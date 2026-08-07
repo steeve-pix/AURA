@@ -2,16 +2,14 @@
 
 #include "world/Position.hpp"
 
-namespace aura::agent{
+namespace aura::agent {
     class Agent {
- public:
+    public:
         explicit Agent(world::Position position);
 
-        world::Position position ()const;
+        [[nodiscard]] world::Position position() const;
 
     private:
         world::Position position_;
     };
 }
-
-
