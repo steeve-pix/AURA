@@ -20,5 +20,7 @@ namespace aura::agent {
         world::Position position_;
         int energy_;
         int maxEnergy_;
+
+        void interactWithCell(const world::World& world);
     };
 }

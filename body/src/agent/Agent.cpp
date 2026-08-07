@@ -39,7 +39,9 @@ namespace aura::agent {
 
         position_ = next;
         --energy_;
-        
+
+        interactWithCell(world);
+
         return true;
     }
 
@@ -49,5 +51,11 @@ namespace aura::agent {
 
     int Agent::maxEnergy() const {
         return maxEnergy_;
+    }
+
+    void Agent::interactWithCell(const world::World &world) {
+        if (world.cellAt(position_) == CellType::Battery) {
+            energy_ = maxEnergy_;
+        }
     }
 }
