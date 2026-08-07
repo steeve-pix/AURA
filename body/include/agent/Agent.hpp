@@ -10,9 +10,17 @@ namespace aura::agent {
 
         [[nodiscard]] world::Position position() const;
 
-        [[nodiscard]] bool moveTo(world::Position position, const world::World& world);
+        [[nodiscard]] bool moveBy(world::Position offset, const world::World &world);
+
+        [[nodiscard]] int energy() const;
+
+        [[nodiscard]] int maxEnergy() const;
 
     private:
         world::Position position_;
+        int energy_;
+        int maxEnergy_;
+
+        void interactWithCell(const world::World& world);
     };
 }

@@ -12,16 +12,13 @@ int main() {
     std::cout << "AURA body starting...\n\n";
 
     World world{10, 5};
-
     world.addBoundaryWalls();
-    world.setCell({7, 3}, CellType::Battery);
+    world.setCell({4, 2}, CellType::Battery);
 
-    Agent agent{{5, 1}};
-    
-    // if (!agent.moveTo({3, 2}, world)) {
-        // std::cerr << "AURA could not move to (3, 2).\n";
-        // return 1;
-    // }
+    Agent agent{{2, 2}};
+
+    static_cast<void>(agent.moveBy({1, 0}, world)); // 99
+    static_cast<void>(agent.moveBy({1, 0}, world)); // reaches battery → 100
 
     TerminalRenderer renderer;
     renderer.render(world, agent);
