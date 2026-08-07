@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "agent/Agent.hpp"
+#include "bridge/Observation.hpp"
 #include "render/TerminalRenderer.hpp"
 #include "sensors/LocalSensor.hpp"
 #include "world/CellTypeUtils.hpp"
@@ -12,6 +13,7 @@ int main() {
     using aura::agent::Agent;
     using aura::sensors::LocalSensor;
     using aura::world::toString;
+    using aura::bridge::Observation;
 
     std::cout << "AURA body starting...\n\n";
 
@@ -29,13 +31,13 @@ int main() {
     TerminalRenderer renderer;
     renderer.render(world, agent);
 
-    const auto observation = LocalSensor::observe(world, agent);
+    const auto surroundings = LocalSensor::observe(world, agent);
 
-    std::cout << "\nLocal sensor readings:\n"
-              << "North: " << toString(observation.north) << "\n"
-              << "East: " << toString(observation.east) << "\n"
-              << "South: " << toString(observation.south) << "\n"
-              << "West: " << toString(observation.west) << "\n";
+    Observation observation{
+        agent.position(),
+        agent.energy(),
+        surroundings
+    };
 
     return 0;
 }
