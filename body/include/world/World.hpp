@@ -23,6 +23,8 @@ namespace aura::world {
 
         void addBoundaryWalls();
 
+        [[nodiscard]] bool canEnter(Position position) const;
+
     private:
         int width_;
         int height_;

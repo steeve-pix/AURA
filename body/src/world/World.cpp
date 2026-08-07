@@ -15,9 +15,9 @@ namespace aura::world {
 
     bool World::isInside(Position position) const {
         return position.x >= 0 &&
-            position.x < width_ &&
-                position.y >= 0 &&
-            position.y < height_;
+               position.x < width_ &&
+               position.y >= 0 &&
+               position.y < height_;
     }
 
     CellType World::cellAt(Position position) const {
@@ -44,7 +44,12 @@ namespace aura::world {
         }
     }
 
+    bool World::canEnter(Position position) const {
+        return isInside(position) && cellAt(position) != CellType::Wall;
+    }
+
     std::size_t World::index(Position position) const {
-        return static_cast<std::size_t>(position.y * width_ + position.x);
+        return static_cast<std::size_t>(position.y) * static_cast<std::size_t>(width_)
+               + static_cast<std::size_t>(position.x);
     }
 }

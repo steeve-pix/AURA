@@ -8,4 +8,17 @@ namespace aura::agent {
     world::Position Agent::position() const {
         return position_;
     }
+
+    bool Agent::moveTo(world::Position position, const world::World& world) {
+        if (!world.isInside(position)) {
+            return false;
+        }
+
+        if (world.cellAt(position) == CellType::Wall) {
+            return false;
+        }
+
+        position_ = position;
+        return true;
+    }
 }
