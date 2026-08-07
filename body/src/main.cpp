@@ -3,6 +3,7 @@
 #include "agent/Agent.hpp"
 #include "render/TerminalRenderer.hpp"
 #include "sensors/LocalSensor.hpp"
+#include "world/CellTypeUtils.hpp"
 #include "world/World.hpp"
 
 int main() {
@@ -10,6 +11,7 @@ int main() {
     using aura::render::TerminalRenderer;
     using aura::agent::Agent;
     using aura::sensors::LocalSensor;
+    using aura::world::toString;
 
     std::cout << "AURA body starting...\n\n";
 
@@ -29,12 +31,11 @@ int main() {
 
     const auto observation = LocalSensor::observe(world, agent);
 
-    std::cout << std::boolalpha
-              << "\nLocal sensor readings:\n"
-              << "North is wall: " << (observation.north == CellType::Empty) << "\n"
-              << "East is battery: " << (observation.east == CellType::Battery) << "\n"
-              << "South is empty: " << (observation.south == CellType::Empty) << "\n"
-              << "West is empty: " << (observation.west == CellType::Empty) << "\n";
+    std::cout << "\nLocal sensor readings:\n"
+              << "North: " << toString(observation.north) << "\n"
+              << "East: " << toString(observation.east) << "\n"
+              << "South: " << toString(observation.south) << "\n"
+              << "West: " << toString(observation.west) << "\n";
 
     return 0;
 }
