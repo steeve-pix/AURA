@@ -16,12 +16,15 @@ int main() {
     world.addBoundaryWalls();
     world.setCell({7, 3}, CellType::Battery);
 
-    Agent agent{{5, 1}};
+    Agent agent{{2, 2}};
     
-    // if (!agent.moveTo({3, 2}, world)) {
-        // std::cerr << "AURA could not move to (3, 2).\n";
-        // return 1;
-    // }
+    std::cout << "Energy: " << agent.energy() << '\n';
+
+    agent.moveBy({1, 0}, world);
+    std::cout << "Energy: " << agent.energy() << '\n';
+
+    agent.moveBy({0, 1}, world);
+    std::cout << "Energy: " << agent.energy() << "\n\n";
 
     TerminalRenderer renderer;
     renderer.render(world, agent);
