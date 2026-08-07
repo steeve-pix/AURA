@@ -11,6 +11,7 @@ int main() {
     
     World world{10, 5};
     
+    world.addBoundaryWalls();
     world.setCell({3, 2}, CellType::Wall);
     world.setCell({7, 3}, CellType::Battery);
     

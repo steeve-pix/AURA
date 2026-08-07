@@ -21,6 +21,8 @@ namespace aura::world {
 
         void setCell(Position position, CellType type);
 
+        void addBoundaryWalls();
+
     private:
         int width_;
         int height_;

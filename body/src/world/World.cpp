@@ -28,6 +28,22 @@ namespace aura::world {
         cells_[index(position)] = type;
     }
 
+    void World::addBoundaryWalls() {
+        if (width_ <= 0 || height_ <= 0) {
+            return;
+        }
+
+        for (int x = 0; x < width_; ++x) {
+            setCell({x, 0}, CellType::Wall);
+            setCell({x, height_ - 1}, CellType::Wall);
+        }
+
+        for (int y = 0; y < height_; ++y) {
+            setCell({0, y}, CellType::Wall);
+            setCell({width_ - 1, y}, CellType::Wall);
+        }
+    }
+
     std::size_t World::index(Position position) const {
         return static_cast<std::size_t>(position.y * width_ + position.x);
     }
