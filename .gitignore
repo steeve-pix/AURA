@@ -1,5 +1,6 @@
 # JetBrains / CLion / PyCharm
 .idea/
+.cache/
 
 # CMake build directories
 cmake-build-*/
