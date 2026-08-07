@@ -2,9 +2,9 @@
 
 #include "agent/Agent.hpp"
 #include "bridge/Observation.hpp"
+#include "bridge/ObservationSerializer.hpp"
 #include "render/TerminalRenderer.hpp"
 #include "sensors/LocalSensor.hpp"
-#include "world/CellTypeUtils.hpp"
 #include "world/World.hpp"
 
 int main() {
@@ -12,8 +12,8 @@ int main() {
     using aura::render::TerminalRenderer;
     using aura::agent::Agent;
     using aura::sensors::LocalSensor;
-    using aura::world::toString;
     using aura::bridge::Observation;
+    using aura::bridge::serializedObservation;
 
     std::cout << "AURA body starting...\n\n";
 
@@ -38,6 +38,9 @@ int main() {
         agent.energy(),
         surroundings
     };
+
+    std::cout << "\nObservation JSON:\n"
+              << serializedObservation(observation) << "\n";
 
     return 0;
 }

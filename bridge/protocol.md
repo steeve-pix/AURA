@@ -16,10 +16,7 @@ Example:
 
 ```json
 {
-  "position": {
-    "x": 4,
-    "y": 2
-  },
+  "position": [4, 2],
   "energy": 100,
   "north": "Empty",
   "east": "Battery",
