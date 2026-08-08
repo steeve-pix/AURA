@@ -11,6 +11,7 @@ namespace aura::world {
                 return "Battery";
         }
 
+        // Defensive fallback for an invalid enum value received through corrupted state.
         return "Unknown";
     }
 }

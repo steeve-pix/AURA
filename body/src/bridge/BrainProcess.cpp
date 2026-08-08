@@ -14,6 +14,7 @@ namespace aura::bridge {
     }
 
     BrainProcess::~BrainProcess() {
+        // Each non-null handle belongs to this object after a successful launch.
         if (stdinWrite_) {
             CloseHandle(stdinWrite_);
         }
@@ -30,16 +31,19 @@ namespace aura::bridge {
     bool BrainProcess::launch() {
         SECURITY_ATTRIBUTES security{};
         security.nLength = sizeof(SECURITY_ATTRIBUTES);
+        // The child must inherit the pipe ends assigned to its stdin and stdout.
         security.bInheritHandle = TRUE;
         security.lpSecurityDescriptor = nullptr;
 
         HANDLE childStdinRead = nullptr;
         HANDLE childStdoutWrite = nullptr;
 
+        // Python's input() reads observations through childStdinRead.
         if (!CreatePipe(&childStdinRead, &stdinWrite_, &security, 0)) {
             return false;
         }
 
+        // Python's print() writes actions through childStdoutWrite.
         if (!CreatePipe(&stdoutRead_, &childStdoutWrite, &security, 0)) {
             CloseHandle(childStdinRead);
             CloseHandle(stdinWrite_);
@@ -47,8 +51,9 @@ namespace aura::bridge {
             return false;
         }
 
+        // Python should inherit only its ends. Inheriting these parent ends could keep a
+        // pipe open unexpectedly and prevent reads from observing end-of-file.
         SetHandleInformation(stdinWrite_, HANDLE_FLAG_INHERIT, 0);
-
         SetHandleInformation(stdoutRead_, HANDLE_FLAG_INHERIT, 0);
 
         STARTUPINFOA startupInfo{};
@@ -63,6 +68,8 @@ namespace aura::bridge {
         std::string command =
                 pythonExecutable_ + " " + scriptPath_;
 
+        // CreateProcessA may modify its command-line buffer, so it needs writable storage
+        // rather than the read-only pointer returned by std::string::c_str().
         std::vector<char> commandBuffer(
             command.begin(),
             command.end()
@@ -82,6 +89,8 @@ namespace aura::bridge {
             &startupInfo,
             &processInfo
         );
+
+        // The parent keeps stdinWrite_ and stdoutRead_, not these child-facing copies.
         CloseHandle(childStdinRead);
         CloseHandle(childStdoutWrite);
 
@@ -105,6 +114,7 @@ namespace aura::bridge {
         }
 
         std::string message{observationJson};
+        // One line is one protocol message; Python's input() removes this delimiter.
         message.push_back('\n');
 
         DWORD bytesWritten = 0;
@@ -123,6 +133,7 @@ namespace aura::bridge {
 
         std::string response;
 
+        // Read one byte at a time until Python's print() supplies the line delimiter.
         while (true) {
             char character = '\0';
             DWORD bytesRead = 0;

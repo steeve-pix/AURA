@@ -3,6 +3,7 @@
 #include <iostream>
 
 namespace {
+    // Rendering symbols are presentation-only and never become world state.
     char symbolFor(CellType cell) {
         switch (cell) {
             case CellType::Empty:
@@ -23,6 +24,7 @@ namespace aura::render {
         for (int y = 0; y < world.height(); ++y) {
             for (int x = 0; x < world.width(); ++x) {
                 if (x == agentPosition.x && y == agentPosition.y) {
+                    // Draw AURA over the underlying cell without modifying that cell.
                     std::cout << 'A';
                     continue;
                 }
