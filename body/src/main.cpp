@@ -26,46 +26,50 @@ int main() {
     world.addBoundaryWalls();
     world.setCell({3, 2}, CellType::Battery);
 
-    Agent agent{{2, 2}};
+    Agent agent{{1, 2}};
 
-    // The body senses physical state before serializing it for the Python brain.
-    const auto surroundings = LocalSensor::observe(world, agent);
+    for (int step = 0; step < 10; ++step) {
+        // The body senses physical state before serializing it for the Python brain.
+        const auto surroundings = LocalSensor::observe(world, agent);
 
-    Observation observation{
-        agent.position(),
-        agent.energy(),
-        surroundings
-    };
+        Observation observation{
+            agent.position(),
+            agent.energy(),
+            surroundings
+        };
 
-    const std::string observationJson =
-            serializedObservation(observation);
+        const std::string observationJson =
+                serializedObservation(observation);
 
-    aura::bridge::BrainProcess brain{
-        "python", "-m brain.main", R"(C:\Users\Steeve Dim\Documents\AURA)"
-    };
+        aura::bridge::BrainProcess brain{
+            "python", "-m brain.main", R"(C:\Users\Steeve Dim\Documents\AURA)"
+        };
 
-    if (!brain.launch()) {
-        std::cerr << "Failed to launch Python brain\n";
-        return 1;
+        if (!brain.launch()) {
+            std::cerr << "Failed to launch Python brain\n";
+            return 1;
+        }
+
+        std::cout << "Sending to brain: " << observationJson << '\n';
+
+        // exchange() sends exactly one observation line and waits for one action line.
+        const std::string actionJson =
+                brain.exchange(observationJson);
+
+        std::cout << "Brain response: " << actionJson << '\n';
+
+        const auto action =
+                aura::bridge::parseAction(actionJson);
+
+        if (action.type == aura::bridge::ActionType::Move) {
+            static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
+        }
+
+        TerminalRenderer renderer;
+        renderer.render(world, agent);
+
+        std::cout << "Agent energy: " << agent.energy() << '\n';
     }
 
-    std::cout << "Sending to brain: " << observationJson << '\n';
-
-    // exchange() sends exactly one observation line and waits for one action line.
-    const std::string actionJson =
-            brain.exchange(observationJson);
-    
-    std::cout << "Brain response: " << actionJson << '\n';
-    
-    const auto action = 
-        aura::bridge::parseAction(actionJson);
-    
-    if(action.type==aura::bridge::ActionType::Move){
-        static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction),world));
-    }
-
-    TerminalRenderer renderer;
-    renderer.render(world, agent);
-    
     return 0;
 }
