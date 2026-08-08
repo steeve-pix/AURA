@@ -2,7 +2,8 @@
 
 ## Project Overview
 
-Project AURA (Autonomous Unified Reasoning Agent) is a learning-focused software project for building a virtual embodied autonomous agent that runs locally on a PC.
+Project AURA (Autonomous Unified Reasoning Agent) is a learning-focused software project for building a virtual embodied
+autonomous agent that runs locally on a PC.
 
 AURA is intentionally divided into two major systems:
 
@@ -11,7 +12,8 @@ AURA is intentionally divided into two major systems:
 
 The project is both a software engineering project and a learning project.
 
-The goal is NOT merely to produce working software. The developer should understand how the major systems work and why architectural decisions are made.
+The goal is NOT merely to produce working software. The developer should understand how the major systems work and why
+architectural decisions are made.
 
 Agents working on this repository must therefore optimize for:
 
@@ -463,7 +465,8 @@ Only after the fundamental architecture works should the project explore:
 * Reinforcement learning
 * Advanced planning
 
-Clearly distinguish situations where AI models provide real value from situations where conventional programming is simpler and more reliable.
+Clearly distinguish situations where AI models provide real value from situations where conventional programming is
+simpler and more reliable.
 
 ---
 

@@ -5,6 +5,7 @@
 Sent from the C++ body to the Python brain.
 
 Fields:
+
 - position
 - energy
 - north
@@ -16,7 +17,10 @@ Example:
 
 ```json
 {
-  "position": [4, 2],
+  "position": [
+    4,
+    2
+  ],
   "energy": 100,
   "north": "Empty",
   "east": "Battery",
@@ -30,6 +34,7 @@ Example:
 Sent from the Python brain to the C++ body.
 
 Fields:
+
 - action
 - direction
 

@@ -9,6 +9,7 @@ add_executable(aura_body
         src/render/TerminalRenderer.cpp
         src/agent/Agent.cpp
         src/sensors/LocalSensor.cpp
+        src/sensors/RangeSensor.cpp
 )
-
+                                
 target_include_directories(aura_body PRIVATE include)

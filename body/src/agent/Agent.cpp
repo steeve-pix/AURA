@@ -4,7 +4,7 @@
 namespace aura::agent {
     Agent::Agent(world::Position position)
         : position_(position), energy_(20), maxEnergy_(100) {
-        if (energy_>maxEnergy_){
+        if (energy_ > maxEnergy_) {
             throw std::invalid_argument{"Energy cannot be higher than Max Energy."};
         }
     }
@@ -35,7 +35,7 @@ namespace aura::agent {
             return false;
         }
 
-        if (world.cellAt(next) == CellType::Wall) {
+        if (world.cellAt(next) == world::CellType::Wall) {
             return false;
         }
 
@@ -62,7 +62,7 @@ namespace aura::agent {
 
     void Agent::interactWithCell(const world::World &world) {
         // Recharging is a physical consequence of occupying a battery cell.
-        if (world.cellAt(position_) == CellType::Battery) {
+        if (world.cellAt(position_) == world::CellType::Battery) {
             energy_ = maxEnergy_;
         }
     }
