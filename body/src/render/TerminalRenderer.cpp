@@ -4,13 +4,13 @@
 
 namespace {
     // Rendering symbols are presentation-only and never become world state.
-    char symbolFor(CellType cell) {
+    char symbolFor(aura::world::CellType cell) {
         switch (cell) {
-            case CellType::Empty:
+            case aura::world::CellType::Empty:
                 return '.';
-            case CellType::Wall:
+            case aura::world::CellType::Wall:
                 return '#';
-            case CellType::Battery:
+            case aura::world::CellType::Battery:
                 return 'B';
         }
         return '?';

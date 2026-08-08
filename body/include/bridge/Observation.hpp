@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sensors/LocalObservation.hpp"
+#include "sensors/RangeObservation.hpp"
 #include "world/Position.hpp"
 
 namespace aura::bridge {
@@ -12,5 +13,6 @@ namespace aura::bridge {
         int energy;
         /// Cell types immediately north, east, south, and west of AURA.
         sensors::LocalObservation surroundings;
+        sensors::RangeObservation nearby;
     };
 }

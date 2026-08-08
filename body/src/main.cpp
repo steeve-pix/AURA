@@ -9,6 +9,7 @@
 #include "bridge/ObservationSerializer.hpp"
 #include "render/TerminalRenderer.hpp"
 #include "sensors/LocalSensor.hpp"
+#include "sensors/RangeSensor.hpp"
 #include "world/World.hpp"
 
 int main() {
@@ -16,6 +17,7 @@ int main() {
     using aura::render::TerminalRenderer;
     using aura::agent::Agent;
     using aura::sensors::LocalSensor;
+    using aura::sensors::RangeSensor;
     using aura::bridge::Observation;
     using aura::bridge::serializedObservation;
 
@@ -24,18 +26,33 @@ int main() {
     // Build a small deterministic scene for exercising the body-brain loop.
     World world{10, 5};
     world.addBoundaryWalls();
-    world.setCell({3, 2}, CellType::Battery);
+    world.setCell({8, 2}, aura::world::CellType::Battery);
 
     Agent agent{{1, 2}};
+    RangeSensor rangeSensor{10};
 
     for (int step = 0; step < 10; ++step) {
+        const auto rangeObservation = rangeSensor.observe(world, agent);
+
+
+        for (const auto &object: rangeObservation.objects) {
+            std::cout << "RangeSensor detected object at ("
+                    << object.position.x << ", "
+                    << object.position.y << ")\n";
+        }
+
         // The body senses physical state before serializing it for the Python brain.
-        const auto surroundings = LocalSensor::observe(world, agent);
+        const auto local =
+                LocalSensor::observe(world, agent);
+
+        const auto nearby =
+                rangeSensor.observe(world, agent);
 
         Observation observation{
             agent.position(),
             agent.energy(),
-            surroundings
+            local,
+            nearby
         };
 
         const std::string observationJson =
