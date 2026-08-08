@@ -3,6 +3,7 @@ add_executable(aura_body
         src/bridge/ActionParser.cpp
         src/bridge/ActionUtils.cpp
         src/bridge/ObservationSerializer.cpp
+        src/bridge/BrainProcess.cpp
         src/world/CellTypeUtils.cpp
         src/world/World.cpp
         src/render/TerminalRenderer.cpp

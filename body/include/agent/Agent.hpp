@@ -21,6 +21,6 @@ namespace aura::agent {
         int energy_;
         int maxEnergy_;
 
-        void interactWithCell(const world::World& world);
+        void interactWithCell(const world::World &world);
     };
 }

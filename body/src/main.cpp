@@ -3,6 +3,7 @@
 #include "agent/Agent.hpp"
 #include "bridge/ActionParser.hpp"
 #include "bridge/ActionUtils.hpp"
+#include "bridge/BrainProcess.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "render/TerminalRenderer.hpp"
@@ -49,8 +50,24 @@ int main() {
         surroundings
     };
 
-    std::cout << "\nObservation JSON:\n"
-              << serializedObservation(observation) << "\n";
+    const std::string observationJson =
+            serializedObservation(observation);
+
+    aura::bridge::BrainProcess brain{
+        "python", "-m brain.main", R"(C:\Users\Steeve Dim\Documents\AURA)"
+    };
+
+    if (!brain.launch()) {
+        std::cerr << "Failed to launch Python brain\n";
+        return 1;
+    }
+
+    std::cout << "Sending to brain: " << observationJson << '\n';
+
+    const std::string actionJson =
+            brain.exchange(observationJson);
+
+    std::cout << "Brain response: " << actionJson << '\n';
 
     return 0;
 }

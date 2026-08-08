@@ -1,19 +1,19 @@
 #pragma once
 
-namespace aura::bridge{
-    enum class Direction{
+namespace aura::bridge {
+    enum class Direction {
         North,
         East,
         South,
         West
     };
 
-    enum class ActionType{
+    enum class ActionType {
         Idle,
         Move
     };
 
-    struct Action{
+    struct Action {
         ActionType type;
         Direction direction;
     };

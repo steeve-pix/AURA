@@ -1,4 +1,6 @@
-def decide(observation):
+from typing import Any
+
+def decide(observation: dict[str, Any]) -> dict[str, Any]:
     if observation["east"] == "Battery":
         return {
             "action": "move",
