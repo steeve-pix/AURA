@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "agent/Agent.hpp"
+#include "bridge/Action.hpp"
 #include "bridge/ActionParser.hpp"
 #include "bridge/ActionUtils.hpp"
 #include "bridge/BrainProcess.hpp"
@@ -23,26 +24,9 @@ int main() {
     // Build a small deterministic scene for exercising the body-brain loop.
     World world{10, 5};
     world.addBoundaryWalls();
-    world.setCell({5, 2}, CellType::Battery);
+    world.setCell({3, 2}, CellType::Battery);
 
     Agent agent{{2, 2}};
-
-    // Ignore these return values because the fixed demo world makes both moves valid.
-    static_cast<void>(agent.moveBy({1, 0}, world)); // Energy becomes 99.
-    static_cast<void>(agent.moveBy({1, 0}, world)); // Energy becomes 98.
-
-    const auto action = aura::bridge::parseAction(
-        R"({"action": "move","direction": "east"})"
-    );
-
-    if (action.type == aura::bridge::ActionType::Move &&
-        !agent.moveBy(aura::bridge::directionOffset(action.direction), world)) {
-        std::cerr << "AURA could not perform the parsed movement.\n";
-        return 1;
-    }
-
-    TerminalRenderer renderer;
-    renderer.render(world, agent);
 
     // The body senses physical state before serializing it for the Python brain.
     const auto surroundings = LocalSensor::observe(world, agent);
@@ -70,8 +54,18 @@ int main() {
     // exchange() sends exactly one observation line and waits for one action line.
     const std::string actionJson =
             brain.exchange(observationJson);
-
+    
     std::cout << "Brain response: " << actionJson << '\n';
+    
+    const auto action = 
+        aura::bridge::parseAction(actionJson);
+    
+    if(action.type==aura::bridge::ActionType::Move){
+        static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction),world));
+    }
 
+    TerminalRenderer renderer;
+    renderer.render(world, agent);
+    
     return 0;
 }
