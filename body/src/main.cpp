@@ -34,20 +34,25 @@ int main() {
     for (int step = 0; step < 10; ++step) {
         const auto rangeObservation = rangeSensor.observe(world, agent);
 
-        for (const auto &object : rangeObservation.objects) {
+
+        for (const auto &object: rangeObservation.objects) {
             std::cout << "RangeSensor detected object at ("
-                      << object.position.x << ", "
-                      << object.position.y << ")\n";
+                    << object.position.x << ", "
+                    << object.position.y << ")\n";
         }
 
         // The body senses physical state before serializing it for the Python brain.
-        const auto surroundings = LocalSensor::observe(world, agent);
+        const auto local =
+                LocalSensor::observe(world, agent);
 
+        const auto nearby =
+                rangeSensor.observe(world, agent);
 
         Observation observation{
             agent.position(),
             agent.energy(),
-            surroundings
+            local,
+            nearby
         };
 
         const std::string observationJson =
