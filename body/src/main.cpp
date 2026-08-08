@@ -26,10 +26,10 @@ int main() {
     // Build a small deterministic scene for exercising the body-brain loop.
     World world{10, 5};
     world.addBoundaryWalls();
-    world.setCell({3, 2}, aura::world::CellType::Battery);
+    world.setCell({8, 2}, aura::world::CellType::Battery);
 
     Agent agent{{1, 2}};
-    RangeSensor rangeSensor{3};
+    RangeSensor rangeSensor{10};
 
     for (int step = 0; step < 10; ++step) {
         const auto rangeObservation = rangeSensor.observe(world, agent);
