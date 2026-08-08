@@ -19,8 +19,8 @@ int main() {
 
     World world{10, 5};
     world.addBoundaryWalls();
-//    world.setCell({4, 2}, CellType::Battery);
-//    world.setCell({4, 1}, CellType::Wall);
+    // world.setCell({4, 2}, CellType::Battery);
+    // world.setCell({4, 1}, CellType::Wall);
     world.setCell({5, 2}, CellType::Battery);
 
     Agent agent{{2, 2}};

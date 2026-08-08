@@ -1,13 +1,8 @@
+import json
+
 from brain.decision import decide
 
-observation = {
-    "position": [2, 2],
-    "energy": 42,
-    "north": "Empty",
-    "east": "Battery",
-    "south": "Empty",
-    "west": "Wall",
-}
-
+raw = input()
+observation = json.loads(raw)
 decision = decide(observation)
-print(decision)
+print(json.dumps(decision))
