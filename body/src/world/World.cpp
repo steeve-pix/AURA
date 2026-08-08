@@ -33,6 +33,7 @@ namespace aura::world {
             return;
         }
 
+        // Corners are assigned twice; this keeps each boundary loop simple and harmless.
         for (int x = 0; x < width_; ++x) {
             setCell({x, 0}, CellType::Wall);
             setCell({x, height_ - 1}, CellType::Wall);
@@ -49,6 +50,7 @@ namespace aura::world {
     }
 
     std::size_t World::index(Position position) const {
+        // Row-major storage places every complete row before the next one.
         return static_cast<std::size_t>(position.y) * static_cast<std::size_t>(width_)
                + static_cast<std::size_t>(position.x);
     }

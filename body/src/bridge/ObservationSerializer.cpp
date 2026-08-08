@@ -7,6 +7,7 @@
 namespace aura::bridge {
     std::string serializedObservation(const Observation &observation) {
         std::ostringstream json;
+        // The compact single-line form matches the bridge's newline-delimited messages.
         json << "{"
                 << "\"position\":["
                 << observation.position.x << ","

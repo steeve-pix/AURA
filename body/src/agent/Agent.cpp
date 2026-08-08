@@ -10,6 +10,7 @@ namespace aura::agent {
     }
 
     bool Agent::moveBy(world::Position offset, const world::World &world) {
+        // Diagonal moves, multi-cell jumps, and staying still are not physical steps.
         const bool isSingleStep =
                 (offset.x == 1 && offset.y == 0) ||
                 (offset.x == -1 && offset.y == 0) ||
@@ -20,6 +21,7 @@ namespace aura::agent {
             return false;
         }
 
+        // Calculate first so a rejected move never changes the agent's real position.
         world::Position next{
             .x = position_.x + offset.x,
             .y = position_.y + offset.y
@@ -38,6 +40,7 @@ namespace aura::agent {
         }
 
         position_ = next;
+        // Only completed movement consumes energy.
         --energy_;
 
         interactWithCell(world);
@@ -54,6 +57,7 @@ namespace aura::agent {
     }
 
     void Agent::interactWithCell(const world::World &world) {
+        // Recharging is a physical consequence of occupying a battery cell.
         if (world.cellAt(position_) == CellType::Battery) {
             energy_ = maxEnergy_;
         }

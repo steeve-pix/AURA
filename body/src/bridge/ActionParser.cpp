@@ -3,6 +3,8 @@
 #include <stdexcept>
 
 namespace {
+    // This deliberately small parser supports the flat action messages in AURA's current
+    // protocol. A general JSON library is unnecessary until the protocol becomes richer.
     bool isJsonWhitespace(char character) {
         return character == ' ' || character == '\t' ||
                character == '\n' || character == '\r';
@@ -28,6 +30,7 @@ namespace {
             ++position;
         }
 
+        // Character code 34 is a double quote; spelling it this way avoids escaping it.
         if (position >= json.size() || json[position] != static_cast<char>(34)) {
             throw std::invalid_argument("Expected a JSON string value");
         }

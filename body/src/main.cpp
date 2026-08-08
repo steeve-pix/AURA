@@ -20,14 +20,16 @@ int main() {
 
     std::cout << "AURA body starting...\n\n";
 
+    // Build a small deterministic scene for exercising the body-brain loop.
     World world{10, 5};
     world.addBoundaryWalls();
     world.setCell({5, 2}, CellType::Battery);
 
     Agent agent{{2, 2}};
 
-    static_cast<void>(agent.moveBy({1, 0}, world)); // 99
-    static_cast<void>(agent.moveBy({1, 0}, world)); // 98
+    // Ignore these return values because the fixed demo world makes both moves valid.
+    static_cast<void>(agent.moveBy({1, 0}, world)); // Energy becomes 99.
+    static_cast<void>(agent.moveBy({1, 0}, world)); // Energy becomes 98.
 
     const auto action = aura::bridge::parseAction(
         R"({"action": "move","direction": "east"})"
@@ -42,6 +44,7 @@ int main() {
     TerminalRenderer renderer;
     renderer.render(world, agent);
 
+    // The body senses physical state before serializing it for the Python brain.
     const auto surroundings = LocalSensor::observe(world, agent);
 
     Observation observation{
@@ -64,6 +67,7 @@ int main() {
 
     std::cout << "Sending to brain: " << observationJson << '\n';
 
+    // exchange() sends exactly one observation line and waits for one action line.
     const std::string actionJson =
             brain.exchange(observationJson);
 
