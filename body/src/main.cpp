@@ -7,9 +7,11 @@
 #include "bridge/BrainProcess.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
+#include "navigation/Pathfinder.hpp"
 #include "render/TerminalRenderer.hpp"
 #include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
+#include "world/CellType.hpp"
 #include "world/World.hpp"
 
 int main() {
@@ -27,13 +29,20 @@ int main() {
     World world{10, 5};
     world.addBoundaryWalls();
     world.setCell({8, 2}, aura::world::CellType::Battery);
+    world.setCell({5, 1}, aura::world::CellType::Wall);
+    world.setCell({5, 2}, aura::world::CellType::Wall);
 
     Agent agent{{1, 2}};
     RangeSensor rangeSensor{10};
 
+    const auto path = aura::navigation::findPath(world, agent.position(), {8, 2});
+
+    for (const auto &position: path) {
+        std::cout << "(" << position.x << "," << position.y << ")\n";
+    }
+
     for (int step = 0; step < 10; ++step) {
         const auto rangeObservation = rangeSensor.observe(world, agent);
-
 
         for (const auto &object: rangeObservation.objects) {
             std::cout << "RangeSensor detected object at ("
