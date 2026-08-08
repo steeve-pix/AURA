@@ -7,15 +7,21 @@
 namespace aura::bridge {
     std::string serializedObservation(const Observation &observation) {
         std::ostringstream json;
-        json << "{\n"
-                << "  \"position\": [" << observation.position.x << ", "
-                << observation.position.y << "],\n"
-                << "  \"energy\": " << observation.energy << ",\n"
-                << R"(  "north": ")" << world::toString(observation.surroundings.north) << "\",\n"
-                << R"(  "east": ")" << world::toString(observation.surroundings.east) << "\",\n"
-                << R"(  "south": ")" << world::toString(observation.surroundings.south) << "\",\n"
-                << R"(  "west": ")" << world::toString(observation.surroundings.west) << "\"\n"
-                << '}';
+        // The compact single-line form matches the bridge's newline-delimited messages.
+        json << "{"
+                << "\"position\":["
+                << observation.position.x << ","
+                << observation.position.y << "],"
+                << "\"energy\":" << observation.energy << ","
+                << "\"north\":\""
+                << aura::world::toString(observation.surroundings.north) << "\","
+                << "\"east\":\""
+                << aura::world::toString(observation.surroundings.east) << "\","
+                << "\"south\":\""
+                << aura::world::toString(observation.surroundings.south) << "\","
+                << "\"west\":\""
+                << aura::world::toString(observation.surroundings.west) << "\""
+                << "}";
 
         return json.str();
     }

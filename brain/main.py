@@ -1,13 +1,15 @@
-from brain.decision import decide
+"""Run one newline-delimited observation/action exchange for the AURA brain."""
 
-observation = {
-    "position": [2, 2],
-    "energy": 42,
-    "north": "Empty",
-    "east": "Battery",
-    "south": "Empty",
-    "west": "Wall",
-}
+import json
+from typing import Any
 
+from brain.decision import decide  # pyright: ignore[reportUnknownVariableType]
+
+# input() reads the observation line redirected from the C++ body's pipe.
+raw = input()
+
+observation: dict[str, Any] = json.loads(raw)  # pyright: ignore[reportExplicitAny, reportAny]
 decision = decide(observation)
-print(decision)
+
+# print() adds the newline that tells the C++ exchange loop the action is complete.
+print(json.dumps(decision))
