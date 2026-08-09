@@ -101,6 +101,26 @@ int main() {
             static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
         }
 
+        if (action.type == aura::bridge::ActionType::MoveTo) {
+            const auto path = aura::navigation::findPath(
+                world,
+                agent.position(),
+                action.target
+            );
+
+            if (!path.empty()) {
+                const auto current = agent.position();
+                const auto next = path.front();
+
+                const aura::world::Position offset{
+                    next.x - current.x,
+                    next.y - current.y
+                };
+
+                static_cast<void>(agent.moveBy(offset, world));
+            }
+        }
+
         TerminalRenderer renderer;
         renderer.render(world, agent);
 

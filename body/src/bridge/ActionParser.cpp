@@ -1,6 +1,9 @@
 #include "bridge/ActionParser.hpp"
+#include "bridge/Action.hpp"
 
+#include <nlohmann/json.hpp>
 #include <stdexcept>
+#include <string>
 
 namespace {
     // This deliberately small parser supports the flat action messages in AURA's current
@@ -65,19 +68,48 @@ namespace {
 }
 
 namespace aura::bridge {
-    Action parseAction(std::string_view json) {
-        const std::string_view action = readStringField(json, "\"action\"");
+    Action parseAction(std::string_view text) {
+        const auto json = nlohmann::json::parse(text);
 
-        if (action == "idle") {
-            // Direction is ignored when the action type is Idle.
-            return {ActionType::Idle, Direction::North};
+        const std::string action =
+        json.at("action").get<std::string>();
+
+        if(action == "idle"){
+            return {ActionType::Idle,Direction::North,{0,0}};
         }
 
-        if (action != "move") {
-            throw std::invalid_argument("Unsupported action type");
+        if(action == "move"){
+            const std::string direction =
+            json.at("direction").get<std::string>();
+
+            if (direction == "north")
+                return {ActionType::Move, Direction::North, {0, 0}};
+
+            if (direction == "east")
+                return {ActionType::Move, Direction::East, {0, 0}};
+
+            if (direction == "south")
+                return {ActionType::Move, Direction::South, {0, 0}};
+
+            if (direction == "west")
+                return {ActionType::Move, Direction::West, {0, 0}};
+
+            throw std::runtime_error("Unknown movement direction");
         }
 
-        const std::string_view direction = readStringField(json, "\"direction\"");
-        return {ActionType::Move, parseDirection(direction)};
+        if(action=="move_to"){
+            const auto& target = json.at("target");
+
+            return{
+                ActionType::MoveTo,
+                Direction::North,
+                {
+                    target.at(0).get<int>(),
+                    target.at(1).get<int>()
+                }
+            };
+        }
+
+        throw std::runtime_error("Unknown action type");
     }
 }
