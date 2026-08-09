@@ -9,21 +9,10 @@ def decide(observation: dict[str, Any], goal: str) -> dict[str, Any]:  # pyright
     if goal == "recharge":
         for obj in observation["nearby_objects"]:  # pyright: ignore[reportAny]
             if obj["type"] == "Battery":
-                aura_x, aura_y = observation["position"]  # pyright: ignore[reportAny]
-
-                battery_x, battery_y = obj["position"]  # pyright: ignore[reportAny]
-
-                if battery_x > aura_x:
-                    return {"action": "move", "direction": "east"}
-
-                if battery_x < aura_x:
-                    return {"action": "move", "direction": "west"}
-
-                if battery_y > aura_y:
-                    return {"action": "move", "direction": "south"}
-
-                if battery_y < aura_y:
-                    return {"action": "move", "direction": "north"}
+               return {
+                   "action":"move_to",
+                   "target":obj["position"],
+               }
 
             return {"action": "idle"}
 

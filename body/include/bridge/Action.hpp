@@ -1,5 +1,7 @@
 #pragma once
 
+#include "world/Position.hpp"
+
 namespace aura::bridge {
     /// Cardinal directions understood by both the brain protocol and the body.
     enum class Direction {
@@ -12,7 +14,8 @@ namespace aura::bridge {
     /// Physical action categories currently accepted from the Python brain.
     enum class ActionType {
         Idle,
-        Move
+        Move,
+        MoveTo
     };
 
     /// A validated intention sent by the brain for the body to perform.
@@ -21,5 +24,6 @@ namespace aura::bridge {
     struct Action {
         ActionType type;
         Direction direction;
+        world::Position target;
     };
 }
