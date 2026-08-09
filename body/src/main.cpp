@@ -12,6 +12,7 @@
 #include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
 #include "world/CellType.hpp"
+#include "world/Position.hpp"
 #include "world/World.hpp"
 
 int main() {
@@ -36,6 +37,15 @@ int main() {
     RangeSensor rangeSensor{10};
 
     const auto path = aura::navigation::findPath(world, agent.position(), {8, 2});
+
+    const auto next = path.front();
+
+    const aura::world::Position offset{
+        next.x - agent.position().x,
+        next.y - agent.position().y
+    };
+
+    static_cast<void>(agent.moveBy(offset, world));
 
     for (const auto &position: path) {
         std::cout << "(" << position.x << "," << position.y << ")\n";

@@ -46,3 +46,11 @@ Example:
   "direction": "east"
 }
 ```
+
+### Move to a target
+
+The `move_to` action asks the C++ body to navigate to a target position. The target uses the `[x, y]` coordinate format.
+
+```json
+{"action":"move_to","target":[7,3]}
+```
