@@ -32,10 +32,12 @@ add_executable(aura_body
         src/main.cpp
         src/bridge/BrainProcess.cpp
         src/render/Window.cpp
+        src/render/GridRenderer.cpp
 )
 
 target_link_libraries(aura_body
         PRIVATE
         aura_core
         glfw
+        "-framework OPENGL"
 )

@@ -31,7 +31,15 @@ namespace aura::render{
         return glfwWindowShouldClose(handle_);
     }
 
-    void Window::pollEvents() const {
+    void Window::pollEvents() {
         glfwPollEvents();
-    }   
+    }
+
+    void Window::clear() const{
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    void Window::display() const {
+        glfwSwapBuffers(handle_);
+    }
 }
