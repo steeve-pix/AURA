@@ -16,3 +16,4 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 add_subdirectory(body)
+add_subdirectory(tests/cpp)
