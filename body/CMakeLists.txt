@@ -13,6 +13,16 @@ add_library(aura_core
 
 target_include_directories(aura_core PUBLIC include)
 
+include(FetchContent)
+
+FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG 3.4
+)
+
+FetchContent_MakeAvailable(glfw)
+
 target_link_libraries(aura_core
         PRIVATE
         nlohmann_json::nlohmann_json
@@ -21,6 +31,11 @@ target_link_libraries(aura_core
 add_executable(aura_body
         src/main.cpp
         src/bridge/BrainProcess.cpp
+        src/render/Window.cpp
 )
 
-target_link_libraries(aura_body PRIVATE aura_core)
+target_link_libraries(aura_body
+        PRIVATE
+        aura_core
+        glfw
+)
