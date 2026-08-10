@@ -13,6 +13,8 @@ namespace aura::bridge {
             observation.position.y
         };
 
+        json["sensor_radius"] = observation.sensor_radius;
+
         json["energy"] = observation.energy;
         json["north"] = aura::world::toString(observation.surroundings.north);
         json["east"] = aura::world::toString(observation.surroundings.east);

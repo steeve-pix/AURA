@@ -2,9 +2,9 @@ import json
 import sys
 from typing import Any
 
-from brain.decision import decide
-from brain.goals import choose_goal
-from brain.memory import Memory
+from decision import decide
+from goals import choose_goal
+from memory import Memory
 
 
 def main() -> None:
