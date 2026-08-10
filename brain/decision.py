@@ -1,5 +1,5 @@
 """Choose AURA's next high-level intention from a body observation."""
-
+import random
 from typing import Any
 from memory import Memory
 
@@ -37,10 +37,10 @@ def decide(observation: dict[str, Any], goal: str, memory: Memory) -> dict[
         aura_x, aura_y = observation["position"]
 
         directions = {
-            "north": [0, -1],
-            "east": [1, 0],
-            "south": [0, 1],
-            "west": [-1, 0],
+            "north":(0, -1),
+            "east": (1, 0),
+            "south":(0, 1),
+            "west": (-1, 0),
         }
 
         candidates = []
@@ -63,9 +63,13 @@ def decide(observation: dict[str, Any], goal: str, memory: Memory) -> dict[
                 "action": "idle"
             }
 
-        candidates.sort()
+        lowest_score = min(score for score, _ in candidates)
 
-        _, direction = candidates[0]
+        best_directions = [
+            direction for score, direction in candidates if score == lowest_score
+        ]
+
+        direction = random.choice(best_directions)
 
         return {
             "action": "move",
