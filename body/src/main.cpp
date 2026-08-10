@@ -1,4 +1,5 @@
 #include <iostream>
+#include <exception>
 
 #include "agent/Agent.hpp"
 #include "bridge/Action.hpp"
@@ -51,6 +52,31 @@ int main() {
         std::cout << "(" << position.x << "," << position.y << ")\n";
     }
 
+#if defined(_WIN32)
+    const std::string pythonExecutable = "python";
+    const std::string scriptPath = "-m brain.main";
+    const std::string workingDirectory = R"(C:\Users\Steeve Dim\Documents\AURA)";
+#else
+    const std::string pythonExecutable = "python3";
+
+    const std::string scriptPath =
+            "/Users/steeve.dimitry/Documents/Developer/AURA/brain/main.py";
+
+    const std::string workingDirectory =
+            "/Users/steeve.dimitry/Documents/Developer/AURA";
+#endif
+
+    aura::bridge::BrainProcess brain{
+        pythonExecutable,
+        scriptPath,
+        workingDirectory
+    };
+
+    if (!brain.launch()) {
+        std::cerr << "Failed to launch Python brain\n";
+        return 1;
+    }
+
     for (int step = 0; step < 10; ++step) {
         const auto rangeObservation = rangeSensor.observe(world, agent);
 
@@ -71,20 +97,12 @@ int main() {
             agent.position(),
             agent.energy(),
             local,
-            nearby
+            nearby,
+            10
         };
 
         const std::string observationJson =
                 serializedObservation(observation);
-
-        aura::bridge::BrainProcess brain{
-            "python", "-m brain.main", R"(C:\Users\Steeve Dim\Documents\AURA)"
-        };
-
-        if (!brain.launch()) {
-            std::cerr << "Failed to launch Python brain\n";
-            return 1;
-        }
 
         std::cout << "Sending to brain: " << observationJson << '\n';
 
@@ -92,10 +110,21 @@ int main() {
         const std::string actionJson =
                 brain.exchange(observationJson);
 
+        if (actionJson.empty()) {
+            std::cerr << "Brain returned empty response; skipping this step\n";
+            continue;
+        }
+
         std::cout << "Brain response: " << actionJson << '\n';
 
-        const auto action =
-                aura::bridge::parseAction(actionJson);
+        aura::bridge::Action action{};
+        try {
+            action = aura::bridge::parseAction(actionJson);
+        } catch (const std::exception &error) {
+            std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
+            std::cerr << "Reason: " << error.what() << '\n';
+            continue;
+        }
 
         if (action.type == aura::bridge::ActionType::Move) {
             static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));

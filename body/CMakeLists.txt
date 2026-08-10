@@ -14,6 +14,7 @@ add_executable(aura_body
 )
 
 target_include_directories(aura_body PRIVATE include)
+
 target_link_libraries(aura_body
         PRIVATE
         nlohmann_json::nlohmann_json

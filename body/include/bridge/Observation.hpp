@@ -14,5 +14,6 @@ namespace aura::bridge {
         /// Cell types immediately north, east, south, and west of AURA.
         sensors::LocalObservation surroundings;
         sensors::RangeObservation nearby;
+        int sensor_radius;
     };
 }

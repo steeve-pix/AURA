@@ -12,6 +12,9 @@ Fields:
 - east
 - south
 - west
+- sensor_radius
+- visible_cells
+- nearby_objects
 
 Example:
 
@@ -22,12 +25,23 @@ Example:
     2
   ],
   "energy": 100,
+  "sensor_radius": 2,
   "north": "Empty",
   "east": "Battery",
   "south": "Empty",
-  "west": "Empty"
+  "west": "Empty",
+  "visible_cells": [
+    {"position": [3, 2], "type": "Empty"},
+    {"position": [4, 2], "type": "Empty"},
+    {"position": [5, 2], "type": "Wall"}
+  ],
+  "nearby_objects": [
+    {"position": [6, 2], "type": "Battery"}
+  ]
 }
 ```
+
+`visible_cells` contains every in-bounds cell currently covered by the range sensor. The Python brain can remember these observations as a partial map. `nearby_objects` remains a focused list of visible batteries.
 
 ## Action
 
@@ -36,7 +50,8 @@ Sent from the Python brain to the C++ body.
 Fields:
 
 - action
-- direction
+- direction (for `move`)
+- target (for `move_to`)
 
 Example:
 

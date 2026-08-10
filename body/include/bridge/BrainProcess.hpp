@@ -3,7 +3,21 @@
 #include <string>
 #include <string_view>
 
+#if defined(_WIN32)
 #include <windows.h>
+using ChildProcessHandle = HANDLE;
+using IoHandle = HANDLE;
+static constexpr IoHandle kInvalidIoHandle = nullptr;
+static const ChildProcessHandle kInvalidProcessHandle = nullptr;
+#else
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+using ChildProcessHandle = pid_t;
+using IoHandle = int;
+static constexpr IoHandle kInvalidIoHandle = -1;
+static constexpr ChildProcessHandle kInvalidProcessHandle = -1;
+#endif
 
 namespace aura::bridge {
     /// Owns the Windows child process and the pipes connecting the body to the brain.
@@ -34,8 +48,8 @@ namespace aura::bridge {
         std::string workingDirectory_;
 
         // These are the parent-side handles retained after the child starts.
-        HANDLE processHandle_ = nullptr;
-        HANDLE stdinWrite_ = nullptr;
-        HANDLE stdoutRead_ = nullptr;
+        ChildProcessHandle processHandle_ = kInvalidProcessHandle;
+        IoHandle stdinWrite_ = kInvalidIoHandle;
+        IoHandle stdoutRead_ = kInvalidIoHandle;
     };
 }
