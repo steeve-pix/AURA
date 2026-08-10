@@ -1,5 +1,10 @@
 add_executable(aura_tests
-main.cpp
+        main.cpp
+)
+
+target_include_directories(aura_tests
+        PRIVATE
+        ${CMAKE_SOURCE_DIR}/body/include
 )
 
 target_link_libraries(aura_tests
