@@ -3,7 +3,7 @@
 
 namespace aura::agent {
     Agent::Agent(world::Position position)
-        : position_(position), energy_(100), maxEnergy_(100) {
+        : position_(position), energy_(20), maxEnergy_(100) {
         if (energy_ > maxEnergy_) {
             throw std::invalid_argument{"Energy cannot be higher than Max Energy."};
         }
