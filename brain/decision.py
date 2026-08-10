@@ -1,6 +1,6 @@
 """Choose AURA's next high-level intention from a body observation."""
 from typing import Any
-from memory import Memory
+from brain.memory import Memory
 
 
 def decide(observation: dict[str, Any], goal: str, memory: Memory) -> dict[
@@ -25,7 +25,7 @@ def decide(observation: dict[str, Any], goal: str, memory: Memory) -> dict[
 
             return {
                 "action": "move_to",
-                "target": list[target]
+                "target": list(target)
             }
 
         return {
