@@ -8,6 +8,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
 
+include(CTest)
+
+if(BUILD_TESTING)
+    add_subdirectory(tests/cpp)
+endif()
+
 FetchContent_Declare(
         json
         URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
@@ -16,4 +22,3 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 add_subdirectory(body)
-add_subdirectory(tests/cpp)

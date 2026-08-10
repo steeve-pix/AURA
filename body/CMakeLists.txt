@@ -11,7 +11,7 @@ add_library(aura_core
         src/world/World.cpp
 )
 
-target_include_directories(aura_core PRIVATE include)
+target_include_directories(aura_core PUBLIC include)
 
 target_link_libraries(aura_core
         PRIVATE

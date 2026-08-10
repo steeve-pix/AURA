@@ -11,3 +11,8 @@ target_link_libraries(aura_tests
         PRIVATE
         aura_core
 )
+
+add_test(
+        NAME aura_core_tests
+        COMMAND aura_tests
+)
