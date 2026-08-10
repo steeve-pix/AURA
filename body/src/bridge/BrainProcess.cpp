@@ -3,8 +3,15 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unistd.h>
 
+#if defined(_WIN32)
 #include <windows.h>
+#else
+#include <csignal>
+#include <sys/wait.h>
+#include <errno.h>
+#endif
 
 namespace aura::bridge {
     BrainProcess::BrainProcess(std::string pythonExecutable, std::string scriptPath, std::string workingDirectory)
@@ -14,45 +21,61 @@ namespace aura::bridge {
     }
 
     BrainProcess::~BrainProcess() {
-        // Each non-null handle belongs to this object after a successful launch.
+#if defined(_WIN32)
         if (stdinWrite_) {
             CloseHandle(stdinWrite_);
+            stdinWrite_ = kInvalidIoHandle;
         }
 
         if (stdoutRead_) {
             CloseHandle(stdoutRead_);
+            stdoutRead_ = kInvalidIoHandle;
         }
 
         if (processHandle_) {
             CloseHandle(processHandle_);
+            processHandle_ = kInvalidProcessHandle;
         }
+#else
+        if (stdinWrite_ != kInvalidIoHandle) {
+            close(stdinWrite_);
+            stdinWrite_ = kInvalidIoHandle;
+        }
+
+        if (stdoutRead_ != kInvalidIoHandle) {
+            close(stdoutRead_);
+            stdoutRead_ = kInvalidIoHandle;
+        }
+
+        if (processHandle_ != kInvalidProcessHandle) {
+            kill(processHandle_, SIGTERM);
+            waitpid(processHandle_, nullptr, 0);
+            processHandle_ = kInvalidProcessHandle;
+        }
+#endif
     }
 
     bool BrainProcess::launch() {
+#if defined(_WIN32)
         SECURITY_ATTRIBUTES security{};
         security.nLength = sizeof(SECURITY_ATTRIBUTES);
-        // The child must inherit the pipe ends assigned to its stdin and stdout.
         security.bInheritHandle = TRUE;
         security.lpSecurityDescriptor = nullptr;
 
         HANDLE childStdinRead = nullptr;
         HANDLE childStdoutWrite = nullptr;
 
-        // Python's input() reads observations through childStdinRead.
         if (!CreatePipe(&childStdinRead, &stdinWrite_, &security, 0)) {
             return false;
         }
 
-        // Python's print() writes actions through childStdoutWrite.
         if (!CreatePipe(&stdoutRead_, &childStdoutWrite, &security, 0)) {
             CloseHandle(childStdinRead);
             CloseHandle(stdinWrite_);
-            stdinWrite_ = nullptr;
+            stdinWrite_ = kInvalidIoHandle;
             return false;
         }
 
-        // Python should inherit only its ends. Inheriting these parent ends could keep a
-        // pipe open unexpectedly and prevent reads from observing end-of-file.
         SetHandleInformation(stdinWrite_, HANDLE_FLAG_INHERIT, 0);
         SetHandleInformation(stdoutRead_, HANDLE_FLAG_INHERIT, 0);
 
@@ -65,16 +88,8 @@ namespace aura::bridge {
         startupInfo.hStdOutput = childStdoutWrite;
         startupInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 
-        std::string command =
-                pythonExecutable_ + " " + scriptPath_;
-
-        // CreateProcessA may modify its command-line buffer, so it needs writable storage
-        // rather than the read-only pointer returned by std::string::c_str().
-        std::vector<char> commandBuffer(
-            command.begin(),
-            command.end()
-        );
-
+        std::string command = pythonExecutable_ + " " + scriptPath_;
+        std::vector<char> commandBuffer(command.begin(), command.end());
         commandBuffer.push_back('\0');
 
         const BOOL success = CreateProcessA(
@@ -90,35 +105,84 @@ namespace aura::bridge {
             &processInfo
         );
 
-        // The parent keeps stdinWrite_ and stdoutRead_, not these child-facing copies.
         CloseHandle(childStdinRead);
         CloseHandle(childStdoutWrite);
 
         if (!success) {
             CloseHandle(stdinWrite_);
             CloseHandle(stdoutRead_);
-            stdinWrite_ = nullptr;
-            stdoutRead_ = nullptr;
+            stdinWrite_ = kInvalidIoHandle;
+            stdoutRead_ = kInvalidIoHandle;
             return false;
         }
 
         CloseHandle(processInfo.hThread);
         processHandle_ = processInfo.hProcess;
-
         return true;
+#else
+        int stdinPipe[2] = {-1, -1};
+        int stdoutPipe[2] = {-1, -1};
+
+        if (pipe(stdinPipe) == -1 || pipe(stdoutPipe) == -1) {
+            if (stdinPipe[0] != -1) close(stdinPipe[0]);
+            if (stdinPipe[1] != -1) close(stdinPipe[1]);
+            if (stdoutPipe[0] != -1) close(stdoutPipe[0]);
+            if (stdoutPipe[1] != -1) close(stdoutPipe[1]);
+            return false;
+        }
+
+        pid_t pid = fork();
+        if (pid == -1) {
+            close(stdinPipe[0]);
+            close(stdinPipe[1]);
+            close(stdoutPipe[0]);
+            close(stdoutPipe[1]);
+            return false;
+        }
+
+        if (pid == 0) {
+            dup2(stdinPipe[0], STDIN_FILENO);
+            dup2(stdoutPipe[1], STDOUT_FILENO);
+
+            close(stdinPipe[1]);
+            close(stdoutPipe[0]);
+
+            if (!workingDirectory_.empty()) {
+                if (chdir(workingDirectory_.c_str()) != 0) {
+                    _exit(1);
+                }
+            }
+
+            execlp(
+                pythonExecutable_.c_str(),
+                pythonExecutable_.c_str(),
+                "-u",
+                scriptPath_.c_str(),
+                static_cast<char *>(nullptr)
+            );
+            _exit(1);
+        }
+
+        close(stdinPipe[0]);
+        close(stdoutPipe[1]);
+
+        processHandle_ = pid;
+        stdinWrite_ = stdinPipe[1];
+        stdoutRead_ = stdoutPipe[0];
+        return true;
+#endif
     }
 
     std::string BrainProcess::exchange(std::string_view observationJson) {
+#if defined(_WIN32)
         if (!stdinWrite_ || !stdoutRead_) {
             return {};
         }
 
         std::string message{observationJson};
-        // One line is one protocol message; Python's input() removes this delimiter.
         message.push_back('\n');
 
         DWORD bytesWritten = 0;
-
         const BOOL writeSuccess = WriteFile(
             stdinWrite_,
             message.data(),
@@ -132,20 +196,10 @@ namespace aura::bridge {
         }
 
         std::string response;
-
-        // Read one byte at a time until Python's print() supplies the line delimiter.
         while (true) {
             char character = '\0';
             DWORD bytesRead = 0;
-
-            const BOOL readSuccess = ReadFile(
-                stdoutRead_,
-                &character,
-                1,
-                &bytesRead,
-                nullptr
-            );
-
+            const BOOL readSuccess = ReadFile(stdoutRead_, &character, 1, &bytesRead, nullptr);
             if (!readSuccess || bytesRead == 0) {
                 return {};
             }
@@ -158,5 +212,35 @@ namespace aura::bridge {
         }
 
         return response;
+#else
+        if (stdinWrite_ == kInvalidIoHandle || stdoutRead_ == kInvalidIoHandle) {
+            return {};
+        }
+
+        std::string message{observationJson};
+        message.push_back('\n');
+
+        const ssize_t written = write(stdinWrite_, message.data(), message.size());
+        if (written != static_cast<ssize_t>(message.size())) {
+            return {};
+        }
+
+        std::string response;
+        while (true) {
+            char character = '\0';
+            const ssize_t readCount = read(stdoutRead_, &character, 1);
+            if (readCount != 1) {
+                return {};
+            }
+
+            if (character == '\n') {
+                break;
+            }
+
+            response.push_back(character);
+        }
+
+        return response;
+#endif
     }
 }

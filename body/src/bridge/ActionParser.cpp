@@ -72,15 +72,15 @@ namespace aura::bridge {
         const auto json = nlohmann::json::parse(text);
 
         const std::string action =
-        json.at("action").get<std::string>();
+                json.at("action").get<std::string>();
 
-        if(action == "idle"){
-            return {ActionType::Idle,Direction::North,{0,0}};
+        if (action == "idle") {
+            return {ActionType::Idle, Direction::North, {0, 0}};
         }
 
-        if(action == "move"){
+        if (action == "move") {
             const std::string direction =
-            json.at("direction").get<std::string>();
+                    json.at("direction").get<std::string>();
 
             if (direction == "north")
                 return {ActionType::Move, Direction::North, {0, 0}};
@@ -97,10 +97,10 @@ namespace aura::bridge {
             throw std::runtime_error("Unknown movement direction");
         }
 
-        if(action=="move_to"){
-            const auto& target = json.at("target");
+        if (action == "move_to") {
+            const auto &target = json.at("target");
 
-            return{
+            return {
                 ActionType::MoveTo,
                 Direction::North,
                 {

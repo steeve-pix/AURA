@@ -20,7 +20,7 @@ namespace aura::bridge {
         json["west"] = aura::world::toString(observation.surroundings.west);
         json["nearby_objects"] = nlohmann::json::array();
 
-        for (const auto &object : observation.nearby.objects) {
+        for (const auto &object: observation.nearby.objects) {
             json["nearby_objects"].push_back({
                 {"type", aura::world::toString(object.type)},
                 {"position", {object.position.x, object.position.y}}
