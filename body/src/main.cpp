@@ -97,7 +97,8 @@ int main() {
             agent.position(),
             agent.energy(),
             local,
-            nearby
+            nearby,
+            10
         };
 
         const std::string observationJson =

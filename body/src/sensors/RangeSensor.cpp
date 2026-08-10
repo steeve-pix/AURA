@@ -22,6 +22,8 @@ namespace aura::sensors {
                 const auto type =
                         world.cellAt(scannedPosition);
 
+                observation.cells.push_back({type, scannedPosition});
+
                 if (type == world::CellType::Battery) {
                     observation.objects.push_back({type, scannedPosition});
                 }

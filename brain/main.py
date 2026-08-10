@@ -18,6 +18,12 @@ def main() -> None:
 
         observation: dict[str, Any] = json.loads(raw)
 
+        for visible_cell in observation["visible_cells"]:
+            memory.remember_cell(
+                visible_cell["position"],
+                visible_cell["type"],
+            )
+
         memory.record_visit(observation["position"])
 
         for visible_object in observation["nearby_objects"]:
