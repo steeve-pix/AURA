@@ -11,6 +11,7 @@ namespace aura::sensors {
 
         [[nodiscard]] RangeObservation observe(const world::World &world, const agent::Agent &agent) const;
 
+        [[nodiscard]] int radius() const;
     private:
         int radius_;
     };

@@ -1,7 +1,7 @@
 #include <iostream>
-#include <exception>
+#include <ostream>
+#include <GLFW/glfw3.h>
 
-#include "agent/Agent.hpp"
 #include "bridge/Action.hpp"
 #include "bridge/ActionParser.hpp"
 #include "bridge/ActionUtils.hpp"
@@ -9,61 +9,34 @@
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "navigation/Pathfinder.hpp"
-#include "render/TerminalRenderer.hpp"
+#include "render/GridRenderer.hpp"
+#include "render/Window.hpp"
 #include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
-#include "world/CellType.hpp"
-#include "world/Position.hpp"
-#include "world/World.hpp"
 
 int main() {
-    using aura::world::World;
-    using aura::render::TerminalRenderer;
-    using aura::agent::Agent;
-    using aura::sensors::LocalSensor;
-    using aura::sensors::RangeSensor;
-    using aura::bridge::Observation;
-    using aura::bridge::serializedObservation;
+    using aura::render::GridRenderer;
+    using aura::render::Window;
 
-    std::cout << "AURA body starting...\n\n";
+    Window window{1280, 720, "AURA"};
 
-    // Build a small deterministic scene for exercising the body-brain loop.
-    World world{10, 5};
+    aura::world::World world{10, 5};
     world.addBoundaryWalls();
-    world.setCell({8, 2}, aura::world::CellType::Battery);
-    world.setCell({5, 1}, aura::world::CellType::Wall);
-    world.setCell({5, 2}, aura::world::CellType::Wall);
+    world.setCell({6, 3}, aura::world::CellType::Battery);
 
-    Agent agent{{1, 2}};
-    RangeSensor rangeSensor{10};
+    aura::agent::Agent agent{{3, 2}};
 
-    const auto path = aura::navigation::findPath(world, agent.position(), {8, 2});
-
-    const auto next = path.front();
-
-    const aura::world::Position offset{
-        next.x - agent.position().x,
-        next.y - agent.position().y
-    };
-
-    static_cast<void>(agent.moveBy(offset, world));
-
-    for (const auto &position: path) {
-        std::cout << "(" << position.x << "," << position.y << ")\n";
-    }
-
+    aura::sensors::RangeSensor rangeSensor{3};
 #if defined(_WIN32)
     const std::string pythonExecutable = "python";
-    const std::string scriptPath = "-m brain.main";
-    const std::string workingDirectory = R"(C:\Users\Steeve Dim\Documents\AURA)";
+    const std::string scriptPath = "brain.main";
+    const std::string workingDirectory =
+            R"(C:\Users\Steeve Dim\Documents\AURA)";
 #else
     const std::string pythonExecutable = "python3";
-
-    const std::string scriptPath =
-            "/Users/steeve.dimitry/Documents/Developer/AURA/brain/main.py";
-
+    const std::string scriptPath = "brain/main.py";
     const std::string workingDirectory =
-            "/Users/steeve.dimitry/Documents/Developer/AURA";
+            "/Users/steeve.dimitry/Developer/AURA";
 #endif
 
     aura::bridge::BrainProcess brain{
@@ -77,83 +50,114 @@ int main() {
         return 1;
     }
 
-    for (int step = 0; step < 10; ++step) {
-        const auto rangeObservation = rangeSensor.observe(world, agent);
+    double lastUpdateTime = glfwGetTime();
 
-        for (const auto &object: rangeObservation.objects) {
-            std::cout << "RangeSensor detected object at ("
-                    << object.position.x << ", "
-                    << object.position.y << ")\n";
-        }
+    constexpr double updateInterval = 0.25;
 
-        // The body senses physical state before serializing it for the Python brain.
-        const auto local =
-                LocalSensor::observe(world, agent);
+    while (!window.shouldClose()) {
+        Window::pollEvents();
 
-        const auto nearby =
-                rangeSensor.observe(world, agent);
+        const double now = glfwGetTime();
 
-        Observation observation{
-            agent.position(),
-            agent.energy(),
-            local,
-            nearby,
-            10
-        };
+        if (now - lastUpdateTime >= updateInterval) {
+            const auto local =
+                    aura::sensors::LocalSensor::observe(
+                        world,
+                        agent
+                    );
 
-        const std::string observationJson =
-                serializedObservation(observation);
+            const auto nearby =
+                    rangeSensor.observe(
+                        world,
+                        agent
+                    );
 
-        std::cout << "Sending to brain: " << observationJson << '\n';
-
-        // exchange() sends exactly one observation line and waits for one action line.
-        const std::string actionJson =
-                brain.exchange(observationJson);
-
-        if (actionJson.empty()) {
-            std::cerr << "Brain returned empty response; skipping this step\n";
-            continue;
-        }
-
-        std::cout << "Brain response: " << actionJson << '\n';
-
-        aura::bridge::Action action{};
-        try {
-            action = aura::bridge::parseAction(actionJson);
-        } catch (const std::exception &error) {
-            std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
-            std::cerr << "Reason: " << error.what() << '\n';
-            continue;
-        }
-
-        if (action.type == aura::bridge::ActionType::Move) {
-            static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
-        }
-
-        if (action.type == aura::bridge::ActionType::MoveTo) {
-            const auto path = aura::navigation::findPath(
-                world,
+            const aura::bridge::Observation observation{
                 agent.position(),
-                action.target
-            );
+                agent.energy(),
+                local,
+                nearby,
+                rangeSensor.radius()
+            };
 
-            if (!path.empty()) {
-                const auto current = agent.position();
-                const auto next = path.front();
+            const std::string observationJson =
+                    aura::bridge::serializedObservation(
+                        observation
+                    );
 
-                const aura::world::Position offset{
-                    next.x - current.x,
-                    next.y - current.y
-                };
+            const std::string actionJson =
+                    brain.exchange(
+                        observationJson
+                    );
 
-                static_cast<void>(agent.moveBy(offset, world));
+            if (!actionJson.empty()) {
+                try {
+                    const auto action =
+                            aura::bridge::parseAction(
+                                actionJson
+                            );
+
+                    if (action.type == aura::bridge::ActionType::Move) {
+                        static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
+                    }
+
+                    if (action.type == aura::bridge::ActionType::MoveTo) {
+                        const auto path =
+                                aura::navigation::findPath(
+                                    world,
+                                    agent.position(),
+                                    action.target
+                                );
+
+                        if (!path.empty()) {
+                            const auto current =
+                                    agent.position();
+
+                            const std::string title =
+                                    "AURA | Energy: " + std::to_string(agent.energy()) + " | Position: (" +
+                                    std::to_string(current.x) + "," + std::to_string(current.y) + ")";
+                            window.setTitle(title);
+
+                            const auto next =
+                                    path.front();
+
+                            const aura::world::Position offset{
+                                next.x - current.x,
+                                next.y - current.y
+                            };
+
+                            static_cast<void>(
+                                agent.moveBy(
+                                    offset,
+                                    world
+                                )
+                            );
+                        }
+                    }
+                } catch (const std::exception &error) {
+                    std::cerr
+                            << "Invalid JSON from brain: "
+                            << actionJson
+                            << '\n';
+
+                    std::cerr
+                            << "Reason: "
+                            << error.what()
+                            << '\n';
+                }
             }
+
+            lastUpdateTime = now;
         }
 
-        TerminalRenderer renderer;
-        renderer.render(world, agent);
+        window.clear();
 
-        std::cout << "Agent energy: " << agent.energy() << '\n';
+        GridRenderer::render(
+            world,
+            agent
+        );
+
+        window.display();
     }
 
     return 0;

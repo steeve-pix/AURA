@@ -32,4 +32,8 @@ namespace aura::sensors {
 
         return observation;
     }
+
+    int RangeSensor::radius() const {
+        return radius_;
+    }
 }
