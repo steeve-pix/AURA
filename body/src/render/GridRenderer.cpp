@@ -1,27 +1,34 @@
 #include "render/GridRenderer.hpp"
 
 #include <GLFW/glfw3.h>
+#include <cstdlib>
+#include <cmath>
 
 namespace aura::render {
-    void GridRenderer::render(
-        const world::World &world,
-        const agent::Agent &agent
-    ) {
+    void GridRenderer::render(const world::World &world, const agent::Agent &agent, int sensorRadius) const {
         const float cellWidth =
                 2.0F / static_cast<float>(world.width());
 
         const float cellHeight =
                 2.0F / static_cast<float>(world.height());
 
+        const auto agentPosition = agent.position();
+
         for (int y = 0; y < world.height(); ++y) {
             for (int x = 0; x < world.width(); ++x) {
                 const auto cell =
                         world.cellAt({x, y});
 
-                if (cell == aura::world::CellType::Wall) {
+                const bool insideSensorRange =
+                        std::abs(x - agentPosition.x) < sensorRadius &&
+                        std::abs(y - agentPosition.y) < sensorRadius;
+
+                if (cell == world::CellType::Wall) {
                     glColor3f(0.35F, 0.35F, 0.35F);
-                } else if (cell == aura::world::CellType::Battery) {
+                } else if (cell == world::CellType::Battery) {
                     glColor3f(0.2F, 0.8F, 0.2F);
+                } else if (insideSensorRange) {
+                    glColor3f(0.18F, 0.18F, 0.23F);
                 } else {
                     glColor3f(0.12F, 0.12F, 0.15F);
                 }

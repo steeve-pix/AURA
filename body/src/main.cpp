@@ -152,9 +152,10 @@ int main() {
 
         window.clear();
 
-        GridRenderer::render(
+        GridRenderer gridRenderer;
+        gridRenderer.render(
             world,
-            agent
+            agent, rangeSensor.radius()
         );
 
         window.display();
