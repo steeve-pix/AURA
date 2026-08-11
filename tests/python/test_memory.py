@@ -47,6 +47,17 @@ class MemoryTests(unittest.TestCase):
             2
         )
 
+    def test_records_failed_targets(self):
+        memory = Memory()
+
+        memory.record_failed_target([8, 3])
+        memory.record_failed_target([8, 3])
+
+        self.assertEqual(
+            memory.failed_target_count((8, 3)),
+            2
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

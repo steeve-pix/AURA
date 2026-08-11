@@ -9,13 +9,19 @@ def decide(observation: dict[str, Any], goal: str, memory: Memory) -> dict[
 
     if goal == "recharge":
         for obj in observation["nearby_objects"]:  # pyright: ignore[reportAny]
-            if obj["type"] == "Battery":
+            position = tuple(obj["position"])
+
+            if obj["type"] == "Battery" and memory.failed_target_count(position) == 0:
                 return {
                     "action": "move_to",
                     "target": obj["position"],
                 }
 
-        known_batteries = memory.batteries()
+        known_batteries = [
+            battery
+            for battery in memory.batteries()
+            if memory.failed_target_count(battery) == 0
+        ]
 
         if known_batteries:
             aura_x, aura_y = observation["position"]

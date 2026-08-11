@@ -6,6 +6,7 @@ class Memory:
         self.known_cells: dict[tuple[int, int], str] = {}
         self.known_batteries: set[tuple[int, int]] = set()
         self.visit_counts: dict[tuple[int, int], int] = {}
+        self.failed_targets: dict[tuple[int, int], int] = {}
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[tuple(position)] = cell_type
@@ -27,11 +28,24 @@ class Memory:
     def visit_count(self, position: tuple[int, int]) -> int:
         return self.visit_counts.get(position, 0)
 
+    def record_failed_target(self, position: list[int]) -> None:
+        key = tuple(position)
+
+        self.failed_targets[key] = (
+            self.failed_targets.get(key, 0) + 1
+        )
+
+    def failed_target_count(
+            self,
+            position: tuple[int, int]
+    ) -> int:
+        return self.failed_targets.get(position, 0)
+
     def least_visited_position(self) -> Optional[tuple[int, int]]:
         walkable_positions = [
             position
             for position, cell_type in self.known_cells.items()
-            if cell_type != "Wall"
+            if cell_type != "Wall" and self.failed_target_count(position) == 0
         ]
 
         if not walkable_positions:

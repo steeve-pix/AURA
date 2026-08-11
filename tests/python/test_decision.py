@@ -65,6 +65,32 @@ class DecisionTests(unittest.TestCase):
             }
         )
 
+    def test_recharge_avoids_a_failed_battery_target(self):
+        memory = Memory()
+        memory.remember_battery([6, 2])
+        memory.record_failed_target([6, 2])
+
+        observation = {
+            "position": [2, 2],
+            "energy": 20,
+            "north": "Empty",
+            "east": "Empty",
+            "south": "Empty",
+            "west": "Empty",
+            "nearby_objects": []
+        }
+
+        action = decide(
+            observation,
+            "recharge",
+            memory
+        )
+
+        self.assertEqual(
+            action,
+            {"action": "idle"}
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

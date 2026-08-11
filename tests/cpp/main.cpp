@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include "agent/Agent.hpp"
+#include "bridge/Observation.hpp"
+#include "bridge/ObservationSerializer.hpp"
 #include "world/World.hpp"
 #include "world/Position.hpp"
 #include "navigation/Pathfinder.hpp"
@@ -120,6 +122,35 @@ int main() {
 
     if (!blockedPath.empty()) {
         std::cout << "FAIL: unreachable target should return empty path\n";
+        ++failures;
+    }
+
+    const aura::bridge::Observation observation{
+        {2, 2},
+        100,
+        {
+            aura::world::CellType::Empty,
+            aura::world::CellType::Empty,
+            aura::world::CellType::Empty,
+            aura::world::CellType::Empty
+        },
+        {},
+        3,
+        aura::bridge::LastAction{
+            aura::bridge::ActionType::MoveTo,
+            aura::world::Position{8, 3},
+            false
+        }
+    };
+
+    const auto serialized =
+            aura::bridge::serializedObservation(observation);
+
+    if (serialized.find("\"last_action\":") == std::string::npos ||
+        serialized.find("\"type\":\"move_to\"") == std::string::npos ||
+        serialized.find("\"target\":[8,3]") == std::string::npos ||
+        serialized.find("\"succeeded\":false") == std::string::npos) {
+        std::cout << "FAIL: observation should include the last move_to result\n";
         ++failures;
     }
 

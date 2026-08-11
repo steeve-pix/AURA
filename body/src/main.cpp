@@ -1,4 +1,5 @@
 #include <iostream>
+#include <optional>
 #include <ostream>
 #include <vector>
 #include <GLFW/glfw3.h>
@@ -24,9 +25,15 @@ int main() {
 
     aura::world::World world{10, 5};
     world.addBoundaryWalls();
+    world.setCell({4, 2}, aura::world::CellType::Wall);
+    world.setCell({5, 2}, aura::world::CellType::Wall);
+    world.setCell({6, 2}, aura::world::CellType::Wall);
+    world.setCell({7, 2}, aura::world::CellType::Wall);
+    world.setCell({4, 3}, aura::world::CellType::Wall);
+
     world.setCell({6, 3}, aura::world::CellType::Battery);
 
-    aura::agent::Agent agent{{3, 2}};
+    aura::agent::Agent agent{{3, 1}};
 
     aura::sensors::RangeSensor rangeSensor{3};
 #if defined(_WIN32)
@@ -63,6 +70,8 @@ int main() {
 
     aura::bridge::BrainDebugState brainDebug;
 
+    std::optional<aura::bridge::LastAction> lastAction;
+
     while (!window.shouldClose()) {
         Window::pollEvents();
 
@@ -86,13 +95,16 @@ int main() {
                 agent.energy(),
                 local,
                 nearby,
-                rangeSensor.radius()
+                rangeSensor.radius(),
+                lastAction
             };
 
             const std::string observationJson =
                     aura::bridge::serializedObservation(
                         observation
                     );
+
+            lastAction.reset();
 
             const std::string actionJson =
                     brain.exchange(
@@ -113,7 +125,17 @@ int main() {
                         currentPath.clear();
                         hasTarget = false;
 
-                        static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
+                        const bool moved =
+                                agent.moveBy(
+                                    aura::bridge::directionOffset(action.direction),
+                                    world
+                                );
+
+                        lastAction = {
+                            aura::bridge::ActionType::Move,
+                            std::nullopt,
+                            moved
+                        };
                     }
 
                     if (action.type == aura::bridge::ActionType::MoveTo) {
@@ -127,12 +149,15 @@ int main() {
                                     currentTarget
                                 );
 
+                        bool moved = currentTarget == agent.position();
+
                         if (!currentPath.empty()) {
                             const auto current =
                                     agent.position();
 
                             const std::string title =
-                                    "AURA | Energy: " + std::to_string(agent.energy()) + " | Position: (" +
+                                    "AURA | Energy: " + std::to_string(agent.energy()) + " | Goal: " + brainDebug.goal +
+                                    " | Position: (" +
                                     std::to_string(current.x) + "," + std::to_string(current.y) + ")";
                             window.setTitle(title);
 
@@ -144,13 +169,28 @@ int main() {
                                 next.y - current.y
                             };
 
-                            static_cast<void>(
-                                agent.moveBy(
-                                    offset,
-                                    world
-                                )
+                            moved = agent.moveBy(
+                                offset,
+                                world
                             );
                         }
+
+                        lastAction = {
+                            aura::bridge::ActionType::MoveTo,
+                            currentTarget,
+                            moved
+                        };
+                    }
+
+                    if (action.type == aura::bridge::ActionType::Idle) {
+                        currentPath.clear();
+                        hasTarget = false;
+
+                        lastAction = {
+                            aura::bridge::ActionType::Idle,
+                            std::nullopt,
+                            true
+                        };
                     }
                 } catch (const std::exception &error) {
                     std::cerr

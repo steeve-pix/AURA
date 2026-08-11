@@ -18,6 +18,11 @@ def main() -> None:
 
         observation: dict[str, Any] = json.loads(raw)
 
+        last_action = observation.get("last_action")
+
+        if last_action is not None and last_action["type"] == "move_to" and not last_action["succeeded"]:
+            memory.record_failed_target(last_action["target"])
+
         for visible_cell in observation["visible_cells"]:
             memory.remember_cell(
                 visible_cell["position"],
@@ -56,9 +61,9 @@ def main() -> None:
         decision["debug"] = {
             "goal": goal,
             "know_cells": [
-                list(position)                for position in memory.known_cells.keys()
+                list(position) for position in memory.known_cells.keys()
             ],
-            "visited_cells":[
+            "visited_cells": [
                 list(position) for position in memory.visit_counts.keys()
             ],
         }

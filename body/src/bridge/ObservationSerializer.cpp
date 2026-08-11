@@ -8,6 +8,20 @@ namespace aura::bridge {
     std::string serializedObservation(const Observation &observation) {
         nlohmann::json json;
 
+        const auto actionTypeName =
+                [](ActionType type) {
+                    switch (type) {
+                        case ActionType::Idle:
+                            return "idle";
+                        case ActionType::Move:
+                            return "move";
+                        case ActionType::MoveTo:
+                            return "move_to";
+                    }
+
+                    return "unknown";
+                };
+
         json["position"] = {
             observation.position.x,
             observation.position.y
@@ -22,6 +36,22 @@ namespace aura::bridge {
         json["west"] = aura::world::toString(observation.surroundings.west);
         json["visible_cells"] = nlohmann::json::array();
         json["nearby_objects"] = nlohmann::json::array();
+
+        if (observation.lastAction.has_value()) {
+            const auto &lastAction = observation.lastAction.value();
+
+            json["last_action"] = {
+                {"type", actionTypeName(lastAction.type)},
+                {"succeeded", lastAction.succeeded}
+            };
+
+            if (lastAction.target.has_value()) {
+                const auto &target = lastAction.target.value();
+                json["last_action"]["target"] = {target.x, target.y};
+            }
+        } else {
+            json["last_action"] = nullptr;
+        }
 
         for (const auto &cell: observation.nearby.cells) {
             json["visible_cells"].push_back({
