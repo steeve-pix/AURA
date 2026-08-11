@@ -6,7 +6,7 @@
 
 namespace aura::render {
     void GridRenderer::render(const world::World &world, const agent::Agent &agent, int sensorRadius,
-                              const std::vector<world::Position> &path, const world::Position *target) {
+                              const std::vector<world::Position> &path, const world::Position *target, const bridge::BrainDebugState& debug) {
         const float cellWidth =
                 2.0F / static_cast<float>(world.width());
 
@@ -15,21 +15,37 @@ namespace aura::render {
 
         const auto agentPosition = agent.position();
 
+        const auto containsPosition =
+                [](const auto &positions, world::Position position) {
+                    for (const auto &item : positions) {
+                        if (item == position) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                };
+
         for (int y = 0; y < world.height(); ++y) {
             for (int x = 0; x < world.width(); ++x) {
-                const auto cell =
-                        world.cellAt({x, y});
+                const world::Position position{x, y};
+
+                const auto cell = world.cellAt(position);
+
+                const bool known =
+                        containsPosition(debug.knownCells, position);
+
+                const bool visited =
+                        containsPosition(debug.visitedCells, position);
 
                 const bool insideSensorRange =
-                        std::abs(x - agentPosition.x) < sensorRadius &&
-                        std::abs(y - agentPosition.y) < sensorRadius;
+                        std::abs(x - agentPosition.x) <= sensorRadius &&
+                        std::abs(y - agentPosition.y) <= sensorRadius;
 
                 if (cell == world::CellType::Wall) {
                     glColor3f(0.35F, 0.35F, 0.35F);
                 } else if (cell == world::CellType::Battery) {
                     glColor3f(0.2F, 0.8F, 0.2F);
-                } else if (insideSensorRange) {
-                    glColor3f(0.18F, 0.18F, 0.23F);
                 } else {
                     glColor3f(0.12F, 0.12F, 0.15F);
                 }
@@ -54,6 +70,45 @@ namespace aura::render {
                 glVertex2f(left, bottom);
 
                 glEnd();
+
+                if (cell == world::CellType::Empty && known) {
+                    glColor3f(0.16F, 0.16F, 0.20F);
+
+                    glBegin(GL_QUADS);
+
+                    glVertex2f(left, top);
+                    glVertex2f(right, top);
+                    glVertex2f(right, bottom);
+                    glVertex2f(left, bottom);
+
+                    glEnd();
+                }
+
+                if (cell == world::CellType::Empty && visited) {
+                    glColor3f(0.23F, 0.23F, 0.29F);
+
+                    glBegin(GL_QUADS);
+
+                    glVertex2f(left, top);
+                    glVertex2f(right, top);
+                    glVertex2f(right, bottom);
+                    glVertex2f(left, bottom);
+
+                    glEnd();
+                }
+
+                if (cell == world::CellType::Empty && insideSensorRange) {
+                    glColor3f(0.19F, 0.27F, 0.35F);
+
+                    glBegin(GL_QUADS);
+
+                    glVertex2f(left, top);
+                    glVertex2f(right, top);
+                    glVertex2f(right, bottom);
+                    glVertex2f(left, bottom);
+
+                    glEnd();
+                }
             }
         }
 

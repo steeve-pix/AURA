@@ -7,6 +7,7 @@
 #include "bridge/ActionParser.hpp"
 #include "bridge/ActionUtils.hpp"
 #include "bridge/BrainProcess.hpp"
+#include "bridge/BrainResponseParser.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "navigation/Pathfinder.hpp"
@@ -30,7 +31,7 @@ int main() {
     aura::sensors::RangeSensor rangeSensor{3};
 #if defined(_WIN32)
     const std::string pythonExecutable = "python";
-    const std::string scriptPath = "brain.main";
+    const std::string scriptPath = "-m brain.main";
     const std::string workingDirectory =
             R"(C:\Users\Steeve Dim\Documents\AURA)";
 #else
@@ -59,6 +60,8 @@ int main() {
 
     aura::world::Position currentTarget{};
     bool hasTarget = false;
+
+    aura::bridge::BrainDebugState brainDebug;
 
     while (!window.shouldClose()) {
         Window::pollEvents();
@@ -98,10 +101,13 @@ int main() {
 
             if (!actionJson.empty()) {
                 try {
+                    const auto response =
+                            aura::bridge::parseBrainResponse(actionJson);
+
+                    brainDebug = response.debug;
+
                     const auto action =
-                            aura::bridge::parseAction(
-                                actionJson
-                            );
+                            response.action;
 
                     if (action.type == aura::bridge::ActionType::Move) {
                         currentPath.clear();
@@ -171,7 +177,8 @@ int main() {
             currentPath,
             hasTarget
                 ? &currentTarget
-                : nullptr
+                : nullptr,
+            brainDebug
         );
 
         window.display();
