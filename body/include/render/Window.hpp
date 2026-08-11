@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 struct GLFWwindow;
 
@@ -20,6 +21,7 @@ namespace aura::render {
         void clear() const;
 
         void display() const;
+        void setTitle(const std::string &title) const;
 
     private:
         GLFWwindow *handle_ = nullptr;

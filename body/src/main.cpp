@@ -55,7 +55,7 @@ int main() {
     constexpr double updateInterval = 0.25;
 
     while (!window.shouldClose()) {
-        window.pollEvents();
+        Window::pollEvents();
 
         const double now = glfwGetTime();
 
@@ -97,24 +97,11 @@ int main() {
                                 actionJson
                             );
 
-                    if (
-                        action.type ==
-                        aura::bridge::ActionType::Move
-                    ) {
-                        static_cast<void>(
-                            agent.moveBy(
-                                aura::bridge::directionOffset(
-                                    action.direction
-                                ),
-                                world
-                            )
-                        );
+                    if (action.type == aura::bridge::ActionType::Move) {
+                        static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
                     }
 
-                    if (
-                        action.type ==
-                        aura::bridge::ActionType::MoveTo
-                    ) {
+                    if (action.type == aura::bridge::ActionType::MoveTo) {
                         const auto path =
                                 aura::navigation::findPath(
                                     world,
@@ -125,6 +112,11 @@ int main() {
                         if (!path.empty()) {
                             const auto current =
                                     agent.position();
+
+                            const std::string title =
+                                    "AURA | Energy: " + std::to_string(agent.energy()) + " | Position: (" +
+                                    std::to_string(current.x) + "," + std::to_string(current.y) + ")";
+                            window.setTitle(title);
 
                             const auto next =
                                     path.front();

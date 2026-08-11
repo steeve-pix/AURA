@@ -42,4 +42,8 @@ namespace aura::render{
     void Window::display() const {
         glfwSwapBuffers(handle_);
     }
+
+    void Window::setTitle(const std::string &title) const {
+        glfwSetWindowTitle(handle_, title.c_str());
+    }
 }
