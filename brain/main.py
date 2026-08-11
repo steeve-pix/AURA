@@ -2,9 +2,9 @@ import json
 import sys
 from typing import Any
 
-from decision import decide
-from goals import choose_goal
-from memory import Memory
+from brain.decision import decide
+from brain.goals import choose_goal
+from brain.memory import Memory
 
 
 def main() -> None:
@@ -22,6 +22,10 @@ def main() -> None:
 
         if last_action is not None and last_action["type"] == "move_to" and not last_action["succeeded"]:
             memory.record_failed_target(last_action["target"])
+            print(
+                f"Failed targets: {memory.failed_targets}",
+                file=sys.stderr,
+            )
 
         for visible_cell in observation["visible_cells"]:
             memory.remember_cell(

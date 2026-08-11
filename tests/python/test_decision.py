@@ -118,12 +118,10 @@ class DecisionTests(unittest.TestCase):
             memory
         )
 
-        self.assertEqual(
-            action,
-            {
-                "action": "move_to",
-                "target": [3, 2]
-            }
+        self.assertEqual(action["action"], "move")
+        self.assertIn(
+            action["direction"],
+            {"north", "east", "south", "west"},
         )
 
 

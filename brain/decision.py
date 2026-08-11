@@ -1,7 +1,7 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
 from typing import Any, Union
-from memory import Memory
+from brain.memory import Memory
 
 
 def decide(observation: dict[str, Any], goal: str, memory: Memory) -> dict[
@@ -23,22 +23,24 @@ def decide(observation: dict[str, Any], goal: str, memory: Memory) -> dict[
                     "target": list(target)
                 }
 
-            # Otherwise use a remembered battery that still looks usable.
-            usable_batteries = [
-                battery for battery in memory.batteries() if memory.failed_target_count(battery) < 2
-            ]
+        usable_batteries = [
+            battery
+            for battery in memory.batteries()
+            if memory.failed_target_count(battery) < 2
+        ]
 
-            if usable_batteries:
-                target = min(usable_batteries, key=lambda battery: abs(battery[0] - aura_x) + abs(battery[1] - aura_y))
+        if usable_batteries:
+            target = min(
+                usable_batteries,
+                key=lambda battery: abs(battery[0] - aura_x) + abs(battery[1] - aura_y),
+            )
 
-                return {
-                    "action": "move_to",
-                    "target": list(target)
-                }
+            return {
+                "action": "move_to",
+                "target": list(target)
+            }
 
-            # Recharge is still the goal, but we currently know
-            # of no usable battery. Search for another one.
-            return choose_exploration_action(observation, memory)
+        return choose_exploration_action(observation, memory)
 
     if goal == "explore":
         return choose_exploration_action(observation, memory)

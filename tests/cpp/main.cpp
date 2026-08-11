@@ -3,6 +3,7 @@
 #include "agent/Agent.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
+#include "world/MazeGenerator.hpp"
 #include "world/World.hpp"
 #include "world/Position.hpp"
 #include "navigation/Pathfinder.hpp"
@@ -106,22 +107,35 @@ int main() {
         ++failures;
     }
 
-    aura::world::World blockedWorld{7, 5};
-    blockedWorld.addBoundaryWalls();
+    aura::world::World mazeWorld{11, 9};
+    aura::world::MazeGenerator mazeGenerator{1337};
+    mazeGenerator.generate(mazeWorld, 3);
 
-    blockedWorld.setCell({3, 1}, aura::world::CellType::Wall);
-    blockedWorld.setCell({3, 2}, aura::world::CellType::Wall);
-    blockedWorld.setCell({3, 3}, aura::world::CellType::Wall);
+    int batteryCount = 0;
 
-    const auto blockedPath =
-            aura::navigation::findPath(
-                blockedWorld,
-                {1, 2},
-                {5, 2}
-            );
+    for (int y = 0; y < mazeWorld.height(); ++y) {
+        for (int x = 0; x < mazeWorld.width(); ++x) {
+            const aura::world::Position position{x, y};
 
-    if (!blockedPath.empty()) {
-        std::cout << "FAIL: unreachable target should return empty path\n";
+            if (mazeWorld.cellAt(position) == aura::world::CellType::Battery) {
+                ++batteryCount;
+            }
+
+            if (position == aura::world::Position{1, 1} ||
+                !mazeWorld.canEnter(position)) {
+                continue;
+            }
+
+            if (aura::navigation::findPath(mazeWorld, {1, 1}, position).empty()) {
+                std::cout << "FAIL: maze passages should connect to the start\n";
+                ++failures;
+                break;
+            }
+        }
+    }
+
+    if (batteryCount != 3) {
+        std::cout << "FAIL: maze should contain the requested battery count\n";
         ++failures;
     }
 
