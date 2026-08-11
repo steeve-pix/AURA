@@ -1,11 +1,13 @@
 #include <iostream>
 #include <ostream>
+#include <vector>
 #include <GLFW/glfw3.h>
 
 #include "bridge/Action.hpp"
 #include "bridge/ActionParser.hpp"
 #include "bridge/ActionUtils.hpp"
 #include "bridge/BrainProcess.hpp"
+#include "bridge/BrainResponseParser.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "navigation/Pathfinder.hpp"
@@ -29,7 +31,7 @@ int main() {
     aura::sensors::RangeSensor rangeSensor{3};
 #if defined(_WIN32)
     const std::string pythonExecutable = "python";
-    const std::string scriptPath = "brain.main";
+    const std::string scriptPath = "-m brain.main";
     const std::string workingDirectory =
             R"(C:\Users\Steeve Dim\Documents\AURA)";
 #else
@@ -53,6 +55,13 @@ int main() {
     double lastUpdateTime = glfwGetTime();
 
     constexpr double updateInterval = 0.25;
+
+    std::vector<aura::world::Position> currentPath;
+
+    aura::world::Position currentTarget{};
+    bool hasTarget = false;
+
+    aura::bridge::BrainDebugState brainDebug;
 
     while (!window.shouldClose()) {
         Window::pollEvents();
@@ -92,24 +101,33 @@ int main() {
 
             if (!actionJson.empty()) {
                 try {
+                    const auto response =
+                            aura::bridge::parseBrainResponse(actionJson);
+
+                    brainDebug = response.debug;
+
                     const auto action =
-                            aura::bridge::parseAction(
-                                actionJson
-                            );
+                            response.action;
 
                     if (action.type == aura::bridge::ActionType::Move) {
+                        currentPath.clear();
+                        hasTarget = false;
+
                         static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
                     }
 
                     if (action.type == aura::bridge::ActionType::MoveTo) {
-                        const auto path =
+                        currentTarget = action.target;
+                        hasTarget = true;
+
+                        currentPath =
                                 aura::navigation::findPath(
                                     world,
                                     agent.position(),
-                                    action.target
+                                    currentTarget
                                 );
 
-                        if (!path.empty()) {
+                        if (!currentPath.empty()) {
                             const auto current =
                                     agent.position();
 
@@ -119,7 +137,7 @@ int main() {
                             window.setTitle(title);
 
                             const auto next =
-                                    path.front();
+                                    currentPath.front();
 
                             const aura::world::Position offset{
                                 next.x - current.x,
@@ -154,7 +172,13 @@ int main() {
 
         GridRenderer::render(
             world,
-            agent
+            agent,
+            rangeSensor.radius(),
+            currentPath,
+            hasTarget
+                ? &currentTarget
+                : nullptr,
+            brainDebug
         );
 
         window.display();

@@ -1,6 +1,7 @@
 add_library(aura_core
         src/agent/Agent.cpp
         src/bridge/ActionParser.cpp
+        src/bridge/BrainResponseParser.cpp
         src/bridge/ActionUtils.cpp
         src/bridge/ObservationSerializer.cpp
         src/navigation/Pathfinder.cpp

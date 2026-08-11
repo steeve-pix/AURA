@@ -53,6 +53,16 @@ def main() -> None:
 
         decision = decide(observation, goal, memory)
 
+        decision["debug"] = {
+            "goal": goal,
+            "know_cells": [
+                list(position)                for position in memory.known_cells.keys()
+            ],
+            "visited_cells":[
+                list(position) for position in memory.visit_counts.keys()
+            ],
+        }
+
         print(json.dumps(decision), flush=True)
 
 
