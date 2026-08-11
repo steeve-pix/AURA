@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ostream>
+#include <vector>
 #include <GLFW/glfw3.h>
 
 #include "bridge/Action.hpp"
@@ -54,6 +55,11 @@ int main() {
 
     constexpr double updateInterval = 0.25;
 
+    std::vector<aura::world::Position> currentPath;
+
+    aura::world::Position currentTarget{};
+    bool hasTarget = false;
+
     while (!window.shouldClose()) {
         Window::pollEvents();
 
@@ -98,18 +104,24 @@ int main() {
                             );
 
                     if (action.type == aura::bridge::ActionType::Move) {
+                        currentPath.clear();
+                        hasTarget = false;
+
                         static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
                     }
 
                     if (action.type == aura::bridge::ActionType::MoveTo) {
-                        const auto path =
+                        currentTarget = action.target;
+                        hasTarget = true;
+
+                        currentPath =
                                 aura::navigation::findPath(
                                     world,
                                     agent.position(),
-                                    action.target
+                                    currentTarget
                                 );
 
-                        if (!path.empty()) {
+                        if (!currentPath.empty()) {
                             const auto current =
                                     agent.position();
 
@@ -119,7 +131,7 @@ int main() {
                             window.setTitle(title);
 
                             const auto next =
-                                    path.front();
+                                    currentPath.front();
 
                             const aura::world::Position offset{
                                 next.x - current.x,
@@ -152,10 +164,14 @@ int main() {
 
         window.clear();
 
-        GridRenderer gridRenderer;
-        gridRenderer.render(
+        GridRenderer::render(
             world,
-            agent, rangeSensor.radius()
+            agent,
+            rangeSensor.radius(),
+            currentPath,
+            hasTarget
+                ? &currentTarget
+                : nullptr
         );
 
         window.display();

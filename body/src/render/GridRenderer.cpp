@@ -5,7 +5,8 @@
 #include <cmath>
 
 namespace aura::render {
-    void GridRenderer::render(const world::World &world, const agent::Agent &agent, int sensorRadius) const {
+    void GridRenderer::render(const world::World &world, const agent::Agent &agent, int sensorRadius,
+                              const std::vector<world::Position> &path, const world::Position *target) {
         const float cellWidth =
                 2.0F / static_cast<float>(world.width());
 
@@ -54,6 +55,56 @@ namespace aura::render {
 
                 glEnd();
             }
+        }
+
+        for (const auto &position: path) {
+            const float left =
+                    -1.0F + static_cast<float>(position.x) * cellWidth;
+
+            const float right =
+                    left + cellWidth;
+
+            const float top =
+                    1.0F - static_cast<float>(position.y) * cellHeight;
+
+            const float bottom =
+                    top - cellHeight;
+
+            glColor3f(0.55F, 0.35F, 0.75F);
+
+            glBegin(GL_QUADS);
+
+            glVertex2f(left, top);
+            glVertex2f(right, top);
+            glVertex2f(right, bottom);
+            glVertex2f(left, bottom);
+
+            glEnd();
+        }
+
+        if (target != nullptr) {
+            const float left =
+                    -1.0F + static_cast<float>(target->x) * cellWidth;
+
+            const float right =
+                    left + cellWidth;
+
+            const float top =
+                    1.0F - static_cast<float>(target->y) * cellHeight;
+
+            const float bottom =
+                    top - cellHeight;
+
+            glColor3f(1.0F, 0.65F, 0.15F);
+
+            glBegin(GL_QUADS);
+
+            glVertex2f(left, top);
+            glVertex2f(right, top);
+            glVertex2f(right, bottom);
+            glVertex2f(left, bottom);
+
+            glEnd();
         }
 
         glColor3f(0.18F, 0.18F, 0.20F);

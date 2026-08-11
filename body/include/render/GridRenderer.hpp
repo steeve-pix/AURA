@@ -1,11 +1,15 @@
 #pragma once
 
+#include <vector>
+
 #include "agent/Agent.hpp"
+#include "world/Position.hpp"
 #include "world/World.hpp"
 
 namespace aura::render {
     class GridRenderer {
     public:
-        void render(const world::World &world, const agent::Agent &agent, int sensorRadius) const;
+        static void render(const world::World &world, const agent::Agent &agent, int sensorRadius,
+                           const std::vector<world::Position> &path, const world::Position *target);
     };
 }
