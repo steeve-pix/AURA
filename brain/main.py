@@ -60,7 +60,7 @@ def main() -> None:
 
         decision["debug"] = {
             "goal": goal,
-            "know_cells": [
+            "known_cells": [
                 list(position) for position in memory.known_cells.keys()
             ],
             "visited_cells": [

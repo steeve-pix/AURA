@@ -45,7 +45,7 @@ class Memory:
         walkable_positions = [
             position
             for position, cell_type in self.known_cells.items()
-            if cell_type != "Wall" and self.failed_target_count(position) == 0
+            if cell_type != "Wall" and self.failed_target_count(position) < 2
         ]
 
         if not walkable_positions:
