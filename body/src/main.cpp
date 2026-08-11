@@ -1,4 +1,5 @@
 #include <iostream>
+#include <optional>
 #include <ostream>
 #include <vector>
 #include <GLFW/glfw3.h>
@@ -15,6 +16,7 @@
 #include "render/Window.hpp"
 #include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
+#include "world/MazeGenerator.hpp"
 
 int main() {
     using aura::render::GridRenderer;
@@ -22,13 +24,20 @@ int main() {
 
     Window window{1280, 720, "AURA"};
 
-    aura::world::World world{10, 5};
-    world.addBoundaryWalls();
-    world.setCell({6, 3}, aura::world::CellType::Battery);
+    constexpr int WIDTH = 41;
+    constexpr int HEIGHT = 21;
+    constexpr int NUM_BATTERIES = 12;
 
-    aura::agent::Agent agent{{3, 2}};
+    aura::world::World world{WIDTH, HEIGHT};
 
-    aura::sensors::RangeSensor rangeSensor{3};
+    aura::world::MazeGenerator generator{1337};
+    generator.generate(world, NUM_BATTERIES);
+
+    // Agent starts safely at guaranteed open position {1, 1}
+    aura::agent::Agent agent{{1, 1}};
+
+    aura::sensors::RangeSensor rangeSensor{10};
+
 #if defined(_WIN32)
     const std::string pythonExecutable = "python";
     const std::string scriptPath = "-m brain.main";
@@ -36,7 +45,7 @@ int main() {
             R"(C:\Users\Steeve Dim\Documents\AURA)";
 #else
     const std::string pythonExecutable = "python3";
-    const std::string scriptPath = "brain/main.py";
+    const std::string scriptPath = "-mbrain.main";
     const std::string workingDirectory =
             "/Users/steeve.dimitry/Developer/AURA";
 #endif
@@ -63,6 +72,8 @@ int main() {
 
     aura::bridge::BrainDebugState brainDebug;
 
+    std::optional<aura::bridge::LastAction> lastAction;
+
     while (!window.shouldClose()) {
         Window::pollEvents();
 
@@ -86,13 +97,16 @@ int main() {
                 agent.energy(),
                 local,
                 nearby,
-                rangeSensor.radius()
+                rangeSensor.radius(),
+                lastAction
             };
 
             const std::string observationJson =
                     aura::bridge::serializedObservation(
                         observation
                     );
+
+            lastAction.reset();
 
             const std::string actionJson =
                     brain.exchange(
@@ -113,10 +127,28 @@ int main() {
                         currentPath.clear();
                         hasTarget = false;
 
-                        static_cast<void>(agent.moveBy(aura::bridge::directionOffset(action.direction), world));
+                        const bool moved =
+                                agent.moveBy(
+                                    aura::bridge::directionOffset(action.direction),
+                                    world
+                                );
+
+                        lastAction = {
+                            aura::bridge::ActionType::Move,
+                            std::nullopt,
+                            moved
+                        };
                     }
 
                     if (action.type == aura::bridge::ActionType::MoveTo) {
+                        std::cout
+                                << "Target: ("
+                                << action.target.x
+                                << ", "
+                                << action.target.y
+                                << ")"
+                                << '\n';
+
                         currentTarget = action.target;
                         hasTarget = true;
 
@@ -127,12 +159,15 @@ int main() {
                                     currentTarget
                                 );
 
+                        bool moved = currentTarget == agent.position();
+
                         if (!currentPath.empty()) {
                             const auto current =
                                     agent.position();
 
                             const std::string title =
-                                    "AURA | Energy: " + std::to_string(agent.energy()) + " | Position: (" +
+                                    "AURA | Energy: " + std::to_string(agent.energy()) + " | Goal: " + brainDebug.goal +
+                                    " | Position: (" +
                                     std::to_string(current.x) + "," + std::to_string(current.y) + ")";
                             window.setTitle(title);
 
@@ -144,13 +179,30 @@ int main() {
                                 next.y - current.y
                             };
 
-                            static_cast<void>(
-                                agent.moveBy(
-                                    offset,
-                                    world
-                                )
+                            moved = agent.moveBy(
+                                offset,
+                                world
                             );
+                        } else if (!moved) {
+                            std::cout << "No path to target\n";
                         }
+
+                        lastAction = {
+                            aura::bridge::ActionType::MoveTo,
+                            currentTarget,
+                            moved
+                        };
+                    }
+
+                    if (action.type == aura::bridge::ActionType::Idle) {
+                        currentPath.clear();
+                        hasTarget = false;
+
+                        lastAction = {
+                            aura::bridge::ActionType::Idle,
+                            std::nullopt,
+                            true
+                        };
                     }
                 } catch (const std::exception &error) {
                     std::cerr

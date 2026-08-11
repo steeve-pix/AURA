@@ -9,6 +9,7 @@ add_library(aura_core
         src/sensors/LocalSensor.cpp
         src/sensors/RangeSensor.cpp
         src/world/CellTypeUtils.cpp
+        src/world/MazeGenerator.cpp
         src/world/World.cpp
 )
 
