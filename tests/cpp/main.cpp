@@ -109,7 +109,7 @@ int main() {
 
     aura::world::World mazeWorld{11, 9};
     aura::world::MazeGenerator mazeGenerator{1337};
-    mazeGenerator.generate(mazeWorld, 3);
+    mazeGenerator.generate(mazeWorld, 3, 0);
 
     int batteryCount = 0;
 

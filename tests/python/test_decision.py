@@ -5,6 +5,72 @@ from brain.memory import Memory
 
 
 class DecisionTests(unittest.TestCase):
+    def test_recharge_keeps_target_for_small_path_improvement(self):
+        memory = Memory()
+        memory.set_recharge_target([9, 5])
+
+        observation = {
+            "position": [1, 1],
+            "energy": 30,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [9, 5],
+                    "reachable": True,
+                    "path_length": 14,
+                },
+                {
+                    "type": "Battery",
+                    "position": [7, 4],
+                    "reachable": True,
+                    "path_length": 12,
+                },
+            ],
+        }
+
+        action = decide(observation, "recharge", memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [9, 5],
+            },
+        )
+
+    def test_recharge_switches_for_large_path_improvement(self):
+        memory = Memory()
+        memory.set_recharge_target([9, 5])
+
+        observation = {
+            "position": [1, 1],
+            "energy": 30,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [9, 5],
+                    "reachable": True,
+                    "path_length": 14,
+                },
+                {
+                    "type": "Battery",
+                    "position": [5, 3],
+                    "reachable": True,
+                    "path_length": 7,
+                },
+            ],
+        }
+
+        action = decide(observation, "recharge", memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [5, 3],
+            },
+        )
+
     def test_recharge_excludes_battery_that_costs_too_much_energy(self):
         memory = Memory()
 

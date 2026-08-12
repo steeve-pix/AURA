@@ -1,4 +1,7 @@
+from brain import memory
+
 ENERGY_RESERVE = 5
+RECHARGE_CONSIDERATION_THRESHOLD = 70
 
 
 def recharge_score(observation):
@@ -6,7 +9,7 @@ def recharge_score(observation):
 
     shortest_path = shortest_battery_path(observation)
 
-    if shortest_path is not None:
+    if shortest_path is not None and energy <= RECHARGE_CONSIDERATION_THRESHOLD:
         required_energy = shortest_path + ENERGY_RESERVE
 
         if energy <= required_energy:
@@ -48,14 +51,25 @@ GOAL_SWITCH_MARGIN = 0.1
 CRITICAL_ENERGY = 8
 
 
-def choose_goal(observation, memory):  # pyright: ignore[reportExplicitAny]
-    if observation["energy"] <= CRITICAL_ENERGY:
+def choose_goal(observation, memory):
+    current_goal = memory.active_goal
+
+    if current_goal is not None and goal_completed(current_goal, observation):
+        memory.clear_active_goal()
+        current_goal = None
+
+    energy = observation["energy"]
+
+    if energy <= CRITICAL_ENERGY:
         memory.set_active_goal("recharge")
         return "recharge"
 
-    scores = goal_scores(observation, memory)
+    # Once recharge wins, do not allow another goal to interrupt it.
+    if memory.active_goal == "recharge" and energy < 100:
+        return "recharge"
 
-    best_goal = max(scores, key=lambda k: scores[k])
+    scores = goal_scores(observation, memory)
+    best_goal = max(scores, key=lambda goal: scores[goal])
     current_goal = memory.active_goal
 
     if current_goal is None:
@@ -85,3 +99,22 @@ def shortest_battery_path(observation):
         return None
 
     return min(path_lengths)
+
+
+def goal_completed(goal, observation):
+    if goal == "recharge":
+        return observation["energy"] >= 100
+
+    if goal == "investigate":
+        unknown_here = any(
+            obj["type"] == "Unknown"
+            and obj["position"] == observation["position"]
+            for obj in observation["nearby_objects"]
+        )
+
+        return not unknown_here
+
+    if goal == "explore":
+        return False
+
+    return True

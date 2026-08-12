@@ -17,6 +17,8 @@ namespace aura::bridge {
                             return "move";
                         case ActionType::MoveTo:
                             return "move_to";
+                        case ActionType::Investigate:
+                            return "investigate";
                     }
 
                     return "unknown";

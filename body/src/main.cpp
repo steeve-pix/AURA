@@ -29,11 +29,12 @@ int main() {
     constexpr int WIDTH = 41;
     constexpr int HEIGHT = 21;
     constexpr int NUM_BATTERIES = 12;
+    constexpr int NUM_UNKNOWN = 9;
 
     aura::world::World world{WIDTH, HEIGHT};
 
     aura::world::MazeGenerator generator{1337};
-    generator.generate(world, NUM_BATTERIES);
+    generator.generate(world, NUM_BATTERIES, NUM_UNKNOWN);
 
     // Agent starts safely at guaranteed open position {1, 1}
     aura::agent::Agent agent{{1, 1}};
@@ -149,8 +150,18 @@ int main() {
                             response.action;
 
                     if (action.type == aura::bridge::ActionType::Investigate) {
+                        currentPath.clear();
+                        hasTarget = false;
+
+                        const auto agentPosition = agent.position();
+                        const int sensorRadius = rangeSensor.radius();
+                        const bool withinSensorRange =
+                                action.target.x >= agentPosition.x - sensorRadius &&
+                                action.target.x <= agentPosition.x + sensorRadius &&
+                                action.target.y >= agentPosition.y - sensorRadius &&
+                                action.target.y <= agentPosition.y + sensorRadius;
                         const bool validTarget =
-                                agent.position() == action.target && world.cellAt(action.target) ==
+                                withinSensorRange && world.cellAt(action.target) ==
                                 aura::world::CellType::Unknown;
 
                         if (validTarget) {

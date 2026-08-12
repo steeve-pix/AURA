@@ -1,9 +1,12 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
 from typing import Any, Union
+
+from brain import memory
 from brain.memory import Memory
 
 BATTERY_ARRIVAL_RESERVE = 2
+BATTERY_TARGET_SWITCH_MARGIN = 5
 
 
 def choose_recharge_action(observation, memory):
@@ -28,6 +31,26 @@ def choose_recharge_action(observation, memory):
             visible_batteries,
             key=lambda obj: obj["path_length"],
         )
+
+        active_target = memory.active_recharge_target
+        active_battery = next(
+            (
+                obj
+                for obj in visible_batteries
+                if tuple(obj["position"]) == active_target
+            ),
+            None,
+        )
+
+        if active_battery is not None:
+            improvement = (
+                    active_battery["path_length"]
+                    - best["path_length"]
+            )
+
+            if improvement < BATTERY_TARGET_SWITCH_MARGIN:
+                best = active_battery
+
         target = tuple(best["position"])
 
         if target != memory.active_recharge_target:
@@ -42,8 +65,8 @@ def choose_recharge_action(observation, memory):
         target = memory.active_recharge_target
 
         if (
-            target not in visible_battery_positions
-            and not memory.is_failed_target(target)
+                target not in visible_battery_positions
+                and not memory.is_failed_target(target)
         ):
             return {
                 "action": "move_to",
@@ -56,7 +79,7 @@ def choose_recharge_action(observation, memory):
         battery
         for battery in memory.batteries()
         if battery not in visible_battery_positions
-        and not memory.is_failed_target(battery)
+           and not memory.is_failed_target(battery)
     ]
 
     if remembered:
@@ -78,6 +101,7 @@ def choose_recharge_action(observation, memory):
 
     return choose_exploration_action(observation, memory)
 
+
 def decide(observation, goal, memory):
     if goal == "recharge":
         return choose_recharge_action(observation, memory)
@@ -86,7 +110,7 @@ def decide(observation, goal, memory):
         return choose_exploration_action(observation, memory)
 
     if goal == "investigate":
-        return choose_investigation_action(observation)
+        return choose_investigation_action(observation, memory)
 
     return {"action": "idle"}
 
@@ -133,26 +157,28 @@ def choose_exploration_action(
     }
 
 
-def choose_investigation_action(observation):
+def choose_investigation_action(observation, memory: Memory):
     unknown_objects = [
-        obj for obj in observation["nearby_objects"] if obj["type"] == "Unknown" and obj["reachable"]
-
+        obj for obj in observation["nearby_objects"]
+        if obj["type"] == "Unknown"
+           and obj["reachable"]
+           and not memory.is_failed_target(tuple(obj["position"]))
     ]
     if not unknown_objects:
         return {"action": "idle"}
 
-    aura_position = observation["position"]
-
-    for obj in unknown_objects:
-        if obj["position"] == aura_position:
-            return {
-                "action": "investigate",
-                "target": obj["position"],
-            }
-
-    target = unknown_objects[0]
+    target = min(
+        unknown_objects,
+        key=lambda obj: (
+            max(
+                abs(obj["position"][0] - observation["position"][0]),
+                abs(obj["position"][1] - observation["position"][1]),
+            ),
+            tuple(obj["position"]),
+        ),
+    )
 
     return {
-        "action": "move_to",
+        "action": "investigate",
         "target": target["position"]
     }

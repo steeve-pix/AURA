@@ -22,9 +22,9 @@ def main() -> None:
 
         if (
                 last_action
-                and last_action["type"] == "move_to"
-                and not last_action["succeeded"]
-                and last_action["target"] is not None
+                and last_action.get("type") in {"move_to", "investigate"}
+                and not last_action.get("succeeded", False)
+                and last_action.get("target") is not None
         ):
             target = tuple(last_action["target"])
             memory.mark_target_failed(target)

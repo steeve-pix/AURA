@@ -12,7 +12,7 @@ namespace aura::world {
         explicit MazeGenerator(std::uint32_t seed);
 
         /// Replaces the world's interior with a connected maze and batteries.
-        void generate(World &world, int batteryCount) const;
+        void generate(World &world, int batteryCount,int unknownCount) const;
 
     private:
         std::uint32_t seed_;
