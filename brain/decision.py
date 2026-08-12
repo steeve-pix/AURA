@@ -4,51 +4,62 @@ from typing import Any, Union
 from brain.memory import Memory
 
 
-def decide(observation: dict[str, Any], goal: str, memory: Memory) -> dict[
-    str, Any]:  # pyright: ignore[reportExplicitAny]
-    """Choose a high-level action that serves the current goal."""
+def choose_recharge_action(observation, memory):
+    # 1) Re-rank to visible reachable batteries first (shortest path).
+    visible_batteries = [
+        obj
+        for obj in observation["nearby_objects"]
+        if obj["type"] == "Battery"
+           and obj.get("reachable", False)
+           and not memory.is_failed_target(tuple(obj["position"]))
+    ]
 
-    if goal == "recharge":
+    if visible_batteries:
+        best = min(visible_batteries, key=lambda obj: obj["path_length"])
+        target = tuple(best["position"])
+
+        if not memory.is_failed_target(target):
+            memory.set_recharge_target(target)
+            return {"action": "move_to", "target": list(target)}
+
+        if memory.active_recharge_target == target:
+            memory.clear_recharge_target()
+
+    # 2) Keep existing target only if still valid.
+    if memory.active_recharge_target is not None:
+        target = memory.active_recharge_target
+        if not memory.is_failed_target(target):
+            return {"action": "move_to", "target": list(target)}
+        memory.clear_recharge_target()
+
+    # 3) Fallback to remembered usable batteries.
+    remembered = [
+        battery for battery in memory.batteries() if not memory.is_failed_target(battery)
+    ]
+    if remembered:
         aura_x, aura_y = observation["position"]
+        target = min(
+            remembered,
+            key=lambda battery: abs(battery[0] - aura_x) + abs(battery[1] - aura_y),
+        )
+        memory.set_recharge_target(target)
+        return {"action": "move_to", "target": list(target)}
 
-        for obj in observation["nearby_objects"]:  # pyright: ignore[reportAny]
-            if obj["type"] != "Battery":
-                continue
+    return choose_exploration_action(observation, memory)
 
-            target = tuple(obj["position"])
-
-            if memory.failed_target_count(target) < 2:
-                return {
-                    "action": "move_to",
-                    "target": list(target)
-                }
-
-        usable_batteries = [
-            battery
-            for battery in memory.batteries()
-            if memory.failed_target_count(battery) < 2
-        ]
-
-        if usable_batteries:
-            target = min(
-                usable_batteries,
-                key=lambda battery: abs(battery[0] - aura_x) + abs(battery[1] - aura_y),
-            )
-
-            return {
-                "action": "move_to",
-                "target": list(target)
-            }
-
-        return choose_exploration_action(observation, memory)
+def decide(observation, goal, memory):
+    if goal == "recharge":
+        return choose_recharge_action(observation, memory)
 
     if goal == "explore":
         return choose_exploration_action(observation, memory)
 
     return {"action": "idle"}
 
-
-def choose_exploration_action(observation, memory: Memory) -> Union[None, dict[str, Any], dict[str, Union[str, Any]]]:
+def choose_exploration_action(
+        observation,
+        memory: Memory
+) -> Union[None, dict[str, Any], dict[str, Union[str, Any]]]:
     """Choose a high-level action that serves the current goal."""
     aura_x, aura_y = observation["position"]
 
@@ -71,14 +82,12 @@ def choose_exploration_action(observation, memory: Memory) -> Union[None, dict[s
         )
 
         score = memory.visit_count(next_position)
-
         candidates.append((score, dir_name))
 
     if not candidates:
         return {"action": "idle"}
 
     lowest_score = min(score for score, _ in candidates)
-
     best_directions = [
         dir_name for score, dir_name in candidates if score == lowest_score
     ]

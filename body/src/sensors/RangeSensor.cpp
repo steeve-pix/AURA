@@ -1,4 +1,6 @@
 #include "sensors/RangeSensor.hpp"
+
+#include "navigation/Pathfinder.hpp"
 #include "world/CellType.hpp"
 #include "world/Position.hpp"
 
@@ -25,7 +27,15 @@ namespace aura::sensors {
                 observation.cells.push_back({type, scannedPosition});
 
                 if (type == world::CellType::Battery) {
-                    observation.objects.push_back({type, scannedPosition});
+                    const auto path =
+                            navigation::findPath(world, agent.position(), scannedPosition);
+
+                    const bool reachable =
+                            scannedPosition == agent.position() || !path.empty();
+
+                    const int pathLength =
+                            reachable ? static_cast<int>(path.size()) : -1;
+                    observation.objects.push_back({type, scannedPosition, reachable, pathLength});
                 }
             }
         }
