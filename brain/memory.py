@@ -9,6 +9,8 @@ class Memory:
         self.visit_counts: dict[tuple[int, int], int] = {}
         self.failed_targets: set[tuple[int, int]] = set()
         self.active_recharge_target: Optional[Tuple[int, int]] = None
+        self.active_investigation_target: Optional[Tuple[int, int]] = None
+        self.active_investigation_approach: Optional[Tuple[int, int]] = None
         self.active_goal: Optional[str] = None
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
@@ -64,6 +66,22 @@ class Memory:
 
     def clear_recharge_target(self) -> None:
         self.active_recharge_target = None
+
+    def set_investigation_target(self, position: Sequence[int]) -> None:
+        target = tuple(position)
+        if target != self.active_investigation_target:
+            self.active_investigation_approach = None
+        self.active_investigation_target = target
+
+    def set_investigation_approach(self, position: Sequence[int]) -> None:
+        self.active_investigation_approach = tuple(position)
+
+    def clear_investigation_approach(self) -> None:
+        self.active_investigation_approach = None
+
+    def clear_investigation_target(self) -> None:
+        self.active_investigation_target = None
+        self.active_investigation_approach = None
 
     def set_active_goal(self, goal: str) -> None:
         self.active_goal = goal

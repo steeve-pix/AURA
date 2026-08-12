@@ -161,24 +161,74 @@ def choose_investigation_action(observation, memory: Memory):
     unknown_objects = [
         obj for obj in observation["nearby_objects"]
         if obj["type"] == "Unknown"
-           and obj["reachable"]
            and not memory.is_failed_target(tuple(obj["position"]))
     ]
     if not unknown_objects:
+        memory.clear_investigation_target()
         return {"action": "idle"}
 
-    target = min(
-        unknown_objects,
-        key=lambda obj: (
-            max(
-                abs(obj["position"][0] - observation["position"][0]),
-                abs(obj["position"][1] - observation["position"][1]),
+    objects_by_position = {
+        tuple(obj["position"]): obj for obj in unknown_objects
+    }
+    target_position = memory.active_investigation_target
+
+    if target_position not in objects_by_position:
+        target = min(
+            unknown_objects,
+            key=lambda obj: (
+                abs(obj["position"][0] - observation["position"][0])
+                + abs(obj["position"][1] - observation["position"][1]),
+                tuple(obj["position"]),
             ),
-            tuple(obj["position"]),
-        ),
-    )
+        )
+        target_position = tuple(target["position"])
+        memory.set_investigation_target(target_position)
+
+    aura_position = tuple(observation["position"])
+    target_x, target_y = target_position
+
+    if abs(target_x - aura_position[0]) + abs(target_y - aura_position[1]) == 1:
+        memory.clear_investigation_approach()
+        return {
+            "action": "investigate",
+            "target": list(target_position),
+        }
+
+    visible_cells = {
+        tuple(cell["position"]): cell["type"]
+        for cell in observation["visible_cells"]
+    }
+    adjacent_positions = [
+        (target_x, target_y - 1),
+        (target_x + 1, target_y),
+        (target_x, target_y + 1),
+        (target_x - 1, target_y),
+    ]
+    approach_candidates = [
+        position for position in adjacent_positions
+        if visible_cells.get(position) not in {None, "Wall", "Unknown"}
+        and not memory.is_failed_target(position)
+    ]
+
+    if not approach_candidates:
+        memory.mark_target_failed(target_position)
+        memory.clear_investigation_target()
+        return {"action": "idle"}
+
+    approach = memory.active_investigation_approach
+    if approach not in approach_candidates:
+        approach = min(
+            approach_candidates,
+            key=lambda position: (
+                abs(position[0] - aura_position[0])
+                + abs(position[1] - aura_position[1]),
+                memory.visit_count(position),
+                position,
+            ),
+        )
+        memory.set_investigation_approach(approach)
 
     return {
-        "action": "investigate",
-        "target": target["position"]
+        "action": "move_to",
+        "target": list(approach),
     }

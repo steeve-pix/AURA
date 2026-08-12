@@ -29,9 +29,12 @@ def explore_score(observation, memory):
     return base + repetition_bonus
 
 
-def investigation_score(observation):
+def investigation_score(observation, memory):
     unknown_objects = [
-        obj for obj in observation["nearby_objects"] if obj["type"] == "Unknown" and obj["reachable"]]
+        obj for obj in observation["nearby_objects"]
+        if obj["type"] == "Unknown"
+        and not memory.is_failed_target(tuple(obj["position"]))
+    ]
 
     if not unknown_objects:
         return 0.0
@@ -43,7 +46,7 @@ def goal_scores(observation, memory):
     return {
         "recharge": recharge_score(observation),
         "explore": explore_score(observation, memory),
-        "investigate": investigation_score(observation),
+        "investigate": investigation_score(observation, memory),
     }
 
 
@@ -54,13 +57,16 @@ CRITICAL_ENERGY = 8
 def choose_goal(observation, memory):
     current_goal = memory.active_goal
 
-    if current_goal is not None and goal_completed(current_goal, observation):
+    if current_goal is not None and goal_completed(current_goal, observation, memory):
+        if current_goal == "investigate":
+            memory.clear_investigation_target()
         memory.clear_active_goal()
         current_goal = None
 
     energy = observation["energy"]
 
     if energy <= CRITICAL_ENERGY:
+        memory.clear_investigation_target()
         memory.set_active_goal("recharge")
         return "recharge"
 
@@ -83,6 +89,8 @@ def choose_goal(observation, memory):
         return current_goal
 
     if best_score >= current_score + GOAL_SWITCH_MARGIN:
+        if current_goal == "investigate":
+            memory.clear_investigation_target()
         memory.set_active_goal(best_goal)
         return best_goal
 
@@ -101,18 +109,26 @@ def shortest_battery_path(observation):
     return min(path_lengths)
 
 
-def goal_completed(goal, observation):
+def goal_completed(goal, observation, memory):
     if goal == "recharge":
         return observation["energy"] >= 100
 
     if goal == "investigate":
-        unknown_here = any(
+        target = memory.active_investigation_target
+        if target is None:
+            return not any(
+                obj["type"] == "Unknown"
+                and not memory.is_failed_target(tuple(obj["position"]))
+                for obj in observation["nearby_objects"]
+            )
+
+        target_is_still_unknown = any(
             obj["type"] == "Unknown"
-            and obj["position"] == observation["position"]
+            and tuple(obj["position"]) == target
             for obj in observation["nearby_objects"]
         )
 
-        return not unknown_here
+        return not target_is_still_unknown
 
     if goal == "explore":
         return False
