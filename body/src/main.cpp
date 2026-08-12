@@ -29,16 +29,17 @@ int main() {
     constexpr int WIDTH = 41;
     constexpr int HEIGHT = 21;
     constexpr int NUM_BATTERIES = 12;
+    constexpr int NUM_UNKNOWN = 20;
 
     aura::world::World world{WIDTH, HEIGHT};
 
     aura::world::MazeGenerator generator{1337};
-    generator.generate(world, NUM_BATTERIES);
+    generator.generate(world, NUM_BATTERIES, NUM_UNKNOWN);
 
     // Agent starts safely at guaranteed open position {1, 1}
     aura::agent::Agent agent{{1, 1}};
 
-    aura::sensors::RangeSensor rangeSensor{5};
+    aura::sensors::RangeSensor rangeSensor{3};
 
 #if defined(_WIN32)
     const std::string pythonExecutable = "python";
@@ -149,8 +150,16 @@ int main() {
                             response.action;
 
                     if (action.type == aura::bridge::ActionType::Investigate) {
+                        currentPath.clear();
+                        hasTarget = false;
+
+                        const auto agentPosition = agent.position();
+                        const int targetDistance =
+                                std::abs(action.target.x - agentPosition.x) +
+                                std::abs(action.target.y - agentPosition.y);
                         const bool validTarget =
-                                agent.position() == action.target && world.cellAt(action.target) ==
+                                world.isInside(action.target) && targetDistance == 1 &&
+                                world.cellAt(action.target) ==
                                 aura::world::CellType::Unknown;
 
                         if (validTarget) {

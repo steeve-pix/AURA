@@ -1,15 +1,28 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
 from typing import Any, Union
+
+from brain import memory
 from brain.memory import Memory
+
+BATTERY_ARRIVAL_RESERVE = 2
+BATTERY_TARGET_SWITCH_MARGIN = 5
 
 
 def choose_recharge_action(observation, memory):
+    energy = observation["energy"]
+    visible_battery_positions = {
+        tuple(obj["position"])
+        for obj in observation["nearby_objects"]
+        if obj["type"] == "Battery"
+    }
+
     visible_batteries = [
         obj
         for obj in observation["nearby_objects"]
         if obj["type"] == "Battery"
            and obj.get("reachable", False)
+           and obj["path_length"] <= energy - BATTERY_ARRIVAL_RESERVE
            and not memory.is_failed_target(tuple(obj["position"]))
     ]
 
@@ -18,6 +31,26 @@ def choose_recharge_action(observation, memory):
             visible_batteries,
             key=lambda obj: obj["path_length"],
         )
+
+        active_target = memory.active_recharge_target
+        active_battery = next(
+            (
+                obj
+                for obj in visible_batteries
+                if tuple(obj["position"]) == active_target
+            ),
+            None,
+        )
+
+        if active_battery is not None:
+            improvement = (
+                    active_battery["path_length"]
+                    - best["path_length"]
+            )
+
+            if improvement < BATTERY_TARGET_SWITCH_MARGIN:
+                best = active_battery
+
         target = tuple(best["position"])
 
         if target != memory.active_recharge_target:
@@ -31,7 +64,10 @@ def choose_recharge_action(observation, memory):
     if memory.active_recharge_target is not None:
         target = memory.active_recharge_target
 
-        if not memory.is_failed_target(target):
+        if (
+                target not in visible_battery_positions
+                and not memory.is_failed_target(target)
+        ):
             return {
                 "action": "move_to",
                 "target": list(target),
@@ -42,7 +78,8 @@ def choose_recharge_action(observation, memory):
     remembered = [
         battery
         for battery in memory.batteries()
-        if not memory.is_failed_target(battery)
+        if battery not in visible_battery_positions
+           and not memory.is_failed_target(battery)
     ]
 
     if remembered:
@@ -64,6 +101,7 @@ def choose_recharge_action(observation, memory):
 
     return choose_exploration_action(observation, memory)
 
+
 def decide(observation, goal, memory):
     if goal == "recharge":
         return choose_recharge_action(observation, memory)
@@ -72,7 +110,7 @@ def decide(observation, goal, memory):
         return choose_exploration_action(observation, memory)
 
     if goal == "investigate":
-        return choose_investigation_action(observation)
+        return choose_investigation_action(observation, memory)
 
     return {"action": "idle"}
 
@@ -119,26 +157,78 @@ def choose_exploration_action(
     }
 
 
-def choose_investigation_action(observation):
+def choose_investigation_action(observation, memory: Memory):
     unknown_objects = [
-        obj for obj in observation["nearby_objects"] if obj["type"] == "Unknown" and obj["reachable"]
-
+        obj for obj in observation["nearby_objects"]
+        if obj["type"] == "Unknown"
+           and not memory.is_failed_target(tuple(obj["position"]))
     ]
     if not unknown_objects:
+        memory.clear_investigation_target()
         return {"action": "idle"}
 
-    aura_position = observation["position"]
+    objects_by_position = {
+        tuple(obj["position"]): obj for obj in unknown_objects
+    }
+    target_position = memory.active_investigation_target
 
-    for obj in unknown_objects:
-        if obj["position"] == aura_position:
-            return {
-                "action": "investigate",
-                "target": obj["position"],
-            }
+    if target_position not in objects_by_position:
+        target = min(
+            unknown_objects,
+            key=lambda obj: (
+                abs(obj["position"][0] - observation["position"][0])
+                + abs(obj["position"][1] - observation["position"][1]),
+                tuple(obj["position"]),
+            ),
+        )
+        target_position = tuple(target["position"])
+        memory.set_investigation_target(target_position)
 
-    target = unknown_objects[0]
+    aura_position = tuple(observation["position"])
+    target_x, target_y = target_position
+
+    if abs(target_x - aura_position[0]) + abs(target_y - aura_position[1]) == 1:
+        memory.clear_investigation_approach()
+        return {
+            "action": "investigate",
+            "target": list(target_position),
+        }
+
+    visible_cells = {
+        tuple(cell["position"]): cell["type"]
+        for cell in observation["visible_cells"]
+    }
+    adjacent_positions = [
+        (target_x, target_y - 1),
+        (target_x + 1, target_y),
+        (target_x, target_y + 1),
+        (target_x - 1, target_y),
+    ]
+    approach_candidates = [
+        position for position in adjacent_positions
+        if visible_cells.get(position) not in {None, "Wall", "Unknown"}
+        and not memory.is_failed_target(position)
+    ]
+
+    if not approach_candidates:
+        memory.mark_target_failed(target_position)
+        memory.clear_investigation_target()
+        return {"action": "idle"}
+
+    approach = memory.active_investigation_approach
+    if approach not in approach_candidates:
+        approach = min(
+            approach_candidates,
+            key=lambda position: (
+                abs(position[0] - aura_position[0])
+                + abs(position[1] - aura_position[1]),
+                memory.visit_count(position),
+                position,
+            ),
+        )
+        memory.set_investigation_approach(approach)
 
     return {
         "action": "move_to",
-        "target": target["position"]
+        "target": list(approach),
     }

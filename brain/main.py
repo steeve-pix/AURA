@@ -22,9 +22,9 @@ def main() -> None:
 
         if (
                 last_action
-                and last_action["type"] == "move_to"
-                and not last_action["succeeded"]
-                and last_action["target"] is not None
+                and last_action.get("type") in {"move_to", "investigate"}
+                and not last_action.get("succeeded", False)
+                and last_action.get("target") is not None
         ):
             target = tuple(last_action["target"])
             memory.mark_target_failed(target)
@@ -32,10 +32,22 @@ def main() -> None:
             if memory.active_recharge_target == target:
                 memory.clear_recharge_target()
 
+            if last_action["type"] == "investigate":
+                memory.clear_investigation_target()
+            elif memory.active_investigation_approach == target:
+                memory.clear_investigation_approach()
+
             print(
                 f"Failed targets: {memory.failed_targets}",
                 file=sys.stderr,
             )
+
+        if (
+                last_action
+                and last_action.get("type") == "investigate"
+                and last_action.get("succeeded", False)
+        ):
+            memory.clear_investigation_target()
 
         for visible_cell in observation["visible_cells"]:
             memory.remember_cell(
