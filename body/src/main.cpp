@@ -1,6 +1,8 @@
 #include <iostream>
 #include <optional>
 #include <ostream>
+#include <sstream>
+#include <iomanip>
 #include <vector>
 #include <GLFW/glfw3.h>
 
@@ -73,6 +75,28 @@ int main() {
     aura::bridge::BrainDebugState brainDebug;
 
     std::optional<aura::bridge::LastAction> lastAction;
+
+    auto formatScore = [](const aura::bridge::BrainDebugState &debug, const std::string &name) {
+        const auto it = debug.goalScores.find(name);
+
+        if (it == debug.goalScores.end()) {
+            return std::string{"n/a"};
+        }
+
+        std::ostringstream score;
+        score << std::fixed << std::setprecision(2) << it->second;
+        return score.str();
+    };
+
+    auto setWindowTitle = [&](const aura::bridge::BrainDebugState &debug, int energy) {
+        const std::string goalLabel = debug.goal.empty() ? "unknown" : debug.goal;
+        const std::string goalScore = formatScore(debug, debug.goal.empty() ? std::string{} : debug.goal);
+        const std::string exploreScore = formatScore(debug, "explore");
+
+        const std::string title =
+                "AURA | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " + exploreScore + " | Energy: " + std::to_string(energy);
+        window.setTitle(title);
+    };
 
     while (!window.shouldClose()) {
         Window::pollEvents();
@@ -184,7 +208,7 @@ int main() {
                                 world
                             );
                         } else if (!moved) {
-                            std::cout << "No path to target\n";
+                                std::cout << "No path to target\n";
                         }
 
                         lastAction = {
@@ -219,6 +243,8 @@ int main() {
 
             lastUpdateTime = now;
         }
+
+        setWindowTitle(brainDebug, static_cast<int>(agent.energy()));
 
         window.clear();
 

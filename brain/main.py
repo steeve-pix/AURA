@@ -3,7 +3,7 @@ import sys
 from typing import Any
 
 from brain.decision import decide
-from brain.goals import choose_goal
+from brain.goals import choose_goal,goal_score
 from brain.memory import Memory
 
 
@@ -58,12 +58,15 @@ def main() -> None:
                     battery
                 )
 
+        score = goal_score(observation)
         goal = choose_goal(observation)
 
         decision = decide(observation, goal, memory)
 
         decision["debug"] = {
             "goal": goal,
+            "goal_scores": score,
+            "goalScore": score,
             "known_cells": [
                 list(position) for position in memory.known_cells.keys()
             ],
