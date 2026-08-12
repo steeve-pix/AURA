@@ -5,14 +5,6 @@ from brain.memory import Memory
 
 
 def choose_recharge_action(observation, memory):
-    # 1) Keep existing target only if still valid.
-    if memory.active_recharge_target is not None:
-        target = memory.active_recharge_target
-        if not memory.is_failed_target(target):
-            return {"action": "move_to", "target": list(target)}
-        memory.clear_recharge_target()
-
-    # 2) Re-rank to visible reachable batteries first (shortest path).
     visible_batteries = [
         obj
         for obj in observation["nearby_objects"]
@@ -22,29 +14,55 @@ def choose_recharge_action(observation, memory):
     ]
 
     if visible_batteries:
-        best = min(visible_batteries, key=lambda obj: obj["path_length"])
+        best = min(
+            visible_batteries,
+            key=lambda obj: obj["path_length"],
+        )
         target = tuple(best["position"])
 
-        if not memory.is_failed_target(target):
+        if target != memory.active_recharge_target:
             memory.set_recharge_target(target)
-            return {"action": "move_to", "target": list(target)}
 
-        if memory.active_recharge_target == target:
-            memory.clear_recharge_target()
+        return {
+            "action": "move_to",
+            "target": list(target),
+        }
 
-    # 3) Fallback to remembered usable batteries.
+    if memory.active_recharge_target is not None:
+        target = memory.active_recharge_target
+
+        if not memory.is_failed_target(target):
+            return {
+                "action": "move_to",
+                "target": list(target),
+            }
+
+        memory.clear_recharge_target()
+
     remembered = [
-        battery for battery in memory.batteries() if not memory.is_failed_target(battery)
+        battery
+        for battery in memory.batteries()
+        if not memory.is_failed_target(battery)
     ]
+
     if remembered:
-        target = remembered[0]
+        aura_x, aura_y = observation["position"]
+
+        target = min(
+            remembered,
+            key=lambda battery:
+            abs(battery[0] - aura_x)
+            + abs(battery[1] - aura_y),
+        )
 
         memory.set_recharge_target(target)
 
-        return {"action": "move_to", "target": list(target)}
+        return {
+            "action": "move_to",
+            "target": list(target),
+        }
 
     return choose_exploration_action(observation, memory)
-
 
 def decide(observation, goal, memory):
     if goal == "recharge":

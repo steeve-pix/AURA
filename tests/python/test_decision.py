@@ -69,7 +69,7 @@ class DecisionTests(unittest.TestCase):
             },
         )
 
-    def test_recharge_keeps_existing_active_target(self):
+    def test_recharge_switches_to_shorter_visible_path(self):
         memory = Memory()
         memory.set_recharge_target([9, 6])
 
@@ -92,10 +92,10 @@ class DecisionTests(unittest.TestCase):
             action,
             {
                 "action": "move_to",
-                "target": [9, 6],
+                "target": [2, 1],
             },
         )
-        self.assertEqual(memory.active_recharge_target, (9, 6))
+        self.assertEqual(memory.active_recharge_target, (2, 1))
 
     def test_recharge_does_not_reselect_failed_active_target(self):
         memory = Memory()
