@@ -1,10 +1,16 @@
-from typing import Any
-
-from brain import memory
+ENERGY_RESERVE = 5
 
 
 def recharge_score(observation):
     energy = observation["energy"]
+
+    shortest_path = shortest_battery_path(observation)
+
+    if shortest_path is not None:
+        required_energy = shortest_path + ENERGY_RESERVE
+
+        if energy <= required_energy:
+            return 1.0
 
     return 1.0 - energy / 100.0
 
@@ -38,7 +44,44 @@ def goal_scores(observation, memory):
     }
 
 
+GOAL_SWITCH_MARGIN = 0.1
+CRITICAL_ENERGY = 8
+
+
 def choose_goal(observation, memory):  # pyright: ignore[reportExplicitAny]
+    if observation["energy"] <= CRITICAL_ENERGY:
+        memory.set_active_goal("recharge")
+        return "recharge"
+
     scores = goal_scores(observation, memory)
 
-    return max(scores, key=lambda k: scores[k])
+    best_goal = max(scores, key=lambda k: scores[k])
+    current_goal = memory.active_goal
+
+    if current_goal is None:
+        memory.set_active_goal(best_goal)
+        return best_goal
+
+    current_score = scores.get(current_goal, 0.0)
+    best_score = scores[best_goal]
+
+    if best_goal == current_goal:
+        return current_goal
+
+    if best_score >= current_score + GOAL_SWITCH_MARGIN:
+        memory.set_active_goal(best_goal)
+        return best_goal
+
+    return current_goal
+
+
+def shortest_battery_path(observation):
+    path_lengths = [
+        obj["path_length"] for obj in observation["nearby_objects"] if
+        (obj["type"] == "Battery" and obj["reachable"] and obj["path_length"] >= 0)
+    ]
+
+    if not path_lengths:
+        return None
+
+    return min(path_lengths)

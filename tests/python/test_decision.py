@@ -5,6 +5,63 @@ from brain.memory import Memory
 
 
 class DecisionTests(unittest.TestCase):
+    def test_recharge_excludes_battery_that_costs_too_much_energy(self):
+        memory = Memory()
+
+        observation = {
+            "position": [1, 1],
+            "energy": 15,
+            "north": "Wall",
+            "east": "Wall",
+            "south": "Wall",
+            "west": "Wall",
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [8, 4],
+                    "reachable": True,
+                    "path_length": 20,
+                },
+            ],
+        }
+
+        action = decide(observation, "recharge", memory)
+
+        self.assertEqual(action, {"action": "idle"})
+        self.assertIsNone(memory.active_recharge_target)
+
+    def test_recharge_chooses_shortest_energy_viable_path(self):
+        memory = Memory()
+
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [9, 5],
+                    "reachable": True,
+                    "path_length": 14,
+                },
+                {
+                    "type": "Battery",
+                    "position": [5, 3],
+                    "reachable": True,
+                    "path_length": 7,
+                },
+            ],
+        }
+
+        action = decide(observation, "recharge", memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [5, 3],
+            },
+        )
+
     def test_recharge_chooses_shortest_reachable_path(self):
         memory = Memory()
 

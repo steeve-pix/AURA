@@ -9,6 +9,7 @@ class Memory:
         self.visit_counts: dict[tuple[int, int], int] = {}
         self.failed_targets: set[tuple[int, int]] = set()
         self.active_recharge_target: Optional[Tuple[int, int]] = None
+        self.active_goal: Optional[str] = None
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[tuple(position)] = cell_type
@@ -63,3 +64,9 @@ class Memory:
 
     def clear_recharge_target(self) -> None:
         self.active_recharge_target = None
+
+    def set_active_goal(self, goal: str) -> None:
+        self.active_goal = goal
+
+    def clear_active_goal(self) -> None:
+        self.active_goal = None

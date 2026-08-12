@@ -3,13 +3,23 @@ import random
 from typing import Any, Union
 from brain.memory import Memory
 
+BATTERY_ARRIVAL_RESERVE = 2
+
 
 def choose_recharge_action(observation, memory):
+    energy = observation["energy"]
+    visible_battery_positions = {
+        tuple(obj["position"])
+        for obj in observation["nearby_objects"]
+        if obj["type"] == "Battery"
+    }
+
     visible_batteries = [
         obj
         for obj in observation["nearby_objects"]
         if obj["type"] == "Battery"
            and obj.get("reachable", False)
+           and obj["path_length"] <= energy - BATTERY_ARRIVAL_RESERVE
            and not memory.is_failed_target(tuple(obj["position"]))
     ]
 
@@ -31,7 +41,10 @@ def choose_recharge_action(observation, memory):
     if memory.active_recharge_target is not None:
         target = memory.active_recharge_target
 
-        if not memory.is_failed_target(target):
+        if (
+            target not in visible_battery_positions
+            and not memory.is_failed_target(target)
+        ):
             return {
                 "action": "move_to",
                 "target": list(target),
@@ -42,7 +55,8 @@ def choose_recharge_action(observation, memory):
     remembered = [
         battery
         for battery in memory.batteries()
-        if not memory.is_failed_target(battery)
+        if battery not in visible_battery_positions
+        and not memory.is_failed_target(battery)
     ]
 
     if remembered:
