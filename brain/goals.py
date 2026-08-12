@@ -20,11 +20,22 @@ def explore_score(observation, memory):
     return base + repetition_bonus
 
 
+
+def investigation_scores(observation):
+    unknown_objects = [
+        obj for obj in observation if obj["nearby_objects"] if obj["type"] == "Unknown"
+    ]
+
+    if not unknown_objects:
+        return 0.0
+
+    return 0.65
 def goal_scores(observation, memory):
 
     return {
         "recharge": recharge_score(observation),
         "explore": explore_score(observation, memory),
+        "investigation": investigation_scores(observation),
     }
 
 
