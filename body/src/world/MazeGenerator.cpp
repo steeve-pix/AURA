@@ -104,5 +104,6 @@ namespace aura::world {
         for (int index = 0; index < batteriesToPlace; ++index) {
             world.setCell(passageCells[index], CellType::Battery);
         }
+        world.setCell({12,5},CellType::Unknown);
     }
 }

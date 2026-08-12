@@ -26,7 +26,7 @@ namespace aura::sensors {
 
                 observation.cells.push_back({type, scannedPosition});
 
-                if (type == world::CellType::Battery) {
+                if (type == world::CellType::Battery|| type == world::CellType::Unknown) {
                     const auto path =
                             navigation::findPath(world, agent.position(), scannedPosition);
 

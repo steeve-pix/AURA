@@ -12,8 +12,10 @@ namespace {
                 return '#';
             case aura::world::CellType::Battery:
                 return 'B';
+            case aura::world::CellType::Unknown:
+                return '?';
         }
-        return '?';
+        return '$';
     }
 }
 
