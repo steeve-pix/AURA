@@ -3,7 +3,7 @@ import sys
 from typing import Any
 
 from brain.decision import decide
-from brain.goals import choose_goal,goal_score
+from brain.goals import choose_goal,goal_scores
 from brain.memory import Memory
 
 
@@ -68,8 +68,8 @@ def main() -> None:
                     battery
                 )
 
-        score = goal_score(observation)
-        goal = choose_goal(observation)
+        score = goal_scores(observation, memory)
+        goal = choose_goal(observation,memory)
 
         decision = decide(observation, goal, memory)
 
