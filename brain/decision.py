@@ -5,7 +5,14 @@ from brain.memory import Memory
 
 
 def choose_recharge_action(observation, memory):
-    # 1) Re-rank to visible reachable batteries first (shortest path).
+    # 1) Keep existing target only if still valid.
+    if memory.active_recharge_target is not None:
+        target = memory.active_recharge_target
+        if not memory.is_failed_target(target):
+            return {"action": "move_to", "target": list(target)}
+        memory.clear_recharge_target()
+
+    # 2) Re-rank to visible reachable batteries first (shortest path).
     visible_batteries = [
         obj
         for obj in observation["nearby_objects"]
@@ -25,27 +32,19 @@ def choose_recharge_action(observation, memory):
         if memory.active_recharge_target == target:
             memory.clear_recharge_target()
 
-    # 2) Keep existing target only if still valid.
-    if memory.active_recharge_target is not None:
-        target = memory.active_recharge_target
-        if not memory.is_failed_target(target):
-            return {"action": "move_to", "target": list(target)}
-        memory.clear_recharge_target()
-
     # 3) Fallback to remembered usable batteries.
     remembered = [
         battery for battery in memory.batteries() if not memory.is_failed_target(battery)
     ]
     if remembered:
-        aura_x, aura_y = observation["position"]
-        target = min(
-            remembered,
-            key=lambda battery: abs(battery[0] - aura_x) + abs(battery[1] - aura_y),
-        )
+        target = remembered[0]
+
         memory.set_recharge_target(target)
+
         return {"action": "move_to", "target": list(target)}
 
     return choose_exploration_action(observation, memory)
+
 
 def decide(observation, goal, memory):
     if goal == "recharge":
@@ -55,6 +54,7 @@ def decide(observation, goal, memory):
         return choose_exploration_action(observation, memory)
 
     return {"action": "idle"}
+
 
 def choose_exploration_action(
         observation,
