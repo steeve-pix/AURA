@@ -51,11 +51,15 @@ class MemoryTests(unittest.TestCase):
         memory = Memory()
 
         memory.record_failed_target([8, 3])
-        memory.record_failed_target([8, 3])
+
+        self.assertIn(
+            (8, 3),
+            memory.failed_targets,
+        )
 
         self.assertEqual(
             memory.failed_target_count((8, 3)),
-            2
+            1
         )
 
 

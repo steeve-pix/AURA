@@ -20,8 +20,18 @@ def main() -> None:
 
         last_action = observation.get("last_action")
 
-        if last_action is not None and last_action["type"] == "move_to" and not last_action["succeeded"]:
-            memory.record_failed_target(last_action["target"])
+        if (
+            last_action
+            and last_action["type"] == "move_to"
+            and not last_action["succeeded"]
+            and last_action["target"] is not None
+        ):
+            target = tuple(last_action["target"])
+            memory.mark_target_failed(target)
+
+            if memory.active_recharge_target == target:
+                memory.clear_recharge_target()
+
             print(
                 f"Failed targets: {memory.failed_targets}",
                 file=sys.stderr,

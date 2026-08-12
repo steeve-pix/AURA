@@ -38,7 +38,7 @@ int main() {
     // Agent starts safely at guaranteed open position {1, 1}
     aura::agent::Agent agent{{1, 1}};
 
-    aura::sensors::RangeSensor rangeSensor{10};
+    aura::sensors::RangeSensor rangeSensor{5};
 
 #if defined(_WIN32)
     const std::string pythonExecutable = "python";
