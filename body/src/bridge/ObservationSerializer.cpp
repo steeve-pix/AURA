@@ -63,7 +63,9 @@ namespace aura::bridge {
         for (const auto &object: observation.nearby.objects) {
             json["nearby_objects"].push_back({
                 {"type", aura::world::toString(object.type)},
-                {"position", {object.position.x, object.position.y}}
+                {"position", {object.position.x, object.position.y}},
+                {"reachable", object.reachable},
+                {"path_length", object.pathLength}
             });
         }
 

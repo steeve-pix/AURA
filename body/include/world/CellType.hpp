@@ -6,6 +6,7 @@ namespace aura::world {
     enum class CellType {
         Empty,
         Wall,
-        Battery
+        Battery,
+        Unknown
     };
 }

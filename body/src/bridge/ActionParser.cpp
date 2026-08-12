@@ -110,6 +110,18 @@ namespace aura::bridge {
             };
         }
 
+        if (action == "investigate") {
+            const auto &target = json.at("target");
+
+            return {
+                ActionType::Investigate,
+                Direction::North, {
+                    target.at(0).get<int>(),
+                    target.at(1).get<int>()
+                }
+            };
+        }
+
         throw std::runtime_error("Unknown action type");
     }
 }

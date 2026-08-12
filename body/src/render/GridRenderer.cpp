@@ -46,7 +46,10 @@ namespace aura::render {
                     glColor3f(0.35F, 0.35F, 0.35F);
                 } else if (cell == world::CellType::Battery) {
                     glColor3f(0.2F, 0.8F, 0.2F);
-                } else {
+                } else if (cell == world::CellType::Unknown) {
+                    glColor3f(1.0F, 0.0F, 0.2F);
+
+                }else {
                     glColor3f(0.12F, 0.12F, 0.15F);
                 }
 

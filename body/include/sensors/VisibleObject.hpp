@@ -7,5 +7,8 @@ namespace aura::sensors {
     struct VisibleObject {
         world::CellType type;
         world::Position position;
+
+        bool reachable;
+        int pathLength;
     };
 }

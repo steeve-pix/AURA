@@ -1,6 +1,8 @@
 #include <iostream>
 #include <optional>
 #include <ostream>
+#include <sstream>
+#include <iomanip>
 #include <vector>
 #include <GLFW/glfw3.h>
 
@@ -36,7 +38,7 @@ int main() {
     // Agent starts safely at guaranteed open position {1, 1}
     aura::agent::Agent agent{{1, 1}};
 
-    aura::sensors::RangeSensor rangeSensor{10};
+    aura::sensors::RangeSensor rangeSensor{5};
 
 #if defined(_WIN32)
     const std::string pythonExecutable = "python";
@@ -73,6 +75,29 @@ int main() {
     aura::bridge::BrainDebugState brainDebug;
 
     std::optional<aura::bridge::LastAction> lastAction;
+
+    auto formatScore = [](const aura::bridge::BrainDebugState &debug, const std::string &name) {
+        const auto it = debug.goalScores.find(name);
+
+        if (it == debug.goalScores.end()) {
+            return std::string{"n/a"};
+        }
+
+        std::ostringstream score;
+        score << std::fixed << std::setprecision(2) << it->second;
+        return score.str();
+    };
+
+    auto setWindowTitle = [&](const aura::bridge::BrainDebugState &debug, int energy) {
+        const std::string goalLabel = debug.goal.empty() ? "unknown" : debug.goal;
+        const std::string goalScore = formatScore(debug, debug.goal.empty() ? std::string{} : debug.goal);
+        const std::string exploreScore = formatScore(debug, "explore");
+
+        const std::string title =
+                "AURA | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " + exploreScore + " | Energy: " +
+                std::to_string(energy);
+        window.setTitle(title);
+    };
 
     while (!window.shouldClose()) {
         Window::pollEvents();
@@ -123,6 +148,19 @@ int main() {
                     const auto action =
                             response.action;
 
+                    if (action.type == aura::bridge::ActionType::Investigate) {
+                        const bool validTarget =
+                                agent.position() == action.target && world.cellAt(action.target) ==
+                                aura::world::CellType::Unknown;
+
+                        if (validTarget) {
+                            world.setCell(action.target, aura::world::CellType::Battery);
+
+                            lastAction = {aura::bridge::ActionType::Investigate, action.target, true};
+                        } else {
+                            lastAction = {aura::bridge::ActionType::Investigate, action.target, false};
+                        }
+                    }
                     if (action.type == aura::bridge::ActionType::Move) {
                         currentPath.clear();
                         hasTarget = false;
@@ -219,6 +257,8 @@ int main() {
 
             lastUpdateTime = now;
         }
+
+        setWindowTitle(brainDebug, static_cast<int>(agent.energy()));
 
         window.clear();
 

@@ -26,6 +26,12 @@ namespace aura::bridge {
                 }
             }
 
+            if (debug.contains("goal_scores")) {
+                for (auto it = debug.at("goal_scores").begin(); it != debug.at("goal_scores").end(); ++it) {
+                    response.debug.goalScores[it.key()] = it.value().get<double>();
+                }
+            }
+
             if (debug.contains("visited_cells")) {
                 for (const auto &position: debug.at("visited_cells")) {
                     response.debug.visitedCells.push_back({
