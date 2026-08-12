@@ -53,7 +53,7 @@ def decide(observation, goal, memory):
     if goal == "explore":
         return choose_exploration_action(observation, memory)
 
-    if goal == "investigation":
+    if goal == "investigate":
         return choose_investigation_action(observation)
 
     return {"action": "idle"}
@@ -103,17 +103,24 @@ def choose_exploration_action(
 
 def choose_investigation_action(observation):
     unknown_objects = [
-        obj for obj in observation["nearby_objects"] if obj["type"] == "Unknown"
+        obj for obj in observation["nearby_objects"] if obj["type"] == "Unknown" and obj["reachable"]
 
     ]
     if not unknown_objects:
         return {"action": "idle"}
 
-    aura_x, aura_y = observation["position"]
+    aura_position = observation["position"]
 
-    target = min(unknown_objects, key=lambda obj: abs(obj["position"][0] - aura_x) + abs(obj["position"][1] - aura_y))
+    for obj in unknown_objects:
+        if obj["position"] == aura_position:
+            return {
+                "action": "investigate",
+                "target": obj["position"],
+            }
+
+    target = unknown_objects[0]
 
     return {
         "action": "move_to",
-        target: target["position"]
+        "target": target["position"]
     }

@@ -15,7 +15,8 @@ namespace aura::bridge {
     enum class ActionType {
         Idle,
         Move,
-        MoveTo
+        MoveTo,
+        Investigate
     };
 
     /// A validated intention sent by the brain for the body to perform.

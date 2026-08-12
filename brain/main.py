@@ -3,7 +3,7 @@ import sys
 from typing import Any
 
 from brain.decision import decide
-from brain.goals import choose_goal,goal_scores
+from brain.goals import choose_goal, goal_scores
 from brain.memory import Memory
 
 
@@ -21,10 +21,10 @@ def main() -> None:
         last_action = observation.get("last_action")
 
         if (
-            last_action
-            and last_action["type"] == "move_to"
-            and not last_action["succeeded"]
-            and last_action["target"] is not None
+                last_action
+                and last_action["type"] == "move_to"
+                and not last_action["succeeded"]
+                and last_action["target"] is not None
         ):
             target = tuple(last_action["target"])
             memory.mark_target_failed(target)
@@ -69,14 +69,13 @@ def main() -> None:
                 )
 
         score = goal_scores(observation, memory)
-        goal = choose_goal(observation,memory)
+        goal = choose_goal(observation, memory)
 
         decision = decide(observation, goal, memory)
 
         decision["debug"] = {
             "goal": goal,
             "goal_scores": score,
-            "goalScore": score,
             "known_cells": [
                 list(position) for position in memory.known_cells.keys()
             ],

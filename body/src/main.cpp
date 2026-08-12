@@ -94,7 +94,8 @@ int main() {
         const std::string exploreScore = formatScore(debug, "explore");
 
         const std::string title =
-                "AURA | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " + exploreScore + " | Energy: " + std::to_string(energy);
+                "AURA | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " + exploreScore + " | Energy: " +
+                std::to_string(energy);
         window.setTitle(title);
     };
 
@@ -147,6 +148,19 @@ int main() {
                     const auto action =
                             response.action;
 
+                    if (action.type == aura::bridge::ActionType::Investigate) {
+                        const bool validTarget =
+                                agent.position() == action.target && world.cellAt(action.target) ==
+                                aura::world::CellType::Unknown;
+
+                        if (validTarget) {
+                            world.setCell(action.target, aura::world::CellType::Battery);
+
+                            lastAction = {aura::bridge::ActionType::Investigate, action.target, true};
+                        } else {
+                            lastAction = {aura::bridge::ActionType::Investigate, action.target, false};
+                        }
+                    }
                     if (action.type == aura::bridge::ActionType::Move) {
                         currentPath.clear();
                         hasTarget = false;
@@ -208,7 +222,7 @@ int main() {
                                 world
                             );
                         } else if (!moved) {
-                                std::cout << "No path to target\n";
+                            std::cout << "No path to target\n";
                         }
 
                         lastAction = {
