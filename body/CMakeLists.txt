@@ -35,6 +35,7 @@ add_executable(aura_body
         src/bridge/BrainProcess.cpp
         src/render/Window.cpp
         src/render/GridRenderer.cpp
+        src/app/Application.cpp
 )
 
 target_link_libraries(aura_body
