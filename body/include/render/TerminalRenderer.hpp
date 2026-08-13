@@ -4,10 +4,10 @@
 #include "world/World.hpp"
 
 namespace aura::render {
-    /// Draws a text-only view of the current world for the developer.
+    /// Produces a text-only view of the simulation for terminal debugging.
     class TerminalRenderer {
     public:
-        /// Prints the grid and overlays AURA at its current position.
+        /// Prints every world cell while drawing AURA over its current position.
         void render(const world::World &world, const agent::Agent agent) const;
     };
 }

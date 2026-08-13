@@ -4,6 +4,8 @@
 #include "world/Position.hpp"
 
 namespace aura::bridge {
-    /// Converts a protocol direction into the body's one-cell grid offset.
+    /// Converts a cardinal direction into a one-cell offset in world coordinates.
+    ///
+    /// North decreases y, east increases x, south increases y, and west decreases x.
     [[nodiscard]] world::Position directionOffset(Direction direction);
 }

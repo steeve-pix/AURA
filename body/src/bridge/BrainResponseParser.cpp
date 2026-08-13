@@ -10,11 +10,13 @@ namespace aura::bridge {
 
         BrainResponse response{};
 
+        // Action parsing remains authoritative; debug fields are optional diagnostics.
         response.action = parseAction(text);
 
         if (json.contains("debug")) {
             const auto &debug = json.at("debug");
 
+            // Missing debug members intentionally retain their empty default values.
             response.debug.goal = debug.value("goal", std::string{});
 
             if (debug.contains("known_cells")) {

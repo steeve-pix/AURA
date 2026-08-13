@@ -5,8 +5,8 @@ namespace aura::sensors {
                                           const agent::Agent &agent) {
         const auto position = agent.position();
 
-        // Cardinal order matches LocalObservation and the JSON protocol fields.
-        // Boundary walls keep these adjacent lookups inside the world for a valid agent.
+        // Field order is part of the observation protocol. Generated worlds keep valid
+        // agents behind boundary walls, so each adjacent lookup remains in bounds.
         LocalObservation observation{
             world.cellAt({position.x, position.y - 1}),
             world.cellAt({position.x + 1, position.y}),

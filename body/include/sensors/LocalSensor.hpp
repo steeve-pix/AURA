@@ -5,12 +5,10 @@
 #include "world/World.hpp"
 
 namespace aura::sensors {
-    /// Reads the four cells directly adjacent to the agent.
-    ///
-    /// The sensor reports physical facts only; the Python brain interprets their meaning.
+    /// Reads the four cells that share an edge with AURA's current position.
     class LocalSensor {
     public:
-        /// Captures the current north, east, south, and west cell types.
+        /// Returns neighboring cell contents in north, east, south, west order.
         static LocalObservation observe(const world::World &world, const agent::Agent &agent);
     };
 }

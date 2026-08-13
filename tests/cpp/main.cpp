@@ -91,7 +91,7 @@ int main() {
     pathWorld.setCell({3, 2}, aura::world::CellType::Wall);
     pathWorld.setCell({3, 3}, aura::world::CellType::Wall);
 
-    // Open a gap at the bottom.
+    // The gap makes the destination reachable while preserving walls on three sides.
     pathWorld.setCell({3, 3}, aura::world::CellType::Empty);
 
     const auto path =

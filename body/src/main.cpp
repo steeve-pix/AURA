@@ -36,12 +36,13 @@ int main() {
     aura::world::MazeGenerator generator{1337};
     generator.generate(world, NUM_BATTERIES, NUM_UNKNOWN);
 
-    // Agent starts safely at guaranteed open position {1, 1}
+    // Maze generation reserves (1, 1), making it the deterministic safe spawn cell.
     aura::agent::Agent agent{{1, 1}};
 
     aura::sensors::RangeSensor rangeSensor{3};
 
 #if defined(_WIN32)
+    // Process invocation differs because Windows and POSIX parse child arguments differently.
     const std::string pythonExecutable = "python";
     const std::string scriptPath = "-m brain.main";
     const std::string workingDirectory =
@@ -75,6 +76,7 @@ int main() {
 
     aura::bridge::BrainDebugState brainDebug;
 
+    // The previous result is sent exactly once so the brain can update target memory.
     std::optional<aura::bridge::LastAction> lastAction;
 
     auto formatScore = [](const aura::bridge::BrainDebugState &debug, const std::string &name) {
@@ -100,6 +102,7 @@ int main() {
         window.setTitle(title);
     };
 
+    // Rendering remains continuous while simulation and brain updates run at a fixed cadence.
     while (!window.shouldClose()) {
         Window::pollEvents();
 
@@ -132,6 +135,8 @@ int main() {
                         observation
                     );
 
+            // Ownership of this result transfers to the serialized observation; a later
+            // cycle must not report the same outcome twice.
             lastAction.reset();
 
             const std::string actionJson =
@@ -154,6 +159,7 @@ int main() {
                         hasTarget = false;
 
                         const auto agentPosition = agent.position();
+                        // Manhattan distance one enforces physical, cardinal adjacency.
                         const int targetDistance =
                                 std::abs(action.target.x - agentPosition.x) +
                                 std::abs(action.target.y - agentPosition.y);
@@ -206,6 +212,8 @@ int main() {
                                     currentTarget
                                 );
 
+                        // Being at the destination is a successful no-op, while an empty
+                        // path to a different coordinate means navigation failed.
                         bool moved = currentTarget == agent.position();
 
                         if (!currentPath.empty()) {
@@ -218,6 +226,8 @@ int main() {
                                     std::to_string(current.x) + "," + std::to_string(current.y) + ")";
                             window.setTitle(title);
 
+                            // MoveTo advances one path edge per update so sensing and goal
+                            // selection can react between steps.
                             const auto next =
                                     currentPath.front();
 

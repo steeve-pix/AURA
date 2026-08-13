@@ -4,25 +4,28 @@
 #include "world/World.hpp"
 
 namespace aura::agent {
-    /// Represents AURA's physical state inside the simulated world.
+    /// Holds AURA's position and energy in the simulated world.
     ///
-    /// The body owns movement, collision checks, energy use, and physical interactions.
-    /// High-level decisions remain in the Python brain.
+    /// Agent validates physical movement and applies cell interactions. It does not
+    /// choose destinations; strategic decisions belong to the Python brain.
     class Agent {
     public:
-        /// Creates an agent at the given grid position with full energy.
+        /// Places AURA at `position` with its energy set to the built-in maximum.
         explicit Agent(world::Position position);
 
-        /// Returns the agent's current grid position.
+        /// Returns AURA's current grid coordinates.
         [[nodiscard]] world::Position position() const;
 
-        /// Attempts one cardinal step and returns whether the body completed it.
+        /// Attempts one cardinal, one-cell move.
+        ///
+        /// The move fails without changing state when the offset is invalid, the
+        /// destination is blocked or outside the world, or no energy remains.
         [[nodiscard]] bool moveBy(world::Position offset, const world::World &world);
 
-        /// Returns the agent's current energy.
+        /// Returns the movement energy currently available.
         [[nodiscard]] int energy() const;
 
-        /// Returns the energy level restored by a battery.
+        /// Returns the energy capacity restored when AURA reaches a battery.
         [[nodiscard]] int maxEnergy() const;
 
     private:
@@ -30,7 +33,7 @@ namespace aura::agent {
         int energy_;
         int maxEnergy_;
 
-        /// Applies the physical effect of the cell occupied after movement.
+        /// Applies any effect associated with the cell AURA currently occupies.
         void interactWithCell(const world::World &world);
     };
 }

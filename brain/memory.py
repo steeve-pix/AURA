@@ -69,6 +69,7 @@ class Memory:
 
     def set_investigation_target(self, position: Sequence[int]) -> None:
         target = tuple(position)
+        # An approach is valid only for the unknown object that selected it.
         if target != self.active_investigation_target:
             self.active_investigation_approach = None
         self.active_investigation_target = target
@@ -80,6 +81,7 @@ class Memory:
         self.active_investigation_approach = None
 
     def clear_investigation_target(self) -> None:
+        # Target and approach form one lock and must be released together.
         self.active_investigation_target = None
         self.active_investigation_approach = None
 

@@ -8,6 +8,7 @@ namespace aura::bridge {
     std::string serializedObservation(const Observation &observation) {
         nlohmann::json json;
 
+        // Protocol names are centralized here so enum spelling never leaks into JSON.
         const auto actionTypeName =
                 [](ActionType type) {
                     switch (type) {
@@ -52,6 +53,7 @@ namespace aura::bridge {
                 json["last_action"]["target"] = {target.x, target.y};
             }
         } else {
+            // An explicit null distinguishes the first cycle from an omitted field.
             json["last_action"] = nullptr;
         }
 

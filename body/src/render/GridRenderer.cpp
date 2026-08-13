@@ -7,6 +7,8 @@
 namespace aura::render {
     void GridRenderer::render(const world::World &world, const agent::Agent &agent, int sensorRadius,
                               const std::vector<world::Position> &path, const world::Position *target, const bridge::BrainDebugState& debug) {
+        // OpenGL's visible area spans -1 to 1, so each grid cell consumes an equal
+        // fraction of that two-unit width and height.
         const float cellWidth =
                 2.0F / static_cast<float>(world.width());
 
@@ -15,6 +17,8 @@ namespace aura::render {
 
         const auto agentPosition = agent.position();
 
+        // Debug collections are vectors from the protocol; membership checks stay local
+        // because rendering does not own or reshape brain data.
         const auto containsPosition =
                 [](const auto &positions, world::Position position) {
                     for (const auto &item : positions) {
@@ -38,6 +42,7 @@ namespace aura::render {
                 const bool visited =
                         containsPosition(debug.visitedCells, position);
 
+                // Sensor coverage is a square Chebyshev footprint centered on AURA.
                 const bool insideSensorRange =
                         std::abs(x - agentPosition.x) <= sensorRadius &&
                         std::abs(y - agentPosition.y) <= sensorRadius;
@@ -53,6 +58,7 @@ namespace aura::render {
                     glColor3f(0.12F, 0.12F, 0.15F);
                 }
 
+                // World y increases downward, while OpenGL y increases upward.
                 const float left =
                         -1.0F + static_cast<float>(x) * cellWidth;
 
@@ -74,6 +80,8 @@ namespace aura::render {
 
                 glEnd();
 
+                // Overlays are drawn from broadest history to most immediate state so
+                // visited and currently sensed cells remain visually dominant.
                 if (cell == world::CellType::Empty && known) {
                     glColor3f(0.16F, 0.16F, 0.20F);
 
@@ -115,6 +123,7 @@ namespace aura::render {
             }
         }
 
+        // Route and target overlays intentionally cover cell-history shading.
         for (const auto &position: path) {
             const float left =
                     -1.0F + static_cast<float>(position.x) * cellWidth;
@@ -165,6 +174,7 @@ namespace aura::render {
             glEnd();
         }
 
+        // Grid lines are rendered after cell fills so boundaries remain legible.
         glColor3f(0.18F, 0.18F, 0.20F);
 
         glBegin(GL_LINES);
@@ -187,6 +197,7 @@ namespace aura::render {
 
         glEnd();
 
+        // AURA is the final overlay and therefore cannot be hidden by route highlighting.
         const auto position = agent.position();
 
         const float left =
