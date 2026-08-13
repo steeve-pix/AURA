@@ -34,6 +34,10 @@ namespace aura::app {
 
         void executeIdle();
 
+        [[nodiscard]] bridge::Observation buildObservation() const;
+
+        void executeAction(const bridge::Action &action);
+
         render::Window window_;
 
         world::World world_;

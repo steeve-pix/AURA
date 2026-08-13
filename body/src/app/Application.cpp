@@ -43,10 +43,10 @@ namespace aura::app {
 
         double lastUpdateTime = glfwGetTime();
 
-        constexpr double updateInterval = 0.25;
+        constexpr double updateInterval = 0.01;
 
 
-        auto formatScore = [](const bridge::BrainDebugState &debug, const std::string &name) {
+        auto formatScore = [](const bridge::BrainDebugState &debug, const std::string &name) -> std::string {
             const auto it = debug.goalScores.find(name);
 
             if (it == debug.goalScores.end()) {
@@ -84,9 +84,8 @@ namespace aura::app {
 
             window_.clear();
 
-            GridRenderer::render(world_, agent_, rangeSensor_.radius(), currentPath_, hasTarget_
-                                         ? &currentTarget_
-                                         : nullptr, brainDebug_
+            GridRenderer::render(world_, agent_, rangeSensor_.radius(), currentPath_,
+                                 hasTarget_ ? &currentTarget_ : nullptr, brainDebug_
             );
 
             window_.display();
@@ -96,38 +95,15 @@ namespace aura::app {
     }
 
     void Application::update() {
-        const auto local =
-                sensors::LocalSensor::observe(
-                    world_,
-                    agent_
-                );
-
-        const auto nearby =
-                rangeSensor_.observe(
-                    world_,
-                    agent_
-                );
-
-        const bridge::Observation observation{
-            agent_.position(),
-            agent_.energy(),
-            local,
-            nearby,
-            rangeSensor_.radius(),
-            lastAction_
-        };
+        const bridge::Observation observation = buildObservation();
 
         const std::string observationJson =
-                bridge::serializedObservation(
-                    observation
-                );
+                bridge::serializedObservation(observation);
 
         lastAction_.reset();
 
         const std::string actionJson =
-                brain_.exchange(
-                    observationJson
-                );
+                brain_.exchange(observationJson);
 
         if (!actionJson.empty()) {
             try {
@@ -136,33 +112,11 @@ namespace aura::app {
 
                 brainDebug_ = response.debug;
 
-                const auto action =
-                        response.action;
-
-                switch (action.type) {
-                    case bridge::ActionType::Investigate:
-                        executeInvestigation(action);
-                        break;
-                    case bridge::ActionType::Move:
-                        executeMove(action);
-                        break;
-                    case bridge::ActionType::MoveTo:
-                        executeMoveTo(action);
-                        break;
-                    case bridge::ActionType::Idle:
-                        executeIdle();
-                        break;
-                }
+                executeAction(response.action);
             } catch (const std::exception &error) {
-                std::cerr
-                        << "Invalid JSON from brain: "
-                        << actionJson
-                        << '\n';
+                std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
 
-                std::cerr
-                        << "Reason: "
-                        << error.what()
-                        << '\n';
+                std::cerr << "Reason: " << error.what() << '\n';
             }
         }
     }
@@ -235,10 +189,8 @@ namespace aura::app {
                     agent_.position();
 
             const std::string title =
-                    "AURA | Energy: " + std::to_string(agent_.energy()) + " | Goal: " + brainDebug_.
-                    goal +
-                    " | Position: (" +
-                    std::to_string(current.x) + "," + std::to_string(current.y) + ")";
+                    "AURA | Energy: " + std::to_string(agent_.energy()) + " | Goal: " + brainDebug_.goal +
+                    " | Position: (" + std::to_string(current.x) + "," + std::to_string(current.y) + ")";
             window_.setTitle(title);
 
             const auto next =
@@ -272,5 +224,38 @@ namespace aura::app {
             std::nullopt,
             true
         };
+    }
+
+    bridge::Observation Application::buildObservation() const {
+        const auto local =
+                sensors::LocalSensor::observe(world_, agent_);
+
+        const auto nearby =
+                rangeSensor_.observe(world_, agent_);
+        return {
+            .position = agent_.position(),
+            .energy = agent_.energy(),
+            .surroundings = local,
+            .nearby = nearby,
+            .sensor_radius = rangeSensor_.radius(),
+            .lastAction = lastAction_
+        };
+    }
+
+    void Application::executeAction(const bridge::Action &action) {
+        switch (action.type) {
+            case bridge::ActionType::Investigate:
+                executeInvestigation(action);
+                break;
+            case bridge::ActionType::Move:
+                executeMove(action);
+                break;
+            case bridge::ActionType::MoveTo:
+                executeMoveTo(action);
+                break;
+            case bridge::ActionType::Idle:
+                executeIdle();
+                break;
+        }
     }
 }
