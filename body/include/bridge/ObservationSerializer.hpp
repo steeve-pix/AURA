@@ -5,6 +5,6 @@
 #include "bridge/Observation.hpp"
 
 namespace aura::bridge {
-    /// Converts a body observation into the JSON representation consumed by Python.
+    /// Serializes an observation using the stable field names expected by the brain.
     std::string serializedObservation(const Observation &observation);
 }

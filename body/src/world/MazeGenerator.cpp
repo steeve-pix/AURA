@@ -22,6 +22,7 @@ void MazeGenerator::generate(World &world, int batteryCount, int unknownCount) c
             std::vector<bool>(height, true)
     );
 
+    // Logical maze cells occupy odd world coordinates; even coordinates separate them.
     const int gridWidth = (width - 1) / 2;
     const int gridHeight = (height - 1) / 2;
 
@@ -40,6 +41,7 @@ void MazeGenerator::generate(World &world, int batteryCount, int unknownCount) c
     constexpr int horizontalOffsets[] = {0, 0, 1, -1};
     constexpr int verticalOffsets[] = {1, -1, 0, 0};
 
+    // Randomized depth-first traversal carves a connected spanning tree of passages.
     while (!stack.empty()) {
         const auto [gridX, gridY] = stack.top();
 
@@ -76,6 +78,7 @@ void MazeGenerator::generate(World &world, int batteryCount, int unknownCount) c
         const int nextWorldX = nextGridX * 2 + 1;
         const int nextWorldY = nextGridY * 2 + 1;
 
+        // Open both the next logical cell and the wall separating it from the current cell.
         isWall[nextWorldX][nextWorldY] = false;
         isWall[(currentWorldX + nextWorldX) / 2]
               [(currentWorldY + nextWorldY) / 2] = false;
@@ -91,11 +94,13 @@ void MazeGenerator::generate(World &world, int batteryCount, int unknownCount) c
             if (isWall[x][y]) {
                 world.setCell({x, y}, CellType::Wall);
             } else if (x != 1 || y != 1) {
+                // The spawn remains empty and is never selected for object placement.
                 passageCells.push_back({x, y});
             }
         }
     }
 
+    // One seeded shuffle gives deterministic, non-overlapping placement slots.
     std::shuffle(passageCells.begin(), passageCells.end(), random);
 
     int cellIndex = 0;

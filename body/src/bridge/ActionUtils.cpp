@@ -4,7 +4,7 @@
 
 namespace aura::bridge {
     world::Position directionOffset(Direction direction) {
-        // Screen-style coordinates place north at decreasing y.
+        // World coordinates follow the renderer: the origin is at the upper-left.
         switch (direction) {
             case Direction::North:
                 return {0, -1};

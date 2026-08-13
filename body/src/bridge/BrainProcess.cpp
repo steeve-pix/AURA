@@ -22,6 +22,7 @@ namespace aura::bridge {
 
     BrainProcess::~BrainProcess() {
 #if defined(_WIN32)
+        // The parent owns only these handles; child-side pipe handles were closed at launch.
         if (stdinWrite_) {
             CloseHandle(stdinWrite_);
             stdinWrite_ = kInvalidIoHandle;
@@ -37,6 +38,7 @@ namespace aura::bridge {
             processHandle_ = kInvalidProcessHandle;
         }
 #else
+        // Closing stdin first lets a cooperative brain observe EOF before termination.
         if (stdinWrite_ != kInvalidIoHandle) {
             close(stdinWrite_);
             stdinWrite_ = kInvalidIoHandle;
@@ -57,6 +59,7 @@ namespace aura::bridge {
 
     bool BrainProcess::launch() {
 #if defined(_WIN32)
+        // Child endpoints remain inheritable while parent endpoints are explicitly private.
         SECURITY_ATTRIBUTES security{};
         security.nLength = sizeof(SECURITY_ATTRIBUTES);
         security.bInheritHandle = TRUE;
@@ -89,6 +92,7 @@ namespace aura::bridge {
         startupInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 
         std::string command = pythonExecutable_ + " " + scriptPath_;
+        // CreateProcess may modify its command-line buffer, so it cannot receive c_str().
         std::vector<char> commandBuffer(command.begin(), command.end());
         commandBuffer.push_back('\0');
 
@@ -120,6 +124,7 @@ namespace aura::bridge {
         processHandle_ = processInfo.hProcess;
         return true;
 #else
+        // Two unidirectional pipes form the request and response channels.
         int stdinPipe[2] = {-1, -1};
         int stdoutPipe[2] = {-1, -1};
 
@@ -141,6 +146,7 @@ namespace aura::bridge {
         }
 
         if (pid == 0) {
+            // The child replaces its standard streams before replacing the process image.
             dup2(stdinPipe[0], STDIN_FILENO);
             dup2(stdoutPipe[1], STDOUT_FILENO);
 
@@ -166,6 +172,7 @@ namespace aura::bridge {
         close(stdinPipe[0]);
         close(stdoutPipe[1]);
 
+        // The parent retains only the endpoints used to write requests and read replies.
         processHandle_ = pid;
         stdinWrite_ = stdinPipe[1];
         stdoutRead_ = stdoutPipe[0];
@@ -180,6 +187,7 @@ namespace aura::bridge {
         }
 
         std::string message{observationJson};
+        // Newlines frame messages because each JSON document itself occupies one line.
         message.push_back('\n');
 
         DWORD bytesWritten = 0;
@@ -196,6 +204,7 @@ namespace aura::bridge {
         }
 
         std::string response;
+        // Reading through the delimiter avoids returning a partial JSON document.
         while (true) {
             char character = '\0';
             DWORD bytesRead = 0;
@@ -218,6 +227,7 @@ namespace aura::bridge {
         }
 
         std::string message{observationJson};
+        // Newlines frame messages because each JSON document itself occupies one line.
         message.push_back('\n');
 
         const ssize_t written = write(stdinWrite_, message.data(), message.size());
@@ -226,6 +236,7 @@ namespace aura::bridge {
         }
 
         std::string response;
+        // Reading through the delimiter avoids returning a partial JSON document.
         while (true) {
             char character = '\0';
             const ssize_t readCount = read(stdoutRead_, &character, 1);

@@ -20,6 +20,8 @@ def main() -> None:
 
         last_action = observation.get("last_action")
 
+        # Failed destinations are excluded from later planning so the brain cannot
+        # alternate forever between equivalent approaches to the same obstacle.
         if (
                 last_action
                 and last_action.get("type") in {"move_to", "investigate"}
@@ -61,6 +63,8 @@ def main() -> None:
             if visible_object["type"] == "Battery":
                 memory.remember_battery(visible_object["position"])
 
+        # Sensor truth supersedes remembered batteries when a previously known coordinate
+        # is inside the current scan but no longer contains a battery.
         visible_batteries = {
             tuple(obj["position"]) for obj in observation["nearby_objects"] if obj["type"] == "Battery"
         }
@@ -85,6 +89,7 @@ def main() -> None:
 
         decision = decide(observation, goal, memory)
 
+        # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {
             "goal": goal,
             "goal_scores": score,

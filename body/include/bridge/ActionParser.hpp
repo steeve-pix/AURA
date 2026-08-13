@@ -5,7 +5,9 @@
 #include "bridge/Action.hpp"
 
 namespace aura::bridge {
-    /// Parses the small action JSON message used by the brain-body protocol.
-    /// Throws std::invalid_argument when a required field or value is invalid.
+    /// Parses and validates one JSON action emitted by the Python brain.
+    ///
+    /// Missing fields, malformed JSON, and unsupported action values are reported
+    /// through the parsing exceptions raised by this function.
     [[nodiscard]] Action parseAction(std::string_view json);
 }

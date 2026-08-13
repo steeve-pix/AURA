@@ -42,6 +42,7 @@ def choose_recharge_action(observation, memory):
             None,
         )
 
+        # Keep the active battery unless the new route is meaningfully shorter.
         if active_battery is not None:
             improvement = (
                     active_battery["path_length"]
@@ -64,6 +65,7 @@ def choose_recharge_action(observation, memory):
     if memory.active_recharge_target is not None:
         target = memory.active_recharge_target
 
+        # Continue toward an out-of-range remembered target until it fails or is disproved.
         if (
                 target not in visible_battery_positions
                 and not memory.is_failed_target(target)
@@ -146,6 +148,7 @@ def choose_exploration_action(
     if not candidates:
         return {"action": "idle"}
 
+    # Randomness applies only among equally least-visited legal directions.
     lowest_score = min(score for score, _ in candidates)
     best_directions = [
         dir_name for score, dir_name in candidates if score == lowest_score
@@ -167,6 +170,7 @@ def choose_investigation_action(observation, memory: Memory):
         memory.clear_investigation_target()
         return {"action": "idle"}
 
+    # Position lookup preserves the current object lock across changing sensor order.
     objects_by_position = {
         tuple(obj["position"]): obj for obj in unknown_objects
     }
@@ -187,6 +191,7 @@ def choose_investigation_action(observation, memory: Memory):
     aura_position = tuple(observation["position"])
     target_x, target_y = target_position
 
+    # Investigation is physical: AURA must share a cardinal edge with the object.
     if abs(target_x - aura_position[0]) + abs(target_y - aura_position[1]) == 1:
         memory.clear_investigation_approach()
         return {
@@ -204,12 +209,15 @@ def choose_investigation_action(observation, memory: Memory):
         (target_x, target_y + 1),
         (target_x - 1, target_y),
     ]
+    # Unknown cells are not valid staging positions; AURA approaches from a known,
+    # walkable neighbor and remembers that choice to prevent left-right oscillation.
     approach_candidates = [
         position for position in adjacent_positions
         if visible_cells.get(position) not in {None, "Wall", "Unknown"}
         and not memory.is_failed_target(position)
     ]
 
+    # Reject the object itself only after every visible adjacent approach is unusable.
     if not approach_candidates:
         memory.mark_target_failed(target_position)
         memory.clear_investigation_target()

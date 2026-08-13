@@ -8,23 +8,29 @@
 #include "world/Position.hpp"
 
 namespace aura::bridge {
-    /// Outcome of the most recent intention executed by the body.
+    /// Result of the most recently attempted body action.
     struct LastAction {
+        /// Category of action that was attempted.
         ActionType type;
+        /// Destination when the action addressed a coordinate; otherwise empty.
         std::optional<world::Position> target;
+        /// Whether the body completed the requested action.
         bool succeeded;
     };
 
-    /// Snapshot of physical state sent from the C++ body to the Python brain.
+    /// Read-only world snapshot supplied to the Python brain for one decision cycle.
     struct Observation {
-        /// Current body location in world coordinates.
+        /// AURA's current world coordinates.
         world::Position position;
         /// Remaining movement energy.
         int energy;
-        /// Cell types immediately north, east, south, and west of AURA.
+        /// Contents of the four cardinally adjacent cells.
         sensors::LocalObservation surroundings;
+        /// Cells and actionable objects reported by the range sensor.
         sensors::RangeObservation nearby;
+        /// Half-width of the square area covered by the range sensor.
         int sensor_radius;
+        /// Previous action result, absent before the first decision cycle.
         std::optional<LastAction> lastAction;
     };
 }

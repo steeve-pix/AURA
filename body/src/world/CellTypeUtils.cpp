@@ -13,7 +13,7 @@ namespace aura::world {
                 return "Unknown";
         }
 
-        // Defensive fallback for an invalid enum value received through corrupted state.
+        // Keep serialization total even if corrupted state contains an invalid enum value.
         return "Uninitialized";
     }
 }

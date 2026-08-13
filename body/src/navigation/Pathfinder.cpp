@@ -18,6 +18,8 @@ namespace aura::navigation {
         std::vector<bool> visited(totalCells, false);
         std::vector<world::Position> parent(totalCells);
 
+        // Breadth-first expansion guarantees the first discovered route is shortest
+        // because every legal grid step has equal cost.
         std::queue<world::Position> frontier;
 
         const auto indexOf =
@@ -63,6 +65,7 @@ namespace aura::navigation {
                 }
 
                 visited[nextIndex] = true;
+                // Parent links are sufficient to reconstruct the route after reaching goal.
                 parent[nextIndex] = current;
                 frontier.push(next);
             }
@@ -72,6 +75,7 @@ namespace aura::navigation {
             return {};
         }
 
+        // Walk backward from the goal, then reverse to produce movement order.
         std::vector<world::Position> path;
 
         world::Position current = goal;

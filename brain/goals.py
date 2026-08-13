@@ -10,6 +10,7 @@ def recharge_score(observation):
     shortest_path = shortest_battery_path(observation)
 
     if shortest_path is not None and energy <= RECHARGE_CONSIDERATION_THRESHOLD:
+        # Reserve prevents a technically reachable battery from becoming a zero-energy trap.
         required_energy = shortest_path + ENERGY_RESERVE
 
         if energy <= required_energy:
@@ -24,6 +25,7 @@ def explore_score(observation, memory):
     visits = memory.visit_count(current)
 
     base = 0.30
+    # Repeated occupancy raises exploration pressure but cannot dominate every other goal.
     repetition_bonus = min(visits * 0.05, 0.30)
 
     return base + repetition_bonus
@@ -70,7 +72,7 @@ def choose_goal(observation, memory):
         memory.set_active_goal("recharge")
         return "recharge"
 
-    # Once recharge wins, do not allow another goal to interrupt it.
+    # Recharge remains sticky until full so score fluctuations cannot strand AURA mid-route.
     if memory.active_goal == "recharge" and energy < 100:
         return "recharge"
 
@@ -88,6 +90,7 @@ def choose_goal(observation, memory):
     if best_goal == current_goal:
         return current_goal
 
+    # Hysteresis avoids rapid goal switching when two scores are nearly equal.
     if best_score >= current_score + GOAL_SWITCH_MARGIN:
         if current_goal == "investigate":
             memory.clear_investigation_target()
@@ -114,6 +117,8 @@ def goal_completed(goal, observation, memory):
         return observation["energy"] >= 100
 
     if goal == "investigate":
+        # A locked target keeps investigation active while AURA approaches from outside
+        # the object's cell; completion depends on that object no longer being unknown.
         target = memory.active_investigation_target
         if target is None:
             return not any(

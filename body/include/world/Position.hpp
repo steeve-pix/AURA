@@ -1,13 +1,14 @@
 #pragma once
 
 namespace aura::world {
-    /// Integer coordinates for one cell in the 2D world.
+    /// Integer coordinates identifying one world cell.
     ///
-    /// x increases toward the east and y increases toward the south.
+    /// The origin is at the upper-left: x increases eastward and y southward.
     struct Position {
         int x;
         int y;
 
+        /// Compares both coordinates for exact grid-position equality.
         bool operator==(const Position &other) const {
             return x == other.x &&
                    y == other.y;
