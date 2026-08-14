@@ -45,3 +45,6 @@ class WorldMemory:
 
     def entity_at(self,position:list[int]|tuple[int,int])-> RememberedEntity|None:
         return self.entities.get((position[0], position[1]))
+
+    def restore_entity(self,entity: RememberedEntity) -> None:
+        self.entities[entity.position] = entity

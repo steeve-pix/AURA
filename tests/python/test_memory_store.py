@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -49,6 +50,38 @@ class MemoryStoreTests(unittest.TestCase):
             self.assertEqual(loaded.known_cells[(2, 3)], "Empty")
             self.assertEqual(loaded.visit_count((2, 3)), 1)
             self.assertEqual(other_world.known_cells, {})
+
+    def test_round_trip_restores_world_memory_entity_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "memory.json"
+            memory = Memory()
+            memory.advance_step()
+            memory.remember_battery([3, 2])
+            memory.remember_battery([3, 2])
+
+            save_memory(memory, path, "maze:1337")
+            loaded = load_memory(path, "maze:1337")
+
+            entity = loaded.world_memory.entity_at((3, 2))
+            self.assertIsNotNone(entity)
+            self.assertEqual(loaded.step, memory.step)
+            self.assertEqual(entity.last_seen_step, memory.step)
+            self.assertEqual(entity.times_confirmed, 2)
+
+    def test_loads_legacy_coordinate_battery_memory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "memory.json"
+            path.write_text(json.dumps({
+                "world_id": "maze:1337",
+                "known_batteries": [[3, 2]],
+            }))
+
+            memory = load_memory(path, "maze:1337")
+
+            entity = memory.world_memory.entity_at((3, 2))
+            self.assertIsNotNone(entity)
+            self.assertEqual(entity.entity_type, "Battery")
+            self.assertEqual(entity.status, "confirmed")
 
 
 if __name__ == "__main__":

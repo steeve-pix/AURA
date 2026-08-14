@@ -7,7 +7,6 @@ from brain.world_memory import WorldMemory
 class Memory:
     def __init__(self) -> None:
         self.known_cells: dict[tuple[int, int], str] = {}
-        self.known_batteries: dict[tuple[int, int], BatteryMemory] = {}
         self.visit_counts: dict[tuple[int, int], int] = {}
         self.failed_targets: set[tuple[int, int]] = set()
         self.active_recharge_target: Optional[Tuple[int, int]] = None
@@ -23,21 +22,9 @@ class Memory:
 
     def remember_battery(self, position: list[int] | tuple[int, int]) -> None:
         key = (position[0], position[1])
-        existing = self.known_batteries.get(key)
         self.world_memory.remembered_entity(key, "Battery", self.step)
 
-        if existing is None:
-            self.known_batteries[key] = BatteryMemory(position=key, status="confirmed", last_seen_step=self.step,
-                                                      time_confirmed=1)
-            return
-
-        existing.status = "confirmed"
-        existing.last_seen_step = self.step
-        existing.time_confirmed += 1
-
     def forget_battery(self, position: tuple[int, int]) -> None:
-        self.known_batteries.pop(position, None)
-
         entity = self.world_memory.entity_at(position)
 
         if entity is not None and entity.entity_type == "Battery":
@@ -117,11 +104,6 @@ class Memory:
         self.active_goal = None
 
     def mark_battery_stale(self, position: tuple[int, int]) -> None:
-        memory = self.known_batteries.get(position)
-
-        if memory is not None:
-            memory.status = "stale"
-
         entity = self.world_memory.entity_at(position)
 
         if entity is not None and entity.entity_type == "Battery":

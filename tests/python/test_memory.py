@@ -106,7 +106,7 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(entity.entity_type, "Battery")
         self.assertEqual(entity.status, "confirmed")
 
-    def test_world_memory_mirrors_repeated_battery_confirmation(self):
+    def test_world_memory_tracks_repeated_battery_confirmation(self):
         memory = Memory()
         position = (3, 2)
         memory.remember_battery(position)
@@ -114,24 +114,21 @@ class MemoryTests(unittest.TestCase):
         memory.advance_step()
         memory.remember_battery(position)
 
-        battery = memory.known_batteries[position]
         entity = memory.world_memory.entity_at(position)
         self.assertIsNotNone(entity)
-        self.assertEqual(entity.last_seen_step, battery.last_seen_step)
-        self.assertEqual(entity.times_confirmed, battery.time_confirmed)
+        self.assertEqual(entity.last_seen_step, memory.step)
+        self.assertEqual(entity.times_confirmed, 2)
 
-    def test_world_memory_mirrors_stale_battery(self):
+    def test_world_memory_tracks_stale_battery(self):
         memory = Memory()
         position = (3, 2)
         memory.remember_battery(position)
 
         memory.mark_battery_stale(position)
 
-        battery = memory.known_batteries[position]
         entity = memory.world_memory.entity_at(position)
         self.assertIsNotNone(entity)
-        self.assertEqual(battery.status, "stale")
-        self.assertEqual(entity.status, battery.status)
+        self.assertEqual(entity.status, "stale")
 
     def test_confirmed_battery_query_matches_world_memory(self):
         memory = Memory()
