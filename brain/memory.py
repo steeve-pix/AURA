@@ -136,7 +136,16 @@ class Memory:
         self.investigation_history[tuple(position)] = revealed_type
 
     def previous_investigation_result(self, position: list[int] | tuple[int, int]) -> str | None:
-        return self.investigation_history.get(tuple(position))
+        return self.investigation_history.get((position[0], position[1]))
+
+    def remember_unknown(self, position: list[int] | tuple[int, int]) -> None:
+        self.world_memory.remembered_entity(position, "Unknown", self.step)
+
+    def unknowns(self) -> list[tuple[int, int]]:
+        return [
+            entity.position for entity in self.world_memory.entities.values() if
+            entity.entity_type == "Unknown" and entity.status == "confirmed"
+        ]
 
 
 MemoryStatus = Literal[

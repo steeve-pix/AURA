@@ -48,3 +48,4 @@ class WorldMemory:
 
     def restore_entity(self,entity: RememberedEntity) -> None:
         self.entities[entity.position] = entity
+
