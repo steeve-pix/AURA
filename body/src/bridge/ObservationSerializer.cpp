@@ -11,19 +11,21 @@ namespace aura::bridge {
         // Protocol names are centralized here so enum spelling never leaks into JSON.
         const auto actionTypeName =
                 [](ActionType type) {
-                    switch (type) {
-                        case ActionType::Idle:
-                            return "idle";
-                        case ActionType::Move:
-                            return "move";
-                        case ActionType::MoveTo:
-                            return "move_to";
-                        case ActionType::Investigate:
-                            return "investigate";
-                    }
+            switch (type) {
+                case ActionType::Idle:
+                    return "idle";
+                case ActionType::Move:
+                    return "move";
+                case ActionType::MoveTo:
+                    return "move_to";
+                case ActionType::Investigate:
+                    return "investigate";
+            }
 
-                    return "unknown";
-                };
+            return "unknown";
+        };
+
+        json["world_id"] = observation.worldId;
 
         json["position"] = {
             observation.position.x,

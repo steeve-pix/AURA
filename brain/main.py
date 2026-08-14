@@ -1,14 +1,19 @@
 import json
 import sys
 from typing import Any
+from pathlib import Path
 
 from brain.decision import decide
 from brain.goals import choose_goal, goal_scores
-from brain.memory import Memory
+from brain.memory_store import load_memory, memory_path_for_world, save_memory
 
 
 def main() -> None:
-    memory = Memory()
+    memory_directory = Path("data")
+
+    memory = None
+    active_world_id = None
+    memory_path = None
 
     for raw in sys.stdin:
         raw = raw.strip()
@@ -18,16 +23,21 @@ def main() -> None:
 
         observation: dict[str, Any] = json.loads(raw)
 
+        world_id = observation["world_id"]
+
+        if memory is None or world_id != active_world_id:
+            memory_path = memory_path_for_world(memory_directory, world_id)
+            memory = load_memory(memory_path, world_id)
+            active_world_id = world_id
+
         last_action = observation.get("last_action")
 
         # Failed destinations are excluded from later planning so the brain cannot
         # alternate forever between equivalent approaches to the same obstacle.
-        if (
-                last_action
-                and last_action.get("type") in {"move_to", "investigate"}
-                and not last_action.get("succeeded", False)
-                and last_action.get("target") is not None
-        ):
+        if (last_action and last_action.get("type")
+                in {"move_to", "investigate"} and not
+                last_action.get("succeeded", False)
+                and last_action.get("target") is not None):
             target = tuple(last_action["target"])
             memory.mark_target_failed(target)
 
@@ -39,16 +49,11 @@ def main() -> None:
             elif memory.active_investigation_approach == target:
                 memory.clear_investigation_approach()
 
-            print(
-                f"Failed targets: {memory.failed_targets}",
-                file=sys.stderr,
-            )
+            print(f"Failed targets: {memory.failed_targets}", file=sys.stderr)
 
-        if (
-                last_action
+        if (last_action
                 and last_action.get("type") == "investigate"
-                and last_action.get("succeeded", False)
-        ):
+                and last_action.get("succeeded", False)):
             memory.clear_investigation_target()
 
         for visible_cell in observation["visible_cells"]:
@@ -83,6 +88,8 @@ def main() -> None:
                 memory.forget_battery(
                     battery
                 )
+
+        save_memory(memory, memory_path, world_id)
 
         score = goal_scores(observation, memory)
         goal = choose_goal(observation, memory)
