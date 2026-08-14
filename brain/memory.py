@@ -38,9 +38,16 @@ class Memory:
     def forget_battery(self, position: tuple[int, int]) -> None:
         self.known_batteries.pop(position, None)
 
+        entity = self.world_memory.entity_at(position)
+
+        if entity is not None and entity.entity_type == "Battery":
+            self.world_memory.mark_stale(position)
+
     def batteries(self) -> list[tuple[int, int]]:
         return [
-            memory.position for memory in self.known_batteries.values() if memory.status == "confirmed"
+            entity.position for entity in self.world_memory.entities.values()
+            if entity.entity_type == "Battery"
+               and entity.status == "confirmed"
         ]
 
     def record_visit(self, position: list[int]) -> None:
@@ -115,25 +122,31 @@ class Memory:
         if memory is not None:
             memory.status = "stale"
 
-        self.world_memory.mark_stale(position)
+        entity = self.world_memory.entity_at(position)
+
+        if entity is not None and entity.entity_type == "Battery":
+            self.world_memory.mark_stale(position)
 
     def advance_step(self) -> None:
         self.step += 1
 
     def battery_trust(self, position: tuple[int, int]) -> float:
-        memory = self.known_batteries.get(position)
+        entity = self.world_memory.entity_at(position)
 
-        if memory is None:
+        if entity is None:
             return 0.0
 
-        if memory.status == "stale":
+        if entity.entity_type != "Battery":
             return 0.0
 
-        age = max(0, self.step - memory.last_seen_step)
+        if entity.status == "stale":
+            return 0.0
+
+        age = max(0, self.step - entity.last_seen_step)
 
         recency = 1.0 / (1.0 + age * 0.05)
 
-        confirmation = min(1.0, 0.5 + memory.time_confirmed * 0.1)
+        confirmation = min(1.0, 0.5 + entity.times_confirmed * 0.1)
 
         return recency * confirmation
 

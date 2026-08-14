@@ -133,6 +133,24 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(battery.status, "stale")
         self.assertEqual(entity.status, battery.status)
 
+    def test_confirmed_battery_query_matches_world_memory(self):
+        memory = Memory()
+        memory.remember_battery([3, 2])
+        memory.remember_battery([7, 4])
+        memory.mark_battery_stale((7, 4))
+
+        self.assertEqual(
+            set(memory.batteries()),
+            {
+                entity.position
+                for entity in memory.world_memory.entities.values()
+                if (
+                    entity.entity_type == "Battery"
+                    and entity.status == "confirmed"
+                )
+            },
+        )
+
     def test_records_visits(self):
         memory = Memory()
 
