@@ -54,6 +54,8 @@ namespace aura::app {
 
         render::Window window_;
 
+        std::uint32_t mazeSeed_;
+
         world::World world_;
         agent::Agent agent_;
 
@@ -70,5 +72,8 @@ namespace aura::app {
 
         /// Planning metadata used only by developer-facing rendering.
         bridge::BrainDebugState brainDebug_;
+
+        static constexpr int NUM_BATTERIES = 12;
+        static constexpr int NUM_UNKNOWN = 20;
     };
 }

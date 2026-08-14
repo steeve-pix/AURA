@@ -23,12 +23,13 @@
 
 namespace aura::app {
     Application::Application(std::string brainWorkingDirectory)
-        : window_(1280, 720, "AURA"), world_(41 * 2, 21 * 2), agent_({.x = 1, .y = 1}), rangeSensor_(3),
+        : window_(1280, 720, "AURA"), mazeSeed_(1337), world_(42, 21), agent_({.x = 1, .y = 1}),
+          rangeSensor_(3),
           brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)) {
-        constexpr int NUM_BATTERIES = 12 * 5;
-        constexpr int NUM_UNKNOWN = 20 * 4;
 
-        world::MazeGenerator generator{1337};
+
+        world::MazeGenerator generator{mazeSeed_};
+
         generator.generate(world_, NUM_BATTERIES, NUM_UNKNOWN);
     }
 
@@ -43,7 +44,7 @@ namespace aura::app {
 
         double lastUpdateTime = glfwGetTime();
 
-        constexpr double updateInterval = 0.01;
+        constexpr double updateInterval = 0.25;
 
 
         auto formatScore = [](const bridge::BrainDebugState &debug, const std::string &name) -> std::string {
@@ -236,6 +237,12 @@ namespace aura::app {
     }
 
     bridge::Observation Application::buildObservation() const {
+        const std::string worldId =
+                "maze:" + std::to_string(mazeSeed_)
+                + ":" + std::to_string(world_.width())
+                + "x" + std::to_string(world_.height())
+                + ":b" + std::to_string(NUM_BATTERIES)
+                + ":u" + std::to_string(NUM_UNKNOWN);
         const auto local =
                 sensors::LocalSensor::observe(world_, agent_);
 
@@ -247,7 +254,8 @@ namespace aura::app {
             .surroundings = local,
             .nearby = nearby,
             .sensor_radius = rangeSensor_.radius(),
-            .lastAction = lastAction_
+            .lastAction = lastAction_,
+            .worldId = worldId,
         };
     }
 
