@@ -5,13 +5,15 @@ from pathlib import Path
 
 from brain.decision import decide
 from brain.goals import choose_goal, goal_scores
-from brain.memory import Memory
-from brain.memory_store import load_memory, save_memory
+from brain.memory_store import load_memory, memory_path_for_world, save_memory
 
 
 def main() -> None:
-    MEMORY_PATH = Path("data/memory.json")
-    memory = load_memory(MEMORY_PATH)
+    memory_directory = Path("data")
+
+    memory = None
+    active_world_id = None
+    memory_path = None
 
     for raw in sys.stdin:
         raw = raw.strip()
@@ -20,6 +22,13 @@ def main() -> None:
             continue
 
         observation: dict[str, Any] = json.loads(raw)
+
+        world_id = observation["world_id"]
+
+        if memory is None or world_id != active_world_id:
+            memory_path = memory_path_for_world(memory_directory, world_id)
+            memory = load_memory(memory_path, world_id)
+            active_world_id = world_id
 
         last_action = observation.get("last_action")
 
@@ -80,7 +89,7 @@ def main() -> None:
                     battery
                 )
 
-        save_memory(memory, MEMORY_PATH)
+        save_memory(memory, memory_path, world_id)
 
         score = goal_scores(observation, memory)
         goal = choose_goal(observation, memory)

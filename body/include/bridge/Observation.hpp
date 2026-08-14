@@ -32,5 +32,7 @@ namespace aura::bridge {
         int sensor_radius;
         /// Previous action result, absent before the first decision cycle.
         std::optional<LastAction> lastAction;
+
+        std::string worldId;
     };
 }

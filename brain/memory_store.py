@@ -5,8 +5,17 @@ from pathlib import Path
 from brain.memory import Memory
 
 
-def save_memory(memory: Memory, path: Path) -> None:
+def memory_path_for_world(directory: Path, world_id: str) -> Path:
+    if not world_id:
+        raise ValueError("Cannot persist memory without a world_id")
+
+    filename = re.sub(r"[^A-Za-z0-9._-]+", "_", world_id).strip("_")
+    return directory / f"{filename}.json"
+
+
+def save_memory(memory: Memory, path: Path, world_id: str) -> None:
     data = {
+        "world_id": world_id,
         "known_batteries": [
             list(position) for position in memory.batteries()
         ],
@@ -29,7 +38,7 @@ def save_memory(memory: Memory, path: Path) -> None:
     path.write_text(text)
 
 
-def load_memory(path: Path) -> Memory:
+def load_memory(path: Path, world_id: str) -> Memory:
     memory = Memory()
 
     if not path.exists():
@@ -40,7 +49,10 @@ def load_memory(path: Path) -> Memory:
     if not text:
         return memory
 
-    data = json.loads(path.read_text())
+    data = json.loads(text)
+
+    if data.get("world_id") != world_id:
+        return memory
 
     for position in data.get("known_batteries", []):
         memory.remember_battery(position)
@@ -58,5 +70,3 @@ def load_memory(path: Path) -> Memory:
         memory.visit_counts[position] = visit["count"]
 
     return memory
-
-
