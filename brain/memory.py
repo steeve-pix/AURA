@@ -14,6 +14,7 @@ class Memory:
         self.active_investigation_approach: Optional[Tuple[int, int]] = None
         self.active_goal: Optional[str] = None
         self.step = 0
+        self.investigation_history: dict[tuple[int, int], str] = {}
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[(position[0], position[1])] = cell_type
@@ -130,6 +131,12 @@ class Memory:
         confirmation = min(1.0, 0.5 + memory.time_confirmed * 0.1)
 
         return recency * confirmation
+
+    def remember_investigation_result(self, position: list[int] | tuple[int, int], revealed_type: str) -> None:
+        self.investigation_history[tuple(position)] = revealed_type
+
+    def previous_investigation_result(self, position: list[int] | tuple[int, int]) -> str | None:
+        return self.investigation_history.get(tuple(position))
 
 
 MemoryStatus = Literal[
