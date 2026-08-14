@@ -53,9 +53,15 @@ def main() -> None:
 
             print(f"Failed targets: {memory.failed_targets}", file=sys.stderr)
 
-        if (last_action
-                and last_action.get("type") == "investigate"
-                and last_action.get("succeeded", False)):
+        if (last_action and last_action.get("type") == "investigate" and last_action.get("succeeded", False)):
+            target = tuple(last_action["target"])
+
+            revealed_cell = next((cell for cell in observation["visible_cells"] if tuple(cell["position"]) == target),
+                                 None, )
+
+            if revealed_cell is not None:
+                memory.remember_investigation_result(target, revealed_cell["type"])
+
             memory.clear_investigation_target()
 
         for visible_cell in observation["visible_cells"]:
