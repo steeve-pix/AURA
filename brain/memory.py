@@ -1,12 +1,12 @@
 from __future__ import annotations
 from typing import Optional, Sequence, Tuple, Literal
 from dataclasses import dataclass
+from brain.world_memory import WorldMemory
 
 
 class Memory:
     def __init__(self) -> None:
         self.known_cells: dict[tuple[int, int], str] = {}
-        self.known_batteries: dict[tuple[int, int], BatteryMemory] = {}
         self.visit_counts: dict[tuple[int, int], int] = {}
         self.failed_targets: set[tuple[int, int]] = set()
         self.active_recharge_target: Optional[Tuple[int, int]] = None
@@ -15,29 +15,32 @@ class Memory:
         self.active_goal: Optional[str] = None
         self.step = 0
         self.investigation_history: dict[tuple[int, int], str] = {}
+        self.world_memory: WorldMemory = WorldMemory()
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[(position[0], position[1])] = cell_type
 
+    def remember_entity(self, position: list[int] | tuple[int, int], entity_type: str, ) -> None:
+        self.world_memory.remember_entity(
+            position=position,
+            entity_type=entity_type,
+            step=self.step,
+        )
+
     def remember_battery(self, position: list[int] | tuple[int, int]) -> None:
-        key = (position[0], position[1])
-        existing = self.known_batteries.get(key)
+        self.remember_entity(position, "Battery")
 
-        if existing is None:
-            self.known_batteries[key] = BatteryMemory(position=key, status="confirmed", last_seen_step=self.step,
-                                                      time_confirmed=1)
-            return
-
-        existing.status = "confirmed"
-        existing.last_seen_step = self.step
-        existing.time_confirmed += 1
+    def mark_entity_stale(self, position: list[int] | tuple[int, int], ) -> None:
+        self.world_memory.mark_stale(position)
 
     def forget_battery(self, position: tuple[int, int]) -> None:
-        self.known_batteries.pop(position, None)
+        self.mark_entity_stale(position)
 
     def batteries(self) -> list[tuple[int, int]]:
         return [
-            memory.position for memory in self.known_batteries.values() if memory.status == "confirmed"
+            entity.position for entity in self.world_memory.entities.values()
+            if entity.entity_type == "Battery"
+               and entity.status == "confirmed"
         ]
 
     def record_visit(self, position: list[int]) -> None:
@@ -107,28 +110,28 @@ class Memory:
         self.active_goal = None
 
     def mark_battery_stale(self, position: tuple[int, int]) -> None:
-        memory = self.known_batteries.get(position)
-
-        if memory is not None:
-            memory.status = "stale"
+        self.mark_entity_stale(position)
 
     def advance_step(self) -> None:
         self.step += 1
 
     def battery_trust(self, position: tuple[int, int]) -> float:
-        memory = self.known_batteries.get(position)
+        entity = self.world_memory.entity_at(position)
 
-        if memory is None:
+        if entity is None:
             return 0.0
 
-        if memory.status == "stale":
+        if entity.entity_type != "Battery":
             return 0.0
 
-        age = max(0, self.step - memory.last_seen_step)
+        if entity.status == "stale":
+            return 0.0
+
+        age = max(0, self.step - entity.last_seen_step)
 
         recency = 1.0 / (1.0 + age * 0.05)
 
-        confirmation = min(1.0, 0.5 + memory.time_confirmed * 0.1)
+        confirmation = min(1.0, 0.5 + entity.times_confirmed * 0.1)
 
         return recency * confirmation
 
@@ -136,7 +139,16 @@ class Memory:
         self.investigation_history[tuple(position)] = revealed_type
 
     def previous_investigation_result(self, position: list[int] | tuple[int, int]) -> str | None:
-        return self.investigation_history.get(tuple(position))
+        return self.investigation_history.get((position[0], position[1]))
+
+    def remember_unknown(self, position: list[int] | tuple[int, int]) -> None:
+        self.remember_entity(position, "Unknown")
+
+    def unknowns(self) -> list[tuple[int, int]]:
+        return [
+            entity.position for entity in self.world_memory.entities.values() if
+            entity.entity_type == "Unknown" and entity.status == "confirmed"
+        ]
 
 
 MemoryStatus = Literal[

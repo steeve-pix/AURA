@@ -36,8 +36,8 @@ def investigation_score(observation, memory):
     reachable_unknowns = [
         obj for obj in observation["nearby_objects"]
         if obj["type"] == "Unknown"
-        and obj.get("reachable", False)
-        and not memory.is_failed_target(tuple(obj["position"]))
+           and obj.get("reachable", False)
+           and not memory.is_failed_target(tuple(obj["position"]))
     ]
 
     if not reachable_unknowns:

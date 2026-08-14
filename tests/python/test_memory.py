@@ -4,6 +4,25 @@ from brain.memory import Memory
 
 
 class MemoryTests(unittest.TestCase):
+    def test_remembers_arbitrary_entity_type(self):
+        memory = Memory()
+
+        memory.remember_entity([4, 7], "Food")
+
+        entity = memory.world_memory.entity_at((4, 7))
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.entity_type, "Food")
+
+    def test_marks_arbitrary_entity_type_stale(self):
+        memory = Memory()
+        memory.remember_entity([4, 7], "Food")
+
+        memory.mark_entity_stale([4, 7])
+
+        entity = memory.world_memory.entity_at((4, 7))
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.status, "stale")
+
     def test_remembers_battery(self):
         memory = Memory()
 
@@ -95,6 +114,58 @@ class MemoryTests(unittest.TestCase):
         memory.mark_battery_stale(stale_battery)
 
         self.assertEqual(memory.battery_trust(stale_battery), 0.0)
+
+    def test_world_memory_mirrors_confirmed_battery(self):
+        memory = Memory()
+
+        memory.remember_battery([3, 2])
+
+        entity = memory.world_memory.entity_at((3, 2))
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.entity_type, "Battery")
+        self.assertEqual(entity.status, "confirmed")
+
+    def test_world_memory_tracks_repeated_battery_confirmation(self):
+        memory = Memory()
+        position = (3, 2)
+        memory.remember_battery(position)
+
+        memory.advance_step()
+        memory.remember_battery(position)
+
+        entity = memory.world_memory.entity_at(position)
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.last_seen_step, memory.step)
+        self.assertEqual(entity.times_confirmed, 2)
+
+    def test_world_memory_tracks_stale_battery(self):
+        memory = Memory()
+        position = (3, 2)
+        memory.remember_battery(position)
+
+        memory.mark_battery_stale(position)
+
+        entity = memory.world_memory.entity_at(position)
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.status, "stale")
+
+    def test_confirmed_battery_query_matches_world_memory(self):
+        memory = Memory()
+        memory.remember_battery([3, 2])
+        memory.remember_battery([7, 4])
+        memory.mark_battery_stale((7, 4))
+
+        self.assertEqual(
+            set(memory.batteries()),
+            {
+                entity.position
+                for entity in memory.world_memory.entities.values()
+                if (
+                    entity.entity_type == "Battery"
+                    and entity.status == "confirmed"
+                )
+            },
+        )
 
     def test_records_visits(self):
         memory = Memory()

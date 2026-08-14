@@ -53,8 +53,9 @@ def main() -> None:
 
             print(f"Failed targets: {memory.failed_targets}", file=sys.stderr)
 
-        if (last_action and last_action.get("type") == "investigate" and last_action.get("succeeded", False)):
-            target = tuple(last_action["target"])
+        if last_action and last_action.get("type") == "investigate" and last_action.get("succeeded", False):
+            x, y = last_action["target"]
+            target = (x, y)
 
             revealed_cell = next((cell for cell in observation["visible_cells"] if tuple(cell["position"]) == target),
                                  None, )
@@ -73,8 +74,10 @@ def main() -> None:
         memory.record_visit(observation["position"])
 
         for visible_object in observation["nearby_objects"]:
-            if visible_object["type"] == "Battery":
-                memory.remember_battery(visible_object["position"])
+            memory.remember_entity(
+                visible_object["position"],
+                visible_object["type"],
+            )
 
         # Sensor truth supersedes remembered batteries when a previously known coordinate
         # is inside the current scan but no longer contains a battery.

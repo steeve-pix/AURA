@@ -2,7 +2,8 @@ import json
 import re
 from pathlib import Path
 
-from brain.memory import Memory, BatteryMemory
+from brain.memory import Memory
+from brain.world_memory import RememberedEntity
 
 
 def memory_path_for_world(directory: Path, world_id: str) -> Path:
@@ -17,12 +18,13 @@ def save_memory(memory: Memory, path: Path, world_id: str) -> None:
     data = {
         "world_id": world_id,
         "step": memory.step,
-        "known_batteries": [{
-            "position": list(battery_memory.position),
-            "status": battery_memory.status,
-            "last_seen_step": battery_memory.last_seen_step,
-            "time_confirmed": battery_memory.time_confirmed,
-        } for battery_memory in memory.known_batteries.values()],
+        "entities": [{
+            "position": list(entity.position),
+            "entity_type": entity.entity_type,
+            "status": entity.status,
+            "last_seen_step": entity.last_seen_step,
+            "times_confirmed": entity.times_confirmed,
+        } for entity in memory.world_memory.entities.values()],
 
         "investigation_history": [{
             "position": list(position),
@@ -63,13 +65,43 @@ def load_memory(path: Path, world_id: str) -> Memory:
     if data.get("world_id") != world_id:
         return memory
 
-    for item in data.get("known_batteries", []):
-        x, y = item["position"]
-        key = (x, y)
+    memory.step = int(data.get("step", 0))
 
-        memory.known_batteries[key] = BatteryMemory(position=key, status=item.get("status", "confirmed"),
-                                                    last_seen_step=item.get("last_seen_step", 0),
-                                                    time_confirmed=item.get("time_confirmed", 1))
+    entity_items = data.get("entities")
+    if entity_items is None:
+        entity_items = []
+
+        for battery in data.get("known_batteries", []):
+            if isinstance(battery, dict):
+                entity_items.append({
+                    "position": battery["position"],
+                    "entity_type": "Battery",
+                    "status": battery.get("status", "confirmed"),
+                    "last_seen_step": battery.get("last_seen_step", 0),
+                    "times_confirmed": battery.get(
+                        "times_confirmed",
+                        battery.get("time_confirmed", 1),
+                    ),
+                })
+            else:
+                entity_items.append({
+                    "position": battery,
+                    "entity_type": "Battery",
+                })
+
+    for item in entity_items:
+        x, y = item["position"]
+        entity = RememberedEntity(
+            position=(int(x), int(y)),
+            entity_type=item["entity_type"],
+            status=item.get("status", "confirmed"),
+            last_seen_step=int(item.get("last_seen_step", 0)),
+            times_confirmed=int(
+                item.get("times_confirmed", item.get("time_confirmed", 1))
+            ),
+        )
+
+        memory.world_memory.restore_entity(entity)
 
     for item in data.get("investigation_history", []):
         memory.remember_investigation_result(item["position"], item["revealed_type"])
