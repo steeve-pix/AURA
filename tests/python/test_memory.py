@@ -13,6 +13,16 @@ class MemoryTests(unittest.TestCase):
         self.assertIsNotNone(entity)
         self.assertEqual(entity.entity_type, "Food")
 
+    def test_marks_arbitrary_entity_type_stale(self):
+        memory = Memory()
+        memory.remember_entity([4, 7], "Food")
+
+        memory.mark_entity_stale([4, 7])
+
+        entity = memory.world_memory.entity_at((4, 7))
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.status, "stale")
+
     def test_remembers_battery(self):
         memory = Memory()
 

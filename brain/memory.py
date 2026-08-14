@@ -30,11 +30,11 @@ class Memory:
     def remember_battery(self, position: list[int] | tuple[int, int]) -> None:
         self.remember_entity(position, "Battery")
 
-    def forget_battery(self, position: tuple[int, int]) -> None:
-        entity = self.world_memory.entity_at(position)
+    def mark_entity_stale(self, position: list[int] | tuple[int, int], ) -> None:
+        self.world_memory.mark_stale(position)
 
-        if entity is not None and entity.entity_type == "Battery":
-            self.world_memory.mark_stale(position)
+    def forget_battery(self, position: tuple[int, int]) -> None:
+        self.mark_entity_stale(position)
 
     def batteries(self) -> list[tuple[int, int]]:
         return [
@@ -110,10 +110,7 @@ class Memory:
         self.active_goal = None
 
     def mark_battery_stale(self, position: tuple[int, int]) -> None:
-        entity = self.world_memory.entity_at(position)
-
-        if entity is not None and entity.entity_type == "Battery":
-            self.world_memory.mark_stale(position)
+        self.mark_entity_stale(position)
 
     def advance_step(self) -> None:
         self.step += 1
