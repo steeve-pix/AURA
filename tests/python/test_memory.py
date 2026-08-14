@@ -36,6 +36,28 @@ class MemoryTests(unittest.TestCase):
             memory.batteries()
         )
 
+    def test_forgetting_unknown_battery_is_safe(self):
+        memory = Memory()
+
+        memory.forget_battery((3, 2))
+
+        self.assertEqual(memory.batteries(), [])
+
+    def test_stale_battery_is_not_returned_as_confirmed(self):
+        memory = Memory()
+        memory.remember_battery([3, 2])
+
+        memory.mark_battery_stale((3, 2))
+
+        self.assertNotIn((3, 2), memory.batteries())
+
+    def test_marking_unknown_battery_stale_is_safe(self):
+        memory = Memory()
+
+        memory.mark_battery_stale((3, 2))
+
+        self.assertEqual(memory.batteries(), [])
+
     def test_records_visits(self):
         memory = Memory()
 

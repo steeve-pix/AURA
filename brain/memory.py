@@ -23,7 +23,7 @@ class Memory:
         self.known_batteries[key] = BatteryMemory(position=key, status="confirmed")
 
     def forget_battery(self, position: tuple[int, int]) -> None:
-        self.known_batteries.discard(position)
+        self.known_batteries.pop(position, None)
 
     def batteries(self) -> list[tuple[int, int]]:
         return [
@@ -97,7 +97,7 @@ class Memory:
         self.active_goal = None
 
     def mark_battery_stale(self, position: tuple[int, int]) -> None:
-        memory = self.known_batteries[position]
+        memory = self.known_batteries.get(position)
 
         if memory is not None:
             memory.status = "stale"
