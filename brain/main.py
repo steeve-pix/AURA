@@ -1,14 +1,17 @@
 import json
 import sys
 from typing import Any
+from pathlib import Path
 
 from brain.decision import decide
 from brain.goals import choose_goal, goal_scores
 from brain.memory import Memory
+from brain.memory_store import load_memory, save_memory
 
 
 def main() -> None:
-    memory = Memory()
+    MEMORY_PATH = Path("data/memory.json")
+    memory = load_memory(MEMORY_PATH)
 
     for raw in sys.stdin:
         raw = raw.strip()
@@ -22,12 +25,10 @@ def main() -> None:
 
         # Failed destinations are excluded from later planning so the brain cannot
         # alternate forever between equivalent approaches to the same obstacle.
-        if (
-                last_action
-                and last_action.get("type") in {"move_to", "investigate"}
-                and not last_action.get("succeeded", False)
-                and last_action.get("target") is not None
-        ):
+        if (last_action and last_action.get("type")
+                in {"move_to", "investigate"} and not
+                last_action.get("succeeded", False)
+                and last_action.get("target") is not None):
             target = tuple(last_action["target"])
             memory.mark_target_failed(target)
 
@@ -39,16 +40,11 @@ def main() -> None:
             elif memory.active_investigation_approach == target:
                 memory.clear_investigation_approach()
 
-            print(
-                f"Failed targets: {memory.failed_targets}",
-                file=sys.stderr,
-            )
+            print(f"Failed targets: {memory.failed_targets}", file=sys.stderr)
 
-        if (
-                last_action
+        if (last_action
                 and last_action.get("type") == "investigate"
-                and last_action.get("succeeded", False)
-        ):
+                and last_action.get("succeeded", False)):
             memory.clear_investigation_target()
 
         for visible_cell in observation["visible_cells"]:
@@ -83,6 +79,8 @@ def main() -> None:
                 memory.forget_battery(
                     battery
                 )
+
+        save_memory(memory, MEMORY_PATH)
 
         score = goal_scores(observation, memory)
         goal = choose_goal(observation, memory)

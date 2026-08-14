@@ -23,10 +23,10 @@
 
 namespace aura::app {
     Application::Application(std::string brainWorkingDirectory)
-        : window_(1280, 720, "AURA"), world_(41, 21), agent_({.x = 1, .y = 1}), rangeSensor_(3),
+        : window_(1280, 720, "AURA"), world_(41 * 2, 21 * 2), agent_({.x = 1, .y = 1}), rangeSensor_(3),
           brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)) {
-        constexpr int NUM_BATTERIES = 12;
-        constexpr int NUM_UNKNOWN = 20;
+        constexpr int NUM_BATTERIES = 12 * 5;
+        constexpr int NUM_UNKNOWN = 20 * 4;
 
         world::MazeGenerator generator{1337};
         generator.generate(world_, NUM_BATTERIES, NUM_UNKNOWN);
