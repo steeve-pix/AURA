@@ -2,11 +2,24 @@
 import random
 from typing import Any, Union
 
-from brain import memory
 from brain.memory import Memory
 
 BATTERY_ARRIVAL_RESERVE = 2
 BATTERY_TARGET_SWITCH_MARGIN = 5
+
+
+def remembered_battery_score(
+        memory: Memory,
+        battery: tuple[int, int],
+        aura_position: tuple[int, int],
+) -> float:
+    trust = memory.battery_trust(battery)
+    distance = (
+            abs(battery[0] - aura_position[0])
+            + abs(battery[1] - aura_position[1])
+    )
+
+    return trust / (1.0 + distance)
 
 
 def choose_recharge_action(observation, memory):
@@ -85,13 +98,16 @@ def choose_recharge_action(observation, memory):
     ]
 
     if remembered:
-        aura_x, aura_y = observation["position"]
+        x, y = observation["position"]
+        aura_position = (x, y)
 
-        target = min(
+        target = max(
             remembered,
-            key=lambda battery:
-            abs(battery[0] - aura_x)
-            + abs(battery[1] - aura_y),
+            key=lambda battery: remembered_battery_score(
+                memory,
+                battery,
+                aura_position,
+            ),
         )
 
         memory.set_recharge_target(target)
@@ -163,8 +179,8 @@ def choose_exploration_action(
 def choose_investigation_action(observation, memory: Memory):
     unknown_objects = [
         obj for obj in observation["nearby_objects"]
-        if obj["type"] == "Unknown"
-           and not memory.is_failed_target(tuple(obj["position"]))
+        if obj["type"] == "Unknown" and obj["reachable"]
+           and not memory.is_failed_target((int(obj["position"][0]), int(obj["position"][1])))
     ]
     if not unknown_objects:
         memory.clear_investigation_target()
@@ -177,14 +193,13 @@ def choose_investigation_action(observation, memory: Memory):
     target_position = memory.active_investigation_target
 
     if target_position not in objects_by_position:
-        target = min(
+        target = max(
             unknown_objects,
             key=lambda obj: (
-                abs(obj["position"][0] - observation["position"][0])
-                + abs(obj["position"][1] - observation["position"][1]),
-                tuple(obj["position"]),
-            ),
+                investigation_target_score(obj, observation, memory), tuple(obj["position"])
+            )
         )
+
         target_position = tuple(target["position"])
         memory.set_investigation_target(target_position)
 
@@ -214,7 +229,7 @@ def choose_investigation_action(observation, memory: Memory):
     approach_candidates = [
         position for position in adjacent_positions
         if visible_cells.get(position) not in {None, "Wall", "Unknown"}
-        and not memory.is_failed_target(position)
+           and not memory.is_failed_target(position)
     ]
 
     # Reject the object itself only after every visible adjacent approach is unusable.
@@ -240,3 +255,24 @@ def choose_investigation_action(observation, memory: Memory):
         "action": "move_to",
         "target": list(approach),
     }
+
+
+HISTORICAL_BATTERY_BONUS = 0.15
+
+
+def investigation_target_score(obj, observation, memory: Memory) -> float:
+    aura_x, aura_y = observation["position"]
+    target_x, target_y = obj["position"]
+
+    distance = (abs(target_x - aura_x) + abs(target_y - aura_y))
+
+    distance_score = 1.0 / (1.0 + distance)
+
+    previous_result = (memory.previous_investigation_result(obj["position"]))
+
+    history_bonus = 0.0
+
+    if previous_result == "Battery":
+        history_bonus = HISTORICAL_BATTERY_BONUS
+
+    return distance_score + history_bonus

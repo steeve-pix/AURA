@@ -44,7 +44,7 @@ namespace aura::app {
 
         double lastUpdateTime = glfwGetTime();
 
-        constexpr double updateInterval = 0.25;
+        constexpr double updateInterval = 0.01;
 
 
         auto formatScore = [](const bridge::BrainDebugState &debug, const std::string &name) -> std::string {

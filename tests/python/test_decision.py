@@ -1,6 +1,6 @@
 import unittest
 
-from brain.decision import decide
+from brain.decision import choose_investigation_action, decide
 from brain.memory import Memory
 
 
@@ -324,6 +324,69 @@ class DecisionTests(unittest.TestCase):
             }
         )
 
+    def test_recharge_uses_trust_to_rank_remembered_batteries(self):
+        memory = Memory()
+        close_old_battery = (3, 2)
+        farther_trusted_battery = (6, 2)
+        memory.remember_battery(close_old_battery)
+
+        for _ in range(100):
+            memory.advance_step()
+
+        for _ in range(5):
+            memory.remember_battery(farther_trusted_battery)
+
+        observation = {
+            "position": [2, 2],
+            "energy": 20,
+            "north": "Empty",
+            "east": "Empty",
+            "south": "Empty",
+            "west": "Empty",
+            "nearby_objects": [],
+        }
+
+        action = decide(observation, "recharge", memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": list(farther_trusted_battery),
+            },
+        )
+
+    def test_recharge_prefers_visible_battery_over_trusted_memory(self):
+        memory = Memory()
+        remembered_battery = (3, 2)
+        visible_battery = (8, 4)
+
+        for _ in range(5):
+            memory.remember_battery(remembered_battery)
+
+        observation = {
+            "position": [2, 2],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": list(visible_battery),
+                    "reachable": True,
+                    "path_length": 8,
+                },
+            ],
+        }
+
+        action = decide(observation, "recharge", memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": list(visible_battery),
+            },
+        )
+
     def test_recharge_retries_a_battery_after_one_failure(self):
         memory = Memory()
         memory.remember_battery([6, 2])
@@ -378,6 +441,67 @@ class DecisionTests(unittest.TestCase):
                 "action": "idle"
             }
         )
+
+    def test_investigation_prefers_historically_rewarding_unknown(self):
+        memory = Memory()
+        memory.remember_investigation_result([6, 2], "Battery")
+
+        observation = {
+            "position": [2, 2],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [5, 2],
+                    "reachable": True,
+                    "path_length": 3,
+                },
+                {
+                    "type": "Unknown",
+                    "position": [6, 2],
+                    "reachable": True,
+                    "path_length": 4,
+                },
+            ],
+            "visible_cells": [
+                {"position": [5, 1], "type": "Empty"},
+                {"position": [6, 1], "type": "Empty"},
+            ],
+        }
+
+        choose_investigation_action(observation, memory)
+
+        self.assertEqual(memory.active_investigation_target, (6, 2))
+
+    def test_investigation_keeps_existing_target(self):
+        memory = Memory()
+        memory.set_investigation_target((5, 2))
+        memory.remember_investigation_result([6, 2], "Battery")
+
+        observation = {
+            "position": [2, 2],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [5, 2],
+                    "reachable": True,
+                    "path_length": 3,
+                },
+                {
+                    "type": "Unknown",
+                    "position": [6, 2],
+                    "reachable": True,
+                    "path_length": 4,
+                },
+            ],
+            "visible_cells": [
+                {"position": [5, 1], "type": "Empty"},
+                {"position": [6, 1], "type": "Empty"},
+            ],
+        }
+
+        choose_investigation_action(observation, memory)
+
+        self.assertEqual(memory.active_investigation_target, (5, 2))
 
 
 if __name__ == "__main__":

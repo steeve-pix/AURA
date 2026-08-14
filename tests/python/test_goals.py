@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from brain.goals import choose_goal, recharge_score
+from brain.goals import choose_goal, investigation_score, recharge_score
 from brain.memory import Memory
 
 
@@ -110,6 +110,42 @@ class TestGoals(unittest.TestCase):
         )
 
         self.assertAlmostEqual(recharge_score(observation), 0.2)
+
+    def test_previous_battery_result_increases_investigation_score(self):
+        observation = dict(
+            self.observation,
+            nearby_objects=[
+                {
+                    "type": "Unknown",
+                    "position": [12, 5],
+                    "reachable": True,
+                },
+            ],
+        )
+        novel_memory = Memory()
+        historical_memory = Memory()
+        historical_memory.remember_investigation_result([12, 5], "Battery")
+
+        self.assertGreater(
+            investigation_score(observation, historical_memory),
+            investigation_score(observation, novel_memory),
+        )
+
+    def test_unreachable_historical_battery_result_adds_no_urgency(self):
+        observation = dict(
+            self.observation,
+            nearby_objects=[
+                {
+                    "type": "Unknown",
+                    "position": [12, 5],
+                    "reachable": False,
+                },
+            ],
+        )
+        memory = Memory()
+        memory.remember_investigation_result([12, 5], "Battery")
+
+        self.assertEqual(investigation_score(observation, memory), 0.0)
 
 
 if __name__ == '__main__':

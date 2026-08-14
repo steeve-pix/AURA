@@ -58,6 +58,44 @@ class MemoryTests(unittest.TestCase):
 
         self.assertEqual(memory.batteries(), [])
 
+    def test_recent_battery_is_more_trusted_than_old_battery(self):
+        memory = Memory()
+        old_battery = (3, 2)
+        recent_battery = (7, 4)
+
+        memory.remember_battery(old_battery)
+        for _ in range(20):
+            memory.advance_step()
+        memory.remember_battery(recent_battery)
+
+        self.assertGreater(
+            memory.battery_trust(recent_battery),
+            memory.battery_trust(old_battery),
+        )
+
+    def test_repeated_confirmation_increases_trust(self):
+        memory = Memory()
+        repeatedly_confirmed = (3, 2)
+        confirmed_once = (7, 4)
+
+        memory.remember_battery(repeatedly_confirmed)
+        memory.remember_battery(confirmed_once)
+        memory.remember_battery(repeatedly_confirmed)
+
+        self.assertGreater(
+            memory.battery_trust(repeatedly_confirmed),
+            memory.battery_trust(confirmed_once),
+        )
+
+    def test_stale_battery_has_zero_trust(self):
+        memory = Memory()
+        stale_battery = (3, 2)
+
+        memory.remember_battery(stale_battery)
+        memory.mark_battery_stale(stale_battery)
+
+        self.assertEqual(memory.battery_trust(stale_battery), 0.0)
+
     def test_records_visits(self):
         memory = Memory()
 

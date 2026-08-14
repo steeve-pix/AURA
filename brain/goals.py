@@ -2,6 +2,7 @@ from brain import memory
 
 ENERGY_RESERVE = 5
 RECHARGE_CONSIDERATION_THRESHOLD = 70
+HISTORICAL_BATTERY_BONUS = 0.15
 
 
 def recharge_score(observation):
@@ -32,16 +33,25 @@ def explore_score(observation, memory):
 
 
 def investigation_score(observation, memory):
-    unknown_objects = [
+    reachable_unknowns = [
         obj for obj in observation["nearby_objects"]
         if obj["type"] == "Unknown"
+        and obj.get("reachable", False)
         and not memory.is_failed_target(tuple(obj["position"]))
     ]
 
-    if not unknown_objects:
+    if not reachable_unknowns:
         return 0.0
 
-    return 0.65
+    score = 0.65
+
+    if any(
+            memory.previous_investigation_result(obj["position"]) == "Battery"
+            for obj in reachable_unknowns
+    ):
+        score += HISTORICAL_BATTERY_BONUS
+
+    return min(score, 1.0)
 
 
 def goal_scores(observation, memory):
