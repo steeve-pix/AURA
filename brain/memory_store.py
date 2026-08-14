@@ -2,7 +2,7 @@ import json
 import re
 from pathlib import Path
 
-from brain.memory import Memory
+from brain.memory import Memory, BatteryMemory
 
 
 def memory_path_for_world(directory: Path, world_id: str) -> Path:
@@ -17,8 +17,10 @@ def save_memory(memory: Memory, path: Path, world_id: str) -> None:
     data = {
         "world_id": world_id,
         "known_batteries": [
-            list(position) for position in memory.batteries()
-        ],
+            {
+                "position": list(battery_memory.position),
+                "status": battery_memory.status,
+            } for battery_memory in memory.known_batteries.values()],
 
         "known_cells": [{
             "position": list(position),
@@ -54,8 +56,11 @@ def load_memory(path: Path, world_id: str) -> Memory:
     if data.get("world_id") != world_id:
         return memory
 
-    for position in data.get("known_batteries", []):
-        memory.remember_battery(position)
+    for item in data.get("known_batteries", []):
+        x, y = item["position"]
+        key = (x, y)
+
+        memory.known_batteries[key] = BatteryMemory(position=key, status=item.get("status", "confirmed"))
 
     for cell in data.get("known_cells", []):
         x, y = cell["position"]
