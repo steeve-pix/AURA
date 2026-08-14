@@ -30,6 +30,8 @@ def main() -> None:
             memory = load_memory(memory_path, world_id)
             active_world_id = world_id
 
+        memory.advance_step()
+
         last_action = observation.get("last_action")
 
         # Failed destinations are excluded from later planning so the brain cannot

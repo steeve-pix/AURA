@@ -13,14 +13,23 @@ class Memory:
         self.active_investigation_target: Optional[Tuple[int, int]] = None
         self.active_investigation_approach: Optional[Tuple[int, int]] = None
         self.active_goal: Optional[str] = None
+        self.step = 0
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[(position[0], position[1])] = cell_type
 
-    def remember_battery(self, position: list[int]) -> None:
+    def remember_battery(self, position: list[int] | tuple[int, int]) -> None:
         key = (position[0], position[1])
+        existing = self.known_batteries.get(key)
 
-        self.known_batteries[key] = BatteryMemory(position=key, status="confirmed")
+        if existing is None:
+            self.known_batteries[key] = BatteryMemory(position=key, status="confirmed", last_seen_step=self.step,
+                                                      time_confirmed=1)
+            return
+
+        existing.status = "confirmed"
+        existing.last_seen_step = self.step
+        existing.time_confirmed += 1
 
     def forget_battery(self, position: tuple[int, int]) -> None:
         self.known_batteries.pop(position, None)
@@ -102,6 +111,9 @@ class Memory:
         if memory is not None:
             memory.status = "stale"
 
+    def advance_step(self) -> None:
+        self.step += 1
+
 
 MemoryStatus = Literal[
     "confirmed",
@@ -113,3 +125,5 @@ MemoryStatus = Literal[
 class BatteryMemory:
     position: tuple[int, int]
     status: MemoryStatus = "confirmed"
+    last_seen_step: int = 0
+    time_confirmed: int = 1
