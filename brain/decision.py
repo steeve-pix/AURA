@@ -2,11 +2,24 @@
 import random
 from typing import Any, Union
 
-from brain import memory
 from brain.memory import Memory
 
 BATTERY_ARRIVAL_RESERVE = 2
 BATTERY_TARGET_SWITCH_MARGIN = 5
+
+
+def remembered_battery_score(
+        memory: Memory,
+        battery: tuple[int, int],
+        aura_position: tuple[int, int],
+) -> float:
+    trust = memory.battery_trust(battery)
+    distance = (
+            abs(battery[0] - aura_position[0])
+            + abs(battery[1] - aura_position[1])
+    )
+
+    return trust / (1.0 + distance)
 
 
 def choose_recharge_action(observation, memory):
@@ -85,13 +98,16 @@ def choose_recharge_action(observation, memory):
     ]
 
     if remembered:
-        aura_x, aura_y = observation["position"]
+        x, y = observation["position"]
+        aura_position = (x, y)
 
-        target = min(
+        target = max(
             remembered,
-            key=lambda battery:
-            abs(battery[0] - aura_x)
-            + abs(battery[1] - aura_y),
+            key=lambda battery: remembered_battery_score(
+                memory,
+                battery,
+                aura_position,
+            ),
         )
 
         memory.set_recharge_target(target)
@@ -214,7 +230,7 @@ def choose_investigation_action(observation, memory: Memory):
     approach_candidates = [
         position for position in adjacent_positions
         if visible_cells.get(position) not in {None, "Wall", "Unknown"}
-        and not memory.is_failed_target(position)
+           and not memory.is_failed_target(position)
     ]
 
     # Reject the object itself only after every visible adjacent approach is unusable.

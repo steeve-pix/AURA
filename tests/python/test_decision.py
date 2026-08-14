@@ -324,6 +324,69 @@ class DecisionTests(unittest.TestCase):
             }
         )
 
+    def test_recharge_uses_trust_to_rank_remembered_batteries(self):
+        memory = Memory()
+        close_old_battery = (3, 2)
+        farther_trusted_battery = (6, 2)
+        memory.remember_battery(close_old_battery)
+
+        for _ in range(100):
+            memory.advance_step()
+
+        for _ in range(5):
+            memory.remember_battery(farther_trusted_battery)
+
+        observation = {
+            "position": [2, 2],
+            "energy": 20,
+            "north": "Empty",
+            "east": "Empty",
+            "south": "Empty",
+            "west": "Empty",
+            "nearby_objects": [],
+        }
+
+        action = decide(observation, "recharge", memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": list(farther_trusted_battery),
+            },
+        )
+
+    def test_recharge_prefers_visible_battery_over_trusted_memory(self):
+        memory = Memory()
+        remembered_battery = (3, 2)
+        visible_battery = (8, 4)
+
+        for _ in range(5):
+            memory.remember_battery(remembered_battery)
+
+        observation = {
+            "position": [2, 2],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": list(visible_battery),
+                    "reachable": True,
+                    "path_length": 8,
+                },
+            ],
+        }
+
+        action = decide(observation, "recharge", memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": list(visible_battery),
+            },
+        )
+
     def test_recharge_retries_a_battery_after_one_failure(self):
         memory = Memory()
         memory.remember_battery([6, 2])
