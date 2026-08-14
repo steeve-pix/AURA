@@ -74,10 +74,10 @@ def main() -> None:
         memory.record_visit(observation["position"])
 
         for visible_object in observation["nearby_objects"]:
-            if visible_object["type"] == "Battery":
-                memory.remember_battery(visible_object["position"])
-            elif visible_object["type"] == "Unknown":
-                memory.remember_unknown(visible_object["position"])
+            memory.remember_entity(
+                visible_object["position"],
+                visible_object["type"],
+            )
 
         # Sensor truth supersedes remembered batteries when a previously known coordinate
         # is inside the current scan but no longer contains a battery.

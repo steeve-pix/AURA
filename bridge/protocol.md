@@ -52,11 +52,15 @@ Example:
 }
 ```
 
-`visible_cells` contains every in-bounds cell currently covered by the range sensor. The Python brain can remember these observations as a partial map.
+`visible_cells` contains every in-bounds cell currently covered by the range sensor. The Python brain can remember these
+observations as a partial map.
 
-`nearby_objects` is the focused list of visible batteries. `reachable` and `path_length` describe the C++ body's current pathfinding result for each visible object. An unreachable object has `reachable: false` and `path_length: null`.
+`nearby_objects` is the focused list of visible batteries. `reachable` and `path_length` describe the C++ body's current
+pathfinding result for each visible object. An unreachable object has `reachable: false` and `path_length: null`.
 
-`last_action` reports the outcome of the action executed after the previous observation. It is `null` before the body has executed an action. A `move_to` result includes the requested target so the brain can associate a failure with the correct remembered location.
+`last_action` reports the outcome of the action executed after the previous observation. It is `null` before the body
+has executed an action. A `move_to` result includes the requested target so the brain can associate a failure with the
+correct remembered location.
 
 ```json
 {
@@ -68,7 +72,8 @@ Example:
 }
 ```
 
-The body reports each result once, in the next observation. Python should use failed `move_to` results to avoid repeatedly selecting unreachable targets.
+The body reports each result once, in the next observation. Python should use failed `move_to` results to avoid
+repeatedly selecting unreachable targets.
 
 ## Action
 
@@ -109,7 +114,8 @@ The `move_to` action asks the C++ body to navigate to a target position. The tar
 
 ### Optional debug data
 
-The brain may include a `debug` object with its current goal, goal scores, known cells, and visited cells. The C++ body uses this only for visualization; it does not affect physical simulation.
+The brain may include a `debug` object with its current goal, goal scores, known cells, and visited cells. The C++ body
+uses this only for visualization; it does not affect physical simulation.
 
 ```json
 {

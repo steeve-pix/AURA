@@ -3,224 +3,320 @@
   "step": 117123,
   "entities": [
     {
-      "position": [10,7],
+      "position": [
+        10,
+        7
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115903,
       "times_confirmed": 6939
     },
     {
-      "position": [17,12],
+      "position": [
+        17,
+        12
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116083,
       "times_confirmed": 7593
     },
     {
-      "position": [21,6],
+      "position": [
+        21,
+        6
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115306,
       "times_confirmed": 6827
     },
     {
-      "position": [20,9],
+      "position": [
+        20,
+        9
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115435,
       "times_confirmed": 6742
     },
     {
-      "position": [25,10],
+      "position": [
+        25,
+        10
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116653,
       "times_confirmed": 7233
     },
     {
-      "position": [25,3],
+      "position": [
+        25,
+        3
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 117123,
       "times_confirmed": 5937
     },
     {
-      "position": [25,6],
+      "position": [
+        25,
+        6
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 117123,
       "times_confirmed": 6720
     },
     {
-      "position": [31,9],
+      "position": [
+        31,
+        9
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116939,
       "times_confirmed": 5746
     },
     {
-      "position": [29,13],
+      "position": [
+        29,
+        13
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116755,
       "times_confirmed": 6432
     },
     {
-      "position": [27,14],
+      "position": [
+        27,
+        14
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116655,
       "times_confirmed": 7583
     },
     {
-      "position": [28,9],
+      "position": [
+        28,
+        9
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115340,
       "times_confirmed": 7395
     },
     {
-      "position": [23,13],
+      "position": [
+        23,
+        13
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116159,
       "times_confirmed": 6315
     },
     {
-      "position": [25,15],
+      "position": [
+        25,
+        15
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116653,
       "times_confirmed": 5816
     },
     {
-      "position": [19,15],
+      "position": [
+        19,
+        15
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116161,
       "times_confirmed": 5585
     },
     {
-      "position": [18,19],
+      "position": [
+        18,
+        19
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116162,
       "times_confirmed": 4701
     },
     {
-      "position": [16,19],
+      "position": [
+        16,
+        19
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116077,
       "times_confirmed": 4692
     },
     {
-      "position": [15,18],
+      "position": [
+        15,
+        18
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116079,
       "times_confirmed": 5561
     },
     {
-      "position": [15,14],
+      "position": [
+        15,
+        14
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116079,
       "times_confirmed": 7345
     },
     {
-      "position": [1,18],
+      "position": [
+        1,
+        18
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115933,
       "times_confirmed": 3830
     },
     {
-      "position": [5,17],
+      "position": [
+        5,
+        17
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115937,
       "times_confirmed": 5890
     },
     {
-      "position": [9,13],
+      "position": [
+        9,
+        13
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115949,
       "times_confirmed": 5879
     },
     {
-      "position": [11,7],
+      "position": [
+        11,
+        7
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115903,
       "times_confirmed": 6026
     },
     {
-      "position": [1,10],
+      "position": [
+        1,
+        10
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115887,
       "times_confirmed": 4751
     },
     {
-      "position": [4,15],
+      "position": [
+        4,
+        15
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115931,
       "times_confirmed": 7663
     },
     {
-      "position": [3,15],
+      "position": [
+        3,
+        15
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115931,
       "times_confirmed": 6190
     },
     {
-      "position": [28,13],
+      "position": [
+        28,
+        13
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116754,
       "times_confirmed": 7503
     },
     {
-      "position": [39,15],
+      "position": [
+        39,
+        15
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116859,
       "times_confirmed": 4171
     },
     {
-      "position": [35,9],
+      "position": [
+        35,
+        9
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116941,
       "times_confirmed": 5568
     },
     {
-      "position": [39,1],
+      "position": [
+        39,
+        1
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 116963,
       "times_confirmed": 2928
     },
     {
-      "position": [28,1],
+      "position": [
+        28,
+        1
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 117123,
       "times_confirmed": 5030
     },
     {
-      "position": [9,3],
+      "position": [
+        9,
+        3
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115180,
       "times_confirmed": 5893
     },
     {
-      "position": [8,1],
+      "position": [
+        8,
+        1
+      ],
       "entity_type": "Battery",
       "status": "confirmed",
       "last_seen_step": 115179,
@@ -229,5211 +325,9114 @@
   ],
   "investigation_history": [
     {
-      "position": [20,9],
+      "position": [
+        20,
+        9
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [25,6],
+      "position": [
+        25,
+        6
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [31,9],
+      "position": [
+        31,
+        9
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [28,9],
+      "position": [
+        28,
+        9
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [23,13],
+      "position": [
+        23,
+        13
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [25,15],
+      "position": [
+        25,
+        15
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [18,19],
+      "position": [
+        18,
+        19
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [16,19],
+      "position": [
+        16,
+        19
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [15,18],
+      "position": [
+        15,
+        18
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [15,14],
+      "position": [
+        15,
+        14
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [5,17],
+      "position": [
+        5,
+        17
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [9,13],
+      "position": [
+        9,
+        13
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [11,7],
+      "position": [
+        11,
+        7
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [4,15],
+      "position": [
+        4,
+        15
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [3,15],
+      "position": [
+        3,
+        15
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [28,13],
+      "position": [
+        28,
+        13
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [39,1],
+      "position": [
+        39,
+        1
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [28,1],
+      "position": [
+        28,
+        1
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [9,3],
+      "position": [
+        9,
+        3
+      ],
       "revealed_type": "Battery"
     },
     {
-      "position": [8,1],
+      "position": [
+        8,
+        1
+      ],
       "revealed_type": "Battery"
     }
   ],
   "known_cells": [
     {
-      "position": [0,0],
+      "position": [
+        0,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,0],
+      "position": [
+        1,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,0],
+      "position": [
+        2,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,0],
+      "position": [
+        3,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [4,0],
+      "position": [
+        4,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,1],
+      "position": [
+        0,
+        1
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,1],
+      "position": [
+        1,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [2,1],
+      "position": [
+        2,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,1],
+      "position": [
+        3,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,1],
+      "position": [
+        4,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [0,2],
+      "position": [
+        0,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,2],
+      "position": [
+        1,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,2],
+      "position": [
+        2,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,2],
+      "position": [
+        3,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [4,2],
+      "position": [
+        4,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,3],
+      "position": [
+        0,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,3],
+      "position": [
+        1,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [2,3],
+      "position": [
+        2,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,3],
+      "position": [
+        3,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,3],
+      "position": [
+        4,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,4],
+      "position": [
+        0,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,4],
+      "position": [
+        1,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [2,4],
+      "position": [
+        2,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,4],
+      "position": [
+        3,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,4],
+      "position": [
+        4,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,0],
+      "position": [
+        5,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,1],
+      "position": [
+        5,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [5,2],
+      "position": [
+        5,
+        2
+      ],
       "type": "Empty"
     },
     {
-      "position": [5,3],
+      "position": [
+        5,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [5,4],
+      "position": [
+        5,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,0],
+      "position": [
+        6,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,1],
+      "position": [
+        6,
+        1
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,2],
+      "position": [
+        6,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,3],
+      "position": [
+        6,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,4],
+      "position": [
+        6,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,0],
+      "position": [
+        7,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,1],
+      "position": [
+        7,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,2],
+      "position": [
+        7,
+        2
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,3],
+      "position": [
+        7,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,4],
+      "position": [
+        7,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,0],
+      "position": [
+        8,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,1],
+      "position": [
+        8,
+        1
+      ],
       "type": "Battery"
     },
     {
-      "position": [8,2],
+      "position": [
+        8,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,3],
+      "position": [
+        8,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,4],
+      "position": [
+        8,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,5],
+      "position": [
+        2,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,5],
+      "position": [
+        3,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,5],
+      "position": [
+        4,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,5],
+      "position": [
+        5,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,5],
+      "position": [
+        6,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,5],
+      "position": [
+        7,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,5],
+      "position": [
+        8,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [2,6],
+      "position": [
+        2,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,6],
+      "position": [
+        3,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [4,6],
+      "position": [
+        4,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,6],
+      "position": [
+        5,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,6],
+      "position": [
+        6,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,6],
+      "position": [
+        7,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,6],
+      "position": [
+        8,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,7],
+      "position": [
+        2,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,7],
+      "position": [
+        3,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,7],
+      "position": [
+        4,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [5,7],
+      "position": [
+        5,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,7],
+      "position": [
+        6,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,7],
+      "position": [
+        7,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,7],
+      "position": [
+        8,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [2,8],
+      "position": [
+        2,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,8],
+      "position": [
+        3,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,8],
+      "position": [
+        4,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,8],
+      "position": [
+        5,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,8],
+      "position": [
+        6,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,8],
+      "position": [
+        7,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,8],
+      "position": [
+        8,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,2],
+      "position": [
+        9,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,3],
+      "position": [
+        9,
+        3
+      ],
       "type": "Battery"
     },
     {
-      "position": [9,4],
+      "position": [
+        9,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,5],
+      "position": [
+        9,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,6],
+      "position": [
+        9,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,7],
+      "position": [
+        9,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,8],
+      "position": [
+        9,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [10,2],
+      "position": [
+        10,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,3],
+      "position": [
+        10,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [10,4],
+      "position": [
+        10,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,5],
+      "position": [
+        10,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [10,6],
+      "position": [
+        10,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,7],
+      "position": [
+        10,
+        7
+      ],
       "type": "Battery"
     },
     {
-      "position": [10,8],
+      "position": [
+        10,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,2],
+      "position": [
+        11,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,3],
+      "position": [
+        11,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [11,4],
+      "position": [
+        11,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,5],
+      "position": [
+        11,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [11,6],
+      "position": [
+        11,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,7],
+      "position": [
+        11,
+        7
+      ],
       "type": "Battery"
     },
     {
-      "position": [11,8],
+      "position": [
+        11,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,2],
+      "position": [
+        12,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,3],
+      "position": [
+        12,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,4],
+      "position": [
+        12,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,5],
+      "position": [
+        12,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,6],
+      "position": [
+        12,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,7],
+      "position": [
+        12,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,8],
+      "position": [
+        12,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,2],
+      "position": [
+        13,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,3],
+      "position": [
+        13,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [13,4],
+      "position": [
+        13,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,5],
+      "position": [
+        13,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [13,6],
+      "position": [
+        13,
+        6
+      ],
       "type": "Empty"
     },
     {
-      "position": [13,7],
+      "position": [
+        13,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [13,8],
+      "position": [
+        13,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,2],
+      "position": [
+        14,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,3],
+      "position": [
+        14,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,4],
+      "position": [
+        14,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,5],
+      "position": [
+        14,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,6],
+      "position": [
+        14,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,7],
+      "position": [
+        14,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,8],
+      "position": [
+        14,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,2],
+      "position": [
+        15,
+        2
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,3],
+      "position": [
+        15,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,4],
+      "position": [
+        15,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,5],
+      "position": [
+        15,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,6],
+      "position": [
+        15,
+        6
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,7],
+      "position": [
+        15,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,8],
+      "position": [
+        15,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,2],
+      "position": [
+        16,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,3],
+      "position": [
+        16,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,4],
+      "position": [
+        16,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,5],
+      "position": [
+        16,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,6],
+      "position": [
+        16,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,7],
+      "position": [
+        16,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,8],
+      "position": [
+        16,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,9],
+      "position": [
+        10,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,9],
+      "position": [
+        11,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,9],
+      "position": [
+        12,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,9],
+      "position": [
+        13,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,9],
+      "position": [
+        14,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,9],
+      "position": [
+        15,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,9],
+      "position": [
+        16,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [10,10],
+      "position": [
+        10,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,10],
+      "position": [
+        11,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,10],
+      "position": [
+        12,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,10],
+      "position": [
+        13,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,10],
+      "position": [
+        14,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,10],
+      "position": [
+        15,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,10],
+      "position": [
+        16,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,11],
+      "position": [
+        10,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,11],
+      "position": [
+        11,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,11],
+      "position": [
+        12,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,11],
+      "position": [
+        13,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,11],
+      "position": [
+        14,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,11],
+      "position": [
+        15,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,11],
+      "position": [
+        16,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [10,12],
+      "position": [
+        10,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,12],
+      "position": [
+        11,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,12],
+      "position": [
+        12,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,12],
+      "position": [
+        13,
+        12
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,12],
+      "position": [
+        14,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,12],
+      "position": [
+        15,
+        12
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,12],
+      "position": [
+        16,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,6],
+      "position": [
+        17,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,7],
+      "position": [
+        17,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [17,8],
+      "position": [
+        17,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,9],
+      "position": [
+        17,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [17,10],
+      "position": [
+        17,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,11],
+      "position": [
+        17,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [17,12],
+      "position": [
+        17,
+        12
+      ],
       "type": "Battery"
     },
     {
-      "position": [18,6],
+      "position": [
+        18,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,7],
+      "position": [
+        18,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [18,8],
+      "position": [
+        18,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,9],
+      "position": [
+        18,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [18,10],
+      "position": [
+        18,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,11],
+      "position": [
+        18,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [18,12],
+      "position": [
+        18,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,6],
+      "position": [
+        19,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,7],
+      "position": [
+        19,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,8],
+      "position": [
+        19,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,9],
+      "position": [
+        19,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,10],
+      "position": [
+        19,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,11],
+      "position": [
+        19,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,12],
+      "position": [
+        19,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,6],
+      "position": [
+        20,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,7],
+      "position": [
+        20,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,8],
+      "position": [
+        20,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,9],
+      "position": [
+        20,
+        9
+      ],
       "type": "Battery"
     },
     {
-      "position": [20,10],
+      "position": [
+        20,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,11],
+      "position": [
+        20,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,12],
+      "position": [
+        20,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,6],
+      "position": [
+        21,
+        6
+      ],
       "type": "Battery"
     },
     {
-      "position": [21,7],
+      "position": [
+        21,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,8],
+      "position": [
+        21,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,9],
+      "position": [
+        21,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,10],
+      "position": [
+        21,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,11],
+      "position": [
+        21,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,12],
+      "position": [
+        21,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,6],
+      "position": [
+        22,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,7],
+      "position": [
+        22,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,8],
+      "position": [
+        22,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,9],
+      "position": [
+        22,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,10],
+      "position": [
+        22,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,11],
+      "position": [
+        22,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,12],
+      "position": [
+        22,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,6],
+      "position": [
+        23,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,7],
+      "position": [
+        23,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [23,8],
+      "position": [
+        23,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [23,9],
+      "position": [
+        23,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [23,10],
+      "position": [
+        23,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [23,11],
+      "position": [
+        23,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [23,12],
+      "position": [
+        23,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,6],
+      "position": [
+        24,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,7],
+      "position": [
+        24,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,8],
+      "position": [
+        24,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,9],
+      "position": [
+        24,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,10],
+      "position": [
+        24,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,11],
+      "position": [
+        24,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,12],
+      "position": [
+        24,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,13],
+      "position": [
+        18,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,13],
+      "position": [
+        19,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [20,13],
+      "position": [
+        20,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,13],
+      "position": [
+        21,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,13],
+      "position": [
+        22,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,13],
+      "position": [
+        23,
+        13
+      ],
       "type": "Battery"
     },
     {
-      "position": [24,13],
+      "position": [
+        24,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [18,14],
+      "position": [
+        18,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,14],
+      "position": [
+        19,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [20,14],
+      "position": [
+        20,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,14],
+      "position": [
+        21,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,14],
+      "position": [
+        22,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,14],
+      "position": [
+        23,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,14],
+      "position": [
+        24,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,8],
+      "position": [
+        25,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,9],
+      "position": [
+        25,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,10],
+      "position": [
+        25,
+        10
+      ],
       "type": "Battery"
     },
     {
-      "position": [25,11],
+      "position": [
+        25,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,12],
+      "position": [
+        25,
+        12
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,13],
+      "position": [
+        25,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,14],
+      "position": [
+        25,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,8],
+      "position": [
+        26,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,9],
+      "position": [
+        26,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,10],
+      "position": [
+        26,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,11],
+      "position": [
+        26,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [26,12],
+      "position": [
+        26,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,13],
+      "position": [
+        26,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,14],
+      "position": [
+        26,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,7],
+      "position": [
+        25,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [26,7],
+      "position": [
+        26,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,6],
+      "position": [
+        25,
+        6
+      ],
       "type": "Battery"
     },
     {
-      "position": [26,6],
+      "position": [
+        26,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,5],
+      "position": [
+        20,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,5],
+      "position": [
+        21,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,5],
+      "position": [
+        22,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,5],
+      "position": [
+        23,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,5],
+      "position": [
+        24,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,5],
+      "position": [
+        25,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [26,5],
+      "position": [
+        26,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,4],
+      "position": [
+        20,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,4],
+      "position": [
+        21,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,4],
+      "position": [
+        22,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,4],
+      "position": [
+        23,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,4],
+      "position": [
+        24,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,4],
+      "position": [
+        25,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,4],
+      "position": [
+        26,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,4],
+      "position": [
+        19,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,5],
+      "position": [
+        19,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [18,4],
+      "position": [
+        18,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,5],
+      "position": [
+        18,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,3],
+      "position": [
+        18,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,3],
+      "position": [
+        19,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [20,3],
+      "position": [
+        20,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,3],
+      "position": [
+        21,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,3],
+      "position": [
+        22,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [23,3],
+      "position": [
+        23,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,3],
+      "position": [
+        24,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,2],
+      "position": [
+        18,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,2],
+      "position": [
+        19,
+        2
+      ],
       "type": "Empty"
     },
     {
-      "position": [20,2],
+      "position": [
+        20,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,2],
+      "position": [
+        21,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,2],
+      "position": [
+        22,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,2],
+      "position": [
+        23,
+        2
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,2],
+      "position": [
+        24,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,2],
+      "position": [
+        17,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,3],
+      "position": [
+        17,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [17,4],
+      "position": [
+        17,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [17,5],
+      "position": [
+        17,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,1],
+      "position": [
+        16,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [17,1],
+      "position": [
+        17,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [18,1],
+      "position": [
+        18,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,1],
+      "position": [
+        19,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [20,1],
+      "position": [
+        20,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,1],
+      "position": [
+        21,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,1],
+      "position": [
+        22,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,0],
+      "position": [
+        16,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,0],
+      "position": [
+        17,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,0],
+      "position": [
+        18,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,0],
+      "position": [
+        19,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,0],
+      "position": [
+        20,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,0],
+      "position": [
+        21,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,0],
+      "position": [
+        22,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,0],
+      "position": [
+        23,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,1],
+      "position": [
+        23,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,0],
+      "position": [
+        24,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,1],
+      "position": [
+        24,
+        1
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,0],
+      "position": [
+        25,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,1],
+      "position": [
+        25,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,2],
+      "position": [
+        25,
+        2
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,3],
+      "position": [
+        25,
+        3
+      ],
       "type": "Battery"
     },
     {
-      "position": [26,0],
+      "position": [
+        26,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,1],
+      "position": [
+        26,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [26,2],
+      "position": [
+        26,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,3],
+      "position": [
+        26,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,2],
+      "position": [
+        27,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,3],
+      "position": [
+        27,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,4],
+      "position": [
+        27,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,5],
+      "position": [
+        27,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,6],
+      "position": [
+        27,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,7],
+      "position": [
+        27,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,8],
+      "position": [
+        27,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,2],
+      "position": [
+        28,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,3],
+      "position": [
+        28,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,4],
+      "position": [
+        28,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,5],
+      "position": [
+        28,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,6],
+      "position": [
+        28,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,7],
+      "position": [
+        28,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [28,8],
+      "position": [
+        28,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,9],
+      "position": [
+        27,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [28,9],
+      "position": [
+        28,
+        9
+      ],
       "type": "Battery"
     },
     {
-      "position": [27,10],
+      "position": [
+        27,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [28,10],
+      "position": [
+        28,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,4],
+      "position": [
+        29,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,5],
+      "position": [
+        29,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,6],
+      "position": [
+        29,
+        6
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,7],
+      "position": [
+        29,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,8],
+      "position": [
+        29,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,9],
+      "position": [
+        29,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,10],
+      "position": [
+        29,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [30,4],
+      "position": [
+        30,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,5],
+      "position": [
+        30,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,6],
+      "position": [
+        30,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,7],
+      "position": [
+        30,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,8],
+      "position": [
+        30,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,9],
+      "position": [
+        30,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,10],
+      "position": [
+        30,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,4],
+      "position": [
+        31,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,5],
+      "position": [
+        31,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,6],
+      "position": [
+        31,
+        6
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,7],
+      "position": [
+        31,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,8],
+      "position": [
+        31,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,9],
+      "position": [
+        31,
+        9
+      ],
       "type": "Battery"
     },
     {
-      "position": [31,10],
+      "position": [
+        31,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [32,4],
+      "position": [
+        32,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,5],
+      "position": [
+        32,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,6],
+      "position": [
+        32,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,7],
+      "position": [
+        32,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,8],
+      "position": [
+        32,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,9],
+      "position": [
+        32,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,10],
+      "position": [
+        32,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,3],
+      "position": [
+        29,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [30,3],
+      "position": [
+        30,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,3],
+      "position": [
+        31,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [32,3],
+      "position": [
+        32,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,2],
+      "position": [
+        29,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,2],
+      "position": [
+        30,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,2],
+      "position": [
+        31,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,2],
+      "position": [
+        32,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,1],
+      "position": [
+        27,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [28,1],
+      "position": [
+        28,
+        1
+      ],
       "type": "Battery"
     },
     {
-      "position": [29,1],
+      "position": [
+        29,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [30,1],
+      "position": [
+        30,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,1],
+      "position": [
+        31,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [32,1],
+      "position": [
+        32,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,0],
+      "position": [
+        27,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,0],
+      "position": [
+        28,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,0],
+      "position": [
+        29,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,0],
+      "position": [
+        30,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,0],
+      "position": [
+        31,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,0],
+      "position": [
+        32,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,0],
+      "position": [
+        33,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,1],
+      "position": [
+        33,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,2],
+      "position": [
+        33,
+        2
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,3],
+      "position": [
+        33,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,4],
+      "position": [
+        33,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,5],
+      "position": [
+        33,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,6],
+      "position": [
+        33,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,0],
+      "position": [
+        34,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,1],
+      "position": [
+        34,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,2],
+      "position": [
+        34,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,3],
+      "position": [
+        34,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,4],
+      "position": [
+        34,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,5],
+      "position": [
+        34,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,6],
+      "position": [
+        34,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,7],
+      "position": [
+        33,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,7],
+      "position": [
+        34,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,8],
+      "position": [
+        33,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,8],
+      "position": [
+        34,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,9],
+      "position": [
+        33,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,9],
+      "position": [
+        34,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,10],
+      "position": [
+        33,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,10],
+      "position": [
+        34,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,11],
+      "position": [
+        28,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,11],
+      "position": [
+        29,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [30,11],
+      "position": [
+        30,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,11],
+      "position": [
+        31,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [32,11],
+      "position": [
+        32,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,11],
+      "position": [
+        33,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,11],
+      "position": [
+        34,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,12],
+      "position": [
+        28,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,12],
+      "position": [
+        29,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,12],
+      "position": [
+        30,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,12],
+      "position": [
+        31,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,12],
+      "position": [
+        32,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,12],
+      "position": [
+        33,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,12],
+      "position": [
+        34,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,13],
+      "position": [
+        28,
+        13
+      ],
       "type": "Battery"
     },
     {
-      "position": [29,13],
+      "position": [
+        29,
+        13
+      ],
       "type": "Battery"
     },
     {
-      "position": [30,13],
+      "position": [
+        30,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,13],
+      "position": [
+        31,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [32,13],
+      "position": [
+        32,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,13],
+      "position": [
+        33,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,13],
+      "position": [
+        34,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [28,14],
+      "position": [
+        28,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,14],
+      "position": [
+        29,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,14],
+      "position": [
+        30,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,14],
+      "position": [
+        31,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,14],
+      "position": [
+        32,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,14],
+      "position": [
+        33,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,14],
+      "position": [
+        34,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,11],
+      "position": [
+        27,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,12],
+      "position": [
+        27,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,13],
+      "position": [
+        27,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,14],
+      "position": [
+        27,
+        14
+      ],
       "type": "Battery"
     },
     {
-      "position": [22,15],
+      "position": [
+        22,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,15],
+      "position": [
+        23,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,15],
+      "position": [
+        24,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,15],
+      "position": [
+        25,
+        15
+      ],
       "type": "Battery"
     },
     {
-      "position": [26,15],
+      "position": [
+        26,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,15],
+      "position": [
+        27,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [28,15],
+      "position": [
+        28,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,16],
+      "position": [
+        22,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,16],
+      "position": [
+        23,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,16],
+      "position": [
+        24,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,16],
+      "position": [
+        25,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [26,16],
+      "position": [
+        26,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,16],
+      "position": [
+        27,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [28,16],
+      "position": [
+        28,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,15],
+      "position": [
+        21,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,16],
+      "position": [
+        21,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [20,15],
+      "position": [
+        20,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,16],
+      "position": [
+        20,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,17],
+      "position": [
+        20,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,17],
+      "position": [
+        21,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,17],
+      "position": [
+        22,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,17],
+      "position": [
+        23,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,17],
+      "position": [
+        24,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,17],
+      "position": [
+        25,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [26,17],
+      "position": [
+        26,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,18],
+      "position": [
+        20,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,18],
+      "position": [
+        21,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,18],
+      "position": [
+        22,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,18],
+      "position": [
+        23,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,18],
+      "position": [
+        24,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,18],
+      "position": [
+        25,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,18],
+      "position": [
+        26,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,17],
+      "position": [
+        27,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,18],
+      "position": [
+        27,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,17],
+      "position": [
+        28,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,18],
+      "position": [
+        28,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [22,19],
+      "position": [
+        22,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [23,19],
+      "position": [
+        23,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [24,19],
+      "position": [
+        24,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [25,19],
+      "position": [
+        25,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [26,19],
+      "position": [
+        26,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [27,19],
+      "position": [
+        27,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [28,19],
+      "position": [
+        28,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [22,20],
+      "position": [
+        22,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [23,20],
+      "position": [
+        23,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [24,20],
+      "position": [
+        24,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [25,20],
+      "position": [
+        25,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [26,20],
+      "position": [
+        26,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [27,20],
+      "position": [
+        27,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [28,20],
+      "position": [
+        28,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [21,19],
+      "position": [
+        21,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [21,20],
+      "position": [
+        21,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,19],
+      "position": [
+        20,
+        19
+      ],
       "type": "Wall"
     },
     {
-      "position": [20,20],
+      "position": [
+        20,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,16],
+      "position": [
+        19,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [19,17],
+      "position": [
+        19,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,18],
+      "position": [
+        19,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,19],
+      "position": [
+        19,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,20],
+      "position": [
+        19,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,16],
+      "position": [
+        18,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,17],
+      "position": [
+        18,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,18],
+      "position": [
+        18,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,19],
+      "position": [
+        18,
+        19
+      ],
       "type": "Battery"
     },
     {
-      "position": [18,20],
+      "position": [
+        18,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [18,15],
+      "position": [
+        18,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [19,15],
+      "position": [
+        19,
+        15
+      ],
       "type": "Battery"
     },
     {
-      "position": [17,13],
+      "position": [
+        17,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [17,14],
+      "position": [
+        17,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,15],
+      "position": [
+        17,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [17,16],
+      "position": [
+        17,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,13],
+      "position": [
+        16,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,14],
+      "position": [
+        16,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,15],
+      "position": [
+        16,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,16],
+      "position": [
+        16,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,17],
+      "position": [
+        16,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,17],
+      "position": [
+        17,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,18],
+      "position": [
+        16,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,18],
+      "position": [
+        17,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,13],
+      "position": [
+        15,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,14],
+      "position": [
+        15,
+        14
+      ],
       "type": "Battery"
     },
     {
-      "position": [15,15],
+      "position": [
+        15,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,16],
+      "position": [
+        15,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,17],
+      "position": [
+        15,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [15,18],
+      "position": [
+        15,
+        18
+      ],
       "type": "Battery"
     },
     {
-      "position": [14,13],
+      "position": [
+        14,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,14],
+      "position": [
+        14,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,15],
+      "position": [
+        14,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,16],
+      "position": [
+        14,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,17],
+      "position": [
+        14,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,18],
+      "position": [
+        14,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,19],
+      "position": [
+        14,
+        19
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,19],
+      "position": [
+        15,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [16,19],
+      "position": [
+        16,
+        19
+      ],
       "type": "Battery"
     },
     {
-      "position": [17,19],
+      "position": [
+        17,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,20],
+      "position": [
+        14,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,20],
+      "position": [
+        15,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [16,20],
+      "position": [
+        16,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [17,20],
+      "position": [
+        17,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,16],
+      "position": [
+        13,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [13,17],
+      "position": [
+        13,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [13,18],
+      "position": [
+        13,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,19],
+      "position": [
+        13,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [13,20],
+      "position": [
+        13,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,16],
+      "position": [
+        12,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,17],
+      "position": [
+        12,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,18],
+      "position": [
+        12,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,19],
+      "position": [
+        12,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,20],
+      "position": [
+        12,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,15],
+      "position": [
+        12,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,15],
+      "position": [
+        13,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,14],
+      "position": [
+        12,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,14],
+      "position": [
+        13,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,14],
+      "position": [
+        11,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [11,15],
+      "position": [
+        11,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [11,16],
+      "position": [
+        11,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [11,17],
+      "position": [
+        11,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [11,18],
+      "position": [
+        11,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,19],
+      "position": [
+        11,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [11,20],
+      "position": [
+        11,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,14],
+      "position": [
+        10,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,15],
+      "position": [
+        10,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,16],
+      "position": [
+        10,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,17],
+      "position": [
+        10,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [10,18],
+      "position": [
+        10,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,19],
+      "position": [
+        10,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [10,20],
+      "position": [
+        10,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,13],
+      "position": [
+        10,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,13],
+      "position": [
+        11,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,13],
+      "position": [
+        12,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [13,13],
+      "position": [
+        13,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,10],
+      "position": [
+        9,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,11],
+      "position": [
+        9,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,12],
+      "position": [
+        9,
+        12
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,13],
+      "position": [
+        9,
+        13
+      ],
       "type": "Battery"
     },
     {
-      "position": [9,14],
+      "position": [
+        9,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,15],
+      "position": [
+        9,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,16],
+      "position": [
+        9,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,10],
+      "position": [
+        8,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,11],
+      "position": [
+        8,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,12],
+      "position": [
+        8,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,13],
+      "position": [
+        8,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,14],
+      "position": [
+        8,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,15],
+      "position": [
+        8,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,16],
+      "position": [
+        8,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [8,17],
+      "position": [
+        8,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,17],
+      "position": [
+        9,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,18],
+      "position": [
+        8,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,18],
+      "position": [
+        9,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,19],
+      "position": [
+        8,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,19],
+      "position": [
+        9,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,20],
+      "position": [
+        8,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,20],
+      "position": [
+        9,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,14],
+      "position": [
+        7,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,15],
+      "position": [
+        7,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,16],
+      "position": [
+        7,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,17],
+      "position": [
+        7,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,18],
+      "position": [
+        7,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,19],
+      "position": [
+        7,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,20],
+      "position": [
+        7,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,14],
+      "position": [
+        6,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,15],
+      "position": [
+        6,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,16],
+      "position": [
+        6,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,17],
+      "position": [
+        6,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,18],
+      "position": [
+        6,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,19],
+      "position": [
+        6,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,20],
+      "position": [
+        6,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,16],
+      "position": [
+        5,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,17],
+      "position": [
+        5,
+        17
+      ],
       "type": "Battery"
     },
     {
-      "position": [5,18],
+      "position": [
+        5,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,19],
+      "position": [
+        5,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [5,20],
+      "position": [
+        5,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [4,16],
+      "position": [
+        4,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [4,17],
+      "position": [
+        4,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,18],
+      "position": [
+        4,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [4,19],
+      "position": [
+        4,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,20],
+      "position": [
+        4,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,16],
+      "position": [
+        3,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,17],
+      "position": [
+        3,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,18],
+      "position": [
+        3,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,19],
+      "position": [
+        3,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,20],
+      "position": [
+        3,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,16],
+      "position": [
+        2,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,17],
+      "position": [
+        2,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,18],
+      "position": [
+        2,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,19],
+      "position": [
+        2,
+        19
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,20],
+      "position": [
+        2,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,16],
+      "position": [
+        1,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [1,17],
+      "position": [
+        1,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [1,18],
+      "position": [
+        1,
+        18
+      ],
       "type": "Battery"
     },
     {
-      "position": [1,19],
+      "position": [
+        1,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [1,20],
+      "position": [
+        1,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,16],
+      "position": [
+        0,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,17],
+      "position": [
+        0,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,18],
+      "position": [
+        0,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,19],
+      "position": [
+        0,
+        19
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,20],
+      "position": [
+        0,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,15],
+      "position": [
+        0,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,15],
+      "position": [
+        1,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [2,15],
+      "position": [
+        2,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,15],
+      "position": [
+        3,
+        15
+      ],
       "type": "Battery"
     },
     {
-      "position": [4,15],
+      "position": [
+        4,
+        15
+      ],
       "type": "Battery"
     },
     {
-      "position": [5,15],
+      "position": [
+        5,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [0,14],
+      "position": [
+        0,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,14],
+      "position": [
+        1,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [2,14],
+      "position": [
+        2,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,14],
+      "position": [
+        3,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [4,14],
+      "position": [
+        4,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,14],
+      "position": [
+        5,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,13],
+      "position": [
+        4,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,13],
+      "position": [
+        5,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,13],
+      "position": [
+        6,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,13],
+      "position": [
+        7,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,12],
+      "position": [
+        4,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,12],
+      "position": [
+        5,
+        12
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,12],
+      "position": [
+        6,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,12],
+      "position": [
+        7,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [4,11],
+      "position": [
+        4,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [5,11],
+      "position": [
+        5,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [6,11],
+      "position": [
+        6,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,11],
+      "position": [
+        7,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,10],
+      "position": [
+        4,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [5,10],
+      "position": [
+        5,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,10],
+      "position": [
+        6,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [7,10],
+      "position": [
+        7,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [6,9],
+      "position": [
+        6,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [7,9],
+      "position": [
+        7,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [8,9],
+      "position": [
+        8,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,9],
+      "position": [
+        9,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [5,9],
+      "position": [
+        5,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [4,9],
+      "position": [
+        4,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [3,9],
+      "position": [
+        3,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,10],
+      "position": [
+        3,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,11],
+      "position": [
+        3,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,12],
+      "position": [
+        3,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,9],
+      "position": [
+        2,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,10],
+      "position": [
+        2,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,11],
+      "position": [
+        2,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [2,12],
+      "position": [
+        2,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,5],
+      "position": [
+        1,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [1,6],
+      "position": [
+        1,
+        6
+      ],
       "type": "Empty"
     },
     {
-      "position": [1,7],
+      "position": [
+        1,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [1,8],
+      "position": [
+        1,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [1,9],
+      "position": [
+        1,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [1,10],
+      "position": [
+        1,
+        10
+      ],
       "type": "Battery"
     },
     {
-      "position": [0,5],
+      "position": [
+        0,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,6],
+      "position": [
+        0,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,7],
+      "position": [
+        0,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,8],
+      "position": [
+        0,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,9],
+      "position": [
+        0,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,10],
+      "position": [
+        0,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [0,11],
+      "position": [
+        0,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,11],
+      "position": [
+        1,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [0,12],
+      "position": [
+        0,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,12],
+      "position": [
+        1,
+        12
+      ],
       "type": "Empty"
     },
     {
-      "position": [0,13],
+      "position": [
+        0,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [1,13],
+      "position": [
+        1,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [2,13],
+      "position": [
+        2,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [3,13],
+      "position": [
+        3,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,16],
+      "position": [
+        29,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,17],
+      "position": [
+        29,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,18],
+      "position": [
+        29,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,19],
+      "position": [
+        29,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [29,20],
+      "position": [
+        29,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,16],
+      "position": [
+        30,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,17],
+      "position": [
+        30,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [30,18],
+      "position": [
+        30,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,19],
+      "position": [
+        30,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [30,20],
+      "position": [
+        30,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,16],
+      "position": [
+        31,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,17],
+      "position": [
+        31,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,18],
+      "position": [
+        31,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,19],
+      "position": [
+        31,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [31,20],
+      "position": [
+        31,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,16],
+      "position": [
+        32,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,17],
+      "position": [
+        32,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [32,18],
+      "position": [
+        32,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [32,19],
+      "position": [
+        32,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [32,20],
+      "position": [
+        32,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,16],
+      "position": [
+        33,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [33,17],
+      "position": [
+        33,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,18],
+      "position": [
+        33,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,19],
+      "position": [
+        33,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,20],
+      "position": [
+        33,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,16],
+      "position": [
+        34,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,17],
+      "position": [
+        34,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,18],
+      "position": [
+        34,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,19],
+      "position": [
+        34,
+        19
+      ],
       "type": "Wall"
     },
     {
-      "position": [34,20],
+      "position": [
+        34,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,16],
+      "position": [
+        35,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,17],
+      "position": [
+        35,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,18],
+      "position": [
+        35,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,19],
+      "position": [
+        35,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,20],
+      "position": [
+        35,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,16],
+      "position": [
+        36,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,17],
+      "position": [
+        36,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,18],
+      "position": [
+        36,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,19],
+      "position": [
+        36,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [36,20],
+      "position": [
+        36,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [30,15],
+      "position": [
+        30,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [31,15],
+      "position": [
+        31,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [32,15],
+      "position": [
+        32,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [33,15],
+      "position": [
+        33,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [34,15],
+      "position": [
+        34,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,15],
+      "position": [
+        35,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [36,15],
+      "position": [
+        36,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,14],
+      "position": [
+        35,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,14],
+      "position": [
+        36,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [29,15],
+      "position": [
+        29,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,10],
+      "position": [
+        35,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,11],
+      "position": [
+        35,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,12],
+      "position": [
+        35,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,13],
+      "position": [
+        35,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [36,10],
+      "position": [
+        36,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,11],
+      "position": [
+        36,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [36,12],
+      "position": [
+        36,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,13],
+      "position": [
+        36,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,10],
+      "position": [
+        37,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,11],
+      "position": [
+        37,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,12],
+      "position": [
+        37,
+        12
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,13],
+      "position": [
+        37,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,14],
+      "position": [
+        37,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,15],
+      "position": [
+        37,
+        15
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,16],
+      "position": [
+        37,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,10],
+      "position": [
+        38,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,11],
+      "position": [
+        38,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,12],
+      "position": [
+        38,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,13],
+      "position": [
+        38,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,14],
+      "position": [
+        38,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,15],
+      "position": [
+        38,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,16],
+      "position": [
+        38,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,10],
+      "position": [
+        39,
+        10
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,11],
+      "position": [
+        39,
+        11
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,12],
+      "position": [
+        39,
+        12
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,13],
+      "position": [
+        39,
+        13
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,14],
+      "position": [
+        39,
+        14
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,15],
+      "position": [
+        39,
+        15
+      ],
       "type": "Battery"
     },
     {
-      "position": [39,16],
+      "position": [
+        39,
+        16
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,10],
+      "position": [
+        40,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,11],
+      "position": [
+        40,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,12],
+      "position": [
+        40,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,13],
+      "position": [
+        40,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,14],
+      "position": [
+        40,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,15],
+      "position": [
+        40,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,16],
+      "position": [
+        40,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,9],
+      "position": [
+        35,
+        9
+      ],
       "type": "Battery"
     },
     {
-      "position": [36,9],
+      "position": [
+        36,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,9],
+      "position": [
+        37,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,9],
+      "position": [
+        38,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,9],
+      "position": [
+        39,
+        9
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,9],
+      "position": [
+        40,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,8],
+      "position": [
+        35,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,8],
+      "position": [
+        36,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,8],
+      "position": [
+        37,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,8],
+      "position": [
+        38,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,8],
+      "position": [
+        39,
+        8
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,8],
+      "position": [
+        40,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,7],
+      "position": [
+        35,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [36,7],
+      "position": [
+        36,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,7],
+      "position": [
+        37,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,7],
+      "position": [
+        38,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,6],
+      "position": [
+        35,
+        6
+      ],
       "type": "Empty"
     },
     {
-      "position": [36,6],
+      "position": [
+        36,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,6],
+      "position": [
+        37,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,6],
+      "position": [
+        38,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,6],
+      "position": [
+        39,
+        6
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,7],
+      "position": [
+        39,
+        7
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,6],
+      "position": [
+        40,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,7],
+      "position": [
+        40,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,5],
+      "position": [
+        35,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [36,5],
+      "position": [
+        36,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,5],
+      "position": [
+        37,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,5],
+      "position": [
+        38,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,5],
+      "position": [
+        39,
+        5
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,5],
+      "position": [
+        40,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,4],
+      "position": [
+        35,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,4],
+      "position": [
+        36,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,4],
+      "position": [
+        37,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,4],
+      "position": [
+        38,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,4],
+      "position": [
+        39,
+        4
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,4],
+      "position": [
+        40,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,4],
+      "position": [
+        41,
+        4
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,5],
+      "position": [
+        41,
+        5
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,6],
+      "position": [
+        41,
+        6
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,7],
+      "position": [
+        41,
+        7
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,8],
+      "position": [
+        41,
+        8
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,9],
+      "position": [
+        41,
+        9
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,10],
+      "position": [
+        41,
+        10
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,3],
+      "position": [
+        36,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,3],
+      "position": [
+        37,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,3],
+      "position": [
+        38,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,3],
+      "position": [
+        39,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,3],
+      "position": [
+        40,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,3],
+      "position": [
+        41,
+        3
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,2],
+      "position": [
+        36,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,2],
+      "position": [
+        37,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,2],
+      "position": [
+        38,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,2],
+      "position": [
+        39,
+        2
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,2],
+      "position": [
+        40,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,2],
+      "position": [
+        41,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,1],
+      "position": [
+        36,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [37,1],
+      "position": [
+        37,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,1],
+      "position": [
+        38,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,1],
+      "position": [
+        39,
+        1
+      ],
       "type": "Battery"
     },
     {
-      "position": [40,1],
+      "position": [
+        40,
+        1
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,1],
+      "position": [
+        41,
+        1
+      ],
       "type": "Wall"
     },
     {
-      "position": [36,0],
+      "position": [
+        36,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,0],
+      "position": [
+        37,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,0],
+      "position": [
+        38,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,0],
+      "position": [
+        39,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,0],
+      "position": [
+        40,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,0],
+      "position": [
+        41,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,0],
+      "position": [
+        35,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,1],
+      "position": [
+        35,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [35,2],
+      "position": [
+        35,
+        2
+      ],
       "type": "Wall"
     },
     {
-      "position": [35,3],
+      "position": [
+        35,
+        3
+      ],
       "type": "Empty"
     },
     {
-      "position": [41,11],
+      "position": [
+        41,
+        11
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,12],
+      "position": [
+        41,
+        12
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,13],
+      "position": [
+        41,
+        13
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,14],
+      "position": [
+        41,
+        14
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,15],
+      "position": [
+        41,
+        15
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,16],
+      "position": [
+        41,
+        16
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,17],
+      "position": [
+        37,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,17],
+      "position": [
+        38,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,17],
+      "position": [
+        39,
+        17
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,17],
+      "position": [
+        40,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,17],
+      "position": [
+        41,
+        17
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,18],
+      "position": [
+        37,
+        18
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,18],
+      "position": [
+        38,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,18],
+      "position": [
+        39,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,18],
+      "position": [
+        40,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,18],
+      "position": [
+        41,
+        18
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,19],
+      "position": [
+        37,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [38,19],
+      "position": [
+        38,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [39,19],
+      "position": [
+        39,
+        19
+      ],
       "type": "Empty"
     },
     {
-      "position": [40,19],
+      "position": [
+        40,
+        19
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,19],
+      "position": [
+        41,
+        19
+      ],
       "type": "Wall"
     },
     {
-      "position": [37,20],
+      "position": [
+        37,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [38,20],
+      "position": [
+        38,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [39,20],
+      "position": [
+        39,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [40,20],
+      "position": [
+        40,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [41,20],
+      "position": [
+        41,
+        20
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,0],
+      "position": [
+        15,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [15,1],
+      "position": [
+        15,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [14,0],
+      "position": [
+        14,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [14,1],
+      "position": [
+        14,
+        1
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,0],
+      "position": [
+        13,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [13,1],
+      "position": [
+        13,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [12,0],
+      "position": [
+        12,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [12,1],
+      "position": [
+        12,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [11,0],
+      "position": [
+        11,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [11,1],
+      "position": [
+        11,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [10,0],
+      "position": [
+        10,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [10,1],
+      "position": [
+        10,
+        1
+      ],
       "type": "Empty"
     },
     {
-      "position": [9,0],
+      "position": [
+        9,
+        0
+      ],
       "type": "Wall"
     },
     {
-      "position": [9,1],
+      "position": [
+        9,
+        1
+      ],
       "type": "Empty"
     }
   ],
   "visit_counts": [
     {
-      "position": [1,1],
+      "position": [
+        1,
+        1
+      ],
       "count": 261
     },
     {
-      "position": [2,1],
+      "position": [
+        2,
+        1
+      ],
       "count": 298
     },
     {
-      "position": [3,1],
+      "position": [
+        3,
+        1
+      ],
       "count": 261
     },
     {
-      "position": [4,1],
+      "position": [
+        4,
+        1
+      ],
       "count": 289
     },
     {
-      "position": [5,1],
+      "position": [
+        5,
+        1
+      ],
       "count": 261
     },
     {
-      "position": [5,2],
+      "position": [
+        5,
+        2
+      ],
       "count": 286
     },
     {
-      "position": [5,3],
+      "position": [
+        5,
+        3
+      ],
       "count": 271
     },
     {
-      "position": [5,4],
+      "position": [
+        5,
+        4
+      ],
       "count": 284
     },
     {
-      "position": [5,5],
+      "position": [
+        5,
+        5
+      ],
       "count": 273
     },
     {
-      "position": [6,5],
+      "position": [
+        6,
+        5
+      ],
       "count": 283
     },
     {
-      "position": [7,5],
+      "position": [
+        7,
+        5
+      ],
       "count": 275
     },
     {
-      "position": [8,5],
+      "position": [
+        8,
+        5
+      ],
       "count": 283
     },
     {
-      "position": [9,5],
+      "position": [
+        9,
+        5
+      ],
       "count": 277
     },
     {
-      "position": [10,5],
+      "position": [
+        10,
+        5
+      ],
       "count": 283
     },
     {
-      "position": [11,5],
+      "position": [
+        11,
+        5
+      ],
       "count": 279
     },
     {
-      "position": [12,5],
+      "position": [
+        12,
+        5
+      ],
       "count": 283
     },
     {
-      "position": [13,5],
+      "position": [
+        13,
+        5
+      ],
       "count": 280
     },
     {
-      "position": [13,6],
+      "position": [
+        13,
+        6
+      ],
       "count": 283
     },
     {
-      "position": [13,7],
+      "position": [
+        13,
+        7
+      ],
       "count": 281
     },
     {
-      "position": [13,8],
+      "position": [
+        13,
+        8
+      ],
       "count": 283
     },
     {
-      "position": [13,9],
+      "position": [
+        13,
+        9
+      ],
       "count": 282
     },
     {
-      "position": [14,9],
+      "position": [
+        14,
+        9
+      ],
       "count": 288
     },
     {
-      "position": [15,9],
+      "position": [
+        15,
+        9
+      ],
       "count": 289
     },
     {
-      "position": [16,9],
+      "position": [
+        16,
+        9
+      ],
       "count": 288
     },
     {
-      "position": [17,9],
+      "position": [
+        17,
+        9
+      ],
       "count": 289
     },
     {
-      "position": [18,9],
+      "position": [
+        18,
+        9
+      ],
       "count": 288
     },
     {
-      "position": [19,9],
+      "position": [
+        19,
+        9
+      ],
       "count": 289
     },
     {
-      "position": [20,9],
+      "position": [
+        20,
+        9
+      ],
       "count": 287
     },
     {
-      "position": [21,9],
+      "position": [
+        21,
+        9
+      ],
       "count": 289
     },
     {
-      "position": [21,10],
+      "position": [
+        21,
+        10
+      ],
       "count": 286
     },
     {
-      "position": [21,11],
+      "position": [
+        21,
+        11
+      ],
       "count": 288
     },
     {
-      "position": [22,11],
+      "position": [
+        22,
+        11
+      ],
       "count": 285
     },
     {
-      "position": [23,11],
+      "position": [
+        23,
+        11
+      ],
       "count": 287
     },
     {
-      "position": [23,10],
+      "position": [
+        23,
+        10
+      ],
       "count": 296
     },
     {
-      "position": [23,9],
+      "position": [
+        23,
+        9
+      ],
       "count": 305
     },
     {
-      "position": [23,8],
+      "position": [
+        23,
+        8
+      ],
       "count": 297
     },
     {
-      "position": [23,7],
+      "position": [
+        23,
+        7
+      ],
       "count": 304
     },
     {
-      "position": [22,7],
+      "position": [
+        22,
+        7
+      ],
       "count": 298
     },
     {
-      "position": [21,7],
+      "position": [
+        21,
+        7
+      ],
       "count": 304
     },
     {
-      "position": [21,6],
+      "position": [
+        21,
+        6
+      ],
       "count": 298
     },
     {
-      "position": [21,5],
+      "position": [
+        21,
+        5
+      ],
       "count": 303
     },
     {
-      "position": [20,5],
+      "position": [
+        20,
+        5
+      ],
       "count": 295
     },
     {
-      "position": [19,5],
+      "position": [
+        19,
+        5
+      ],
       "count": 303
     },
     {
-      "position": [19,4],
+      "position": [
+        19,
+        4
+      ],
       "count": 294
     },
     {
-      "position": [19,3],
+      "position": [
+        19,
+        3
+      ],
       "count": 303
     },
     {
-      "position": [19,2],
+      "position": [
+        19,
+        2
+      ],
       "count": 292
     },
     {
-      "position": [19,1],
+      "position": [
+        19,
+        1
+      ],
       "count": 303
     },
     {
-      "position": [20,1],
+      "position": [
+        20,
+        1
+      ],
       "count": 287
     },
     {
-      "position": [21,1],
+      "position": [
+        21,
+        1
+      ],
       "count": 300
     },
     {
-      "position": [22,1],
+      "position": [
+        22,
+        1
+      ],
       "count": 289
     },
     {
-      "position": [23,1],
+      "position": [
+        23,
+        1
+      ],
       "count": 300
     },
     {
-      "position": [23,2],
+      "position": [
+        23,
+        2
+      ],
       "count": 289
     },
     {
-      "position": [23,3],
+      "position": [
+        23,
+        3
+      ],
       "count": 298
     },
     {
-      "position": [23,4],
+      "position": [
+        23,
+        4
+      ],
       "count": 289
     },
     {
-      "position": [23,5],
+      "position": [
+        23,
+        5
+      ],
       "count": 296
     },
     {
-      "position": [24,5],
+      "position": [
+        24,
+        5
+      ],
       "count": 288
     },
     {
-      "position": [25,5],
+      "position": [
+        25,
+        5
+      ],
       "count": 294
     },
     {
-      "position": [25,6],
+      "position": [
+        25,
+        6
+      ],
       "count": 287
     },
     {
-      "position": [25,7],
+      "position": [
+        25,
+        7
+      ],
       "count": 292
     },
     {
-      "position": [26,7],
+      "position": [
+        26,
+        7
+      ],
       "count": 286
     },
     {
-      "position": [27,7],
+      "position": [
+        27,
+        7
+      ],
       "count": 290
     },
     {
-      "position": [28,7],
+      "position": [
+        28,
+        7
+      ],
       "count": 286
     },
     {
-      "position": [29,7],
+      "position": [
+        29,
+        7
+      ],
       "count": 289
     },
     {
-      "position": [29,6],
+      "position": [
+        29,
+        6
+      ],
       "count": 286
     },
     {
-      "position": [29,5],
+      "position": [
+        29,
+        5
+      ],
       "count": 289
     },
     {
-      "position": [29,4],
+      "position": [
+        29,
+        4
+      ],
       "count": 286
     },
     {
-      "position": [29,3],
+      "position": [
+        29,
+        3
+      ],
       "count": 288
     },
     {
-      "position": [30,3],
+      "position": [
+        30,
+        3
+      ],
       "count": 286
     },
     {
-      "position": [31,3],
+      "position": [
+        31,
+        3
+      ],
       "count": 288
     },
     {
-      "position": [31,4],
+      "position": [
+        31,
+        4
+      ],
       "count": 286
     },
     {
-      "position": [31,5],
+      "position": [
+        31,
+        5
+      ],
       "count": 288
     },
     {
-      "position": [31,6],
+      "position": [
+        31,
+        6
+      ],
       "count": 286
     },
     {
-      "position": [31,7],
+      "position": [
+        31,
+        7
+      ],
       "count": 288
     },
     {
-      "position": [31,8],
+      "position": [
+        31,
+        8
+      ],
       "count": 287
     },
     {
-      "position": [31,9],
+      "position": [
+        31,
+        9
+      ],
       "count": 288
     },
     {
-      "position": [31,10],
+      "position": [
+        31,
+        10
+      ],
       "count": 286
     },
     {
-      "position": [31,11],
+      "position": [
+        31,
+        11
+      ],
       "count": 288
     },
     {
-      "position": [30,11],
+      "position": [
+        30,
+        11
+      ],
       "count": 286
     },
     {
-      "position": [29,11],
+      "position": [
+        29,
+        11
+      ],
       "count": 288
     },
     {
-      "position": [29,10],
+      "position": [
+        29,
+        10
+      ],
       "count": 286
     },
     {
-      "position": [29,9],
+      "position": [
+        29,
+        9
+      ],
       "count": 290
     },
     {
-      "position": [28,9],
+      "position": [
+        28,
+        9
+      ],
       "count": 286
     },
     {
-      "position": [27,9],
+      "position": [
+        27,
+        9
+      ],
       "count": 288
     },
     {
-      "position": [27,10],
+      "position": [
+        27,
+        10
+      ],
       "count": 284
     },
     {
-      "position": [27,11],
+      "position": [
+        27,
+        11
+      ],
       "count": 287
     },
     {
-      "position": [26,11],
+      "position": [
+        26,
+        11
+      ],
       "count": 283
     },
     {
-      "position": [25,11],
+      "position": [
+        25,
+        11
+      ],
       "count": 287
     },
     {
-      "position": [25,12],
+      "position": [
+        25,
+        12
+      ],
       "count": 283
     },
     {
-      "position": [25,13],
+      "position": [
+        25,
+        13
+      ],
       "count": 291
     },
     {
-      "position": [24,13],
+      "position": [
+        24,
+        13
+      ],
       "count": 289
     },
     {
-      "position": [23,13],
+      "position": [
+        23,
+        13
+      ],
       "count": 293
     },
     {
-      "position": [23,14],
+      "position": [
+        23,
+        14
+      ],
       "count": 288
     },
     {
-      "position": [23,15],
+      "position": [
+        23,
+        15
+      ],
       "count": 293
     },
     {
-      "position": [24,15],
+      "position": [
+        24,
+        15
+      ],
       "count": 287
     },
     {
-      "position": [25,15],
+      "position": [
+        25,
+        15
+      ],
       "count": 293
     },
     {
-      "position": [25,16],
+      "position": [
+        25,
+        16
+      ],
       "count": 288
     },
     {
-      "position": [25,17],
+      "position": [
+        25,
+        17
+      ],
       "count": 297
     },
     {
-      "position": [24,17],
+      "position": [
+        24,
+        17
+      ],
       "count": 287
     },
     {
-      "position": [23,17],
+      "position": [
+        23,
+        17
+      ],
       "count": 296
     },
     {
-      "position": [23,18],
+      "position": [
+        23,
+        18
+      ],
       "count": 286
     },
     {
-      "position": [23,19],
+      "position": [
+        23,
+        19
+      ],
       "count": 297
     },
     {
-      "position": [22,19],
+      "position": [
+        22,
+        19
+      ],
       "count": 287
     },
     {
-      "position": [21,19],
+      "position": [
+        21,
+        19
+      ],
       "count": 297
     },
     {
-      "position": [21,18],
+      "position": [
+        21,
+        18
+      ],
       "count": 288
     },
     {
-      "position": [21,17],
+      "position": [
+        21,
+        17
+      ],
       "count": 297
     },
     {
-      "position": [21,16],
+      "position": [
+        21,
+        16
+      ],
       "count": 289
     },
     {
-      "position": [21,15],
+      "position": [
+        21,
+        15
+      ],
       "count": 297
     },
     {
-      "position": [21,14],
+      "position": [
+        21,
+        14
+      ],
       "count": 288
     },
     {
-      "position": [21,13],
+      "position": [
+        21,
+        13
+      ],
       "count": 296
     },
     {
-      "position": [20,13],
+      "position": [
+        20,
+        13
+      ],
       "count": 288
     },
     {
-      "position": [19,13],
+      "position": [
+        19,
+        13
+      ],
       "count": 295
     },
     {
-      "position": [19,14],
+      "position": [
+        19,
+        14
+      ],
       "count": 289
     },
     {
-      "position": [19,15],
+      "position": [
+        19,
+        15
+      ],
       "count": 296
     },
     {
-      "position": [18,15],
+      "position": [
+        18,
+        15
+      ],
       "count": 290
     },
     {
-      "position": [17,15],
+      "position": [
+        17,
+        15
+      ],
       "count": 296
     },
     {
-      "position": [17,16],
+      "position": [
+        17,
+        16
+      ],
       "count": 290
     },
     {
-      "position": [17,17],
+      "position": [
+        17,
+        17
+      ],
       "count": 297
     },
     {
-      "position": [17,18],
+      "position": [
+        17,
+        18
+      ],
       "count": 291
     },
     {
-      "position": [17,19],
+      "position": [
+        17,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [16,19],
+      "position": [
+        16,
+        19
+      ],
       "count": 291
     },
     {
-      "position": [15,19],
+      "position": [
+        15,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [15,18],
+      "position": [
+        15,
+        18
+      ],
       "count": 292
     },
     {
-      "position": [15,17],
+      "position": [
+        15,
+        17
+      ],
       "count": 299
     },
     {
-      "position": [14,17],
+      "position": [
+        14,
+        17
+      ],
       "count": 292
     },
     {
-      "position": [13,17],
+      "position": [
+        13,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [13,16],
+      "position": [
+        13,
+        16
+      ],
       "count": 292
     },
     {
-      "position": [13,15],
+      "position": [
+        13,
+        15
+      ],
       "count": 298
     },
     {
-      "position": [14,15],
+      "position": [
+        14,
+        15
+      ],
       "count": 292
     },
     {
-      "position": [15,15],
+      "position": [
+        15,
+        15
+      ],
       "count": 298
     },
     {
-      "position": [15,14],
+      "position": [
+        15,
+        14
+      ],
       "count": 291
     },
     {
-      "position": [15,13],
+      "position": [
+        15,
+        13
+      ],
       "count": 298
     },
     {
-      "position": [15,12],
+      "position": [
+        15,
+        12
+      ],
       "count": 290
     },
     {
-      "position": [15,11],
+      "position": [
+        15,
+        11
+      ],
       "count": 297
     },
     {
-      "position": [16,11],
+      "position": [
+        16,
+        11
+      ],
       "count": 294
     },
     {
-      "position": [17,11],
+      "position": [
+        17,
+        11
+      ],
       "count": 293
     },
     {
-      "position": [18,11],
+      "position": [
+        18,
+        11
+      ],
       "count": 305
     },
     {
-      "position": [19,11],
+      "position": [
+        19,
+        11
+      ],
       "count": 280
     },
     {
-      "position": [17,12],
+      "position": [
+        17,
+        12
+      ],
       "count": 309
     },
     {
-      "position": [17,13],
+      "position": [
+        17,
+        13
+      ],
       "count": 284
     },
     {
-      "position": [14,11],
+      "position": [
+        14,
+        11
+      ],
       "count": 290
     },
     {
-      "position": [13,11],
+      "position": [
+        13,
+        11
+      ],
       "count": 296
     },
     {
-      "position": [13,12],
+      "position": [
+        13,
+        12
+      ],
       "count": 290
     },
     {
-      "position": [13,13],
+      "position": [
+        13,
+        13
+      ],
       "count": 297
     },
     {
-      "position": [12,13],
+      "position": [
+        12,
+        13
+      ],
       "count": 291
     },
     {
-      "position": [11,13],
+      "position": [
+        11,
+        13
+      ],
       "count": 297
     },
     {
-      "position": [11,14],
+      "position": [
+        11,
+        14
+      ],
       "count": 292
     },
     {
-      "position": [11,15],
+      "position": [
+        11,
+        15
+      ],
       "count": 298
     },
     {
-      "position": [11,16],
+      "position": [
+        11,
+        16
+      ],
       "count": 293
     },
     {
-      "position": [11,17],
+      "position": [
+        11,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [10,17],
+      "position": [
+        10,
+        17
+      ],
       "count": 293
     },
     {
-      "position": [9,17],
+      "position": [
+        9,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [9,18],
+      "position": [
+        9,
+        18
+      ],
       "count": 292
     },
     {
-      "position": [9,19],
+      "position": [
+        9,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [8,19],
+      "position": [
+        8,
+        19
+      ],
       "count": 293
     },
     {
-      "position": [7,19],
+      "position": [
+        7,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [6,19],
+      "position": [
+        6,
+        19
+      ],
       "count": 293
     },
     {
-      "position": [5,19],
+      "position": [
+        5,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [4,19],
+      "position": [
+        4,
+        19
+      ],
       "count": 293
     },
     {
-      "position": [3,19],
+      "position": [
+        3,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [3,18],
+      "position": [
+        3,
+        18
+      ],
       "count": 294
     },
     {
-      "position": [3,17],
+      "position": [
+        3,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [4,17],
+      "position": [
+        4,
+        17
+      ],
       "count": 294
     },
     {
-      "position": [5,17],
+      "position": [
+        5,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [6,17],
+      "position": [
+        6,
+        17
+      ],
       "count": 294
     },
     {
-      "position": [7,17],
+      "position": [
+        7,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [7,16],
+      "position": [
+        7,
+        16
+      ],
       "count": 294
     },
     {
-      "position": [7,15],
+      "position": [
+        7,
+        15
+      ],
       "count": 299
     },
     {
-      "position": [7,14],
+      "position": [
+        7,
+        14
+      ],
       "count": 294
     },
     {
-      "position": [7,13],
+      "position": [
+        7,
+        13
+      ],
       "count": 298
     },
     {
-      "position": [8,13],
+      "position": [
+        8,
+        13
+      ],
       "count": 293
     },
     {
-      "position": [9,13],
+      "position": [
+        9,
+        13
+      ],
       "count": 298
     },
     {
-      "position": [9,14],
+      "position": [
+        9,
+        14
+      ],
       "count": 301
     },
     {
-      "position": [9,15],
+      "position": [
+        9,
+        15
+      ],
       "count": 281
     },
     {
-      "position": [9,12],
+      "position": [
+        9,
+        12
+      ],
       "count": 292
     },
     {
-      "position": [9,11],
+      "position": [
+        9,
+        11
+      ],
       "count": 298
     },
     {
-      "position": [9,10],
+      "position": [
+        9,
+        10
+      ],
       "count": 293
     },
     {
-      "position": [9,9],
+      "position": [
+        9,
+        9
+      ],
       "count": 299
     },
     {
-      "position": [9,8],
+      "position": [
+        9,
+        8
+      ],
       "count": 293
     },
     {
-      "position": [9,7],
+      "position": [
+        9,
+        7
+      ],
       "count": 299
     },
     {
-      "position": [10,7],
+      "position": [
+        10,
+        7
+      ],
       "count": 298
     },
     {
-      "position": [11,7],
+      "position": [
+        11,
+        7
+      ],
       "count": 293
     },
     {
-      "position": [11,8],
+      "position": [
+        11,
+        8
+      ],
       "count": 297
     },
     {
-      "position": [11,9],
+      "position": [
+        11,
+        9
+      ],
       "count": 284
     },
     {
-      "position": [11,10],
+      "position": [
+        11,
+        10
+      ],
       "count": 311
     },
     {
-      "position": [11,11],
+      "position": [
+        11,
+        11
+      ],
       "count": 281
     },
     {
-      "position": [8,7],
+      "position": [
+        8,
+        7
+      ],
       "count": 293
     },
     {
-      "position": [7,7],
+      "position": [
+        7,
+        7
+      ],
       "count": 299
     },
     {
-      "position": [7,8],
+      "position": [
+        7,
+        8
+      ],
       "count": 293
     },
     {
-      "position": [7,9],
+      "position": [
+        7,
+        9
+      ],
       "count": 298
     },
     {
-      "position": [6,9],
+      "position": [
+        6,
+        9
+      ],
       "count": 292
     },
     {
-      "position": [5,9],
+      "position": [
+        5,
+        9
+      ],
       "count": 297
     },
     {
-      "position": [5,8],
+      "position": [
+        5,
+        8
+      ],
       "count": 293
     },
     {
-      "position": [5,7],
+      "position": [
+        5,
+        7
+      ],
       "count": 298
     },
     {
-      "position": [4,7],
+      "position": [
+        4,
+        7
+      ],
       "count": 293
     },
     {
-      "position": [3,7],
+      "position": [
+        3,
+        7
+      ],
       "count": 297
     },
     {
-      "position": [3,8],
+      "position": [
+        3,
+        8
+      ],
       "count": 293
     },
     {
-      "position": [3,9],
+      "position": [
+        3,
+        9
+      ],
       "count": 298
     },
     {
-      "position": [3,10],
+      "position": [
+        3,
+        10
+      ],
       "count": 294
     },
     {
-      "position": [3,11],
+      "position": [
+        3,
+        11
+      ],
       "count": 298
     },
     {
-      "position": [4,11],
+      "position": [
+        4,
+        11
+      ],
       "count": 293
     },
     {
-      "position": [5,11],
+      "position": [
+        5,
+        11
+      ],
       "count": 297
     },
     {
-      "position": [5,12],
+      "position": [
+        5,
+        12
+      ],
       "count": 292
     },
     {
-      "position": [5,13],
+      "position": [
+        5,
+        13
+      ],
       "count": 296
     },
     {
-      "position": [5,14],
+      "position": [
+        5,
+        14
+      ],
       "count": 292
     },
     {
-      "position": [5,15],
+      "position": [
+        5,
+        15
+      ],
       "count": 296
     },
     {
-      "position": [4,15],
+      "position": [
+        4,
+        15
+      ],
       "count": 293
     },
     {
-      "position": [3,15],
+      "position": [
+        3,
+        15
+      ],
       "count": 296
     },
     {
-      "position": [2,15],
+      "position": [
+        2,
+        15
+      ],
       "count": 295
     },
     {
-      "position": [1,15],
+      "position": [
+        1,
+        15
+      ],
       "count": 297
     },
     {
-      "position": [1,16],
+      "position": [
+        1,
+        16
+      ],
       "count": 294
     },
     {
-      "position": [1,17],
+      "position": [
+        1,
+        17
+      ],
       "count": 286
     },
     {
-      "position": [1,18],
+      "position": [
+        1,
+        18
+      ],
       "count": 310
     },
     {
-      "position": [1,19],
+      "position": [
+        1,
+        19
+      ],
       "count": 282
     },
     {
-      "position": [1,14],
+      "position": [
+        1,
+        14
+      ],
       "count": 295
     },
     {
-      "position": [1,13],
+      "position": [
+        1,
+        13
+      ],
       "count": 296
     },
     {
-      "position": [1,12],
+      "position": [
+        1,
+        12
+      ],
       "count": 296
     },
     {
-      "position": [1,11],
+      "position": [
+        1,
+        11
+      ],
       "count": 295
     },
     {
-      "position": [1,10],
+      "position": [
+        1,
+        10
+      ],
       "count": 299
     },
     {
-      "position": [1,9],
+      "position": [
+        1,
+        9
+      ],
       "count": 295
     },
     {
-      "position": [1,8],
+      "position": [
+        1,
+        8
+      ],
       "count": 300
     },
     {
-      "position": [1,7],
+      "position": [
+        1,
+        7
+      ],
       "count": 293
     },
     {
-      "position": [1,6],
+      "position": [
+        1,
+        6
+      ],
       "count": 301
     },
     {
-      "position": [1,5],
+      "position": [
+        1,
+        5
+      ],
       "count": 290
     },
     {
-      "position": [1,4],
+      "position": [
+        1,
+        4
+      ],
       "count": 301
     },
     {
-      "position": [1,3],
+      "position": [
+        1,
+        3
+      ],
       "count": 285
     },
     {
-      "position": [2,3],
+      "position": [
+        2,
+        3
+      ],
       "count": 300
     },
     {
-      "position": [3,3],
+      "position": [
+        3,
+        3
+      ],
       "count": 278
     },
     {
-      "position": [3,4],
+      "position": [
+        3,
+        4
+      ],
       "count": 311
     },
     {
-      "position": [3,5],
+      "position": [
+        3,
+        5
+      ],
       "count": 276
     },
     {
-      "position": [2,13],
+      "position": [
+        2,
+        13
+      ],
       "count": 316
     },
     {
-      "position": [3,13],
+      "position": [
+        3,
+        13
+      ],
       "count": 295
     },
     {
-      "position": [6,11],
+      "position": [
+        6,
+        11
+      ],
       "count": 309
     },
     {
-      "position": [7,11],
+      "position": [
+        7,
+        11
+      ],
       "count": 287
     },
     {
-      "position": [10,19],
+      "position": [
+        10,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [11,19],
+      "position": [
+        11,
+        19
+      ],
       "count": 289
     },
     {
-      "position": [12,19],
+      "position": [
+        12,
+        19
+      ],
       "count": 300
     },
     {
-      "position": [13,19],
+      "position": [
+        13,
+        19
+      ],
       "count": 272
     },
     {
-      "position": [18,19],
+      "position": [
+        18,
+        19
+      ],
       "count": 297
     },
     {
-      "position": [19,19],
+      "position": [
+        19,
+        19
+      ],
       "count": 290
     },
     {
-      "position": [19,18],
+      "position": [
+        19,
+        18
+      ],
       "count": 316
     },
     {
-      "position": [19,17],
+      "position": [
+        19,
+        17
+      ],
       "count": 289
     },
     {
-      "position": [24,19],
+      "position": [
+        24,
+        19
+      ],
       "count": 286
     },
     {
-      "position": [25,19],
+      "position": [
+        25,
+        19
+      ],
       "count": 296
     },
     {
-      "position": [26,19],
+      "position": [
+        26,
+        19
+      ],
       "count": 288
     },
     {
-      "position": [27,19],
+      "position": [
+        27,
+        19
+      ],
       "count": 297
     },
     {
-      "position": [28,19],
+      "position": [
+        28,
+        19
+      ],
       "count": 290
     },
     {
-      "position": [29,19],
+      "position": [
+        29,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [30,19],
+      "position": [
+        30,
+        19
+      ],
       "count": 291
     },
     {
-      "position": [31,19],
+      "position": [
+        31,
+        19
+      ],
       "count": 297
     },
     {
-      "position": [32,19],
+      "position": [
+        32,
+        19
+      ],
       "count": 292
     },
     {
-      "position": [33,19],
+      "position": [
+        33,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [33,18],
+      "position": [
+        33,
+        18
+      ],
       "count": 293
     },
     {
-      "position": [33,17],
+      "position": [
+        33,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [32,17],
+      "position": [
+        32,
+        17
+      ],
       "count": 293
     },
     {
-      "position": [31,17],
+      "position": [
+        31,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [30,17],
+      "position": [
+        30,
+        17
+      ],
       "count": 294
     },
     {
-      "position": [29,17],
+      "position": [
+        29,
+        17
+      ],
       "count": 298
     },
     {
-      "position": [29,16],
+      "position": [
+        29,
+        16
+      ],
       "count": 294
     },
     {
-      "position": [29,15],
+      "position": [
+        29,
+        15
+      ],
       "count": 298
     },
     {
-      "position": [28,15],
+      "position": [
+        28,
+        15
+      ],
       "count": 294
     },
     {
-      "position": [27,15],
+      "position": [
+        27,
+        15
+      ],
       "count": 298
     },
     {
-      "position": [27,14],
+      "position": [
+        27,
+        14
+      ],
       "count": 294
     },
     {
-      "position": [27,13],
+      "position": [
+        27,
+        13
+      ],
       "count": 298
     },
     {
-      "position": [28,13],
+      "position": [
+        28,
+        13
+      ],
       "count": 294
     },
     {
-      "position": [29,13],
+      "position": [
+        29,
+        13
+      ],
       "count": 298
     },
     {
-      "position": [30,13],
+      "position": [
+        30,
+        13
+      ],
       "count": 294
     },
     {
-      "position": [31,13],
+      "position": [
+        31,
+        13
+      ],
       "count": 298
     },
     {
-      "position": [32,13],
+      "position": [
+        32,
+        13
+      ],
       "count": 294
     },
     {
-      "position": [33,13],
+      "position": [
+        33,
+        13
+      ],
       "count": 298
     },
     {
-      "position": [34,13],
+      "position": [
+        34,
+        13
+      ],
       "count": 295
     },
     {
-      "position": [35,13],
+      "position": [
+        35,
+        13
+      ],
       "count": 299
     },
     {
-      "position": [36,13],
+      "position": [
+        36,
+        13
+      ],
       "count": 295
     },
     {
-      "position": [37,13],
+      "position": [
+        37,
+        13
+      ],
       "count": 300
     },
     {
-      "position": [37,12],
+      "position": [
+        37,
+        12
+      ],
       "count": 294
     },
     {
-      "position": [37,11],
+      "position": [
+        37,
+        11
+      ],
       "count": 299
     },
     {
-      "position": [36,11],
+      "position": [
+        36,
+        11
+      ],
       "count": 293
     },
     {
-      "position": [35,11],
+      "position": [
+        35,
+        11
+      ],
       "count": 299
     },
     {
-      "position": [35,10],
+      "position": [
+        35,
+        10
+      ],
       "count": 292
     },
     {
-      "position": [35,9],
+      "position": [
+        35,
+        9
+      ],
       "count": 299
     },
     {
-      "position": [36,9],
+      "position": [
+        36,
+        9
+      ],
       "count": 291
     },
     {
-      "position": [37,9],
+      "position": [
+        37,
+        9
+      ],
       "count": 299
     },
     {
-      "position": [37,8],
+      "position": [
+        37,
+        8
+      ],
       "count": 290
     },
     {
-      "position": [37,7],
+      "position": [
+        37,
+        7
+      ],
       "count": 299
     },
     {
-      "position": [38,7],
+      "position": [
+        38,
+        7
+      ],
       "count": 288
     },
     {
-      "position": [39,7],
+      "position": [
+        39,
+        7
+      ],
       "count": 300
     },
     {
-      "position": [39,6],
+      "position": [
+        39,
+        6
+      ],
       "count": 289
     },
     {
-      "position": [39,5],
+      "position": [
+        39,
+        5
+      ],
       "count": 300
     },
     {
-      "position": [39,4],
+      "position": [
+        39,
+        4
+      ],
       "count": 289
     },
     {
-      "position": [39,3],
+      "position": [
+        39,
+        3
+      ],
       "count": 300
     },
     {
-      "position": [39,2],
+      "position": [
+        39,
+        2
+      ],
       "count": 289
     },
     {
-      "position": [39,1],
+      "position": [
+        39,
+        1
+      ],
       "count": 299
     },
     {
-      "position": [38,1],
+      "position": [
+        38,
+        1
+      ],
       "count": 289
     },
     {
-      "position": [37,1],
+      "position": [
+        37,
+        1
+      ],
       "count": 299
     },
     {
-      "position": [36,1],
+      "position": [
+        36,
+        1
+      ],
       "count": 289
     },
     {
-      "position": [35,1],
+      "position": [
+        35,
+        1
+      ],
       "count": 299
     },
     {
-      "position": [34,1],
+      "position": [
+        34,
+        1
+      ],
       "count": 289
     },
     {
-      "position": [33,1],
+      "position": [
+        33,
+        1
+      ],
       "count": 299
     },
     {
-      "position": [32,1],
+      "position": [
+        32,
+        1
+      ],
       "count": 291
     },
     {
-      "position": [31,1],
+      "position": [
+        31,
+        1
+      ],
       "count": 298
     },
     {
-      "position": [30,1],
+      "position": [
+        30,
+        1
+      ],
       "count": 295
     },
     {
-      "position": [29,1],
+      "position": [
+        29,
+        1
+      ],
       "count": 298
     },
     {
-      "position": [28,1],
+      "position": [
+        28,
+        1
+      ],
       "count": 300
     },
     {
-      "position": [27,1],
+      "position": [
+        27,
+        1
+      ],
       "count": 298
     },
     {
-      "position": [26,1],
+      "position": [
+        26,
+        1
+      ],
       "count": 304
     },
     {
-      "position": [25,1],
+      "position": [
+        25,
+        1
+      ],
       "count": 297
     },
     {
-      "position": [25,2],
+      "position": [
+        25,
+        2
+      ],
       "count": 308
     },
     {
-      "position": [25,3],
+      "position": [
+        25,
+        3
+      ],
       "count": 296
     },
     {
-      "position": [26,3],
+      "position": [
+        26,
+        3
+      ],
       "count": 313
     },
     {
-      "position": [27,3],
+      "position": [
+        27,
+        3
+      ],
       "count": 292
     },
     {
-      "position": [27,4],
+      "position": [
+        27,
+        4
+      ],
       "count": 313
     },
     {
-      "position": [27,5],
+      "position": [
+        27,
+        5
+      ],
       "count": 279
     },
     {
-      "position": [33,2],
+      "position": [
+        33,
+        2
+      ],
       "count": 290
     },
     {
-      "position": [33,3],
+      "position": [
+        33,
+        3
+      ],
       "count": 298
     },
     {
-      "position": [33,4],
+      "position": [
+        33,
+        4
+      ],
       "count": 290
     },
     {
-      "position": [33,5],
+      "position": [
+        33,
+        5
+      ],
       "count": 295
     },
     {
-      "position": [34,5],
+      "position": [
+        34,
+        5
+      ],
       "count": 293
     },
     {
-      "position": [35,5],
+      "position": [
+        35,
+        5
+      ],
       "count": 296
     },
     {
-      "position": [35,6],
+      "position": [
+        35,
+        6
+      ],
       "count": 295
     },
     {
-      "position": [35,7],
+      "position": [
+        35,
+        7
+      ],
       "count": 292
     },
     {
-      "position": [34,7],
+      "position": [
+        34,
+        7
+      ],
       "count": 295
     },
     {
-      "position": [33,7],
+      "position": [
+        33,
+        7
+      ],
       "count": 284
     },
     {
-      "position": [33,8],
+      "position": [
+        33,
+        8
+      ],
       "count": 299
     },
     {
-      "position": [33,9],
+      "position": [
+        33,
+        9
+      ],
       "count": 278
     },
     {
-      "position": [33,10],
+      "position": [
+        33,
+        10
+      ],
       "count": 308
     },
     {
-      "position": [33,11],
+      "position": [
+        33,
+        11
+      ],
       "count": 274
     },
     {
-      "position": [36,5],
+      "position": [
+        36,
+        5
+      ],
       "count": 293
     },
     {
-      "position": [37,5],
+      "position": [
+        37,
+        5
+      ],
       "count": 286
     },
     {
-      "position": [37,4],
+      "position": [
+        37,
+        4
+      ],
       "count": 298
     },
     {
-      "position": [37,3],
+      "position": [
+        37,
+        3
+      ],
       "count": 281
     },
     {
-      "position": [36,3],
+      "position": [
+        36,
+        3
+      ],
       "count": 301
     },
     {
-      "position": [35,3],
+      "position": [
+        35,
+        3
+      ],
       "count": 269
     },
     {
-      "position": [39,8],
+      "position": [
+        39,
+        8
+      ],
       "count": 290
     },
     {
-      "position": [39,9],
+      "position": [
+        39,
+        9
+      ],
       "count": 300
     },
     {
-      "position": [39,10],
+      "position": [
+        39,
+        10
+      ],
       "count": 291
     },
     {
-      "position": [39,11],
+      "position": [
+        39,
+        11
+      ],
       "count": 300
     },
     {
-      "position": [39,12],
+      "position": [
+        39,
+        12
+      ],
       "count": 293
     },
     {
-      "position": [39,13],
+      "position": [
+        39,
+        13
+      ],
       "count": 300
     },
     {
-      "position": [39,14],
+      "position": [
+        39,
+        14
+      ],
       "count": 295
     },
     {
-      "position": [39,15],
+      "position": [
+        39,
+        15
+      ],
       "count": 300
     },
     {
-      "position": [39,16],
+      "position": [
+        39,
+        16
+      ],
       "count": 297
     },
     {
-      "position": [39,17],
+      "position": [
+        39,
+        17
+      ],
       "count": 300
     },
     {
-      "position": [38,17],
+      "position": [
+        38,
+        17
+      ],
       "count": 297
     },
     {
-      "position": [37,17],
+      "position": [
+        37,
+        17
+      ],
       "count": 299
     },
     {
-      "position": [37,18],
+      "position": [
+        37,
+        18
+      ],
       "count": 298
     },
     {
-      "position": [37,19],
+      "position": [
+        37,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [36,19],
+      "position": [
+        36,
+        19
+      ],
       "count": 298
     },
     {
-      "position": [35,19],
+      "position": [
+        35,
+        19
+      ],
       "count": 294
     },
     {
-      "position": [35,18],
+      "position": [
+        35,
+        18
+      ],
       "count": 299
     },
     {
-      "position": [35,17],
+      "position": [
+        35,
+        17
+      ],
       "count": 292
     },
     {
-      "position": [35,16],
+      "position": [
+        35,
+        16
+      ],
       "count": 299
     },
     {
-      "position": [35,15],
+      "position": [
+        35,
+        15
+      ],
       "count": 289
     },
     {
-      "position": [34,15],
+      "position": [
+        34,
+        15
+      ],
       "count": 309
     },
     {
-      "position": [33,15],
+      "position": [
+        33,
+        15
+      ],
       "count": 289
     },
     {
-      "position": [32,15],
+      "position": [
+        32,
+        15
+      ],
       "count": 313
     },
     {
-      "position": [31,15],
+      "position": [
+        31,
+        15
+      ],
       "count": 275
     },
     {
-      "position": [36,15],
+      "position": [
+        36,
+        15
+      ],
       "count": 315
     },
     {
-      "position": [37,15],
+      "position": [
+        37,
+        15
+      ],
       "count": 288
     },
     {
-      "position": [38,19],
+      "position": [
+        38,
+        19
+      ],
       "count": 316
     },
     {
-      "position": [39,19],
+      "position": [
+        39,
+        19
+      ],
       "count": 292
     },
     {
-      "position": [27,16],
+      "position": [
+        27,
+        16
+      ],
       "count": 302
     },
     {
-      "position": [27,17],
+      "position": [
+        27,
+        17
+      ],
       "count": 281
     },
     {
-      "position": [25,10],
+      "position": [
+        25,
+        10
+      ],
       "count": 282
     },
     {
-      "position": [25,9],
+      "position": [
+        25,
+        9
+      ],
       "count": 262
     },
     {
-      "position": [22,3],
+      "position": [
+        22,
+        3
+      ],
       "count": 307
     },
     {
-      "position": [21,3],
+      "position": [
+        21,
+        3
+      ],
       "count": 288
     },
     {
-      "position": [18,1],
+      "position": [
+        18,
+        1
+      ],
       "count": 289
     },
     {
-      "position": [17,1],
+      "position": [
+        17,
+        1
+      ],
       "count": 303
     },
     {
-      "position": [16,1],
+      "position": [
+        16,
+        1
+      ],
       "count": 290
     },
     {
-      "position": [15,1],
+      "position": [
+        15,
+        1
+      ],
       "count": 302
     },
     {
-      "position": [15,2],
+      "position": [
+        15,
+        2
+      ],
       "count": 291
     },
     {
-      "position": [15,3],
+      "position": [
+        15,
+        3
+      ],
       "count": 303
     },
     {
-      "position": [16,3],
+      "position": [
+        16,
+        3
+      ],
       "count": 292
     },
     {
-      "position": [17,3],
+      "position": [
+        17,
+        3
+      ],
       "count": 297
     },
     {
-      "position": [17,4],
+      "position": [
+        17,
+        4
+      ],
       "count": 297
     },
     {
-      "position": [17,5],
+      "position": [
+        17,
+        5
+      ],
       "count": 297
     },
     {
-      "position": [16,5],
+      "position": [
+        16,
+        5
+      ],
       "count": 298
     },
     {
-      "position": [15,5],
+      "position": [
+        15,
+        5
+      ],
       "count": 291
     },
     {
-      "position": [15,6],
+      "position": [
+        15,
+        6
+      ],
       "count": 305
     },
     {
-      "position": [15,7],
+      "position": [
+        15,
+        7
+      ],
       "count": 291
     },
     {
-      "position": [16,7],
+      "position": [
+        16,
+        7
+      ],
       "count": 315
     },
     {
-      "position": [17,7],
+      "position": [
+        17,
+        7
+      ],
       "count": 291
     },
     {
-      "position": [18,7],
+      "position": [
+        18,
+        7
+      ],
       "count": 321
     },
     {
-      "position": [19,7],
+      "position": [
+        19,
+        7
+      ],
       "count": 283
     },
     {
-      "position": [14,3],
+      "position": [
+        14,
+        3
+      ],
       "count": 294
     },
     {
-      "position": [13,3],
+      "position": [
+        13,
+        3
+      ],
       "count": 302
     },
     {
-      "position": [12,3],
+      "position": [
+        12,
+        3
+      ],
       "count": 298
     },
     {
-      "position": [11,3],
+      "position": [
+        11,
+        3
+      ],
       "count": 302
     },
     {
-      "position": [10,3],
+      "position": [
+        10,
+        3
+      ],
       "count": 302
     },
     {
-      "position": [9,3],
+      "position": [
+        9,
+        3
+      ],
       "count": 302
     },
     {
-      "position": [8,3],
+      "position": [
+        8,
+        3
+      ],
       "count": 305
     },
     {
-      "position": [7,3],
+      "position": [
+        7,
+        3
+      ],
       "count": 301
     },
     {
-      "position": [7,2],
+      "position": [
+        7,
+        2
+      ],
       "count": 310
     },
     {
-      "position": [7,1],
+      "position": [
+        7,
+        1
+      ],
       "count": 301
     },
     {
-      "position": [8,1],
+      "position": [
+        8,
+        1
+      ],
       "count": 311
     },
     {
-      "position": [9,1],
+      "position": [
+        9,
+        1
+      ],
       "count": 297
     },
     {
-      "position": [10,1],
+      "position": [
+        10,
+        1
+      ],
       "count": 314
     },
     {
-      "position": [11,1],
+      "position": [
+        11,
+        1
+      ],
       "count": 292
     },
     {
-      "position": [12,1],
+      "position": [
+        12,
+        1
+      ],
       "count": 318
     },
     {
-      "position": [13,1],
+      "position": [
+        13,
+        1
+      ],
       "count": 283
     }
   ]

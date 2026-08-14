@@ -22,7 +22,7 @@ class WorldMemory:
     def __init__(self):
         self.entities: dict[tuple[int, int], RememberedEntity] = {}
 
-    def remembered_entity(self, position: list[int] | tuple[int, int], entity_type: str, step: int) -> None:
+    def remember_entity(self, position: list[int] | tuple[int, int], entity_type: str, step: int) -> None:
         key = (position[0], position[1])
 
         existing = self.entities.get(key)
@@ -48,4 +48,3 @@ class WorldMemory:
 
     def restore_entity(self,entity: RememberedEntity) -> None:
         self.entities[entity.position] = entity
-

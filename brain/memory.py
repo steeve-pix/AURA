@@ -20,9 +20,15 @@ class Memory:
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[(position[0], position[1])] = cell_type
 
+    def remember_entity(self, position: list[int] | tuple[int, int], entity_type: str, ) -> None:
+        self.world_memory.remember_entity(
+            position=position,
+            entity_type=entity_type,
+            step=self.step,
+        )
+
     def remember_battery(self, position: list[int] | tuple[int, int]) -> None:
-        key = (position[0], position[1])
-        self.world_memory.remembered_entity(key, "Battery", self.step)
+        self.remember_entity(position, "Battery")
 
     def forget_battery(self, position: tuple[int, int]) -> None:
         entity = self.world_memory.entity_at(position)
@@ -139,7 +145,7 @@ class Memory:
         return self.investigation_history.get((position[0], position[1]))
 
     def remember_unknown(self, position: list[int] | tuple[int, int]) -> None:
-        self.world_memory.remembered_entity(position, "Unknown", self.step)
+        self.remember_entity(position, "Unknown")
 
     def unknowns(self) -> list[tuple[int, int]]:
         return [
