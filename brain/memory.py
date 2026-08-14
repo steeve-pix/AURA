@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional, Sequence, Tuple, Literal
 from dataclasses import dataclass
+from brain.world_memory import WorldMemory
 
 
 class Memory:
@@ -15,6 +16,7 @@ class Memory:
         self.active_goal: Optional[str] = None
         self.step = 0
         self.investigation_history: dict[tuple[int, int], str] = {}
+        self.world_memory: WorldMemory = WorldMemory()
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[(position[0], position[1])] = cell_type
@@ -22,6 +24,7 @@ class Memory:
     def remember_battery(self, position: list[int] | tuple[int, int]) -> None:
         key = (position[0], position[1])
         existing = self.known_batteries.get(key)
+        self.world_memory.remembered_entity(key, "Battery", self.step)
 
         if existing is None:
             self.known_batteries[key] = BatteryMemory(position=key, status="confirmed", last_seen_step=self.step,
@@ -111,6 +114,8 @@ class Memory:
 
         if memory is not None:
             memory.status = "stale"
+
+        self.world_memory.mark_stale(position)
 
     def advance_step(self) -> None:
         self.step += 1

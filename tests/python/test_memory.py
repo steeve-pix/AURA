@@ -96,6 +96,43 @@ class MemoryTests(unittest.TestCase):
 
         self.assertEqual(memory.battery_trust(stale_battery), 0.0)
 
+    def test_world_memory_mirrors_confirmed_battery(self):
+        memory = Memory()
+
+        memory.remember_battery([3, 2])
+
+        entity = memory.world_memory.entity_at((3, 2))
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.entity_type, "Battery")
+        self.assertEqual(entity.status, "confirmed")
+
+    def test_world_memory_mirrors_repeated_battery_confirmation(self):
+        memory = Memory()
+        position = (3, 2)
+        memory.remember_battery(position)
+
+        memory.advance_step()
+        memory.remember_battery(position)
+
+        battery = memory.known_batteries[position]
+        entity = memory.world_memory.entity_at(position)
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.last_seen_step, battery.last_seen_step)
+        self.assertEqual(entity.times_confirmed, battery.time_confirmed)
+
+    def test_world_memory_mirrors_stale_battery(self):
+        memory = Memory()
+        position = (3, 2)
+        memory.remember_battery(position)
+
+        memory.mark_battery_stale(position)
+
+        battery = memory.known_batteries[position]
+        entity = memory.world_memory.entity_at(position)
+        self.assertIsNotNone(entity)
+        self.assertEqual(battery.status, "stale")
+        self.assertEqual(entity.status, battery.status)
+
     def test_records_visits(self):
         memory = Memory()
 
