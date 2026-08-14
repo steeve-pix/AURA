@@ -114,6 +114,23 @@ class Memory:
     def advance_step(self) -> None:
         self.step += 1
 
+    def battery_trust(self, position: tuple[int, int]) -> float:
+        memory = self.known_batteries.get(position)
+
+        if memory is None:
+            return 0.0
+
+        if memory.status == "stale":
+            return 0.0
+
+        age = max(0, self.step - memory.last_seen_step)
+
+        recency = 1.0 / (1.0 + age * 0.05)
+
+        confirmation = min(1.0, 0.5 + memory.time_confirmed * 0.1)
+
+        return recency * confirmation
+
 
 MemoryStatus = Literal[
     "confirmed",
