@@ -1,230 +1,230 @@
 {
   "world_id": "maze:1337:42x21:b12:u20",
-  "step": 52171,
+  "step": 53810,
   "entities": [
     {
       "position": [8,1],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 50785,
-      "times_confirmed": 1968
+      "last_seen_step": 52626,
+      "times_confirmed": 2078
     },
     {
       "position": [9,3],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 50835,
-      "times_confirmed": 2662
+      "last_seen_step": 52627,
+      "times_confirmed": 2786
     },
     {
       "position": [10,7],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 50840,
-      "times_confirmed": 3151
+      "last_seen_step": 53222,
+      "times_confirmed": 3238
     },
     {
       "position": [11,7],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 50841,
-      "times_confirmed": 2772
+      "last_seen_step": 53222,
+      "times_confirmed": 2837
     },
     {
       "position": [17,12],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51113,
-      "times_confirmed": 3407
+      "last_seen_step": 53348,
+      "times_confirmed": 3470
     },
     {
       "position": [20,9],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51970,
-      "times_confirmed": 3089
+      "last_seen_step": 52707,
+      "times_confirmed": 3219
     },
     {
       "position": [21,6],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52089,
-      "times_confirmed": 3123
+      "last_seen_step": 52725,
+      "times_confirmed": 3297
     },
     {
       "position": [23,13],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52171,
-      "times_confirmed": 2945
+      "last_seen_step": 53352,
+      "times_confirmed": 2997
     },
     {
       "position": [25,10],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52171,
-      "times_confirmed": 3403
+      "last_seen_step": 53427,
+      "times_confirmed": 3495
     },
     {
       "position": [25,6],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52166,
-      "times_confirmed": 3112
+      "last_seen_step": 53808,
+      "times_confirmed": 3259
     },
     {
       "position": [25,3],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52091,
-      "times_confirmed": 2653
+      "last_seen_step": 53810,
+      "times_confirmed": 2801
     },
     {
       "position": [28,9],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52169,
-      "times_confirmed": 3597
+      "last_seen_step": 52759,
+      "times_confirmed": 3623
     },
     {
       "position": [31,9],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52125,
-      "times_confirmed": 2707
+      "last_seen_step": 53506,
+      "times_confirmed": 2748
     },
     {
       "position": [28,1],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52103,
-      "times_confirmed": 2223
+      "last_seen_step": 53810,
+      "times_confirmed": 2330
     },
     {
       "position": [28,13],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52170,
-      "times_confirmed": 3471
+      "last_seen_step": 53430,
+      "times_confirmed": 3518
     },
     {
       "position": [29,13],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52129,
-      "times_confirmed": 2912
+      "last_seen_step": 53431,
+      "times_confirmed": 2958
     },
     {
       "position": [27,14],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52171,
-      "times_confirmed": 3430
+      "last_seen_step": 53429,
+      "times_confirmed": 3477
     },
     {
       "position": [25,15],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 52171,
-      "times_confirmed": 2629
+      "last_seen_step": 53427,
+      "times_confirmed": 2661
     },
     {
       "position": [18,19],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51124,
-      "times_confirmed": 2049
+      "last_seen_step": 53355,
+      "times_confirmed": 2151
     },
     {
       "position": [19,15],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51121,
-      "times_confirmed": 2465
+      "last_seen_step": 53354,
+      "times_confirmed": 2543
     },
     {
       "position": [15,14],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51003,
-      "times_confirmed": 3229
+      "last_seen_step": 53336,
+      "times_confirmed": 3321
     },
     {
       "position": [15,18],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51003,
-      "times_confirmed": 2433
+      "last_seen_step": 53336,
+      "times_confirmed": 2531
     },
     {
       "position": [16,19],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51001,
-      "times_confirmed": 2029
+      "last_seen_step": 53334,
+      "times_confirmed": 2140
     },
     {
       "position": [9,13],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 48893,
-      "times_confirmed": 2578
+      "last_seen_step": 53300,
+      "times_confirmed": 2628
     },
     {
       "position": [5,17],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 48881,
-      "times_confirmed": 2558
+      "last_seen_step": 53250,
+      "times_confirmed": 2628
     },
     {
       "position": [1,18],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 48877,
-      "times_confirmed": 1658
+      "last_seen_step": 53246,
+      "times_confirmed": 1690
     },
     {
       "position": [3,15],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 48875,
-      "times_confirmed": 2662
+      "last_seen_step": 53244,
+      "times_confirmed": 2766
     },
     {
       "position": [4,15],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 48875,
-      "times_confirmed": 3306
+      "last_seen_step": 53244,
+      "times_confirmed": 3427
     },
     {
       "position": [1,10],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 46271,
-      "times_confirmed": 2017
+      "last_seen_step": 53204,
+      "times_confirmed": 2114
     },
     {
       "position": [39,15],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51563,
-      "times_confirmed": 1820
+      "last_seen_step": 53672,
+      "times_confirmed": 1878
     },
     {
       "position": [35,9],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51547,
-      "times_confirmed": 2437
+      "last_seen_step": 53580,
+      "times_confirmed": 2517
     },
     {
       "position": [39,1],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 51469,
-      "times_confirmed": 1298
+      "last_seen_step": 53686,
+      "times_confirmed": 1329
     }
   ],
   "investigation_history": [
@@ -3842,663 +3842,663 @@
   "visit_counts": [
     {
       "position": [1,1],
-      "count": 114
-    },
-    {
-      "position": [2,1],
-      "count": 135
-    },
-    {
-      "position": [3,1],
       "count": 120
     },
     {
-      "position": [4,1],
-      "count": 134
-    },
-    {
-      "position": [5,1],
-      "count": 124
-    },
-    {
-      "position": [5,2],
-      "count": 136
-    },
-    {
-      "position": [5,3],
-      "count": 130
-    },
-    {
-      "position": [5,4],
-      "count": 137
-    },
-    {
-      "position": [5,5],
-      "count": 132
-    },
-    {
-      "position": [6,5],
-      "count": 137
-    },
-    {
-      "position": [7,5],
-      "count": 134
-    },
-    {
-      "position": [8,5],
-      "count": 137
-    },
-    {
-      "position": [9,5],
-      "count": 134
-    },
-    {
-      "position": [10,5],
-      "count": 136
-    },
-    {
-      "position": [11,5],
-      "count": 134
-    },
-    {
-      "position": [12,5],
-      "count": 135
-    },
-    {
-      "position": [13,5],
-      "count": 134
-    },
-    {
-      "position": [13,6],
-      "count": 135
-    },
-    {
-      "position": [13,7],
-      "count": 135
-    },
-    {
-      "position": [13,8],
-      "count": 135
-    },
-    {
-      "position": [13,9],
-      "count": 134
-    },
-    {
-      "position": [14,9],
-      "count": 134
-    },
-    {
-      "position": [15,9],
-      "count": 134
-    },
-    {
-      "position": [16,9],
-      "count": 134
-    },
-    {
-      "position": [17,9],
-      "count": 135
-    },
-    {
-      "position": [18,9],
-      "count": 135
-    },
-    {
-      "position": [19,9],
-      "count": 136
-    },
-    {
-      "position": [20,9],
-      "count": 135
-    },
-    {
-      "position": [21,9],
-      "count": 135
-    },
-    {
-      "position": [21,10],
-      "count": 134
-    },
-    {
-      "position": [21,11],
-      "count": 135
-    },
-    {
-      "position": [22,11],
-      "count": 134
-    },
-    {
-      "position": [23,11],
-      "count": 135
-    },
-    {
-      "position": [23,10],
-      "count": 133
-    },
-    {
-      "position": [23,9],
-      "count": 135
-    },
-    {
-      "position": [23,8],
-      "count": 133
-    },
-    {
-      "position": [23,7],
-      "count": 135
-    },
-    {
-      "position": [22,7],
-      "count": 133
-    },
-    {
-      "position": [21,7],
-      "count": 135
-    },
-    {
-      "position": [21,6],
-      "count": 133
-    },
-    {
-      "position": [21,5],
-      "count": 136
-    },
-    {
-      "position": [20,5],
-      "count": 132
-    },
-    {
-      "position": [19,5],
-      "count": 135
-    },
-    {
-      "position": [19,4],
-      "count": 130
-    },
-    {
-      "position": [19,3],
-      "count": 136
-    },
-    {
-      "position": [19,2],
-      "count": 129
-    },
-    {
-      "position": [19,1],
-      "count": 140
-    },
-    {
-      "position": [20,1],
-      "count": 131
-    },
-    {
-      "position": [21,1],
-      "count": 139
-    },
-    {
-      "position": [22,1],
-      "count": 132
-    },
-    {
-      "position": [23,1],
-      "count": 139
-    },
-    {
-      "position": [23,2],
-      "count": 134
-    },
-    {
-      "position": [23,3],
+      "position": [2,1],
       "count": 141
     },
     {
-      "position": [23,4],
+      "position": [3,1],
+      "count": 125
+    },
+    {
+      "position": [4,1],
+      "count": 139
+    },
+    {
+      "position": [5,1],
+      "count": 125
+    },
+    {
+      "position": [5,2],
+      "count": 137
+    },
+    {
+      "position": [5,3],
+      "count": 131
+    },
+    {
+      "position": [5,4],
+      "count": 138
+    },
+    {
+      "position": [5,5],
+      "count": 133
+    },
+    {
+      "position": [6,5],
+      "count": 138
+    },
+    {
+      "position": [7,5],
+      "count": 135
+    },
+    {
+      "position": [8,5],
+      "count": 138
+    },
+    {
+      "position": [9,5],
+      "count": 135
+    },
+    {
+      "position": [10,5],
+      "count": 137
+    },
+    {
+      "position": [11,5],
+      "count": 135
+    },
+    {
+      "position": [12,5],
       "count": 136
+    },
+    {
+      "position": [13,5],
+      "count": 135
+    },
+    {
+      "position": [13,6],
+      "count": 136
+    },
+    {
+      "position": [13,7],
+      "count": 136
+    },
+    {
+      "position": [13,8],
+      "count": 136
+    },
+    {
+      "position": [13,9],
+      "count": 135
+    },
+    {
+      "position": [14,9],
+      "count": 135
+    },
+    {
+      "position": [15,9],
+      "count": 135
+    },
+    {
+      "position": [16,9],
+      "count": 135
+    },
+    {
+      "position": [17,9],
+      "count": 136
+    },
+    {
+      "position": [18,9],
+      "count": 136
+    },
+    {
+      "position": [19,9],
+      "count": 137
+    },
+    {
+      "position": [20,9],
+      "count": 136
+    },
+    {
+      "position": [21,9],
+      "count": 138
+    },
+    {
+      "position": [21,10],
+      "count": 137
+    },
+    {
+      "position": [21,11],
+      "count": 138
+    },
+    {
+      "position": [22,11],
+      "count": 137
+    },
+    {
+      "position": [23,11],
+      "count": 138
+    },
+    {
+      "position": [23,10],
+      "count": 145
+    },
+    {
+      "position": [23,9],
+      "count": 150
+    },
+    {
+      "position": [23,8],
+      "count": 145
+    },
+    {
+      "position": [23,7],
+      "count": 148
+    },
+    {
+      "position": [22,7],
+      "count": 145
+    },
+    {
+      "position": [21,7],
+      "count": 147
+    },
+    {
+      "position": [21,6],
+      "count": 144
+    },
+    {
+      "position": [21,5],
+      "count": 148
+    },
+    {
+      "position": [20,5],
+      "count": 144
+    },
+    {
+      "position": [19,5],
+      "count": 148
+    },
+    {
+      "position": [19,4],
+      "count": 143
+    },
+    {
+      "position": [19,3],
+      "count": 149
+    },
+    {
+      "position": [19,2],
+      "count": 141
+    },
+    {
+      "position": [19,1],
+      "count": 149
+    },
+    {
+      "position": [20,1],
+      "count": 138
+    },
+    {
+      "position": [21,1],
+      "count": 146
+    },
+    {
+      "position": [22,1],
+      "count": 139
+    },
+    {
+      "position": [23,1],
+      "count": 146
+    },
+    {
+      "position": [23,2],
+      "count": 139
+    },
+    {
+      "position": [23,3],
+      "count": 145
+    },
+    {
+      "position": [23,4],
+      "count": 139
     },
     {
       "position": [23,5],
-      "count": 140
+      "count": 143
     },
     {
       "position": [24,5],
-      "count": 136
+      "count": 139
     },
     {
       "position": [25,5],
-      "count": 140
+      "count": 143
     },
     {
       "position": [25,6],
-      "count": 138
+      "count": 139
     },
     {
       "position": [25,7],
-      "count": 140
+      "count": 141
     },
     {
       "position": [26,7],
-      "count": 138
+      "count": 139
     },
     {
       "position": [27,7],
-      "count": 139
+      "count": 140
     },
     {
       "position": [28,7],
-      "count": 137
+      "count": 138
     },
     {
       "position": [29,7],
-      "count": 139
+      "count": 140
     },
     {
       "position": [29,6],
-      "count": 138
+      "count": 139
     },
     {
       "position": [29,5],
-      "count": 138
+      "count": 139
     },
     {
       "position": [29,4],
-      "count": 137
+      "count": 138
     },
     {
       "position": [29,3],
-      "count": 138
+      "count": 139
     },
     {
       "position": [30,3],
-      "count": 137
+      "count": 138
     },
     {
       "position": [31,3],
-      "count": 137
+      "count": 138
     },
     {
       "position": [31,4],
-      "count": 136
+      "count": 137
     },
     {
       "position": [31,5],
-      "count": 137
+      "count": 138
     },
     {
       "position": [31,6],
-      "count": 137
+      "count": 138
     },
     {
       "position": [31,7],
-      "count": 138
+      "count": 139
     },
     {
       "position": [31,8],
-      "count": 138
+      "count": 140
     },
     {
       "position": [31,9],
-      "count": 139
+      "count": 140
     },
     {
       "position": [31,10],
-      "count": 138
+      "count": 139
     },
     {
       "position": [31,11],
-      "count": 138
+      "count": 139
     },
     {
       "position": [30,11],
-      "count": 138
+      "count": 139
     },
     {
       "position": [29,11],
-      "count": 139
+      "count": 140
     },
     {
       "position": [29,10],
-      "count": 138
-    },
-    {
-      "position": [29,9],
       "count": 139
     },
     {
+      "position": [29,9],
+      "count": 141
+    },
+    {
       "position": [28,9],
-      "count": 137
+      "count": 138
     },
     {
       "position": [27,9],
-      "count": 138
+      "count": 139
     },
     {
       "position": [27,10],
-      "count": 136
+      "count": 137
     },
     {
       "position": [27,11],
-      "count": 137
-    },
-    {
-      "position": [26,11],
-      "count": 135
-    },
-    {
-      "position": [25,11],
       "count": 138
     },
     {
+      "position": [26,11],
+      "count": 136
+    },
+    {
+      "position": [25,11],
+      "count": 139
+    },
+    {
       "position": [25,12],
-      "count": 135
+      "count": 136
     },
     {
       "position": [25,13],
-      "count": 137
+      "count": 138
     },
     {
       "position": [24,13],
-      "count": 134
+      "count": 136
     },
     {
       "position": [23,13],
-      "count": 135
+      "count": 136
     },
     {
       "position": [23,14],
-      "count": 132
+      "count": 133
     },
     {
       "position": [23,15],
-      "count": 134
+      "count": 135
     },
     {
       "position": [24,15],
-      "count": 130
+      "count": 132
     },
     {
       "position": [25,15],
-      "count": 134
+      "count": 135
     },
     {
       "position": [25,16],
-      "count": 130
+      "count": 131
     },
     {
       "position": [25,17],
-      "count": 134
+      "count": 135
     },
     {
       "position": [24,17],
-      "count": 130
+      "count": 131
     },
     {
       "position": [23,17],
-      "count": 135
+      "count": 136
     },
     {
       "position": [23,18],
-      "count": 129
+      "count": 130
     },
     {
       "position": [23,19],
-      "count": 135
+      "count": 137
     },
     {
       "position": [22,19],
-      "count": 128
+      "count": 130
     },
     {
       "position": [21,19],
-      "count": 134
+      "count": 136
     },
     {
       "position": [21,18],
-      "count": 128
+      "count": 130
     },
     {
       "position": [21,17],
-      "count": 133
+      "count": 135
     },
     {
       "position": [21,16],
-      "count": 129
+      "count": 131
     },
     {
       "position": [21,15],
-      "count": 133
+      "count": 135
     },
     {
       "position": [21,14],
-      "count": 128
+      "count": 131
     },
     {
       "position": [21,13],
-      "count": 131
+      "count": 135
     },
     {
       "position": [20,13],
-      "count": 127
+      "count": 131
     },
     {
       "position": [19,13],
-      "count": 131
+      "count": 135
     },
     {
       "position": [19,14],
-      "count": 127
+      "count": 131
     },
     {
       "position": [19,15],
-      "count": 130
+      "count": 134
     },
     {
       "position": [18,15],
-      "count": 127
+      "count": 131
     },
     {
       "position": [17,15],
-      "count": 130
+      "count": 134
     },
     {
       "position": [17,16],
-      "count": 127
+      "count": 131
     },
     {
       "position": [17,17],
-      "count": 130
+      "count": 135
     },
     {
       "position": [17,18],
-      "count": 126
+      "count": 131
     },
     {
       "position": [17,19],
-      "count": 129
+      "count": 136
     },
     {
       "position": [16,19],
-      "count": 125
+      "count": 131
     },
     {
       "position": [15,19],
-      "count": 129
+      "count": 136
     },
     {
       "position": [15,18],
-      "count": 126
+      "count": 132
     },
     {
       "position": [15,17],
-      "count": 129
+      "count": 136
     },
     {
       "position": [14,17],
-      "count": 125
+      "count": 131
     },
     {
       "position": [13,17],
-      "count": 129
+      "count": 135
     },
     {
       "position": [13,16],
-      "count": 126
+      "count": 131
     },
     {
       "position": [13,15],
-      "count": 129
+      "count": 134
     },
     {
       "position": [14,15],
-      "count": 125
+      "count": 130
     },
     {
       "position": [15,15],
-      "count": 129
+      "count": 134
     },
     {
       "position": [15,14],
-      "count": 125
+      "count": 129
     },
     {
       "position": [15,13],
-      "count": 130
+      "count": 134
     },
     {
       "position": [15,12],
-      "count": 125
+      "count": 130
     },
     {
       "position": [15,11],
-      "count": 130
+      "count": 135
     },
     {
       "position": [14,11],
-      "count": 126
+      "count": 130
     },
     {
       "position": [13,11],
-      "count": 130
+      "count": 134
     },
     {
       "position": [13,12],
-      "count": 126
+      "count": 130
     },
     {
       "position": [13,13],
-      "count": 130
+      "count": 133
     },
     {
       "position": [12,13],
-      "count": 126
+      "count": 129
     },
     {
       "position": [11,13],
-      "count": 129
+      "count": 133
     },
     {
       "position": [11,14],
-      "count": 125
+      "count": 130
     },
     {
       "position": [11,15],
-      "count": 128
+      "count": 133
     },
     {
       "position": [11,16],
-      "count": 125
+      "count": 129
     },
     {
       "position": [11,17],
-      "count": 129
+      "count": 133
     },
     {
       "position": [10,17],
-      "count": 126
+      "count": 130
     },
     {
       "position": [9,17],
-      "count": 129
+      "count": 133
     },
     {
       "position": [9,18],
-      "count": 126
+      "count": 130
     },
     {
       "position": [9,19],
-      "count": 129
+      "count": 133
     },
     {
       "position": [8,19],
-      "count": 127
+      "count": 129
     },
     {
       "position": [7,19],
-      "count": 130
+      "count": 132
     },
     {
       "position": [6,19],
-      "count": 127
+      "count": 129
     },
     {
       "position": [5,19],
-      "count": 130
+      "count": 132
     },
     {
       "position": [4,19],
-      "count": 128
+      "count": 130
     },
     {
       "position": [3,19],
-      "count": 130
+      "count": 132
     },
     {
       "position": [3,18],
-      "count": 128
+      "count": 130
     },
     {
       "position": [3,17],
-      "count": 131
+      "count": 133
     },
     {
       "position": [4,17],
-      "count": 129
-    },
-    {
-      "position": [5,17],
       "count": 131
     },
     {
+      "position": [5,17],
+      "count": 133
+    },
+    {
       "position": [6,17],
-      "count": 129
+      "count": 132
     },
     {
       "position": [7,17],
-      "count": 130
+      "count": 133
     },
     {
       "position": [7,16],
-      "count": 128
+      "count": 131
     },
     {
       "position": [7,15],
-      "count": 130
+      "count": 133
     },
     {
       "position": [7,14],
-      "count": 127
+      "count": 131
     },
     {
       "position": [7,13],
-      "count": 129
+      "count": 133
     },
     {
       "position": [8,13],
-      "count": 126
+      "count": 130
     },
     {
       "position": [9,13],
-      "count": 130
+      "count": 133
     },
     {
       "position": [9,14],
@@ -4510,43 +4510,43 @@
     },
     {
       "position": [9,12],
-      "count": 127
+      "count": 130
     },
     {
       "position": [9,11],
-      "count": 131
+      "count": 133
     },
     {
       "position": [9,10],
-      "count": 127
+      "count": 130
     },
     {
       "position": [9,9],
-      "count": 130
+      "count": 135
     },
     {
       "position": [9,8],
-      "count": 126
+      "count": 131
     },
     {
       "position": [9,7],
-      "count": 130
+      "count": 135
     },
     {
       "position": [10,7],
-      "count": 127
+      "count": 134
     },
     {
       "position": [11,7],
-      "count": 126
-    },
-    {
-      "position": [11,8],
       "count": 132
     },
     {
+      "position": [11,8],
+      "count": 141
+    },
+    {
       "position": [11,9],
-      "count": 124
+      "count": 132
     },
     {
       "position": [11,10],
@@ -4558,67 +4558,67 @@
     },
     {
       "position": [8,7],
-      "count": 125
+      "count": 131
     },
     {
       "position": [7,7],
-      "count": 128
+      "count": 135
     },
     {
       "position": [7,8],
-      "count": 124
+      "count": 131
     },
     {
       "position": [7,9],
-      "count": 127
+      "count": 135
     },
     {
       "position": [6,9],
-      "count": 123
+      "count": 132
     },
     {
       "position": [5,9],
-      "count": 126
+      "count": 134
     },
     {
       "position": [5,8],
-      "count": 124
+      "count": 131
     },
     {
       "position": [5,7],
-      "count": 127
+      "count": 134
     },
     {
       "position": [4,7],
-      "count": 125
+      "count": 131
     },
     {
       "position": [3,7],
-      "count": 128
+      "count": 134
     },
     {
       "position": [3,8],
-      "count": 125
+      "count": 131
     },
     {
       "position": [3,9],
-      "count": 128
+      "count": 134
     },
     {
       "position": [3,10],
-      "count": 125
+      "count": 131
     },
     {
       "position": [3,11],
-      "count": 127
+      "count": 134
     },
     {
       "position": [4,11],
-      "count": 124
+      "count": 131
     },
     {
       "position": [5,11],
-      "count": 127
+      "count": 134
     },
     {
       "position": [6,11],
@@ -4630,75 +4630,75 @@
     },
     {
       "position": [5,12],
-      "count": 123
+      "count": 131
     },
     {
       "position": [5,13],
-      "count": 126
+      "count": 134
     },
     {
       "position": [5,14],
-      "count": 123
+      "count": 131
     },
     {
       "position": [5,15],
-      "count": 126
+      "count": 134
     },
     {
       "position": [4,15],
-      "count": 123
+      "count": 130
     },
     {
       "position": [3,15],
-      "count": 127
+      "count": 133
     },
     {
       "position": [2,15],
-      "count": 124
+      "count": 129
     },
     {
       "position": [1,15],
-      "count": 128
+      "count": 132
     },
     {
       "position": [1,14],
-      "count": 125
-    },
-    {
-      "position": [1,13],
-      "count": 129
-    },
-    {
-      "position": [2,13],
-      "count": 127
-    },
-    {
-      "position": [3,13],
-      "count": 115
-    },
-    {
-      "position": [1,12],
-      "count": 127
-    },
-    {
-      "position": [1,11],
-      "count": 129
-    },
-    {
-      "position": [1,10],
-      "count": 127
-    },
-    {
-      "position": [1,9],
-      "count": 127
-    },
-    {
-      "position": [1,8],
       "count": 128
     },
     {
+      "position": [1,13],
+      "count": 132
+    },
+    {
+      "position": [2,13],
+      "count": 143
+    },
+    {
+      "position": [3,13],
+      "count": 130
+    },
+    {
+      "position": [1,12],
+      "count": 129
+    },
+    {
+      "position": [1,11],
+      "count": 131
+    },
+    {
+      "position": [1,10],
+      "count": 131
+    },
+    {
+      "position": [1,9],
+      "count": 131
+    },
+    {
+      "position": [1,8],
+      "count": 132
+    },
+    {
       "position": [1,7],
-      "count": 126
+      "count": 129
     },
     {
       "position": [1,6],
@@ -4750,11 +4750,11 @@
     },
     {
       "position": [10,19],
-      "count": 128
+      "count": 138
     },
     {
       "position": [11,19],
-      "count": 124
+      "count": 133
     },
     {
       "position": [12,19],
@@ -4790,251 +4790,251 @@
     },
     {
       "position": [18,19],
-      "count": 127
+      "count": 138
     },
     {
       "position": [19,19],
-      "count": 123
+      "count": 134
     },
     {
       "position": [19,18],
-      "count": 135
+      "count": 148
     },
     {
       "position": [19,17],
-      "count": 119
+      "count": 131
     },
     {
       "position": [24,19],
-      "count": 129
+      "count": 130
     },
     {
       "position": [25,19],
-      "count": 134
+      "count": 135
     },
     {
       "position": [26,19],
-      "count": 129
+      "count": 130
     },
     {
       "position": [27,19],
-      "count": 133
+      "count": 134
     },
     {
       "position": [28,19],
-      "count": 128
+      "count": 129
     },
     {
       "position": [29,19],
-      "count": 131
+      "count": 132
     },
     {
       "position": [30,19],
-      "count": 128
+      "count": 130
     },
     {
       "position": [31,19],
-      "count": 131
+      "count": 133
     },
     {
       "position": [32,19],
-      "count": 129
+      "count": 130
     },
     {
       "position": [33,19],
-      "count": 131
+      "count": 132
     },
     {
       "position": [33,18],
-      "count": 129
+      "count": 130
     },
     {
       "position": [33,17],
-      "count": 131
+      "count": 132
     },
     {
       "position": [32,17],
-      "count": 129
+      "count": 130
     },
     {
       "position": [31,17],
-      "count": 131
+      "count": 132
     },
     {
       "position": [30,17],
-      "count": 129
+      "count": 130
     },
     {
       "position": [29,17],
-      "count": 131
+      "count": 132
     },
     {
       "position": [29,16],
-      "count": 129
+      "count": 131
     },
     {
       "position": [29,15],
-      "count": 130
+      "count": 133
     },
     {
       "position": [28,15],
-      "count": 128
+      "count": 131
     },
     {
       "position": [27,15],
-      "count": 130
+      "count": 133
     },
     {
       "position": [27,14],
-      "count": 128
+      "count": 132
     },
     {
       "position": [27,13],
-      "count": 130
+      "count": 134
     },
     {
       "position": [28,13],
-      "count": 129
+      "count": 132
     },
     {
       "position": [29,13],
-      "count": 131
+      "count": 135
     },
     {
       "position": [30,13],
-      "count": 129
+      "count": 133
     },
     {
       "position": [31,13],
-      "count": 130
+      "count": 134
     },
     {
       "position": [32,13],
-      "count": 128
+      "count": 132
     },
     {
       "position": [33,13],
-      "count": 129
+      "count": 133
     },
     {
       "position": [34,13],
-      "count": 128
+      "count": 131
     },
     {
       "position": [35,13],
-      "count": 129
+      "count": 132
     },
     {
       "position": [36,13],
-      "count": 127
+      "count": 131
     },
     {
       "position": [37,13],
-      "count": 128
+      "count": 132
     },
     {
       "position": [37,12],
-      "count": 127
+      "count": 130
     },
     {
       "position": [37,11],
-      "count": 129
+      "count": 133
     },
     {
       "position": [36,11],
-      "count": 127
+      "count": 131
     },
     {
       "position": [35,11],
-      "count": 130
+      "count": 134
     },
     {
       "position": [35,10],
-      "count": 127
+      "count": 131
     },
     {
       "position": [35,9],
-      "count": 131
+      "count": 135
     },
     {
       "position": [36,9],
-      "count": 127
+      "count": 131
     },
     {
       "position": [37,9],
-      "count": 131
+      "count": 135
     },
     {
       "position": [37,8],
-      "count": 126
+      "count": 130
     },
     {
       "position": [37,7],
-      "count": 131
+      "count": 136
     },
     {
       "position": [38,7],
-      "count": 125
+      "count": 130
     },
     {
       "position": [39,7],
-      "count": 133
+      "count": 137
     },
     {
       "position": [39,8],
-      "count": 128
+      "count": 131
     },
     {
       "position": [39,9],
-      "count": 134
+      "count": 137
     },
     {
       "position": [39,10],
-      "count": 129
+      "count": 131
     },
     {
       "position": [39,11],
-      "count": 134
+      "count": 136
     },
     {
       "position": [39,12],
-      "count": 130
+      "count": 132
     },
     {
       "position": [39,13],
-      "count": 134
+      "count": 136
     },
     {
       "position": [39,14],
-      "count": 130
+      "count": 133
     },
     {
       "position": [39,15],
-      "count": 133
+      "count": 136
     },
     {
       "position": [39,16],
-      "count": 131
-    },
-    {
-      "position": [39,17],
       "count": 133
     },
     {
+      "position": [39,17],
+      "count": 135
+    },
+    {
       "position": [38,17],
-      "count": 130
+      "count": 132
     },
     {
       "position": [37,17],
-      "count": 132
+      "count": 134
     },
     {
       "position": [37,18],
-      "count": 131
+      "count": 133
     },
     {
       "position": [37,19],
-      "count": 132
+      "count": 134
     },
     {
       "position": [38,19],
@@ -5046,43 +5046,43 @@
     },
     {
       "position": [36,19],
-      "count": 132
-    },
-    {
-      "position": [35,19],
-      "count": 131
-    },
-    {
-      "position": [35,18],
-      "count": 131
-    },
-    {
-      "position": [35,17],
-      "count": 129
-    },
-    {
-      "position": [35,16],
-      "count": 133
-    },
-    {
-      "position": [35,15],
-      "count": 128
-    },
-    {
-      "position": [36,15],
       "count": 135
     },
     {
-      "position": [37,15],
-      "count": 119
+      "position": [35,19],
+      "count": 134
     },
     {
-      "position": [34,15],
+      "position": [35,18],
+      "count": 135
+    },
+    {
+      "position": [35,17],
       "count": 133
     },
     {
+      "position": [35,16],
+      "count": 137
+    },
+    {
+      "position": [35,15],
+      "count": 133
+    },
+    {
+      "position": [36,15],
+      "count": 149
+    },
+    {
+      "position": [37,15],
+      "count": 132
+    },
+    {
+      "position": [34,15],
+      "count": 140
+    },
+    {
       "position": [33,15],
-      "count": 124
+      "count": 130
     },
     {
       "position": [32,15],
@@ -5094,147 +5094,147 @@
     },
     {
       "position": [39,6],
-      "count": 125
+      "count": 129
     },
     {
       "position": [39,5],
-      "count": 132
+      "count": 136
     },
     {
       "position": [39,4],
-      "count": 126
+      "count": 129
     },
     {
       "position": [39,3],
-      "count": 132
+      "count": 135
     },
     {
       "position": [39,2],
-      "count": 126
-    },
-    {
-      "position": [39,1],
-      "count": 131
-    },
-    {
-      "position": [38,1],
-      "count": 125
-    },
-    {
-      "position": [37,1],
-      "count": 131
-    },
-    {
-      "position": [36,1],
-      "count": 125
-    },
-    {
-      "position": [35,1],
-      "count": 132
-    },
-    {
-      "position": [34,1],
-      "count": 125
-    },
-    {
-      "position": [33,1],
-      "count": 133
-    },
-    {
-      "position": [32,1],
-      "count": 127
-    },
-    {
-      "position": [31,1],
-      "count": 132
-    },
-    {
-      "position": [30,1],
-      "count": 126
-    },
-    {
-      "position": [29,1],
-      "count": 129
-    },
-    {
-      "position": [28,1],
-      "count": 128
-    },
-    {
-      "position": [27,1],
-      "count": 127
-    },
-    {
-      "position": [26,1],
-      "count": 128
-    },
-    {
-      "position": [25,1],
-      "count": 125
-    },
-    {
-      "position": [25,2],
-      "count": 131
-    },
-    {
-      "position": [25,3],
-      "count": 124
-    },
-    {
-      "position": [26,3],
-      "count": 133
-    },
-    {
-      "position": [27,3],
-      "count": 121
-    },
-    {
-      "position": [27,4],
-      "count": 134
-    },
-    {
-      "position": [27,5],
-      "count": 114
-    },
-    {
-      "position": [33,2],
-      "count": 126
-    },
-    {
-      "position": [33,3],
-      "count": 132
-    },
-    {
-      "position": [33,4],
-      "count": 126
-    },
-    {
-      "position": [33,5],
       "count": 130
     },
     {
-      "position": [34,5],
-      "count": 126
+      "position": [39,1],
+      "count": 135
     },
     {
-      "position": [35,5],
+      "position": [38,1],
       "count": 129
     },
     {
-      "position": [36,5],
+      "position": [37,1],
+      "count": 135
+    },
+    {
+      "position": [36,1],
       "count": 129
     },
     {
-      "position": [37,5],
+      "position": [35,1],
+      "count": 136
+    },
+    {
+      "position": [34,1],
+      "count": 129
+    },
+    {
+      "position": [33,1],
+      "count": 136
+    },
+    {
+      "position": [32,1],
       "count": 128
     },
     {
-      "position": [37,4],
+      "position": [31,1],
       "count": 133
     },
     {
+      "position": [30,1],
+      "count": 129
+    },
+    {
+      "position": [29,1],
+      "count": 133
+    },
+    {
+      "position": [28,1],
+      "count": 133
+    },
+    {
+      "position": [27,1],
+      "count": 133
+    },
+    {
+      "position": [26,1],
+      "count": 137
+    },
+    {
+      "position": [25,1],
+      "count": 135
+    },
+    {
+      "position": [25,2],
+      "count": 141
+    },
+    {
+      "position": [25,3],
+      "count": 134
+    },
+    {
+      "position": [26,3],
+      "count": 145
+    },
+    {
+      "position": [27,3],
+      "count": 133
+    },
+    {
+      "position": [27,4],
+      "count": 154
+    },
+    {
+      "position": [27,5],
+      "count": 132
+    },
+    {
+      "position": [33,2],
+      "count": 128
+    },
+    {
+      "position": [33,3],
+      "count": 134
+    },
+    {
+      "position": [33,4],
+      "count": 129
+    },
+    {
+      "position": [33,5],
+      "count": 134
+    },
+    {
+      "position": [34,5],
+      "count": 130
+    },
+    {
+      "position": [35,5],
+      "count": 133
+    },
+    {
+      "position": [36,5],
+      "count": 134
+    },
+    {
+      "position": [37,5],
+      "count": 133
+    },
+    {
+      "position": [37,4],
+      "count": 136
+    },
+    {
       "position": [37,3],
-      "count": 125
+      "count": 127
     },
     {
       "position": [36,3],
@@ -5246,27 +5246,27 @@
     },
     {
       "position": [35,6],
-      "count": 126
+      "count": 131
     },
     {
       "position": [35,7],
-      "count": 126
+      "count": 131
     },
     {
       "position": [34,7],
-      "count": 128
+      "count": 134
     },
     {
       "position": [33,7],
-      "count": 124
+      "count": 130
     },
     {
       "position": [33,8],
-      "count": 133
+      "count": 140
     },
     {
       "position": [33,9],
-      "count": 123
+      "count": 129
     },
     {
       "position": [33,10],
@@ -5302,131 +5302,131 @@
     },
     {
       "position": [18,1],
-      "count": 131
-    },
-    {
-      "position": [17,1],
-      "count": 139
-    },
-    {
-      "position": [16,1],
-      "count": 130
-    },
-    {
-      "position": [15,1],
-      "count": 138
-    },
-    {
-      "position": [15,2],
-      "count": 130
-    },
-    {
-      "position": [15,3],
       "count": 137
     },
     {
+      "position": [17,1],
+      "count": 146
+    },
+    {
+      "position": [16,1],
+      "count": 137
+    },
+    {
+      "position": [15,1],
+      "count": 145
+    },
+    {
+      "position": [15,2],
+      "count": 137
+    },
+    {
+      "position": [15,3],
+      "count": 145
+    },
+    {
       "position": [16,3],
-      "count": 131
+      "count": 140
     },
     {
       "position": [17,3],
-      "count": 136
+      "count": 145
     },
     {
       "position": [17,4],
-      "count": 134
+      "count": 142
     },
     {
       "position": [17,5],
-      "count": 135
+      "count": 143
     },
     {
       "position": [16,5],
-      "count": 135
+      "count": 142
     },
     {
       "position": [15,5],
-      "count": 132
-    },
-    {
-      "position": [15,6],
-      "count": 136
-    },
-    {
-      "position": [15,7],
-      "count": 130
-    },
-    {
-      "position": [16,7],
-      "count": 143
-    },
-    {
-      "position": [17,7],
-      "count": 129
-    },
-    {
-      "position": [18,7],
-      "count": 143
-    },
-    {
-      "position": [19,7],
-      "count": 122
-    },
-    {
-      "position": [14,3],
-      "count": 127
-    },
-    {
-      "position": [13,3],
-      "count": 132
-    },
-    {
-      "position": [12,3],
-      "count": 128
-    },
-    {
-      "position": [11,3],
-      "count": 131
-    },
-    {
-      "position": [10,3],
-      "count": 129
-    },
-    {
-      "position": [9,3],
-      "count": 130
-    },
-    {
-      "position": [8,3],
-      "count": 132
-    },
-    {
-      "position": [7,3],
-      "count": 130
-    },
-    {
-      "position": [7,2],
-      "count": 133
-    },
-    {
-      "position": [7,1],
-      "count": 129
-    },
-    {
-      "position": [8,1],
-      "count": 134
-    },
-    {
-      "position": [9,1],
-      "count": 127
-    },
-    {
-      "position": [10,1],
       "count": 139
     },
     {
+      "position": [15,6],
+      "count": 145
+    },
+    {
+      "position": [15,7],
+      "count": 138
+    },
+    {
+      "position": [16,7],
+      "count": 150
+    },
+    {
+      "position": [17,7],
+      "count": 136
+    },
+    {
+      "position": [18,7],
+      "count": 152
+    },
+    {
+      "position": [19,7],
+      "count": 130
+    },
+    {
+      "position": [14,3],
+      "count": 136
+    },
+    {
+      "position": [13,3],
+      "count": 142
+    },
+    {
+      "position": [12,3],
+      "count": 139
+    },
+    {
+      "position": [11,3],
+      "count": 142
+    },
+    {
+      "position": [10,3],
+      "count": 142
+    },
+    {
+      "position": [9,3],
+      "count": 142
+    },
+    {
+      "position": [8,3],
+      "count": 142
+    },
+    {
+      "position": [7,3],
+      "count": 140
+    },
+    {
+      "position": [7,2],
+      "count": 142
+    },
+    {
+      "position": [7,1],
+      "count": 138
+    },
+    {
+      "position": [8,1],
+      "count": 145
+    },
+    {
+      "position": [9,1],
+      "count": 137
+    },
+    {
+      "position": [10,1],
+      "count": 145
+    },
+    {
       "position": [11,1],
-      "count": 127
+      "count": 132
     },
     {
       "position": [12,1],
