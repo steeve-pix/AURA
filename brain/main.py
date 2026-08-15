@@ -6,6 +6,7 @@ from pathlib import Path
 from brain.decision import decide
 from brain.goals import choose_goal, goal_scores
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
+from brain.planning import plan_debug, update_plan_from_observation
 
 
 def main() -> None:
@@ -43,13 +44,12 @@ def main() -> None:
             target = tuple(last_action["target"])
             memory.mark_target_failed(target)
 
-            if memory.active_recharge_target == target:
-                memory.clear_recharge_target()
-
             if last_action["type"] == "investigate":
-                memory.clear_investigation_target()
-            elif memory.active_investigation_approach == target:
-                memory.clear_investigation_approach()
+                if (
+                        memory.active_plan is not None
+                        and memory.active_plan.goal == "investigate"
+                ):
+                    memory.clear_active_plan()
 
             print(f"Failed targets: {memory.failed_targets}", file=sys.stderr)
 
@@ -62,8 +62,6 @@ def main() -> None:
 
             if revealed_cell is not None:
                 memory.remember_investigation_result(target, revealed_cell["type"])
-
-            memory.clear_investigation_target()
 
         for visible_cell in observation["visible_cells"]:
             memory.remember_cell(
@@ -100,6 +98,18 @@ def main() -> None:
                     battery
                 )
 
+        if memory.active_plan is not None:
+            update_plan_from_observation(
+                memory.active_plan,
+                observation,
+            )
+
+            if (
+                    memory.active_plan.is_complete()
+                    or memory.active_plan.has_failed()
+            ):
+                memory.clear_active_plan()
+
         save_memory(memory, memory_path, world_id)
 
         score = goal_scores(observation, memory)
@@ -117,6 +127,7 @@ def main() -> None:
             "visited_cells": [
                 list(position) for position in memory.visit_counts.keys()
             ],
+            "plan": plan_debug(memory.active_plan),
         }
 
         print(json.dumps(decision), flush=True)

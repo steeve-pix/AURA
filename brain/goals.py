@@ -70,15 +70,12 @@ def choose_goal(observation, memory):
     current_goal = memory.active_goal
 
     if current_goal is not None and goal_completed(current_goal, observation, memory):
-        if current_goal == "investigate":
-            memory.clear_investigation_target()
         memory.clear_active_goal()
         current_goal = None
 
     energy = observation["energy"]
 
     if energy <= CRITICAL_ENERGY:
-        memory.clear_investigation_target()
         memory.set_active_goal("recharge")
         return "recharge"
 
@@ -102,8 +99,6 @@ def choose_goal(observation, memory):
 
     # Hysteresis avoids rapid goal switching when two scores are nearly equal.
     if best_score >= current_score + GOAL_SWITCH_MARGIN:
-        if current_goal == "investigate":
-            memory.clear_investigation_target()
         memory.set_active_goal(best_goal)
         return best_goal
 
@@ -127,9 +122,19 @@ def goal_completed(goal, observation, memory):
         return observation["energy"] >= 100
 
     if goal == "investigate":
-        # A locked target keeps investigation active while AURA approaches from outside
-        # the object's cell; completion depends on that object no longer being unknown.
-        target = memory.active_investigation_target
+        plan = memory.active_plan
+        target = None
+
+        if plan is not None and plan.goal == "investigate":
+            target = next(
+                (
+                    step.target
+                    for step in plan.steps
+                    if step.step_type == "investigate"
+                ),
+                None,
+            )
+
         if target is None:
             return not any(
                 obj["type"] == "Unknown"

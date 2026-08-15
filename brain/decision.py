@@ -3,9 +3,9 @@ import random
 from typing import Any, Union
 
 from brain.memory import Memory
+from brain.planning import Plan, PlanStep, create_recharge_plan
 
 BATTERY_ARRIVAL_RESERVE = 2
-BATTERY_TARGET_SWITCH_MARGIN = 5
 
 
 def remembered_battery_score(
@@ -23,6 +23,12 @@ def remembered_battery_score(
 
 
 def choose_recharge_action(observation, memory):
+    if (
+            memory.active_plan is not None
+            and memory.active_plan.goal == "recharge"
+    ):
+        return action_from_plan(memory.active_plan)
+
     energy = observation["energy"]
     visible_battery_positions = {
         tuple(obj["position"])
@@ -45,50 +51,11 @@ def choose_recharge_action(observation, memory):
             key=lambda obj: obj["path_length"],
         )
 
-        active_target = memory.active_recharge_target
-        active_battery = next(
-            (
-                obj
-                for obj in visible_batteries
-                if tuple(obj["position"]) == active_target
-            ),
-            None,
-        )
-
-        # Keep the active battery unless the new route is meaningfully shorter.
-        if active_battery is not None:
-            improvement = (
-                    active_battery["path_length"]
-                    - best["path_length"]
-            )
-
-            if improvement < BATTERY_TARGET_SWITCH_MARGIN:
-                best = active_battery
-
         target = tuple(best["position"])
+        plan = create_recharge_plan(target)
+        memory.set_active_plan(plan)
 
-        if target != memory.active_recharge_target:
-            memory.set_recharge_target(target)
-
-        return {
-            "action": "move_to",
-            "target": list(target),
-        }
-
-    if memory.active_recharge_target is not None:
-        target = memory.active_recharge_target
-
-        # Continue toward an out-of-range remembered target until it fails or is disproved.
-        if (
-                target not in visible_battery_positions
-                and not memory.is_failed_target(target)
-        ):
-            return {
-                "action": "move_to",
-                "target": list(target),
-            }
-
-        memory.clear_recharge_target()
+        return action_from_plan(plan)
 
     remembered = [
         battery
@@ -110,17 +77,27 @@ def choose_recharge_action(observation, memory):
             ),
         )
 
-        memory.set_recharge_target(target)
+        plan = create_recharge_plan(target)
+        memory.set_active_plan(plan)
 
-        return {
-            "action": "move_to",
-            "target": list(target),
-        }
+        return action_from_plan(plan)
 
     return choose_exploration_action(observation, memory)
 
 
 def decide(observation, goal, memory):
+    if (
+            memory.active_plan is not None
+            and memory.active_plan.goal != goal
+    ):
+        memory.clear_active_plan()
+
+    if (
+            memory.active_plan is not None
+            and memory.active_plan.goal == goal
+    ):
+        return action_from_plan(memory.active_plan)
+
     if goal == "recharge":
         return choose_recharge_action(observation, memory)
 
@@ -133,10 +110,28 @@ def decide(observation, goal, memory):
     return {"action": "idle"}
 
 
-def choose_exploration_action(
-        observation,
-        memory: Memory
-) -> Union[None, dict[str, Any], dict[str, Union[str, Any]]]:
+def action_from_plan(plan: Plan) -> dict:
+    step = plan.current_step()
+
+    if step is None or step.target is None:
+        return {"action": "idle"}
+
+    if step.step_type == "move_to":
+        return {
+            "action": "move_to",
+            "target": list(step.target),
+        }
+
+    if step.step_type == "investigate":
+        return {
+            "action": "investigate",
+            "target": list(step.target),
+        }
+
+    return {"action": "idle"}
+
+
+def choose_exploration_action(observation, memory: Memory):
     """Choose a high-level action that serves the current goal."""
     aura_x, aura_y = observation["position"]
 
@@ -177,42 +172,46 @@ def choose_exploration_action(
 
 
 def choose_investigation_action(observation, memory: Memory):
+    if (
+            memory.active_plan is not None
+            and memory.active_plan.goal == "investigate"
+    ):
+        return action_from_plan(memory.active_plan)
+
     unknown_objects = [
         obj for obj in observation["nearby_objects"]
         if obj["type"] == "Unknown" and obj["reachable"]
            and not memory.is_failed_target((int(obj["position"][0]), int(obj["position"][1])))
     ]
     if not unknown_objects:
-        memory.clear_investigation_target()
         return {"action": "idle"}
 
-    # Position lookup preserves the current object lock across changing sensor order.
-    objects_by_position = {
-        tuple(obj["position"]): obj for obj in unknown_objects
-    }
-    target_position = memory.active_investigation_target
+    target = max(
+        unknown_objects,
+        key=lambda obj: (
+            investigation_target_score(obj, observation, memory),
+            tuple(obj["position"]),
+        ),
+    )
 
-    if target_position not in objects_by_position:
-        target = max(
-            unknown_objects,
-            key=lambda obj: (
-                investigation_target_score(obj, observation, memory), tuple(obj["position"])
-            )
-        )
-
-        target_position = tuple(target["position"])
-        memory.set_investigation_target(target_position)
+    target_position = tuple(target["position"])
 
     aura_position = tuple(observation["position"])
     target_x, target_y = target_position
 
     # Investigation is physical: AURA must share a cardinal edge with the object.
     if abs(target_x - aura_position[0]) + abs(target_y - aura_position[1]) == 1:
-        memory.clear_investigation_approach()
-        return {
-            "action": "investigate",
-            "target": list(target_position),
-        }
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(
+                    step_type="investigate",
+                    target=target_position,
+                ),
+            ],
+        )
+        memory.set_active_plan(plan)
+        return action_from_plan(plan)
 
     visible_cells = {
         tuple(cell["position"]): cell["type"]
@@ -235,26 +234,28 @@ def choose_investigation_action(observation, memory: Memory):
     # Reject the object itself only after every visible adjacent approach is unusable.
     if not approach_candidates:
         memory.mark_target_failed(target_position)
-        memory.clear_investigation_target()
         return {"action": "idle"}
 
-    approach = memory.active_investigation_approach
-    if approach not in approach_candidates:
-        approach = min(
-            approach_candidates,
-            key=lambda position: (
-                abs(position[0] - aura_position[0])
-                + abs(position[1] - aura_position[1]),
-                memory.visit_count(position),
-                position,
-            ),
-        )
-        memory.set_investigation_approach(approach)
+    approach = min(
+        approach_candidates,
+        key=lambda position: (
+            abs(position[0] - aura_position[0])
+            + abs(position[1] - aura_position[1]),
+            memory.visit_count(position),
+            position,
+        ),
+    )
 
-    return {
-        "action": "move_to",
-        "target": list(approach),
-    }
+    plan = Plan(
+        goal="investigate",
+        steps=[
+            PlanStep(step_type="move_to", target=approach, ),
+            PlanStep(step_type="investigate", target=target_position, ),
+        ],
+    )
+    memory.set_active_plan(plan)
+
+    return action_from_plan(plan)
 
 
 HISTORICAL_BATTERY_BONUS = 0.15
