@@ -4,7 +4,6 @@ from typing import Literal
 PlanStepType = Literal[
     "move_to",
     "investigate",
-    "recharge"
 ]
 
 
@@ -36,6 +35,20 @@ class Plan:
     def advance(self) -> None:
         if not self.is_complete():
             self.current_index += 1
+
+
+def create_recharge_plan(
+    target: tuple[int, int],
+) -> Plan:
+    return Plan(
+        goal="recharge",
+        steps=[
+            PlanStep(
+                step_type="move_to",
+                target=target,
+            ),
+        ],
+    )
 
 
 def update_plan_from_observation(

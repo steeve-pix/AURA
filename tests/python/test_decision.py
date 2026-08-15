@@ -1,8 +1,14 @@
 import unittest
 
 from brain.decision import choose_investigation_action, decide
+from brain.goals import choose_goal
 from brain.memory import Memory
-from brain.planning import Plan, PlanStep
+from brain.planning import (
+    Plan,
+    PlanStep,
+    create_recharge_plan,
+    update_plan_from_observation,
+)
 
 
 class DecisionTests(unittest.TestCase):
@@ -26,9 +32,68 @@ class DecisionTests(unittest.TestCase):
 
         self.assertIsNone(memory.active_plan)
 
-    def test_recharge_keeps_target_for_small_path_improvement(self):
+    def test_reaching_battery_completes_recharge_plan(self):
+        plan = create_recharge_plan((5, 3))
+
+        update_plan_from_observation(plan, {
+            "position": [5, 3],
+            "last_action": {
+                "type": "move_to",
+                "target": [5, 3],
+                "succeeded": True,
+            },
+        })
+
+        self.assertTrue(plan.is_complete())
+
+    def test_failed_navigation_fails_and_clears_recharge_plan(self):
         memory = Memory()
-        memory.set_recharge_target([9, 5])
+        plan = create_recharge_plan((5, 3))
+        memory.set_active_plan(plan)
+
+        update_plan_from_observation(plan, {
+            "position": [2, 2],
+            "last_action": {
+                "type": "move_to",
+                "target": [5, 3],
+                "succeeded": False,
+            },
+        })
+        if plan.has_failed():
+            memory.clear_active_plan()
+
+        self.assertTrue(plan.has_failed())
+        self.assertIsNone(memory.active_plan)
+
+    def test_critical_recharge_cancels_investigation_plan(self):
+        memory = Memory()
+        memory.set_active_goal("investigate")
+        memory.set_active_plan(Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(11, 5)),
+                PlanStep(step_type="investigate", target=(12, 5)),
+            ],
+        ))
+        observation = {
+            "position": [2, 2],
+            "energy": 8,
+            "north": "Wall",
+            "east": "Wall",
+            "south": "Wall",
+            "west": "Wall",
+            "nearby_objects": [],
+        }
+
+        goal = choose_goal(observation, memory)
+        decide(observation, goal, memory)
+
+        self.assertEqual(goal, "recharge")
+        self.assertIsNone(memory.active_plan)
+
+    def test_recharge_plan_locks_selected_battery(self):
+        memory = Memory()
+        memory.set_active_plan(create_recharge_plan((9, 5)))
 
         observation = {
             "position": [1, 1],
@@ -59,9 +124,9 @@ class DecisionTests(unittest.TestCase):
             },
         )
 
-    def test_recharge_switches_for_large_path_improvement(self):
+    def test_newly_visible_battery_does_not_replace_recharge_plan(self):
         memory = Memory()
-        memory.set_recharge_target([9, 5])
+        memory.set_active_plan(create_recharge_plan((9, 5)))
 
         observation = {
             "position": [1, 1],
@@ -88,7 +153,7 @@ class DecisionTests(unittest.TestCase):
             action,
             {
                 "action": "move_to",
-                "target": [5, 3],
+                "target": [9, 5],
             },
         )
 
@@ -115,7 +180,7 @@ class DecisionTests(unittest.TestCase):
         action = decide(observation, "recharge", memory)
 
         self.assertEqual(action, {"action": "idle"})
-        self.assertIsNone(memory.active_recharge_target)
+        self.assertIsNone(memory.active_plan)
 
     def test_recharge_chooses_shortest_energy_viable_path(self):
         memory = Memory()
@@ -213,9 +278,8 @@ class DecisionTests(unittest.TestCase):
             },
         )
 
-    def test_recharge_switches_to_shorter_visible_path(self):
+    def test_recharge_selects_shorter_visible_path_without_plan(self):
         memory = Memory()
-        memory.set_recharge_target([9, 6])
 
         observation = {
             "position": [1, 1],
@@ -239,16 +303,13 @@ class DecisionTests(unittest.TestCase):
                 "target": [2, 1],
             },
         )
-        self.assertEqual(memory.active_recharge_target, (2, 1))
+        self.assertEqual(memory.active_plan.steps[0].target, (2, 1))
 
     def test_recharge_does_not_reselect_failed_active_target(self):
         memory = Memory()
         failed_target = (3, 1)
-        memory.set_recharge_target(failed_target)
 
         memory.mark_target_failed(failed_target)
-        if memory.active_recharge_target == failed_target:
-            memory.clear_recharge_target()
 
         observation = {
             "position": [1, 1],
@@ -279,7 +340,7 @@ class DecisionTests(unittest.TestCase):
                 "target": [8, 4],
             },
         )
-        self.assertEqual(memory.active_recharge_target, (8, 4))
+        self.assertEqual(memory.active_plan.steps[0].target, (8, 4))
 
     def test_recharge_skips_unreachable_visible_batteries(self):
         memory = Memory()

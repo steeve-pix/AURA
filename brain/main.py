@@ -44,9 +44,6 @@ def main() -> None:
             target = tuple(last_action["target"])
             memory.mark_target_failed(target)
 
-            if memory.active_recharge_target == target:
-                memory.clear_recharge_target()
-
             if last_action["type"] == "investigate":
                 if (
                         memory.active_plan is not None

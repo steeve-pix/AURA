@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple, Literal
+from typing import Optional, Sequence, Literal
 from dataclasses import dataclass
 from brain.world_memory import WorldMemory
 from brain.planning import Plan
@@ -9,7 +9,6 @@ class Memory:
         self.known_cells: dict[tuple[int, int], str] = {}
         self.visit_counts: dict[tuple[int, int], int] = {}
         self.failed_targets: set[tuple[int, int]] = set()
-        self.active_recharge_target: Optional[Tuple[int, int]] = None
         self.active_goal: Optional[str] = None
         self.step = 0
         self.investigation_history: dict[tuple[int, int], str] = {}
@@ -75,12 +74,6 @@ class Memory:
             walkable_positions,
             key=lambda position: (self.visit_count(position), position),
         )
-
-    def set_recharge_target(self, position) -> None:
-        self.active_recharge_target = (position[0], position[1])
-
-    def clear_recharge_target(self) -> None:
-        self.active_recharge_target = None
 
     def set_active_goal(self, goal: str) -> None:
         self.active_goal = goal
