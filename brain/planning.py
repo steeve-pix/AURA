@@ -11,6 +11,7 @@ PlanStepType = Literal[
 class PlanStep:
     step_type: PlanStepType
     target: tuple[int, int] | None = None
+    requires_reachable_target: bool = False
 
 
 @dataclass
@@ -37,15 +38,14 @@ class Plan:
             self.current_index += 1
 
 
-def create_recharge_plan(
-    target: tuple[int, int],
-) -> Plan:
+def create_recharge_plan(target: tuple[int, int], ) -> Plan:
     return Plan(
         goal="recharge",
         steps=[
             PlanStep(
                 step_type="move_to",
                 target=target,
+                requires_reachable_target=True,
             ),
         ],
     )
@@ -77,25 +77,31 @@ def plan_debug(plan: Plan | None) -> dict | None:
     }
 
 
-def update_plan_from_observation(
-    plan: Plan,
-    observation,
-) -> None:
+def update_plan_from_observation(plan: Plan, observation, ) -> None:
     step = plan.current_step()
 
     if step is None:
         return
 
+    if step.requires_reachable_target and step.target is not None:
+        observed_target = next(
+            (entity for entity in observation.get("nearby_objects", []) if tuple(entity["position"]) == step.target),
+            None,
+        )
+
+        # Missing evidence is not failure: investigation approach cells are terrain
+        # and therefore do not appear in nearby_objects. An explicitly observed,
+        # unreachable target is enough to invalidate the step.
+        if observed_target is not None and not observed_target.get("reachable", False):
+            plan.failed = True
+            return
+
     if step.step_type == "move_to":
         last_action = observation.get("last_action")
 
-        if (
-            last_action
-            and last_action.get("type") == "move_to"
-            and not last_action.get("succeeded", False)
-            and last_action.get("target") is not None
-            and tuple(last_action["target"]) == step.target
-        ):
+        if (last_action and last_action.get("type") == "move_to" and not last_action.get("succeeded", False)
+                and last_action.get("target") is not None
+                and tuple(last_action["target"]) == step.target):
             plan.failed = True
             return
 
@@ -112,10 +118,6 @@ def update_plan_from_observation(
         if not last_action:
             return
 
-        if (
-            last_action.get("type") == "investigate"
-            and last_action.get("succeeded", False)
-            and last_action.get("target") is not None
-            and tuple(last_action["target"]) == step.target
-        ):
+        if (last_action.get("type") == "investigate" and last_action.get("succeeded", False) and last_action.get(
+                "target") is not None and tuple(last_action["target"]) == step.target):
             plan.advance()
