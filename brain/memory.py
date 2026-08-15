@@ -38,9 +38,7 @@ class Memory:
 
     def batteries(self) -> list[tuple[int, int]]:
         return [
-            entity.position for entity in self.world_memory.entities.values()
-            if entity.entity_type == "Battery"
-               and entity.status == "confirmed"
+            entity.position for entity in self.world_memory.entities_of_type("Battery")
         ]
 
     def record_visit(self, position: list[int]) -> None:
@@ -116,16 +114,9 @@ class Memory:
         self.step += 1
 
     def battery_trust(self, position: tuple[int, int]) -> float:
+        if not self.world_memory.has_entity(position, "Battery"):
+            return 0.0
         entity = self.world_memory.entity_at(position)
-
-        if entity is None:
-            return 0.0
-
-        if entity.entity_type != "Battery":
-            return 0.0
-
-        if entity.status == "stale":
-            return 0.0
 
         age = max(0, self.step - entity.last_seen_step)
 
@@ -146,8 +137,7 @@ class Memory:
 
     def unknowns(self) -> list[tuple[int, int]]:
         return [
-            entity.position for entity in self.world_memory.entities.values() if
-            entity.entity_type == "Unknown" and entity.status == "confirmed"
+            entity.position for entity in self.world_memory.entities_of_type("Unknown")
         ]
 
 
