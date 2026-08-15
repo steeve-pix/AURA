@@ -96,11 +96,15 @@ class Memory:
 
     def clear_investigation_approach(self) -> None:
         self.active_investigation_approach = None
+        if self.active_plan is not None and self.active_plan.goal == "investigate":
+            self.clear_plan()
 
     def clear_investigation_target(self) -> None:
         # Target and approach form one lock and must be released together.
         self.active_investigation_target = None
         self.active_investigation_approach = None
+        if self.active_plan is not None and self.active_plan.goal == "investigate":
+            self.clear_plan()
 
     def set_active_goal(self, goal: str) -> None:
         self.active_goal = goal
@@ -118,6 +122,9 @@ class Memory:
         if not self.world_memory.has_entity(position, "Battery"):
             return 0.0
         entity = self.world_memory.entity_at(position)
+
+        if entity is None:
+            return 0.0
 
         age = max(0, self.step - entity.last_seen_step)
 
@@ -146,6 +153,7 @@ class Memory:
 
     def clear_plan(self) -> None:
         self.active_plan = None
+
 
 MemoryStatus = Literal[
     "confirmed",

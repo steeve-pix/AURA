@@ -2,6 +2,7 @@ import unittest
 
 from brain.decision import action_from_plan, choose_investigation_action
 from brain.memory import Memory
+from brain.planning import Plan, PlanStep
 
 
 class TestInvestigation(unittest.TestCase):
@@ -86,6 +87,72 @@ class TestInvestigation(unittest.TestCase):
 
         self.assertEqual(action, {"action": "move_to", "target": [11, 10]})
         self.assertEqual(plan.current_index, 0)
+
+    def test_reaching_approach_advances_to_investigation(self):
+        memory = Memory()
+        memory.set_active_plan(Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(11, 10)),
+                PlanStep(step_type="investigate", target=(12, 10)),
+            ],
+        ))
+        observation = {
+            "position": [11, 10],
+            "visible_cells": [],
+            "nearby_objects": [{
+                "type": "Unknown",
+                "position": [12, 10],
+                "reachable": True,
+                "path_length": 1,
+            }],
+        }
+
+        action = choose_investigation_action(observation, memory)
+
+        self.assertEqual(
+            action,
+            {"action": "investigate", "target": [12, 10]},
+        )
+        self.assertEqual(memory.active_plan.current_index, 1)
+
+    def test_action_from_plan_handles_step_without_target(self):
+        plan = Plan(
+            goal="investigate",
+            steps=[PlanStep(step_type="investigate")],
+        )
+
+        self.assertEqual(action_from_plan(plan), {"action": "idle"})
+
+    def test_successful_investigation_cleanup_clears_active_plan(self):
+        memory = Memory()
+        memory.set_investigation_target((12, 10))
+        memory.set_active_plan(Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="investigate", target=(12, 10)),
+            ],
+        ))
+
+        memory.clear_investigation_target()
+
+        self.assertIsNone(memory.active_plan)
+
+    def test_failed_approach_cleanup_clears_active_plan(self):
+        memory = Memory()
+        memory.set_investigation_target((12, 10))
+        memory.set_investigation_approach((11, 10))
+        memory.set_active_plan(Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(11, 10)),
+                PlanStep(step_type="investigate", target=(12, 10)),
+            ],
+        ))
+
+        memory.clear_investigation_approach()
+
+        self.assertIsNone(memory.active_plan)
 
     def test_investigates_unknown_from_adjacent_cell(self):
         memory = Memory()

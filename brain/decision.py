@@ -137,7 +137,7 @@ def decide(observation, goal, memory):
 def action_from_plan(plan: Plan) -> dict:
     step = plan.current_step()
 
-    if step is None:
+    if step is None or step.target is None:
         return {"action": "idle"}
 
     if step.step_type == "move_to":
@@ -206,8 +206,18 @@ def choose_investigation_action(observation, memory: Memory):
         memory.clear_plan()
         return {"action": "idle"}
 
-    if memory.active_plan is not None and memory.active_plan.goal == "investigate":
-        return action_from_plan(memory.active_plan)
+    plan = memory.active_plan
+    step = plan.current_step() if plan is not None else None
+
+    if (
+            step is not None
+            and step.step_type == "move_to"
+            and tuple(observation["position"]) == step.target
+    ):
+        plan.advance()
+
+    if plan is not None and plan.goal == "investigate":
+        return action_from_plan(plan)
 
     # Position lookup preserves the current object lock across changing sensor order.
     objects_by_position = {
