@@ -17,6 +17,7 @@ class PlanStep:
 @dataclass
 class Plan:
     goal: str
+    goal_target: tuple[int, int] | None = None
     steps: list[PlanStep] = field(default_factory=list)
     current_index: int = 0
     failed: bool = False
@@ -41,6 +42,7 @@ class Plan:
 def create_recharge_plan(target: tuple[int, int], ) -> Plan:
     return Plan(
         goal="recharge",
+        goal_target=target,
         steps=[
             PlanStep(
                 step_type="move_to",
@@ -59,6 +61,7 @@ def plan_debug(plan: Plan | None) -> dict | None:
 
     return {
         "goal": plan.goal,
+        "goal_target": None if plan.goal_target is None else list(plan.goal_target),
         "current_step": plan.current_index,
         "step_count": len(plan.steps),
         "failed": plan.has_failed(),

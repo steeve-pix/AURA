@@ -3,7 +3,7 @@ import sys
 from typing import Any
 from pathlib import Path
 
-from brain.decision import decide
+from brain.decision import decide, replan_failed_investigation
 from brain.goals import choose_goal, goal_scores
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
 from brain.planning import plan_debug, update_plan_from_observation
@@ -102,11 +102,11 @@ def main() -> None:
                 observation,
             )
 
-            if (
-                    memory.active_plan.is_complete()
-                    or memory.active_plan.has_failed()
-            ):
+            if memory.active_plan.is_complete():
                 memory.clear_active_plan()
+            elif memory.active_plan.has_failed():
+                if not replan_failed_investigation(observation, memory):
+                    memory.clear_active_plan()
 
         save_memory(memory, memory_path, world_id)
 

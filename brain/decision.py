@@ -192,6 +192,41 @@ def choose_investigation_action(observation, memory: Memory):
 
     target_position = tuple(target["position"])
 
+    plan = create_investigation_plan(
+        observation,
+        memory,
+        target_position,
+    )
+
+    if plan is None:
+        return {"action": "idle"}
+
+    memory.set_active_plan(plan)
+    return action_from_plan(plan)
+
+
+def create_investigation_plan(
+        observation,
+        memory: Memory,
+        target_position: tuple[int, int],
+) -> Plan | None:
+    target_object = next(
+        (
+            obj
+            for obj in observation["nearby_objects"]
+            if obj["type"] == "Unknown"
+               and tuple(obj["position"]) == target_position
+        ),
+        None,
+    )
+
+    if (
+            target_object is None
+            or not target_object.get("reachable", False)
+            or memory.is_failed_target(target_position)
+    ):
+        return None
+
     aura_position = tuple(observation["position"])
     target_x, target_y = target_position
 
@@ -199,6 +234,7 @@ def choose_investigation_action(observation, memory: Memory):
     if abs(target_x - aura_position[0]) + abs(target_y - aura_position[1]) == 1:
         plan = Plan(
             goal="investigate",
+            goal_target=target_position,
             steps=[
                 PlanStep(
                     step_type="investigate",
@@ -206,8 +242,7 @@ def choose_investigation_action(observation, memory: Memory):
                 ),
             ],
         )
-        memory.set_active_plan(plan)
-        return action_from_plan(plan)
+        return plan
 
     visible_cells = {
         tuple(cell["position"]): cell["type"]
@@ -230,7 +265,7 @@ def choose_investigation_action(observation, memory: Memory):
     # Reject the object itself only after every visible adjacent approach is unusable.
     if not approach_candidates:
         memory.mark_target_failed(target_position)
-        return {"action": "idle"}
+        return None
 
     approach = min(
         approach_candidates,
@@ -244,6 +279,7 @@ def choose_investigation_action(observation, memory: Memory):
 
     plan = Plan(
         goal="investigate",
+        goal_target=target_position,
         steps=[
             PlanStep(
                 step_type="move_to",
@@ -253,9 +289,39 @@ def choose_investigation_action(observation, memory: Memory):
             PlanStep(step_type="investigate", target=target_position, ),
         ],
     )
-    memory.set_active_plan(plan)
+    return plan
 
-    return action_from_plan(plan)
+
+def replan_failed_investigation(
+        observation,
+        memory: Memory,
+) -> bool:
+    failed_plan = memory.active_plan
+
+    if (
+            failed_plan is None
+            or failed_plan.goal != "investigate"
+            or not failed_plan.has_failed()
+    ):
+        return False
+
+    target_position = failed_plan.goal_target
+    memory.clear_active_plan()
+
+    if target_position is None:
+        return False
+
+    replacement = create_investigation_plan(
+        observation,
+        memory,
+        target_position,
+    )
+
+    if replacement is None:
+        return False
+
+    memory.set_active_plan(replacement)
+    return True
 
 
 HISTORICAL_BATTERY_BONUS = 0.15
