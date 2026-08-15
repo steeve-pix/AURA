@@ -42,6 +42,28 @@ namespace aura::bridge {
                     });
                 }
             }
+
+            if (debug.contains("plan") && !debug.at("plan").is_null()) {
+                const auto &plan = debug.at("plan");
+                response.debug.planGoal = plan.value("goal", std::string{});
+                response.debug.planCurrentStep = plan.value("current_step", 0);
+                response.debug.planStepCount = plan.value("step_count", 0);
+                response.debug.planFailed = plan.value("failed", false);
+
+                if (plan.contains("step") && !plan.at("step").is_null()) {
+                    const auto &step = plan.at("step");
+                    response.debug.planStepType = step.value("type", std::string{});
+
+                    if (step.contains("target") && !step.at("target").is_null()) {
+                        const auto &target = step.at("target");
+                        response.debug.planStepTarget = {
+                            target.at(0).get<int>(),
+                            target.at(1).get<int>()
+                        };
+                        response.debug.hasPlanStepTarget = true;
+                    }
+                }
+            }
         }
 
         return response;

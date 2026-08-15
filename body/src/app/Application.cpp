@@ -62,9 +62,21 @@ namespace aura::app {
             const std::string goalScore = formatScore(debug, debug.goal.empty() ? std::string{} : debug.goal);
             const std::string exploreScore = formatScore(debug, "explore");
 
+            std::string planLabel = "none";
+
+            if (!debug.planGoal.empty()) {
+                planLabel = debug.planGoal + " "
+                        + std::to_string(debug.planCurrentStep + 1) + "/"
+                        + std::to_string(debug.planStepCount);
+
+                if (!debug.planStepType.empty()) {
+                    planLabel += " " + debug.planStepType;
+                }
+            }
+
             const std::string title =
                     "AURA | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " + exploreScore + " | Energy: " +
-                    std::to_string(energy);
+                    std::to_string(energy) + " | Plan: " + planLabel;
             window_.setTitle(title);
         };
 
@@ -168,14 +180,6 @@ namespace aura::app {
     }
 
     void Application::executeMoveTo(const bridge::Action &action) {
-        std::cout
-                << "Target: ("
-                << action.target.x
-                << ", "
-                << action.target.y
-                << ")"
-                << '\n';
-
         currentTarget_ = action.target;
         hasTarget_ = true;
 
@@ -213,8 +217,6 @@ namespace aura::app {
                 offset,
                 world_
             );
-        } else if (!moved) {
-            std::cout << "No path to target\n";
         }
 
         lastAction_ = {

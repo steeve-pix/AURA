@@ -85,7 +85,7 @@ Fields:
 - direction (for `move`)
 - target (for `move_to`)
 - target (for `investigate`)
-- debug (optional rendering information)
+- debug (optional rendering information, including active-plan state)
 
 Example:
 
@@ -114,7 +114,7 @@ The `move_to` action asks the C++ body to navigate to a target position. The tar
 
 ### Optional debug data
 
-The brain may include a `debug` object with its current goal, goal scores, known cells, and visited cells. The C++ body
+The brain may include a `debug` object with its current goal, goal scores, known cells, visited cells, and active plan. The C++ body
 uses this only for visualization; it does not affect physical simulation.
 
 ```json
@@ -125,7 +125,14 @@ uses this only for visualization; it does not affect physical simulation.
     "goal": "recharge",
     "goal_scores": {"recharge": 80.0, "explore": 20.0},
     "known_cells": [[1, 1], [2, 1]],
-    "visited_cells": [[1, 1]]
+    "visited_cells": [[1, 1]],
+    "plan": {
+      "goal": "recharge",
+      "current_step": 0,
+      "step_count": 1,
+      "failed": false,
+      "step": {"type": "move_to", "target": [7, 3]}
+    }
   }
 }
 ```

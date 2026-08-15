@@ -3,6 +3,7 @@
 #include "agent/Agent.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
+#include "bridge/BrainResponseParser.hpp"
 #include "world/MazeGenerator.hpp"
 #include "world/World.hpp"
 #include "world/Position.hpp"
@@ -165,6 +166,32 @@ int main() {
         serialized.find("\"target\":[8,3]") == std::string::npos ||
         serialized.find("\"succeeded\":false") == std::string::npos) {
         std::cout << "FAIL: observation should include the last move_to result\n";
+        ++failures;
+    }
+
+    const auto response = aura::bridge::parseBrainResponse(R"({
+        "action":"move_to",
+        "target":[7,3],
+        "debug":{
+            "goal":"recharge",
+            "plan":{
+                "goal":"recharge",
+                "current_step":0,
+                "step_count":1,
+                "failed":false,
+                "step":{"type":"move_to","target":[7,3]}
+            }
+        }
+    })");
+
+    if (response.debug.planGoal != "recharge" ||
+        response.debug.planCurrentStep != 0 ||
+        response.debug.planStepCount != 1 ||
+        response.debug.planFailed ||
+        response.debug.planStepType != "move_to" ||
+        !response.debug.hasPlanStepTarget ||
+        response.debug.planStepTarget != aura::world::Position{7, 3}) {
+        std::cout << "FAIL: brain response should expose active plan debug state\n";
         ++failures;
     }
 

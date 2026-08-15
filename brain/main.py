@@ -51,8 +51,6 @@ def main() -> None:
                 ):
                     memory.clear_active_plan()
 
-            print(f"Failed targets: {memory.failed_targets}", file=sys.stderr)
-
         if last_action and last_action.get("type") == "investigate" and last_action.get("succeeded", False):
             x, y = last_action["target"]
             target = (x, y)

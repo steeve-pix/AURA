@@ -1,975 +1,200 @@
 # AURA
 
-**AURA — Autonomous Unified Reasoning Agent**
+**AURA (Autonomous Unified Reasoning Agent)** is a local, embodied autonomous-agent project. A Python brain observes and remembers a partially visible world, chooses goals, and builds plans. A C++ body owns the 2D simulation, sensing, energy, pathfinding, action execution, and OpenGL visualization.
 
-AURA is an experimental embodied AI system built around a simple architectural idea:
+The project deliberately uses understandable, deterministic algorithms rather than hiding its behavior behind an LLM.
 
-- **Python is the brain**
-- **C++ is the body**
+## Current version: v0.2.0
 
-The Python brain handles high-level reasoning such as goals, memory, decision-making, and exploration.
+v0.2.0 moves AURA beyond the original recharge-only milestone. AURA now supports:
 
-The C++ body owns the simulated world, movement, collision detection, energy, sensors, navigation, and physical state.
+- competing `explore`, `investigate`, and `recharge` goals with hysteresis;
+- explicit multi-tick plans for investigation and recharge;
+- action-result feedback, including navigation and investigation failures;
+- investigation of Unknown objects and persistent investigation history;
+- generic entity memory for Batteries, Unknowns, and future object types;
+- confidence metadata for remembered entities, including confirmation count, recency, and stale state;
+- persistent known terrain, entity memory, investigation outcomes, and visit counts;
+- separate memory files for different world identities/seeds;
+- shortest-path and energy-viability checks when selecting batteries;
+- failed-target avoidance and replanning instead of repeatedly choosing impossible destinations;
+- developer visualization of goals, known/visited cells, paths, targets, and the active plan.
 
-The two systems communicate through a JSON-based brain-body protocol.
-
----
-
-## Current Version
-
-### AURA v0.1.0
-
-The first release focuses on proving the core AURA architecture inside a simple 2D grid world.
-
-AURA can currently:
-
-- exist as an embodied agent inside a C++ world
-- move through the environment
-- avoid walls
-- consume energy while moving
-- recharge using batteries
-- sense its immediate surroundings
-- detect nearby resources
-- send observations from C++ to Python
-- keep a persistent Python brain process alive
-- select goals based on internal state
-- remember discovered battery locations
-- invalidate stale battery memories
-- track visited positions
-- explore less-visited areas
-- select high-level movement targets in Python
-- use BFS pathfinding in C++ to navigate around obstacles
-- execute physical movement one step at a time
-
----
+Active plans are intentionally runtime state and are not persisted. Durable knowledge is saved; an interrupted process chooses a fresh plan from that knowledge after restart.
 
 ## Architecture
 
 ```text
-                         Python Brain
+                         Python brain
                               │
-                 ┌────────────┼────────────┐
-                 │            │            │
-               Memory        Goals      Decision
-                 │            │            │
-                 └────────────┴─────┬──────┘
-                                    │
-                                 Action
-                                    │
-                             JSON protocol
-                                    │
-                                    ▼
-                              C++ Body
-                                    │
-          ┌─────────────────────────┼─────────────────────────┐
-          │                         │                         │
-        World                     Agent                   Sensors
-          │                         │                         │
-   walls/resources          position/energy          observations
-          │                         │                         │
-          └─────────────────────────┼─────────────────────────┘
-                                    │
-                               Navigation
-                                    │
-                                   BFS
-                                    │
-                               physical step
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+        Goals              Decision             Memory
+          │                   │                   │
+          └─────────────── Planning ──────────────┘
+                              │
+                         action + debug
+                              │
+                    newline-delimited JSON
+                              │
+                         C++ body
+                              │
+       ┌──────────────────────┼──────────────────────┐
+       │                      │                      │
+     World                  Agent                  Sensors
+       │                      │                      │
+  maze/objects          position/energy       local/range view
+       └──────────────────────┼──────────────────────┘
+                              │
+                       BFS navigation
+                              │
+                    one physical step/tick
 ```
 
-AURA intentionally separates high-level reasoning from physical execution.
+Python decides **what AURA should do**. C++ determines **whether and how the action physically happens**. Every action outcome returns in the next observation, allowing the brain to advance, fail, cancel, or replace a plan using physical evidence.
 
-For example:
-
-Python brain:
-"Move to the battery at (8, 3)."
-
-C++ body:
-"Find a valid path to (8, 3), avoid walls, and move one physical step."
-
-The brain chooses what AURA wants to do.
-
-The body determines how that action physically happens.
-
-## Autonomous Loop
-
-The Python brain follows a simple autonomous-agent cycle:
+## Autonomous loop
 
 ```text
-OBSERVE
-↓
-UPDATE MEMORY
-↓
-CHOOSE GOAL
-↓
-DECIDE
-↓
-ACT
-↓
-OBSERVE AGAIN
+observe physical state and previous action result
+                         ↓
+update persistent world/entity/history memory
+                         ↓
+advance, complete, or fail the active plan
+                         ↓
+score and choose the current goal
+                         ↓
+cancel a plan if its goal is no longer compatible
+                         ↓
+continue an existing plan or construct a new one
+                         ↓
+issue one action to the C++ body
 ```
 
-Example recharge behavior:
+An investigation plan normally contains two steps:
 
 ```text
-Energy becomes low
-↓
-Goal = recharge
-↓
-Battery currently visible?
-│
-┌────┴────┐
-yes        no
-│          │
-use it     check memory
-│          │
-└────┬─────┘
-↓
-choose target
-↓
-send move_to
-↓
-C++ pathfinding
-↓
-move one step
-↓
-repeat
-↓
-reach battery
-↓
-recharge
+goal: investigate
+  1. move_to an adjacent approach cell
+  2. investigate the Unknown target
 ```
-## Project Structure
-```text
-AURA/
-├── brain/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── decision.py
-│   ├── goals.py
-│   └── memory.py
-│
-├── body/
-│   ├── include/
-│   │   ├── agent/
-│   │   ├── bridge/
-│   │   ├── navigation/
-│   │   ├── render/
-│   │   ├── sensors/
-│   │   └── world/
-│   │
-│   ├── src/
-│   │   ├── agent/
-│   │   ├── bridge/
-│   │   ├── navigation/
-│   │   ├── render/
-│   │   ├── sensors/
-│   │   ├── world/
-│   │   └── main.cpp
-│   │
-│   └── CMakeLists.txt
-│
-├── bridge/
-│   └── protocol.md
-│
-├── tests/
-│   ├── cpp/
-│   └── python/
-│
-├── data/
-├── docs/
-├── CMakeLists.txt
-├── README.md
-└── .gitignore
-```
-## Core Components
-### Python Brain
 
-The Python side currently contains the high-level autonomous behavior.
+The movement step completes only when AURA actually reaches its target. The investigation step completes only after a successful matching action result.
 
-Main responsibilities:
+A recharge plan contains one `move_to` step. Recharging itself remains a physical battery-cell interaction owned by C++.
+
+## Memory model
+
+Each generated world reports a stable identity such as:
 
 ```text
-brain/
-├── main.py       → brain process loop
-├── goals.py      → determines what currently matters
-├── decision.py   → chooses actions
-└── memory.py     → stores learned world information
+maze:1337:42x21:b12:u20
 ```
 
-The brain does not directly modify the physical world.
+The brain converts this identity into a dedicated JSON file under `data/`. A different seed or world configuration receives a different file.
 
-Instead, it sends intentions such as:
+Saved memory keeps distinct kinds of knowledge separate:
 
+- `known_cells`: terrain and geometry such as Empty and Wall;
+- `entities`: Batteries, Unknowns, and future object types;
+- `investigation_history`: durable outcomes of investigations;
+- `visit_counts`: movement history.
+
+Failed targets, active goals, and active plans are runtime reasoning state and are not persisted.
+
+New saves use one generic entity representation:
+
+```json
 {
-"action": "move_to",
-"target": [7, 3]
+  "position": [12, 5],
+  "entity_type": "Battery",
+  "status": "confirmed",
+  "last_seen_step": 120,
+  "times_confirmed": 4
 }
-## C++ Body
-
-The C++ body owns the physical truth of the simulation.
-
-Its responsibilities include:
-
-world state
-agent position
-movement
-collision detection
-energy
-batteries
-sensors
-navigation
-rendering
-communication with the Python process
-
-The Python brain cannot teleport AURA or directly change its position.
-
-The C++ body validates and executes all physical actions.
-
-## World
-
-AURA currently lives inside a 2D grid.
-
-Example:
-
-```text
-##########
-#........#
-#.A......#
-#....#...#
-#....#B..#
-#........#
-##########
 ```
 
-Legend:
+The loader still accepts the earlier battery-only format for migration.
 
-A = AURA
-B = Battery
-# = Wall
-. = Empty space
+## World and controls
 
-The current world representation uses a flat C++ vector internally.
+The current application generates a deterministic 42×21 maze using seed `1337`, with 12 Batteries and 20 Unknowns. AURA starts at `(1, 1)` with 100 energy. Each successful cardinal movement costs one energy; entering a Battery cell restores full energy. Investigating an adjacent Unknown currently reveals a Battery.
 
-A 2D position:
+The OpenGL window displays the maze, AURA, sensor coverage, remembered/visited cells, current route, target, goal scores, energy, and active-plan summary. Close the window to stop the simulation.
 
-(x, y)
+## Build and run
 
-is converted into a vector index using:
+Requirements:
 
-```text
-index = y * width + x
-```
-## Agent
+- CMake 3.20 or newer;
+- a C++20 compiler;
+- Python 3.10 or newer;
+- macOS OpenGL frameworks (the current executable target is configured for macOS).
 
-AURA's physical body currently stores state such as:
-
-position
-energy
-maximum energy
-
-Movement occurs one grid cell at a time.
-
-Valid movement directions are currently:
-
-north
-east
-south
-west
-
-Successful movement consumes energy.
-
-Blocked or invalid movement does not.
-
-## Energy
-
-AURA currently starts with a maximum energy value.
-
-Each successful physical step consumes energy.
-
-Example:
-
-Energy: 100
-move
-Energy: 99
-move
-Energy: 98
-
-When AURA reaches a battery, energy is restored to the configured maximum.
-
-This physical state is owned by C++.
-
-Python only observes it and reasons about it.
-
-## Sensors
-
-AURA currently uses two simple sensing systems.
-
-### Local Sensor
-
-The local sensor observes the four adjacent cells:
-
-```text
-        North
-          ↑
-West ← AURA → East
-↓
-South
-```
-
-This produces information such as:
-
-{
-"north": "Empty",
-"east": "Battery",
-"south": "Empty",
-"west": "Wall"
-}
-### Range Sensor
-
-The range sensor scans a larger square area around AURA.
-
-It can report nearby objects such as batteries and visible cells.
-
-Example:
-
-{
-"nearby_objects": [
-{
-"type": "Battery",
-"position": [7, 2]
-}
-]
-}
-
-The sensor has a limited radius, so AURA cannot directly perceive the entire world.
-
-## Goals
-
-AURA currently has simple rule-based goals.
-
-Example:
-
-energy < threshold
-→ recharge
-
-otherwise
-→ explore
-
-The important architectural distinction is:
-
-Goal:
-"I need energy."
-
-Action:
-"Move to (7, 3)."
-
-Goals can persist across many simulation steps.
-
-Actions represent the next intention sent to the body.
-
-## Memory
-
-The Python brain currently maintains in-memory knowledge.
-
-AURA can remember:
-
-discovered battery locations
-visited positions
-how often positions have been visited
-known world cells
-
-Example:
-
-```text
-Battery seen at (8, 3)
-↓
-stored in memory
-
-Battery later outside sensor range
-↓
-AURA still remembers (8, 3)
-```
-
-This allows AURA to reason using information that is no longer currently visible.
-
-## Memory Validation
-
-Memory is not automatically assumed to be permanently correct.
-
-If AURA remembers:
-
-Battery at (8, 3)
-
-and later gets close enough to observe that location but the battery is no longer present, the stale memory can be removed.
-
-The logic is:
-
-```text
-remembered location outside sensor range
-↓
-cannot verify
-↓
-keep memory
-```
-
-```text
-remembered location inside sensor range
-↓
-battery still detected?
-/     \
-yes      no
-|        |
-keep     forget
-```
-
-This introduces a basic distinction between:
-
-perception
-remembered knowledge
-stale knowledge
-## Exploration
-
-When AURA has sufficient energy, it can select an exploration goal.
-
-The first exploration system tracks visited positions.
-
-AURA prefers areas that have been visited less often.
-
-Example:
-
-north → visited 4 times
-east  → visited 0 times
-south → visited 2 times
-west  → wall
-
-AURA prefers east.
-
-When multiple directions are equally unexplored, one may be selected among the best candidates.
-
-The exploration system can also choose less-explored target locations and use the existing navigation system to reach them.
-
-## Navigation
-
-AURA currently uses Breadth-First Search (BFS) for grid navigation.
-
-Python chooses a high-level destination:
-
-{
-"action": "move_to",
-"target": [8, 4]
-}
-
-C++ then calculates a valid path.
-
-Example:
-
-Start:
-(2,2)
-
-Target:
-(6,4)
-
-Path:
-(3,2)
-(4,2)
-(4,3)
-(4,4)
-(5,4)
-(6,4)
-
-Only the next physical step is executed.
-
-The next observation is then sent back to Python.
-
-This means navigation is continuously reevaluated rather than blindly executing an old route.
-
-## Brain-Body Protocol
-
-Protocol documentation is located at:
-
-bridge/protocol.md
-
-The current protocol uses newline-delimited JSON over redirected process standard input/output.
-
-Conceptually:
-
-C++ Body
-│
-│ Observation JSON
-▼
-Python stdin
-
-### Python Brain
-│
-│ Action JSON
-▼
-C++ stdout reader
-
-Each message occupies one line.
-
-### Observation Example
-
-The C++ body may send:
-
-{
-"position": [2, 2],
-"energy": 24,
-"sensor_radius": 3,
-"north": "Empty",
-"east": "Empty",
-"south": "Wall",
-"west": "Empty",
-"nearby_objects": [
-{
-"type": "Battery",
-"position": [7, 2]
-}
-]
-}
-
-The actual pipe representation is compact single-line JSON.
-
-### Action Examples
-
-Idle:
-
-{
-"action": "idle"
-}
-
-Move one step:
-
-{
-"action": "move",
-"direction": "east"
-}
-
-Move toward a target:
-
-{
-"action": "move_to",
-"target": [7, 2]
-}
-## Persistent Brain Process
-
-The C++ body launches the Python brain once and keeps it alive for the lifetime of the simulation.
-
-Conceptually:
-
-```text
-Start C++ body
-↓
-Launch Python brain once
-↓
-Create Python Memory once
-↓
-
-Observation 1 → Action 1
-Observation 2 → Action 2
-Observation 3 → Action 3
-...
-
-      ↓
-Simulation ends
-```
-
-This allows Python memory to persist across observations.
-
-The body does not launch a new Python process every simulation step.
-
-## JSON
-
-AURA uses nlohmann/json on the C++ side for structured JSON serialization and parsing.
-
-This replaced the project's earlier hand-written JSON string generation and parsing.
-
-The Python side uses Python's built-in json module.
-
-## Rendering
-
-AURA currently uses a terminal renderer.
-
-Example:
-
-```text
-##########
-#........#
-#.A......#
-#........#
-#......B.#
-##########
-```
-
-Rendering is intentionally separated from simulation state.
-
-The world does not print itself.
-
-Instead:
-
-World + Agent
-↓
-TerminalRenderer
-↓
-terminal output
-
-This separation is important because a future graphical renderer can display the same simulation state without rewriting the core world logic.
-
-## C++ Architecture
-
-Reusable C++ simulation code is built into:
-
-```text
-aura_core
-
-The structure is conceptually:
-
-                aura_core
-```
-               /         \
-              /           \
-        aura_body       aura_tests
-
-aura_body contains the actual application entry point and Python process integration.
-
-aura_tests exercises deterministic core behavior.
-
-## Requirements
-
-AURA currently requires:
-
-a C++20-compatible compiler
-CMake
-Python 3
-Git
-
-Current major technologies:
-
-C++20
-Python
-CMake
-nlohmann/json
-CTest
-Python unittest
-## Build
-
-From the project root:
+Configure and build:
 
 ```bash
 cmake -S . -B build
 cmake --build build
 ```
 
-The exact executable path depends on the platform, compiler, generator, and build configuration.
-
-## Run
-
-Run the generated:
-
-aura_body
-
-executable.
-
-AURA currently expects the Python brain module to be available relative to the project environment.
-
-The Python brain is launched as:
+Run from the repository root, passing the repository path as the Python brain's working directory:
 
 ```bash
-python -m brain.main
+./build/body/aura_body "$PWD"
 ```
 
-or the platform-equivalent configured by the C++ body.
+## Tests
 
-## C++ Tests
-
-Configure and build the project first:
-
-```bash
-cmake -S . -B build
-cmake --build build
-```
-
-Then run:
-
-```bash
-ctest --test-dir build --output-on-failure
-```
-
-Current C++ tests cover core deterministic behavior such as:
-
-world bounds
-collision rules
-valid movement
-blocked movement
-energy consumption
-battery recharge
-BFS pathfinding
-unreachable destinations
-## Python Tests
-
-From the project root:
+Run all Python tests:
 
 ```bash
 python3 -m unittest discover -s tests/python -p "test_*.py" -v
 ```
 
-On systems where the command is python rather than python3:
+Run all configured C++ tests:
 
 ```bash
-python -m unittest discover -s tests/python -p "test_*.py" -v
+cmake --build build
+ctest --test-dir build --output-on-failure
 ```
 
-Python tests cover behavior such as:
+The suite covers goal selection, entity memory, persistence and legacy loading, per-world isolation, brain-process restart behavior, investigation/recharge plan lifecycles, interruption, failure, and replanning, as well as core C++ world, movement, navigation, serialization, and debug-response parsing.
 
-goal selection
-battery memory
-duplicate-memory prevention
-forgetting batteries
-visit tracking
-recharge targeting
-remembered battery targeting
-exploration decisions
-## Git Workflow
-
-AURA uses the following branch structure:
-
-### main
-↑
-### release/*
-↑
-### dev
-↑
-feature/* or fix/*
-### main
-
-Contains stable released versions.
-
-Normal development does not happen directly on main.
-
-Important releases are tagged:
-
-v0.1.0
-v0.2.0
-v1.0.0
-### dev
-
-Integration branch for completed development work.
-
-### feature/*
-
-Used for new functionality.
-
-Examples:
-
-feature/basic-world
-feature/energy-system
-feature/pathfinding
-feature/memory-system
-feature/exploration
-### fix/*
-
-Used for isolated bug fixes.
-
-### release/*
-
-Used to stabilize an upcoming release.
-
-Only release fixes, documentation, version changes, and final testing should normally happen here.
-
-## Commit Style
-
-AURA uses concise, behavior-focused commit messages.
-
-Examples:
-
-Add boundary walls to world
-Render AURA agent in world
-Drain agent energy while moving
-Connect C++ body to Python brain
-Navigate AURA to brain-selected targets
-Validate remembered battery locations
-Add BFS pathfinding for grid navigation
-
-Commits should represent coherent working changes rather than arbitrary time intervals.
-
-## Design Principles
-
-AURA follows several core engineering principles.
-
-### Brain and body remain separate
-
-Python decides what should happen.
-
-C++ decides how it physically happens.
-
-### The body owns physical truth
-
-Python does not directly modify:
-
-position
-collision state
-energy
-world cells
-### Perception is limited
-
-The Python brain should reason from observations rather than directly reading C++ world internals.
-
-### Memory and perception are different
-
-AURA distinguishes between:
-
-what I can see now
-
-and:
-
-what I remember seeing before
-### High-level actions are preferred
-
-The brain can say:
-
-move_to target
-
-instead of micromanaging every physical step.
-
-### Advanced AI is deliberately postponed
-
-Core autonomous behavior is currently implemented using:
-
-rules
-memory
-scoring
-graph search
-deterministic algorithms
-
-AURA does not need an LLM to determine whether it should walk toward a battery.
-
-## What v0.1.0 Does Not Include
-
-AURA v0.1.0 intentionally does not yet include:
-
-a graphical 2D window
-a 3D environment
-realistic physics
-multiple autonomous agents
-persistent long-term storage
-natural-language conversation
-computer vision
-reinforcement learning
-neural networks
-LLM-based decision-making
-sophisticated planning
-advanced personality systems
-production networking
-distributed execution
-
-The purpose of v0.1.0 is to establish a working autonomous-agent architecture before adding those systems.
-
-## Roadmap
-
-Possible next development stages include:
-
-### v0.2.x — Graphical 2D AURA
-real application window
-graphical grid rendering
-visual agent movement
-visual sensors
-battery/resource visualization
-debugging overlays
-### Future cognition
-richer goals
-goal priority scoring
-planning
-more advanced memory
-memory persistence
-world-model reasoning
-failed-action memory
-uncertainty
-### Communication
-text conversation with AURA
-explanations based on actual internal state
-user instructions
-natural-language goal creation
-## Learning
-
-Explore the appropriate uses of:
-
-search
-planning
-utility systems
-machine learning
-reinforcement learning
-neural networks
-## Advanced AI
-
-Potential future additions:
-
-local LLMs
-API-based LLMs
-language reasoning
-semantic memory
-computer vision
-multimodal perception
-
-These should be added only where they provide real value.
-
-## 3D World
-
-After the 2D architecture is mature, AURA can migrate into a 3D environment.
-
-The goal is to preserve as much as possible of the existing:
-
-brain
-goals
-memory
-protocol philosophy
-decision architecture
-
-while replacing or extending the physical body systems with:
-
-3D coordinates
-orientation
-3D collision
-3D sensors
-real-time rendering
-richer physics
-## Long-Term Vision
-
-AURA is intended to grow from a simple autonomous grid agent into a richer virtual embodied intelligence.
-
-The long-term goal is not simply to create a chatbot inside a game world.
-
-The project explores how separate systems for:
-
-perception
-memory
-goals
-reasoning
-planning
-communication
-learning
-physical execution
-
-can work together as one coherent autonomous agent.
-
-## Status
-
-AURA is an active learning and engineering project.
-
-v0.1.0 represents the first working end-to-end architecture:
+## Project structure
 
 ```text
-PERCEIVE
-↓
-REMEMBER
-↓
-CHOOSE GOAL
-↓
-DECIDE
-↓
-NAVIGATE
-↓
-ACT
-↓
-PERCEIVE AGAIN
+AURA/
+├── brain/
+│   ├── main.py            # persistent brain process and protocol loop
+│   ├── goals.py           # goal scoring, completion, and hysteresis
+│   ├── decision.py        # behavior selection and plan construction
+│   ├── planning.py        # plans, steps, observation-driven advancement
+│   ├── memory.py          # brain-facing memory interface
+│   ├── world_memory.py    # generic remembered entities
+│   └── memory_store.py    # per-world JSON persistence
+├── body/
+│   ├── include/           # C++ interfaces
+│   └── src/               # simulation, bridge, navigation, rendering
+├── bridge/
+│   └── protocol.md        # observation/action protocol
+├── tests/
+│   ├── cpp/
+│   └── python/
+├── data/                  # per-world persistent memories
+└── CMakeLists.txt
 ```
 
-The immediate focus after v0.1.0 is improving the 2D system while preserving the separation between the Python brain and C++ body.
+## Protocol
+
+C++ launches one long-lived Python process and exchanges one JSON object per line:
+
+```text
+C++ observation → Python memory/goals/planning → Python action → C++ execution
+```
+
+Actions currently include `idle`, cardinal `move`, `move_to`, and `investigate`. The optional `debug` response contains presentation-only goal, map, visit, and plan information; it never controls body physics. See [`bridge/protocol.md`](bridge/protocol.md) for field-level examples.
+
+## Scope
+
+AURA is a learning-focused autonomous-agent system, not a general intelligence product. Its current priorities are reliable embodiment, transparent reasoning, persistent world knowledge, debuggable planning, and a clean brain/body boundary. More advanced learning or language-model features should build on those foundations rather than replace them.
