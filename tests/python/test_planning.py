@@ -29,6 +29,7 @@ class PlanTests(unittest.TestCase):
         plan = create_recharge_plan((4, 4))
 
         self.assertTrue(plan.steps[0].requires_reachable_target)
+        self.assertEqual(plan.goal_target, (4, 4))
 
     def test_failed_reachability_precondition_marks_plan_failed(self):
         plan = Plan(
@@ -124,6 +125,7 @@ class PlanTests(unittest.TestCase):
     def test_plan_debug_describes_current_step(self):
         plan = Plan(
             goal="investigate",
+            goal_target=(12, 5),
             steps=[
                 PlanStep(step_type="move_to", target=(11, 5)),
                 PlanStep(step_type="investigate", target=(12, 5)),
@@ -132,6 +134,7 @@ class PlanTests(unittest.TestCase):
 
         self.assertEqual(plan_debug(plan), {
             "goal": "investigate",
+            "goal_target": [12, 5],
             "current_step": 0,
             "step_count": 2,
             "failed": False,

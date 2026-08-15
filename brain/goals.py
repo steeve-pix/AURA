@@ -126,14 +126,7 @@ def goal_completed(goal, observation, memory):
         target = None
 
         if plan is not None and plan.goal == "investigate":
-            target = next(
-                (
-                    step.target
-                    for step in plan.steps
-                    if step.step_type == "investigate"
-                ),
-                None,
-            )
+            target = plan.goal_target
 
         if target is None:
             return not any(
