@@ -3,6 +3,7 @@ import random
 from typing import Any, Union
 
 from brain.memory import Memory
+from brain.planning import Plan, PlanStep
 
 BATTERY_ARRIVAL_RESERVE = 2
 BATTERY_TARGET_SWITCH_MARGIN = 5
@@ -133,10 +134,28 @@ def decide(observation, goal, memory):
     return {"action": "idle"}
 
 
-def choose_exploration_action(
-        observation,
-        memory: Memory
-) -> Union[None, dict[str, Any], dict[str, Union[str, Any]]]:
+def action_from_plan(plan: Plan) -> dict:
+    step = plan.current_step()
+
+    if step is None:
+        return {"action": "idle"}
+
+    if step.step_type == "move_to":
+        return {
+            "action": "move_to",
+            "target": list(step.target),
+        }
+
+    if step.step_type == "investigate":
+        return {
+            "action": "investigate",
+            "target": list(step.target),
+        }
+
+    return {"action": "idle"}
+
+
+def choose_exploration_action(observation, memory: Memory):
     """Choose a high-level action that serves the current goal."""
     aura_x, aura_y = observation["position"]
 
@@ -184,7 +203,11 @@ def choose_investigation_action(observation, memory: Memory):
     ]
     if not unknown_objects:
         memory.clear_investigation_target()
+        memory.clear_plan()
         return {"action": "idle"}
+
+    if memory.active_plan is not None and memory.active_plan.goal == "investigate":
+        return action_from_plan(memory.active_plan)
 
     # Position lookup preserves the current object lock across changing sensor order.
     objects_by_position = {
@@ -209,10 +232,17 @@ def choose_investigation_action(observation, memory: Memory):
     # Investigation is physical: AURA must share a cardinal edge with the object.
     if abs(target_x - aura_position[0]) + abs(target_y - aura_position[1]) == 1:
         memory.clear_investigation_approach()
-        return {
-            "action": "investigate",
-            "target": list(target_position),
-        }
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(
+                    step_type="investigate",
+                    target=target_position,
+                ),
+            ],
+        )
+        memory.set_active_plan(plan)
+        return action_from_plan(plan)
 
     visible_cells = {
         tuple(cell["position"]): cell["type"]
@@ -236,6 +266,7 @@ def choose_investigation_action(observation, memory: Memory):
     if not approach_candidates:
         memory.mark_target_failed(target_position)
         memory.clear_investigation_target()
+        memory.clear_plan()
         return {"action": "idle"}
 
     approach = memory.active_investigation_approach
@@ -251,10 +282,16 @@ def choose_investigation_action(observation, memory: Memory):
         )
         memory.set_investigation_approach(approach)
 
-    return {
-        "action": "move_to",
-        "target": list(approach),
-    }
+    plan = Plan(
+        goal="investigate",
+        steps=[
+            PlanStep(step_type="move_to", target=approach, ),
+            PlanStep(step_type="investigate", target=target_position, ),
+        ],
+    )
+    memory.set_active_plan(plan)
+
+    return action_from_plan(plan)
 
 
 HISTORICAL_BATTERY_BONUS = 0.15

@@ -1,6 +1,6 @@
 import unittest
 
-from brain.decision import choose_investigation_action
+from brain.decision import action_from_plan, choose_investigation_action
 from brain.memory import Memory
 
 
@@ -30,6 +30,62 @@ class TestInvestigation(unittest.TestCase):
             action,
             {"action": "move_to", "target": [11, 10]},
         )
+
+    def test_builds_two_step_investigation_plan(self):
+        memory = Memory()
+        observation = {
+            "position": [10, 10],
+            "visible_cells": [
+                {"type": "Empty", "position": [11, 10]},
+                {"type": "Wall", "position": [12, 9]},
+                {"type": "Wall", "position": [13, 10]},
+                {"type": "Wall", "position": [12, 11]},
+            ],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [12, 10],
+                    "reachable": True,
+                    "path_length": 2,
+                }
+            ],
+        }
+
+        choose_investigation_action(observation, memory)
+
+        plan = memory.active_plan
+        self.assertIsNotNone(plan)
+        self.assertEqual(plan.goal, "investigate")
+        self.assertEqual(plan.current_index, 0)
+        self.assertEqual(len(plan.steps), 2)
+        self.assertEqual(plan.steps[0].step_type, "move_to")
+        self.assertEqual(plan.steps[0].target, (11, 10))
+        self.assertEqual(plan.steps[1].step_type, "investigate")
+        self.assertEqual(plan.steps[1].target, (12, 10))
+
+    def test_action_from_plan_does_not_advance_plan(self):
+        memory = Memory()
+        observation = {
+            "position": [10, 10],
+            "visible_cells": [
+                {"type": "Empty", "position": [11, 10]},
+            ],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [12, 10],
+                    "reachable": True,
+                    "path_length": 2,
+                }
+            ],
+        }
+        choose_investigation_action(observation, memory)
+        plan = memory.active_plan
+
+        action = action_from_plan(plan)
+
+        self.assertEqual(action, {"action": "move_to", "target": [11, 10]})
+        self.assertEqual(plan.current_index, 0)
 
     def test_investigates_unknown_from_adjacent_cell(self):
         memory = Memory()

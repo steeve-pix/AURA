@@ -9,6 +9,7 @@ from brain.memory_store import (
     memory_path_for_world,
     save_memory,
 )
+from brain.planning import Plan, PlanStep
 
 
 class MemoryStoreTests(unittest.TestCase):
@@ -85,6 +86,25 @@ class MemoryStoreTests(unittest.TestCase):
                 "last_seen_step": 0,
                 "times_confirmed": 1,
             }])
+
+    def test_active_plan_is_not_persisted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "memory.json"
+            memory = Memory()
+            memory.set_active_plan(Plan(
+                goal="investigate",
+                steps=[
+                    PlanStep(step_type="move_to", target=(11, 10)),
+                    PlanStep(step_type="investigate", target=(12, 10)),
+                ],
+            ))
+
+            save_memory(memory, path, "maze:1337")
+            loaded = load_memory(path, "maze:1337")
+
+            data = json.loads(path.read_text())
+            self.assertNotIn("active_plan", data)
+            self.assertIsNone(loaded.active_plan)
 
     def test_loads_legacy_coordinate_battery_memory(self):
         with tempfile.TemporaryDirectory() as directory:

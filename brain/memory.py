@@ -1,6 +1,7 @@
 from typing import Optional, Sequence, Tuple, Literal
 from dataclasses import dataclass
 from brain.world_memory import WorldMemory
+from brain.planning import Plan
 
 
 class Memory:
@@ -15,6 +16,7 @@ class Memory:
         self.step = 0
         self.investigation_history: dict[tuple[int, int], str] = {}
         self.world_memory: WorldMemory = WorldMemory()
+        self.active_plan: Plan | None = None
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[(position[0], position[1])] = cell_type
@@ -139,6 +141,11 @@ class Memory:
             entity.position for entity in self.world_memory.entities_of_type("Unknown")
         ]
 
+    def set_active_plan(self, plan: Plan) -> None:
+        self.active_plan = plan
+
+    def clear_plan(self) -> None:
+        self.active_plan = None
 
 MemoryStatus = Literal[
     "confirmed",
