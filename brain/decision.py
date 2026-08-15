@@ -8,11 +8,7 @@ from brain.planning import Plan, PlanStep, create_recharge_plan
 BATTERY_ARRIVAL_RESERVE = 2
 
 
-def remembered_battery_score(
-        memory: Memory,
-        battery: tuple[int, int],
-        aura_position: tuple[int, int],
-) -> float:
+def remembered_battery_score(memory: Memory, battery: tuple[int, int], aura_position: tuple[int, int], ) -> float:
     trust = memory.battery_trust(battery)
     distance = (
             abs(battery[0] - aura_position[0])
@@ -249,7 +245,11 @@ def choose_investigation_action(observation, memory: Memory):
     plan = Plan(
         goal="investigate",
         steps=[
-            PlanStep(step_type="move_to", target=approach, ),
+            PlanStep(
+                step_type="move_to",
+                target=approach,
+                requires_reachable_target=True,
+            ),
             PlanStep(step_type="investigate", target=target_position, ),
         ],
     )

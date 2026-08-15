@@ -1,10 +1,82 @@
 import unittest
 
 from brain.memory import Memory
-from brain.planning import Plan, PlanStep, plan_debug, update_plan_from_observation
+from brain.planning import (
+    Plan,
+    PlanStep,
+    create_recharge_plan,
+    plan_debug,
+    update_plan_from_observation,
+)
 
 
 class PlanTests(unittest.TestCase):
+    def test_move_to_step_can_require_reachability(self):
+        step = PlanStep(
+            step_type="move_to",
+            target=(3, 4),
+            requires_reachable_target=True,
+        )
+
+        self.assertTrue(step.requires_reachable_target)
+
+    def test_investigate_step_does_not_require_path_reachability(self):
+        step = PlanStep(step_type="investigate", target=(4, 4))
+
+        self.assertFalse(step.requires_reachable_target)
+
+    def test_recharge_plan_requires_a_reachable_target(self):
+        plan = create_recharge_plan((4, 4))
+
+        self.assertTrue(plan.steps[0].requires_reachable_target)
+
+    def test_failed_reachability_precondition_marks_plan_failed(self):
+        plan = Plan(
+            goal="recharge",
+            steps=[PlanStep(
+                step_type="move_to",
+                target=(4, 4),
+                requires_reachable_target=True,
+            )],
+        )
+
+        update_plan_from_observation(plan, {
+            "position": [1, 1],
+            "nearby_objects": [{
+                "type": "Battery",
+                "position": [4, 4],
+                "reachable": False,
+                "path_length": -1,
+            }],
+            "last_action": None,
+        })
+
+        self.assertTrue(plan.has_failed())
+
+    def test_valid_reachability_precondition_keeps_step_active(self):
+        plan = Plan(
+            goal="recharge",
+            steps=[PlanStep(
+                step_type="move_to",
+                target=(4, 4),
+                requires_reachable_target=True,
+            )],
+        )
+
+        update_plan_from_observation(plan, {
+            "position": [2, 1],
+            "nearby_objects": [{
+                "type": "Battery",
+                "position": [4, 4],
+                "reachable": True,
+                "path_length": 5,
+            }],
+            "last_action": None,
+        })
+
+        self.assertFalse(plan.has_failed())
+        self.assertEqual(plan.current_index, 0)
+
     def test_new_plan_starts_at_first_step(self):
         first_step = PlanStep(step_type="move_to", target=(3, 4))
         second_step = PlanStep(step_type="investigate", target=(4, 4))

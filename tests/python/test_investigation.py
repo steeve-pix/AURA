@@ -61,8 +61,10 @@ class TestInvestigation(unittest.TestCase):
         self.assertEqual(len(plan.steps), 2)
         self.assertEqual(plan.steps[0].step_type, "move_to")
         self.assertEqual(plan.steps[0].target, (11, 10))
+        self.assertTrue(plan.steps[0].requires_reachable_target)
         self.assertEqual(plan.steps[1].step_type, "investigate")
         self.assertEqual(plan.steps[1].target, (12, 10))
+        self.assertFalse(plan.steps[1].requires_reachable_target)
 
     def test_action_from_plan_does_not_advance_plan(self):
         memory = Memory()
