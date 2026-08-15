@@ -51,6 +51,32 @@ def create_recharge_plan(
     )
 
 
+def plan_debug(plan: Plan | None) -> dict | None:
+    if plan is None:
+        return None
+
+    current_step = plan.current_step()
+
+    return {
+        "goal": plan.goal,
+        "current_step": plan.current_index,
+        "step_count": len(plan.steps),
+        "failed": plan.has_failed(),
+        "step": (
+            None
+            if current_step is None
+            else {
+                "type": current_step.step_type,
+                "target": (
+                    None
+                    if current_step.target is None
+                    else list(current_step.target)
+                ),
+            }
+        ),
+    }
+
+
 def update_plan_from_observation(
     plan: Plan,
     observation,

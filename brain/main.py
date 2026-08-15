@@ -6,7 +6,7 @@ from pathlib import Path
 from brain.decision import decide
 from brain.goals import choose_goal, goal_scores
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
-from brain.planning import update_plan_from_observation
+from brain.planning import plan_debug, update_plan_from_observation
 
 
 def main() -> None:
@@ -127,6 +127,7 @@ def main() -> None:
             "visited_cells": [
                 list(position) for position in memory.visit_counts.keys()
             ],
+            "plan": plan_debug(memory.active_plan),
         }
 
         print(json.dumps(decision), flush=True)
