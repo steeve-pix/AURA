@@ -25,6 +25,11 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glfw)
 
+if(APPLE)
+    # Keep third-party compiler noise from obscuring warnings in AURA's own code.
+    target_compile_options(glfw PRIVATE -Wno-misleading-indentation)
+endif()
+
 target_link_libraries(aura_core
         PRIVATE
         nlohmann_json::nlohmann_json
@@ -44,3 +49,8 @@ target_link_libraries(aura_body
         glfw
         "-framework OPENGL"
 )
+
+if(APPLE)
+    # AURA intentionally uses the macOS compatibility-profile OpenGL API in v0.2.0.
+    target_compile_definitions(aura_body PRIVATE GL_SILENCE_DEPRECATION)
+endif()

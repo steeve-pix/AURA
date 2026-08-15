@@ -21,5 +21,14 @@ namespace aura::bridge {
         std::vector<world::Position> knownCells;
         /// Cells AURA has physically occupied at least once.
         std::vector<world::Position> visitedCells;
+
+        /// Active plan summary for developer-facing runtime diagnostics.
+        std::string planGoal;
+        int planCurrentStep = 0;
+        int planStepCount = 0;
+        bool planFailed = false;
+        std::string planStepType;
+        world::Position planStepTarget{};
+        bool hasPlanStepTarget = false;
     };
 }
