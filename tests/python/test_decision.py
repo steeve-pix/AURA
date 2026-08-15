@@ -2,9 +2,30 @@ import unittest
 
 from brain.decision import choose_investigation_action, decide
 from brain.memory import Memory
+from brain.planning import Plan, PlanStep
 
 
 class DecisionTests(unittest.TestCase):
+    def test_goal_change_cancels_incompatible_active_plan(self):
+        memory = Memory()
+        memory.set_active_plan(Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="investigate", target=(12, 5)),
+            ],
+        ))
+        observation = {
+            "position": [1, 1],
+            "north": "Wall",
+            "east": "Wall",
+            "south": "Wall",
+            "west": "Wall",
+        }
+
+        decide(observation, "explore", memory)
+
+        self.assertIsNone(memory.active_plan)
+
     def test_recharge_keeps_target_for_small_path_improvement(self):
         memory = Memory()
         memory.set_recharge_target([9, 5])

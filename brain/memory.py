@@ -96,15 +96,11 @@ class Memory:
 
     def clear_investigation_approach(self) -> None:
         self.active_investigation_approach = None
-        if self.active_plan is not None and self.active_plan.goal == "investigate":
-            self.clear_plan()
 
     def clear_investigation_target(self) -> None:
         # Target and approach form one lock and must be released together.
         self.active_investigation_target = None
         self.active_investigation_approach = None
-        if self.active_plan is not None and self.active_plan.goal == "investigate":
-            self.clear_plan()
 
     def set_active_goal(self, goal: str) -> None:
         self.active_goal = goal
@@ -151,8 +147,11 @@ class Memory:
     def set_active_plan(self, plan: Plan) -> None:
         self.active_plan = plan
 
-    def clear_plan(self) -> None:
+    def clear_active_plan(self) -> None:
         self.active_plan = None
+
+    def clear_plan(self) -> None:
+        self.clear_active_plan()
 
 
 MemoryStatus = Literal[

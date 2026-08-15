@@ -122,6 +122,12 @@ def choose_recharge_action(observation, memory):
 
 
 def decide(observation, goal, memory):
+    if (
+            memory.active_plan is not None
+            and memory.active_plan.goal != goal
+    ):
+        memory.clear_active_plan()
+
     if goal == "recharge":
         return choose_recharge_action(observation, memory)
 
@@ -203,19 +209,10 @@ def choose_investigation_action(observation, memory: Memory):
     ]
     if not unknown_objects:
         memory.clear_investigation_target()
-        memory.clear_plan()
+        memory.clear_active_plan()
         return {"action": "idle"}
 
     plan = memory.active_plan
-    step = plan.current_step() if plan is not None else None
-
-    if (
-            step is not None
-            and step.step_type == "move_to"
-            and tuple(observation["position"]) == step.target
-    ):
-        plan.advance()
-
     if plan is not None and plan.goal == "investigate":
         return action_from_plan(plan)
 
@@ -276,7 +273,7 @@ def choose_investigation_action(observation, memory: Memory):
     if not approach_candidates:
         memory.mark_target_failed(target_position)
         memory.clear_investigation_target()
-        memory.clear_plan()
+        memory.clear_active_plan()
         return {"action": "idle"}
 
     approach = memory.active_investigation_approach

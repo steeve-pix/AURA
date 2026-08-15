@@ -32,3 +32,35 @@ class Plan:
     def advance(self) -> None:
         if not self.is_complete():
             self.current_index += 1
+
+
+def update_plan_from_observation(
+    plan: Plan,
+    observation,
+) -> None:
+    step = plan.current_step()
+
+    if step is None:
+        return
+
+    if step.step_type == "move_to":
+        current_position = tuple(observation["position"])
+
+        if current_position == step.target:
+            plan.advance()
+
+        return
+
+    if step.step_type == "investigate":
+        last_action = observation.get("last_action")
+
+        if not last_action:
+            return
+
+        if (
+            last_action.get("type") == "investigate"
+            and last_action.get("succeeded", False)
+            and last_action.get("target") is not None
+            and tuple(last_action["target"]) == step.target
+        ):
+            plan.advance()

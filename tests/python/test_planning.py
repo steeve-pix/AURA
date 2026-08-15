@@ -1,6 +1,7 @@
 import unittest
 
-from brain.planning import Plan, PlanStep
+from brain.memory import Memory
+from brain.planning import Plan, PlanStep, update_plan_from_observation
 
 
 class PlanTests(unittest.TestCase):
@@ -47,6 +48,108 @@ class PlanTests(unittest.TestCase):
 
         self.assertTrue(plan.is_complete())
         self.assertIsNone(plan.current_step())
+
+    def test_successful_intermediate_move_does_not_advance_plan(self):
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(11, 5)),
+                PlanStep(step_type="investigate", target=(12, 5)),
+            ],
+        )
+        observation = {
+            "position": [8, 5],
+            "last_action": {
+                "type": "move_to",
+                "target": [11, 5],
+                "succeeded": True,
+            },
+        }
+
+        update_plan_from_observation(plan, observation)
+
+        self.assertEqual(plan.current_index, 0)
+
+    def test_reaching_move_target_advances_to_investigation(self):
+        investigate_step = PlanStep(
+            step_type="investigate",
+            target=(12, 5),
+        )
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(11, 5)),
+                investigate_step,
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {"position": [11, 5], "last_action": None},
+        )
+
+        self.assertIs(plan.current_step(), investigate_step)
+
+    def test_successful_matching_investigation_completes_plan(self):
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="investigate", target=(12, 5)),
+            ],
+        )
+
+        update_plan_from_observation(plan, {
+            "position": [11, 5],
+            "last_action": {
+                "type": "investigate",
+                "target": [12, 5],
+                "succeeded": True,
+            },
+        })
+
+        self.assertTrue(plan.is_complete())
+
+    def test_failed_investigation_does_not_complete_plan(self):
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="investigate", target=(12, 5)),
+            ],
+        )
+
+        update_plan_from_observation(plan, {
+            "position": [11, 5],
+            "last_action": {
+                "type": "investigate",
+                "target": [12, 5],
+                "succeeded": False,
+            },
+        })
+
+        self.assertFalse(plan.is_complete())
+
+    def test_completed_plan_gets_cleared(self):
+        memory = Memory()
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="investigate", target=(12, 5)),
+            ],
+        )
+        memory.set_active_plan(plan)
+
+        update_plan_from_observation(plan, {
+            "position": [11, 5],
+            "last_action": {
+                "type": "investigate",
+                "target": [12, 5],
+                "succeeded": True,
+            },
+        })
+        if plan.is_complete():
+            memory.clear_active_plan()
+
+        self.assertIsNone(memory.active_plan)
 
 
 if __name__ == "__main__":

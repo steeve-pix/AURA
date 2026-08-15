@@ -6,6 +6,7 @@ from pathlib import Path
 from brain.decision import decide
 from brain.goals import choose_goal, goal_scores
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
+from brain.planning import update_plan_from_observation
 
 
 def main() -> None:
@@ -50,6 +51,12 @@ def main() -> None:
                 memory.clear_investigation_target()
             elif memory.active_investigation_approach == target:
                 memory.clear_investigation_approach()
+
+            if (
+                    memory.active_plan is not None
+                    and memory.active_plan.goal == "investigate"
+            ):
+                memory.clear_active_plan()
 
             print(f"Failed targets: {memory.failed_targets}", file=sys.stderr)
 
@@ -99,6 +106,15 @@ def main() -> None:
                 memory.forget_battery(
                     battery
                 )
+
+        if memory.active_plan is not None:
+            update_plan_from_observation(
+                memory.active_plan,
+                observation,
+            )
+
+            if memory.active_plan.is_complete():
+                memory.clear_active_plan()
 
         save_memory(memory, memory_path, world_id)
 
