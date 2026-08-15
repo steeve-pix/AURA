@@ -208,32 +208,29 @@ def choose_exploration_action(observation, memory: Memory):
 
 
 def choose_investigation_action(observation, memory: Memory):
+    if (
+            memory.active_plan is not None
+            and memory.active_plan.goal == "investigate"
+    ):
+        return action_from_plan(memory.active_plan)
+
     unknown_objects = [
         obj for obj in observation["nearby_objects"]
         if obj["type"] == "Unknown" and obj["reachable"]
            and not memory.is_failed_target((int(obj["position"][0]), int(obj["position"][1])))
     ]
     if not unknown_objects:
-        memory.clear_investigation_target()
-        memory.clear_active_plan()
         return {"action": "idle"}
 
-    # Position lookup preserves the current object lock across changing sensor order.
-    objects_by_position = {
-        tuple(obj["position"]): obj for obj in unknown_objects
-    }
-    target_position = memory.active_investigation_target
+    target = max(
+        unknown_objects,
+        key=lambda obj: (
+            investigation_target_score(obj, observation, memory),
+            tuple(obj["position"]),
+        ),
+    )
 
-    if target_position not in objects_by_position:
-        target = max(
-            unknown_objects,
-            key=lambda obj: (
-                investigation_target_score(obj, observation, memory), tuple(obj["position"])
-            )
-        )
-
-        target_position = tuple(target["position"])
-        memory.set_investigation_target(target_position)
+    target_position = tuple(target["position"])
 
     aura_position = tuple(observation["position"])
     target_x, target_y = target_position
@@ -273,8 +270,6 @@ def choose_investigation_action(observation, memory: Memory):
     # Reject the object itself only after every visible adjacent approach is unusable.
     if not approach_candidates:
         memory.mark_target_failed(target_position)
-        memory.clear_investigation_target()
-        memory.clear_active_plan()
         return {"action": "idle"}
 
     approach = min(

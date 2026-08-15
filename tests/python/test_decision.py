@@ -491,11 +491,19 @@ class DecisionTests(unittest.TestCase):
 
         choose_investigation_action(observation, memory)
 
-        self.assertEqual(memory.active_investigation_target, (6, 2))
+        self.assertIsNotNone(memory.active_plan)
+        self.assertEqual(memory.active_plan.goal, "investigate")
+        self.assertEqual(memory.active_plan.steps[-1].target, (6, 2))
 
     def test_investigation_keeps_existing_target(self):
         memory = Memory()
-        memory.set_investigation_target((5, 2))
+        memory.set_active_plan(Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(5, 1)),
+                PlanStep(step_type="investigate", target=(5, 2)),
+            ],
+        ))
         memory.remember_investigation_result([6, 2], "Battery")
 
         observation = {
@@ -520,9 +528,11 @@ class DecisionTests(unittest.TestCase):
             ],
         }
 
-        choose_investigation_action(observation, memory)
+        action = choose_investigation_action(observation, memory)
 
-        self.assertEqual(memory.active_investigation_target, (5, 2))
+        self.assertEqual(action, {"action": "move_to", "target": [5, 1]})
+        self.assertEqual(memory.active_plan.goal, "investigate")
+        self.assertEqual(memory.active_plan.steps[1].target, (5, 2))
 
 
 if __name__ == "__main__":

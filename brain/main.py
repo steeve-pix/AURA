@@ -48,7 +48,6 @@ def main() -> None:
                 memory.clear_recharge_target()
 
             if last_action["type"] == "investigate":
-                memory.clear_investigation_target()
                 if (
                         memory.active_plan is not None
                         and memory.active_plan.goal == "investigate"
@@ -66,8 +65,6 @@ def main() -> None:
 
             if revealed_cell is not None:
                 memory.remember_investigation_result(target, revealed_cell["type"])
-
-            memory.clear_investigation_target()
 
         for visible_cell in observation["visible_cells"]:
             memory.remember_cell(

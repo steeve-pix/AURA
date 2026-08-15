@@ -98,7 +98,6 @@ class TestInvestigation(unittest.TestCase):
 
     def test_investigates_unknown_from_adjacent_cell(self):
         memory = Memory()
-        memory.set_investigation_target((12, 10))
         observation = {
             "position": [11, 10],
             "visible_cells": [],
@@ -140,7 +139,6 @@ class TestInvestigation(unittest.TestCase):
 
     def test_active_plan_keeps_same_approach_across_observations(self):
         memory = Memory()
-        memory.set_investigation_target((14, 10))
         memory.set_active_plan(Plan(
             goal="investigate",
             steps=[

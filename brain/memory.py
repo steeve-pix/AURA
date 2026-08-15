@@ -10,7 +10,6 @@ class Memory:
         self.visit_counts: dict[tuple[int, int], int] = {}
         self.failed_targets: set[tuple[int, int]] = set()
         self.active_recharge_target: Optional[Tuple[int, int]] = None
-        self.active_investigation_target: Optional[Tuple[int, int]] = None
         self.active_goal: Optional[str] = None
         self.step = 0
         self.investigation_history: dict[tuple[int, int], str] = {}
@@ -82,12 +81,6 @@ class Memory:
 
     def clear_recharge_target(self) -> None:
         self.active_recharge_target = None
-
-    def set_investigation_target(self, position: Sequence[int]) -> None:
-        self.active_investigation_target = (position[0], position[1])
-
-    def clear_investigation_target(self) -> None:
-        self.active_investigation_target = None
 
     def set_active_goal(self, goal: str) -> None:
         self.active_goal = goal
