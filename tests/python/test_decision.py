@@ -1,6 +1,11 @@
 import unittest
 
-from brain.decision import choose_investigation_action, decide
+from brain.decision import (
+    choose_investigation_action,
+    create_recharge_plan as create_selected_recharge_plan,
+    decide,
+    replan_failed_recharge,
+)
 from brain.goals import choose_goal
 from brain.memory import Memory
 from brain.planning import (
@@ -12,6 +17,138 @@ from brain.planning import (
 
 
 class DecisionTests(unittest.TestCase):
+    def test_failed_battery_creates_recharge_plan_for_another_battery(self):
+        memory = Memory()
+        battery_a = (5, 3)
+        battery_b = (4, 2)
+        failed_plan = create_recharge_plan(battery_a)
+        failed_plan.failed = True
+        memory.set_active_plan(failed_plan)
+        memory.mark_target_failed(battery_a)
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": list(battery_a),
+                    "reachable": True,
+                    "path_length": 6,
+                },
+                {
+                    "type": "Battery",
+                    "position": list(battery_b),
+                    "reachable": True,
+                    "path_length": 4,
+                },
+            ],
+        }
+
+        self.assertTrue(replan_failed_recharge(observation, memory))
+        self.assertEqual(memory.active_plan.goal_target, battery_b)
+
+    def test_recharge_replanning_does_not_reselect_failed_battery(self):
+        memory = Memory()
+        battery_a = (3, 1)
+        battery_b = (8, 4)
+        failed_plan = create_recharge_plan(battery_a)
+        failed_plan.failed = True
+        memory.set_active_plan(failed_plan)
+        memory.mark_target_failed(battery_a)
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": list(battery_a),
+                    "reachable": True,
+                    "path_length": 2,
+                },
+                {
+                    "type": "Battery",
+                    "position": list(battery_b),
+                    "reachable": True,
+                    "path_length": 8,
+                },
+            ],
+        }
+
+        replan_failed_recharge(observation, memory)
+
+        self.assertNotEqual(memory.active_plan.goal_target, battery_a)
+        self.assertEqual(memory.active_plan.goal_target, battery_b)
+
+    def test_recharge_plan_builder_rejects_energy_infeasible_battery(self):
+        memory = Memory()
+        observation = {
+            "position": [1, 1],
+            "energy": 12,
+            "nearby_objects": [{
+                "type": "Battery",
+                "position": [12, 9],
+                "reachable": True,
+                "path_length": 19,
+            }],
+        }
+
+        self.assertIsNone(create_selected_recharge_plan(observation, memory))
+
+    def test_recharge_plan_builder_rejects_clearly_infeasible_memory(self):
+        memory = Memory()
+        memory.remember_battery((20, 1))
+        observation = {
+            "position": [1, 1],
+            "energy": 12,
+            "nearby_objects": [],
+        }
+
+        self.assertIsNone(create_selected_recharge_plan(observation, memory))
+
+    def test_recharge_replanning_returns_no_plan_without_viable_battery(self):
+        memory = Memory()
+        failed_target = (5, 3)
+        failed_plan = create_recharge_plan(failed_target)
+        failed_plan.failed = True
+        memory.set_active_plan(failed_plan)
+        memory.mark_target_failed(failed_target)
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [{
+                "type": "Battery",
+                "position": list(failed_target),
+                "reachable": True,
+                "path_length": 6,
+            }],
+        }
+
+        self.assertFalse(replan_failed_recharge(observation, memory))
+        self.assertIsNone(memory.active_plan)
+
+    def test_recharge_replanning_preserves_active_goal(self):
+        memory = Memory()
+        memory.set_active_goal("recharge")
+        battery_a = (5, 3)
+        failed_plan = create_recharge_plan(battery_a)
+        failed_plan.failed = True
+        memory.set_active_plan(failed_plan)
+        memory.mark_target_failed(battery_a)
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [{
+                "type": "Battery",
+                "position": [4, 2],
+                "reachable": True,
+                "path_length": 4,
+            }],
+        }
+
+        self.assertTrue(replan_failed_recharge(observation, memory))
+        self.assertEqual(memory.active_goal, "recharge")
+        self.assertEqual(memory.active_plan.goal, "recharge")
+
     def test_goal_change_cancels_incompatible_active_plan(self):
         memory = Memory()
         memory.set_active_plan(Plan(

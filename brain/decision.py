@@ -3,7 +3,11 @@ import random
 from typing import Any, Union
 
 from brain.memory import Memory
-from brain.planning import Plan, PlanStep, create_recharge_plan
+from brain.planning import (
+    Plan,
+    PlanStep,
+    create_recharge_plan as create_recharge_plan_for_target,
+)
 
 BATTERY_ARRIVAL_RESERVE = 2
 
@@ -18,13 +22,7 @@ def remembered_battery_score(memory: Memory, battery: tuple[int, int], aura_posi
     return trust / (1.0 + distance)
 
 
-def choose_recharge_action(observation, memory):
-    if (
-            memory.active_plan is not None
-            and memory.active_plan.goal == "recharge"
-    ):
-        return action_from_plan(memory.active_plan)
-
+def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int] | None:
     energy = observation["energy"]
     visible_battery_positions = {
         tuple(obj["position"])
@@ -47,24 +45,24 @@ def choose_recharge_action(observation, memory):
             key=lambda obj: obj["path_length"],
         )
 
-        target = tuple(best["position"])
-        plan = create_recharge_plan(target)
-        memory.set_active_plan(plan)
-
-        return action_from_plan(plan)
+        return tuple(best["position"])
 
     remembered = [
         battery
         for battery in memory.batteries()
         if battery not in visible_battery_positions
            and not memory.is_failed_target(battery)
+           and (
+                   abs(battery[0] - observation["position"][0])
+                   + abs(battery[1] - observation["position"][1])
+           ) <= energy - BATTERY_ARRIVAL_RESERVE
     ]
 
     if remembered:
         x, y = observation["position"]
         aura_position = (x, y)
 
-        target = max(
+        return max(
             remembered,
             key=lambda battery: remembered_battery_score(
                 memory,
@@ -73,9 +71,49 @@ def choose_recharge_action(observation, memory):
             ),
         )
 
-        plan = create_recharge_plan(target)
-        memory.set_active_plan(plan)
+    return None
 
+
+def create_recharge_plan(observation, memory: Memory, ) -> Plan | None:
+    target = choose_best_recharge_target(observation, memory)
+
+    if target is None:
+        return None
+
+    return create_recharge_plan_for_target(target)
+
+
+def replan_failed_recharge(observation, memory: Memory, ) -> bool:
+    failed_plan = memory.active_plan
+
+    if (
+            failed_plan is None
+            or failed_plan.goal != "recharge"
+            or not failed_plan.has_failed()
+    ):
+        return False
+
+    memory.clear_active_plan()
+    replacement = create_recharge_plan(observation, memory)
+
+    if replacement is None:
+        return False
+
+    memory.set_active_plan(replacement)
+    return True
+
+
+def choose_recharge_action(observation, memory):
+    if (
+            memory.active_plan is not None
+            and memory.active_plan.goal == "recharge"
+    ):
+        return action_from_plan(memory.active_plan)
+
+    plan = create_recharge_plan(observation, memory)
+
+    if plan is not None:
+        memory.set_active_plan(plan)
         return action_from_plan(plan)
 
     return choose_exploration_action(observation, memory)
@@ -205,26 +243,13 @@ def choose_investigation_action(observation, memory: Memory):
     return action_from_plan(plan)
 
 
-def create_investigation_plan(
-        observation,
-        memory: Memory,
-        target_position: tuple[int, int],
-) -> Plan | None:
+def create_investigation_plan(observation, memory: Memory, target_position: tuple[int, int], ) -> Plan | None:
     target_object = next(
-        (
-            obj
-            for obj in observation["nearby_objects"]
-            if obj["type"] == "Unknown"
-               and tuple(obj["position"]) == target_position
-        ),
-        None,
+        (obj for obj in observation["nearby_objects"] if
+         obj["type"] == "Unknown" and tuple(obj["position"]) == target_position), None,
     )
 
-    if (
-            target_object is None
-            or not target_object.get("reachable", False)
-            or memory.is_failed_target(target_position)
-    ):
+    if target_object is None or not target_object.get("reachable", False) or memory.is_failed_target(target_position):
         return None
 
     aura_position = tuple(observation["position"])
