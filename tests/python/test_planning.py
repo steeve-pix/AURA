@@ -128,6 +128,51 @@ class PlanTests(unittest.TestCase):
 
         self.assertFalse(plan.is_complete())
 
+    def test_failed_matching_move_marks_plan_failed(self):
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(11, 5)),
+                PlanStep(step_type="investigate", target=(12, 5)),
+            ],
+        )
+
+        update_plan_from_observation(plan, {
+            "position": [8, 5],
+            "last_action": {
+                "type": "move_to",
+                "target": [11, 5],
+                "succeeded": False,
+            },
+        })
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.current_index, 0)
+
+    def test_failed_plan_gets_cleared(self):
+        memory = Memory()
+        plan = Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(11, 5)),
+                PlanStep(step_type="investigate", target=(12, 5)),
+            ],
+        )
+        memory.set_active_plan(plan)
+
+        update_plan_from_observation(plan, {
+            "position": [8, 5],
+            "last_action": {
+                "type": "move_to",
+                "target": [11, 5],
+                "succeeded": False,
+            },
+        })
+        if plan.has_failed():
+            memory.clear_active_plan()
+
+        self.assertIsNone(memory.active_plan)
+
     def test_completed_plan_gets_cleared(self):
         memory = Memory()
         plan = Plan(

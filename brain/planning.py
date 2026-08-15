@@ -19,6 +19,7 @@ class Plan:
     goal: str
     steps: list[PlanStep] = field(default_factory=list)
     current_index: int = 0
+    failed: bool = False
 
     def is_complete(self) -> bool:
         return self.current_index >= len(self.steps)
@@ -28,6 +29,9 @@ class Plan:
             return None
 
         return self.steps[self.current_index]
+
+    def has_failed(self) -> bool:
+        return self.failed
 
     def advance(self) -> None:
         if not self.is_complete():
@@ -44,6 +48,18 @@ def update_plan_from_observation(
         return
 
     if step.step_type == "move_to":
+        last_action = observation.get("last_action")
+
+        if (
+            last_action
+            and last_action.get("type") == "move_to"
+            and not last_action.get("succeeded", False)
+            and last_action.get("target") is not None
+            and tuple(last_action["target"]) == step.target
+        ):
+            plan.failed = True
+            return
+
         current_position = tuple(observation["position"])
 
         if current_position == step.target:

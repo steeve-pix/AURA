@@ -128,6 +128,12 @@ def decide(observation, goal, memory):
     ):
         memory.clear_active_plan()
 
+    if (
+            memory.active_plan is not None
+            and memory.active_plan.goal == goal
+    ):
+        return action_from_plan(memory.active_plan)
+
     if goal == "recharge":
         return choose_recharge_action(observation, memory)
 
@@ -212,10 +218,6 @@ def choose_investigation_action(observation, memory: Memory):
         memory.clear_active_plan()
         return {"action": "idle"}
 
-    plan = memory.active_plan
-    if plan is not None and plan.goal == "investigate":
-        return action_from_plan(plan)
-
     # Position lookup preserves the current object lock across changing sensor order.
     objects_by_position = {
         tuple(obj["position"]): obj for obj in unknown_objects
@@ -238,7 +240,6 @@ def choose_investigation_action(observation, memory: Memory):
 
     # Investigation is physical: AURA must share a cardinal edge with the object.
     if abs(target_x - aura_position[0]) + abs(target_y - aura_position[1]) == 1:
-        memory.clear_investigation_approach()
         plan = Plan(
             goal="investigate",
             steps=[
@@ -276,18 +277,15 @@ def choose_investigation_action(observation, memory: Memory):
         memory.clear_active_plan()
         return {"action": "idle"}
 
-    approach = memory.active_investigation_approach
-    if approach not in approach_candidates:
-        approach = min(
-            approach_candidates,
-            key=lambda position: (
-                abs(position[0] - aura_position[0])
-                + abs(position[1] - aura_position[1]),
-                memory.visit_count(position),
-                position,
-            ),
-        )
-        memory.set_investigation_approach(approach)
+    approach = min(
+        approach_candidates,
+        key=lambda position: (
+            abs(position[0] - aura_position[0])
+            + abs(position[1] - aura_position[1]),
+            memory.visit_count(position),
+            position,
+        ),
+    )
 
     plan = Plan(
         goal="investigate",

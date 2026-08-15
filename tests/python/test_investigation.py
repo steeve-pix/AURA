@@ -1,6 +1,6 @@
 import unittest
 
-from brain.decision import action_from_plan, choose_investigation_action
+from brain.decision import action_from_plan, choose_investigation_action, decide
 from brain.memory import Memory
 from brain.planning import Plan, PlanStep
 
@@ -138,11 +138,17 @@ class TestInvestigation(unittest.TestCase):
             {"action": "idle"},
         )
 
-    def test_keeps_locked_target_and_approach(self):
+    def test_active_plan_keeps_same_approach_across_observations(self):
         memory = Memory()
         memory.set_investigation_target((14, 10))
-        memory.set_investigation_approach((13, 10))
-        observation = {
+        memory.set_active_plan(Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(13, 10)),
+                PlanStep(step_type="investigate", target=(14, 10)),
+            ],
+        ))
+        first_observation = {
             "position": [11, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [13, 10]},
@@ -153,11 +159,49 @@ class TestInvestigation(unittest.TestCase):
                 {"type": "Unknown", "position": [11, 12], "reachable": True, "path_length": 2},
             ],
         }
+        second_observation = {
+            **first_observation,
+            "position": [12, 10],
+            "visible_cells": [
+                {"type": "Empty", "position": [13, 10]},
+                {"type": "Empty", "position": [14, 9]},
+            ],
+        }
+
+        first_action = decide(first_observation, "investigate", memory)
+        second_action = decide(second_observation, "investigate", memory)
 
         self.assertEqual(
-            choose_investigation_action(observation, memory),
+            first_action,
             {"action": "move_to", "target": [13, 10]},
         )
+        self.assertEqual(second_action, first_action)
+
+    def test_removing_approach_field_does_not_restore_oscillation(self):
+        memory = Memory()
+        memory.set_active_plan(Plan(
+            goal="investigate",
+            steps=[
+                PlanStep(step_type="move_to", target=(13, 10)),
+                PlanStep(step_type="investigate", target=(14, 10)),
+            ],
+        ))
+        observation = {
+            "position": [11, 10],
+            "visible_cells": [
+                {"type": "Empty", "position": [13, 10]},
+                {"type": "Empty", "position": [14, 9]},
+            ],
+            "nearby_objects": [
+                {"type": "Unknown", "position": [14, 10], "reachable": True, "path_length": 3},
+            ],
+        }
+
+        self.assertEqual(
+            decide(observation, "investigate", memory),
+            {"action": "move_to", "target": [13, 10]},
+        )
+        self.assertFalse(hasattr(memory, "active_investigation_approach"))
 
 
 if __name__ == "__main__":

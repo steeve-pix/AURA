@@ -49,14 +49,11 @@ def main() -> None:
 
             if last_action["type"] == "investigate":
                 memory.clear_investigation_target()
-            elif memory.active_investigation_approach == target:
-                memory.clear_investigation_approach()
-
-            if (
-                    memory.active_plan is not None
-                    and memory.active_plan.goal == "investigate"
-            ):
-                memory.clear_active_plan()
+                if (
+                        memory.active_plan is not None
+                        and memory.active_plan.goal == "investigate"
+                ):
+                    memory.clear_active_plan()
 
             print(f"Failed targets: {memory.failed_targets}", file=sys.stderr)
 
@@ -113,7 +110,10 @@ def main() -> None:
                 observation,
             )
 
-            if memory.active_plan.is_complete():
+            if (
+                    memory.active_plan.is_complete()
+                    or memory.active_plan.has_failed()
+            ):
                 memory.clear_active_plan()
 
         save_memory(memory, memory_path, world_id)
