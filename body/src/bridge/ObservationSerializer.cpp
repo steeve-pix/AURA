@@ -8,6 +8,25 @@ namespace aura::bridge {
     std::string serializedObservation(const Observation &observation) {
         nlohmann::json json;
 
+        // Protocol names are centralized here so enum spelling never leaks into JSON.
+        const auto actionTypeName =
+                [](ActionType type) {
+            switch (type) {
+                case ActionType::Idle:
+                    return "idle";
+                case ActionType::Move:
+                    return "move";
+                case ActionType::MoveTo:
+                    return "move_to";
+                case ActionType::Investigate:
+                    return "investigate";
+            }
+
+            return "unknown";
+        };
+
+        json["world_id"] = observation.worldId;
+
         json["position"] = {
             observation.position.x,
             observation.position.y
@@ -23,6 +42,23 @@ namespace aura::bridge {
         json["visible_cells"] = nlohmann::json::array();
         json["nearby_objects"] = nlohmann::json::array();
 
+        if (observation.lastAction.has_value()) {
+            const auto &lastAction = observation.lastAction.value();
+
+            json["last_action"] = {
+                {"type", actionTypeName(lastAction.type)},
+                {"succeeded", lastAction.succeeded}
+            };
+
+            if (lastAction.target.has_value()) {
+                const auto &target = lastAction.target.value();
+                json["last_action"]["target"] = {target.x, target.y};
+            }
+        } else {
+            // An explicit null distinguishes the first cycle from an omitted field.
+            json["last_action"] = nullptr;
+        }
+
         for (const auto &cell: observation.nearby.cells) {
             json["visible_cells"].push_back({
                 {"type", aura::world::toString(cell.type)},
@@ -33,7 +69,9 @@ namespace aura::bridge {
         for (const auto &object: observation.nearby.objects) {
             json["nearby_objects"].push_back({
                 {"type", aura::world::toString(object.type)},
-                {"position", {object.position.x, object.position.y}}
+                {"position", {object.position.x, object.position.y}},
+                {"reachable", object.reachable},
+                {"path_length", object.pathLength}
             });
         }
 

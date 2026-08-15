@@ -3,7 +3,7 @@
 #include "world/CellType.hpp"
 
 namespace aura::sensors {
-    /// Cell types immediately adjacent to AURA in cardinal order.
+    /// Contents of the four cells sharing an edge with AURA's current cell.
     struct LocalObservation {
         world::CellType north;
         world::CellType east;

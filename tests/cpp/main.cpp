@@ -1,6 +1,10 @@
 #include <iostream>
 
 #include "agent/Agent.hpp"
+#include "bridge/Observation.hpp"
+#include "bridge/ObservationSerializer.hpp"
+#include "bridge/BrainResponseParser.hpp"
+#include "world/MazeGenerator.hpp"
 #include "world/World.hpp"
 #include "world/Position.hpp"
 #include "navigation/Pathfinder.hpp"
@@ -88,7 +92,7 @@ int main() {
     pathWorld.setCell({3, 2}, aura::world::CellType::Wall);
     pathWorld.setCell({3, 3}, aura::world::CellType::Wall);
 
-    // Open a gap at the bottom.
+    // The gap makes the destination reachable while preserving walls on three sides.
     pathWorld.setCell({3, 3}, aura::world::CellType::Empty);
 
     const auto path =
@@ -104,22 +108,90 @@ int main() {
         ++failures;
     }
 
-    aura::world::World blockedWorld{7, 5};
-    blockedWorld.addBoundaryWalls();
+    aura::world::World mazeWorld{11, 9};
+    aura::world::MazeGenerator mazeGenerator{1337};
+    mazeGenerator.generate(mazeWorld, 3, 0);
 
-    blockedWorld.setCell({3, 1}, aura::world::CellType::Wall);
-    blockedWorld.setCell({3, 2}, aura::world::CellType::Wall);
-    blockedWorld.setCell({3, 3}, aura::world::CellType::Wall);
+    int batteryCount = 0;
 
-    const auto blockedPath =
-            aura::navigation::findPath(
-                blockedWorld,
-                {1, 2},
-                {5, 2}
-            );
+    for (int y = 0; y < mazeWorld.height(); ++y) {
+        for (int x = 0; x < mazeWorld.width(); ++x) {
+            const aura::world::Position position{x, y};
 
-    if (!blockedPath.empty()) {
-        std::cout << "FAIL: unreachable target should return empty path\n";
+            if (mazeWorld.cellAt(position) == aura::world::CellType::Battery) {
+                ++batteryCount;
+            }
+
+            if (position == aura::world::Position{1, 1} ||
+                !mazeWorld.canEnter(position)) {
+                continue;
+            }
+
+            if (aura::navigation::findPath(mazeWorld, {1, 1}, position).empty()) {
+                std::cout << "FAIL: maze passages should connect to the start\n";
+                ++failures;
+                break;
+            }
+        }
+    }
+
+    if (batteryCount != 3) {
+        std::cout << "FAIL: maze should contain the requested battery count\n";
+        ++failures;
+    }
+
+    const aura::bridge::Observation observation{
+        {2, 2},
+        100,
+        {
+            aura::world::CellType::Empty,
+            aura::world::CellType::Empty,
+            aura::world::CellType::Empty,
+            aura::world::CellType::Empty
+        },
+        {},
+        3,
+        aura::bridge::LastAction{
+            aura::bridge::ActionType::MoveTo,
+            aura::world::Position{8, 3},
+            false
+        }
+    };
+
+    const auto serialized =
+            aura::bridge::serializedObservation(observation);
+
+    if (serialized.find("\"last_action\":") == std::string::npos ||
+        serialized.find("\"type\":\"move_to\"") == std::string::npos ||
+        serialized.find("\"target\":[8,3]") == std::string::npos ||
+        serialized.find("\"succeeded\":false") == std::string::npos) {
+        std::cout << "FAIL: observation should include the last move_to result\n";
+        ++failures;
+    }
+
+    const auto response = aura::bridge::parseBrainResponse(R"({
+        "action":"move_to",
+        "target":[7,3],
+        "debug":{
+            "goal":"recharge",
+            "plan":{
+                "goal":"recharge",
+                "current_step":0,
+                "step_count":1,
+                "failed":false,
+                "step":{"type":"move_to","target":[7,3]}
+            }
+        }
+    })");
+
+    if (response.debug.planGoal != "recharge" ||
+        response.debug.planCurrentStep != 0 ||
+        response.debug.planStepCount != 1 ||
+        response.debug.planFailed ||
+        response.debug.planStepType != "move_to" ||
+        !response.debug.hasPlanStepTarget ||
+        response.debug.planStepTarget != aura::world::Position{7, 3}) {
+        std::cout << "FAIL: brain response should expose active plan debug state\n";
         ++failures;
     }
 

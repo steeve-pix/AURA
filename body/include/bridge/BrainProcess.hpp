@@ -20,26 +20,30 @@ static constexpr ChildProcessHandle kInvalidProcessHandle = -1;
 #endif
 
 namespace aura::bridge {
-    /// Owns the Windows child process and the pipes connecting the body to the brain.
+    /// Owns the Python brain process and its standard-input/output pipes.
     ///
-    /// Observations travel to Python through standard input. Serialized actions return
-    /// through standard output, keeping operating-system details inside the bridge.
+    /// The class presents the same request-response interface on Windows and POSIX.
+    /// Each observation and response is a single newline-terminated JSON message.
     class BrainProcess {
     public:
-        /// Stores the executable, script, and working-directory paths used at launch.
+        /// Stores the process configuration without starting the child process.
         BrainProcess(
             std::string pythonExecutable,
             std::string scriptPath,
             std::string workingDirectory
         );
 
-        /// Releases the process and parent-side pipe handles owned by this object.
+        /// Closes all parent pipe handles and terminates the child when still running.
         ~BrainProcess();
 
-        /// Launches Python and redirects its standard input and output to anonymous pipes.
+        /// Starts the configured child process and connects its input and output pipes.
+        ///
+        /// Returns false when pipe creation or process creation fails.
         [[nodiscard]] bool launch();
 
-        /// Sends one JSON observation and waits for one newline-terminated JSON action.
+        /// Sends one observation and blocks until one complete response is received.
+        ///
+        /// Returns an empty string when communication is unavailable or interrupted.
         [[nodiscard]] std::string exchange(std::string_view observationJson);
 
     private:
@@ -47,7 +51,7 @@ namespace aura::bridge {
         std::string scriptPath_;
         std::string workingDirectory_;
 
-        // These are the parent-side handles retained after the child starts.
+        /// Child identifier and parent-owned pipe endpoints retained after launch.
         ChildProcessHandle processHandle_ = kInvalidProcessHandle;
         IoHandle stdinWrite_ = kInvalidIoHandle;
         IoHandle stdoutRead_ = kInvalidIoHandle;

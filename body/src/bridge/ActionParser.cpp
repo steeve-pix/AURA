@@ -6,8 +6,8 @@
 #include <string>
 
 namespace {
-    // This deliberately small parser supports the flat action messages in AURA's current
-    // protocol. A general JSON library is unnecessary until the protocol becomes richer.
+    // These helpers describe the lexical rules expected by the protocol's string fields.
+    // Keeping them local prevents parser details from becoming part of the public bridge API.
     bool isJsonWhitespace(char character) {
         return character == ' ' || character == '\t' ||
                character == '\n' || character == '\r';
@@ -33,7 +33,7 @@ namespace {
             ++position;
         }
 
-        // Character code 34 is a double quote; spelling it this way avoids escaping it.
+        // ASCII 34 is used here to make the opening and closing delimiter checks identical.
         if (position >= json.size() || json[position] != static_cast<char>(34)) {
             throw std::invalid_argument("Expected a JSON string value");
         }
@@ -104,6 +104,18 @@ namespace aura::bridge {
                 ActionType::MoveTo,
                 Direction::North,
                 {
+                    target.at(0).get<int>(),
+                    target.at(1).get<int>()
+                }
+            };
+        }
+
+        if (action == "investigate") {
+            const auto &target = json.at("target");
+
+            return {
+                ActionType::Investigate,
+                Direction::North, {
                     target.at(0).get<int>(),
                     target.at(1).get<int>()
                 }

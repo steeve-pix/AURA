@@ -9,9 +9,11 @@ namespace aura::world {
                 return "Wall";
             case CellType::Battery:
                 return "Battery";
+            case CellType::Unknown:
+                return "Unknown";
         }
 
-        // Defensive fallback for an invalid enum value received through corrupted state.
-        return "Unknown";
+        // Keep serialization total even if corrupted state contains an invalid enum value.
+        return "Uninitialized";
     }
 }

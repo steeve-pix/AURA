@@ -3,7 +3,7 @@
 #include <iostream>
 
 namespace {
-    // Rendering symbols are presentation-only and never become world state.
+    // Glyph selection remains local so terminal presentation cannot alter world state.
     char symbolFor(aura::world::CellType cell) {
         switch (cell) {
             case aura::world::CellType::Empty:
@@ -12,8 +12,10 @@ namespace {
                 return '#';
             case aura::world::CellType::Battery:
                 return 'B';
+            case aura::world::CellType::Unknown:
+                return '?';
         }
-        return '?';
+        return '$';
     }
 }
 
@@ -24,7 +26,7 @@ namespace aura::render {
         for (int y = 0; y < world.height(); ++y) {
             for (int x = 0; x < world.width(); ++x) {
                 if (x == agentPosition.x && y == agentPosition.y) {
-                    // Draw AURA over the underlying cell without modifying that cell.
+                    // AURA is an overlay; the underlying cell still matters to simulation logic.
                     std::cout << 'A';
                     continue;
                 }

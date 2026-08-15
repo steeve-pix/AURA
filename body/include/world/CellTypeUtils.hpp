@@ -5,6 +5,6 @@
 #include "world/CellType.hpp"
 
 namespace aura::world {
-    /// Returns the stable protocol/display name for a physical cell type.
+    /// Returns the stable, case-sensitive name used by JSON and renderers.
     [[nodiscard]] std::string_view toString(CellType type);
 }
