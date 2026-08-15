@@ -43,8 +43,31 @@ class WorldMemory:
         if entity is not None:
             entity.status = "stale"
 
-    def entity_at(self,position:list[int]|tuple[int,int])-> RememberedEntity|None:
+    def entity_at(self, position: list[int] | tuple[int, int]) -> RememberedEntity | None:
         return self.entities.get((position[0], position[1]))
 
-    def restore_entity(self,entity: RememberedEntity) -> None:
+    def restore_entity(self, entity: RememberedEntity) -> None:
         self.entities[entity.position] = entity
+
+    def entities_of_type(self, entity_type: str, *, confirmed_only: bool = True) -> list[RememberedEntity]:
+        entities = [entity for entity in self.entities.values() if entity.entity_type == entity_type]
+
+        if confirmed_only:
+            entities = [entity for entity in entities if entity.status == "confirmed"]
+
+        return entities
+
+    def has_entity(self, position: list[int] | tuple[int, int], entity_type: str, *,
+                   confirmed_only: bool = True) -> bool:
+        entity = self.entity_at(position)
+
+        if entity is None:
+            return False
+
+        if entity.entity_type != entity_type:
+            return False
+
+        if confirmed_only and not entity.status == "confirmed":
+            return False
+
+        return True
