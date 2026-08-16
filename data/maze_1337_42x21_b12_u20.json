@@ -1,76 +1,76 @@
 {
   "world_id": "maze:1337:42x21:b12:u20",
-  "step": 7779,
+  "step": 7949,
   "entities": [
     {
       "position": [8,1],
-      "entity_type": "Battery",
+      "entity_type": "Unknown",
       "status": "confirmed",
-      "last_seen_step": 7619,
-      "times_confirmed": 235
+      "last_seen_step": 7917,
+      "times_confirmed": 281
     },
     {
       "position": [9,3],
-      "entity_type": "Battery",
+      "entity_type": "Unknown",
       "status": "confirmed",
-      "last_seen_step": 7620,
-      "times_confirmed": 314
+      "last_seen_step": 7925,
+      "times_confirmed": 373
     },
     {
       "position": [10,7],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 6896,
-      "times_confirmed": 389
+      "last_seen_step": 7930,
+      "times_confirmed": 411
     },
     {
       "position": [11,7],
-      "entity_type": "Battery",
+      "entity_type": "Unknown",
       "status": "confirmed",
-      "last_seen_step": 6896,
-      "times_confirmed": 334
+      "last_seen_step": 7931,
+      "times_confirmed": 357
     },
     {
       "position": [17,12],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 7254,
-      "times_confirmed": 531
+      "last_seen_step": 7938,
+      "times_confirmed": 551
     },
     {
       "position": [20,9],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 7768,
-      "times_confirmed": 420
+      "last_seen_step": 7949,
+      "times_confirmed": 461
     },
     {
       "position": [21,6],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 7777,
-      "times_confirmed": 446
+      "last_seen_step": 7949,
+      "times_confirmed": 492
     },
     {
       "position": [23,13],
-      "entity_type": "Battery",
+      "entity_type": "Unknown",
       "status": "confirmed",
-      "last_seen_step": 7546,
-      "times_confirmed": 423
+      "last_seen_step": 7944,
+      "times_confirmed": 433
     },
     {
       "position": [25,10],
       "entity_type": "Battery",
       "status": "confirmed",
-      "last_seen_step": 7741,
-      "times_confirmed": 496
+      "last_seen_step": 7948,
+      "times_confirmed": 512
     },
     {
       "position": [25,6],
-      "entity_type": "Battery",
+      "entity_type": "Unknown",
       "status": "confirmed",
-      "last_seen_step": 7749,
-      "times_confirmed": 454
+      "last_seen_step": 7948,
+      "times_confirmed": 464
     },
     {
       "position": [25,3],
@@ -476,7 +476,7 @@
     },
     {
       "position": [8,1],
-      "type": "Battery"
+      "type": "Unknown"
     },
     {
       "position": [8,2],
@@ -608,7 +608,7 @@
     },
     {
       "position": [9,3],
-      "type": "Battery"
+      "type": "Unknown"
     },
     {
       "position": [9,4],
@@ -680,7 +680,7 @@
     },
     {
       "position": [11,7],
-      "type": "Battery"
+      "type": "Unknown"
     },
     {
       "position": [11,8],
@@ -1184,7 +1184,7 @@
     },
     {
       "position": [23,13],
-      "type": "Battery"
+      "type": "Unknown"
     },
     {
       "position": [24,13],
@@ -1284,7 +1284,7 @@
     },
     {
       "position": [25,6],
-      "type": "Battery"
+      "type": "Unknown"
     },
     {
       "position": [26,6],
@@ -3842,215 +3842,215 @@
   "visit_counts": [
     {
       "position": [1,1],
-      "count": 13
-    },
-    {
-      "position": [2,1],
-      "count": 17
-    },
-    {
-      "position": [3,1],
-      "count": 13
-    },
-    {
-      "position": [4,1],
-      "count": 14
-    },
-    {
-      "position": [5,1],
-      "count": 13
-    },
-    {
-      "position": [5,2],
-      "count": 14
-    },
-    {
-      "position": [5,3],
-      "count": 14
-    },
-    {
-      "position": [5,4],
-      "count": 14
-    },
-    {
-      "position": [5,5],
-      "count": 14
-    },
-    {
-      "position": [6,5],
-      "count": 14
-    },
-    {
-      "position": [7,5],
-      "count": 14
-    },
-    {
-      "position": [8,5],
-      "count": 14
-    },
-    {
-      "position": [9,5],
-      "count": 14
-    },
-    {
-      "position": [10,5],
-      "count": 14
-    },
-    {
-      "position": [11,5],
-      "count": 14
-    },
-    {
-      "position": [12,5],
-      "count": 14
-    },
-    {
-      "position": [13,5],
-      "count": 14
-    },
-    {
-      "position": [13,6],
-      "count": 14
-    },
-    {
-      "position": [13,7],
-      "count": 14
-    },
-    {
-      "position": [13,8],
-      "count": 14
-    },
-    {
-      "position": [13,9],
-      "count": 14
-    },
-    {
-      "position": [14,9],
-      "count": 14
-    },
-    {
-      "position": [15,9],
-      "count": 14
-    },
-    {
-      "position": [16,9],
       "count": 15
     },
     {
-      "position": [17,9],
-      "count": 16
-    },
-    {
-      "position": [18,9],
-      "count": 16
-    },
-    {
-      "position": [19,9],
-      "count": 17
-    },
-    {
-      "position": [20,9],
-      "count": 16
-    },
-    {
-      "position": [21,9],
-      "count": 17
-    },
-    {
-      "position": [21,10],
-      "count": 16
-    },
-    {
-      "position": [21,11],
-      "count": 16
-    },
-    {
-      "position": [22,11],
-      "count": 16
-    },
-    {
-      "position": [23,11],
-      "count": 16
-    },
-    {
-      "position": [23,10],
-      "count": 16
-    },
-    {
-      "position": [23,9],
-      "count": 16
-    },
-    {
-      "position": [23,8],
-      "count": 16
-    },
-    {
-      "position": [23,7],
-      "count": 16
-    },
-    {
-      "position": [22,7],
-      "count": 20
-    },
-    {
-      "position": [21,7],
-      "count": 22
-    },
-    {
-      "position": [21,6],
-      "count": 21
-    },
-    {
-      "position": [21,5],
-      "count": 22
-    },
-    {
-      "position": [20,5],
-      "count": 22
-    },
-    {
-      "position": [19,5],
-      "count": 22
-    },
-    {
-      "position": [19,4],
-      "count": 21
-    },
-    {
-      "position": [19,3],
-      "count": 23
-    },
-    {
-      "position": [19,2],
-      "count": 22
-    },
-    {
-      "position": [19,1],
-      "count": 23
-    },
-    {
-      "position": [18,1],
+      "position": [2,1],
       "count": 19
     },
     {
-      "position": [17,1],
-      "count": 21
+      "position": [3,1],
+      "count": 15
     },
     {
-      "position": [16,1],
-      "count": 18
+      "position": [4,1],
+      "count": 16
     },
     {
-      "position": [15,1],
-      "count": 20
+      "position": [5,1],
+      "count": 15
     },
     {
-      "position": [15,2],
+      "position": [5,2],
+      "count": 16
+    },
+    {
+      "position": [5,3],
+      "count": 16
+    },
+    {
+      "position": [5,4],
+      "count": 16
+    },
+    {
+      "position": [5,5],
+      "count": 16
+    },
+    {
+      "position": [6,5],
+      "count": 16
+    },
+    {
+      "position": [7,5],
+      "count": 16
+    },
+    {
+      "position": [8,5],
+      "count": 16
+    },
+    {
+      "position": [9,5],
+      "count": 16
+    },
+    {
+      "position": [10,5],
+      "count": 16
+    },
+    {
+      "position": [11,5],
+      "count": 16
+    },
+    {
+      "position": [12,5],
+      "count": 16
+    },
+    {
+      "position": [13,5],
+      "count": 16
+    },
+    {
+      "position": [13,6],
+      "count": 16
+    },
+    {
+      "position": [13,7],
+      "count": 16
+    },
+    {
+      "position": [13,8],
+      "count": 16
+    },
+    {
+      "position": [13,9],
+      "count": 16
+    },
+    {
+      "position": [14,9],
       "count": 17
     },
     {
-      "position": [15,3],
+      "position": [15,9],
+      "count": 18
+    },
+    {
+      "position": [16,9],
+      "count": 18
+    },
+    {
+      "position": [17,9],
+      "count": 18
+    },
+    {
+      "position": [18,9],
+      "count": 18
+    },
+    {
+      "position": [19,9],
+      "count": 21
+    },
+    {
+      "position": [20,9],
+      "count": 18
+    },
+    {
+      "position": [21,9],
+      "count": 19
+    },
+    {
+      "position": [21,10],
+      "count": 18
+    },
+    {
+      "position": [21,11],
+      "count": 18
+    },
+    {
+      "position": [22,11],
+      "count": 18
+    },
+    {
+      "position": [23,11],
+      "count": 18
+    },
+    {
+      "position": [23,10],
+      "count": 18
+    },
+    {
+      "position": [23,9],
+      "count": 18
+    },
+    {
+      "position": [23,8],
+      "count": 18
+    },
+    {
+      "position": [23,7],
+      "count": 18
+    },
+    {
+      "position": [22,7],
+      "count": 24
+    },
+    {
+      "position": [21,7],
+      "count": 27
+    },
+    {
+      "position": [21,6],
+      "count": 25
+    },
+    {
+      "position": [21,5],
+      "count": 26
+    },
+    {
+      "position": [20,5],
+      "count": 25
+    },
+    {
+      "position": [19,5],
+      "count": 26
+    },
+    {
+      "position": [19,4],
+      "count": 25
+    },
+    {
+      "position": [19,3],
+      "count": 25
+    },
+    {
+      "position": [19,2],
+      "count": 23
+    },
+    {
+      "position": [19,1],
+      "count": 24
+    },
+    {
+      "position": [18,1],
       "count": 20
+    },
+    {
+      "position": [17,1],
+      "count": 22
+    },
+    {
+      "position": [16,1],
+      "count": 19
+    },
+    {
+      "position": [15,1],
+      "count": 21
+    },
+    {
+      "position": [15,2],
+      "count": 18
+    },
+    {
+      "position": [15,3],
+      "count": 21
     },
     {
       "position": [16,3],
@@ -4102,67 +4102,67 @@
     },
     {
       "position": [14,3],
-      "count": 17
-    },
-    {
-      "position": [13,3],
       "count": 18
     },
     {
+      "position": [13,3],
+      "count": 20
+    },
+    {
       "position": [12,3],
-      "count": 17
-    },
-    {
-      "position": [11,3],
-      "count": 17
-    },
-    {
-      "position": [10,3],
-      "count": 17
-    },
-    {
-      "position": [9,3],
-      "count": 17
-    },
-    {
-      "position": [8,3],
-      "count": 17
-    },
-    {
-      "position": [7,3],
-      "count": 16
-    },
-    {
-      "position": [7,2],
-      "count": 16
-    },
-    {
-      "position": [7,1],
-      "count": 16
-    },
-    {
-      "position": [8,1],
-      "count": 16
-    },
-    {
-      "position": [9,1],
-      "count": 16
-    },
-    {
-      "position": [10,1],
-      "count": 17
-    },
-    {
-      "position": [11,1],
-      "count": 15
-    },
-    {
-      "position": [12,1],
       "count": 19
     },
     {
+      "position": [11,3],
+      "count": 19
+    },
+    {
+      "position": [10,3],
+      "count": 20
+    },
+    {
+      "position": [9,3],
+      "count": 19
+    },
+    {
+      "position": [8,3],
+      "count": 19
+    },
+    {
+      "position": [7,3],
+      "count": 19
+    },
+    {
+      "position": [7,2],
+      "count": 20
+    },
+    {
+      "position": [7,1],
+      "count": 20
+    },
+    {
+      "position": [8,1],
+      "count": 20
+    },
+    {
+      "position": [9,1],
+      "count": 20
+    },
+    {
+      "position": [10,1],
+      "count": 22
+    },
+    {
+      "position": [11,1],
+      "count": 20
+    },
+    {
+      "position": [12,1],
+      "count": 24
+    },
+    {
       "position": [13,1],
-      "count": 14
+      "count": 18
     },
     {
       "position": [20,1],

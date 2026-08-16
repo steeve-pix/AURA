@@ -1,6 +1,7 @@
 import unittest
 
 from brain.memory import Memory
+from brain.reward import calculate_reward
 
 
 class ExperienceTests(unittest.TestCase):
@@ -107,6 +108,54 @@ class ExperienceTests(unittest.TestCase):
 
         self.assertEqual(len(memory.experiences), 1)
         self.assertIsNone(memory.pending_experience)
+
+    def test_investigation_outcome_is_detected_from_next_observation(self):
+        memory = Memory()
+        memory.begin_experience(
+            goal="investigate",
+            action={"action": "investigate", "target": [5, 2]},
+            observation={"position": [4, 2], "energy": 90},
+        )
+
+        memory.finish_pending_experience({
+            "position": [4, 2],
+            "energy": 90,
+            "nearby_objects": [{
+                "type": "Battery",
+                "position": [5, 2],
+                "reachable": True,
+                "path_length": 1,
+            }],
+            "last_action": {
+                "type": "investigate",
+                "target": [5, 2],
+                "succeeded": True,
+            },
+        })
+
+        self.assertEqual(memory.experiences[0].outcome, "Battery")
+
+    def test_recorded_experience_contains_calculated_reward(self):
+        memory = Memory()
+        memory.begin_experience(
+            goal="recharge",
+            action={"action": "move_to", "target": [5, 2]},
+            observation={"position": [2, 2], "energy": 90},
+        )
+
+        memory.finish_pending_experience({
+            "position": [3, 2],
+            "energy": 89,
+            "nearby_objects": [],
+            "last_action": {
+                "type": "move_to",
+                "target": [5, 2],
+                "succeeded": True,
+            },
+        })
+
+        recorded = memory.experiences[0]
+        self.assertEqual(recorded.reward, calculate_reward(recorded))
 
 
 if __name__ == "__main__":
