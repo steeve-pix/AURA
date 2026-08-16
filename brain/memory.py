@@ -2,6 +2,7 @@ from typing import Optional, Sequence, Literal
 from dataclasses import dataclass
 from brain.world_memory import WorldMemory
 from brain.planning import Plan
+from brain.experience import Experience
 
 
 class Memory:
@@ -14,6 +15,8 @@ class Memory:
         self.investigation_history: dict[tuple[int, int], str] = {}
         self.world_memory: WorldMemory = WorldMemory()
         self.active_plan: Plan | None = None
+        self.experiences: list[Experience] = []
+        self.pending_experience: dict | None = None
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[(position[0], position[1])] = cell_type
@@ -125,6 +128,69 @@ class Memory:
 
     def clear_plan(self) -> None:
         self.clear_active_plan()
+
+    def record_experience(self, experience: Experience) -> None:
+        self.experiences.append(experience)
+
+    def begin_experience(self, *, goal: str, action: dict, observation: dict) -> None:
+        if action["action"] == "idle":
+            self.pending_experience = None
+            return
+
+        target = action.get("target")
+
+        self.pending_experience = {
+            "step": self.step,
+            "goal": goal,
+            "action": action["action"],
+            "target": (
+                None if target is None else tuple(target)
+            ),
+            "position_before": tuple(observation["position"]),
+            "energy_before": observation["energy"],
+        }
+
+    def finish_pending_experience(self, observation: dict) -> None:
+        if self.pending_experience is None:
+            return
+
+        last_action = observation.get("last_action")
+
+        if last_action is None:
+            return
+
+        pending = self.pending_experience
+
+        if last_action.get("type") != pending["action"]:
+            return
+
+        reported_target = last_action.get("target")
+
+        if (
+                pending["target"] is not None
+                and (
+                    reported_target is None
+                    or tuple(reported_target) != pending["target"]
+                )
+        ):
+            return
+
+        experience = Experience(
+            step=pending["step"],
+            goal=pending["goal"],
+            action=pending["action"],
+            target=pending["target"],
+            position_before=pending["position_before"],
+            position_after=tuple(observation["position"]),
+            energy_before=pending["energy_before"],
+            energy_after=observation["energy"],
+            succeeded=last_action.get("succeeded", False),
+            outcome=None,
+        )
+
+        self.record_experience(experience)
+
+        self.pending_experience = None
 
 
 MemoryStatus = Literal[

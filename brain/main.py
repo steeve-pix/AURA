@@ -33,6 +33,8 @@ def main() -> None:
 
         memory.advance_step()
 
+        memory.finish_pending_experience(observation)
+
         last_action = observation.get("last_action")
 
         # Failed destinations are excluded from later planning so the brain cannot
@@ -117,6 +119,8 @@ def main() -> None:
         goal = choose_goal(observation, memory)
 
         decision = decide(observation, goal, memory)
+
+        memory.begin_experience(goal=goal, action=decision, observation=observation)
 
         # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {
