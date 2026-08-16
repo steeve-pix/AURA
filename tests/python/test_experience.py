@@ -47,10 +47,11 @@ class ExperienceTests(unittest.TestCase):
                 "succeeded": True,
             },
         }
-        memory.finish_pending_experience(after)
+        completed = memory.finish_pending_experience(after)
 
         self.assertEqual(len(memory.experiences), 1)
         experience = memory.experiences[0]
+        self.assertIs(completed, experience)
         self.assertEqual(experience.position_before, (2, 2))
         self.assertEqual(experience.position_after, (3, 2))
         self.assertEqual(experience.energy_before, 90)

@@ -151,19 +151,22 @@ class Memory:
             "energy_before": observation["energy"],
         }
 
-    def finish_pending_experience(self, observation: dict) -> None:
+    def finish_pending_experience(
+            self,
+            observation: dict,
+    ) -> Experience | None:
         if self.pending_experience is None:
-            return
+            return None
 
         last_action = observation.get("last_action")
 
         if last_action is None:
-            return
+            return None
 
         pending = self.pending_experience
 
         if last_action.get("type") != pending["action"]:
-            return
+            return None
 
         reported_target = last_action.get("target")
 
@@ -174,7 +177,7 @@ class Memory:
                     or tuple(reported_target) != pending["target"]
                 )
         ):
-            return
+            return None
 
         outcome = detect_outcome(pending, observation)
 
@@ -196,6 +199,7 @@ class Memory:
         self.record_experience(experience)
 
         self.pending_experience = None
+        return experience
 
 
 MemoryStatus = Literal[

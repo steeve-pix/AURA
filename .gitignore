@@ -10,6 +10,9 @@ build/
 __pycache__/
 *.pyc
 
+# Runtime experience / training data
+data/experiences/
+
 # OS files
 .DS_Store
 Thumbs.db
