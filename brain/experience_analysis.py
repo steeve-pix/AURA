@@ -56,3 +56,25 @@ def average_reward(experiences: list[Experience]) -> float:
         return 0.0
 
     return sum(experience.reward for experience in experiences) / len(experiences)
+
+if __name__ == "__main__":
+    from collections import Counter
+    import sys
+
+    path = Path(sys.argv[1])
+
+    experiences = load_experiences(path)
+
+    print(f"Experiences: {len(experiences)}")
+    print(f"Success rate: {success_rate(experiences):.2%}")
+    print(f"Average reward: {average_reward(experiences):.3f}")
+
+    print("\n")
+
+    summary = {
+        "Goals":Counter(e.goal for e in experiences),
+        "Actions":Counter(e.action for e in experiences),
+        "Outcomes":Counter(e.outcome for e in experiences),
+    }
+
+    print(json.dumps(summary, indent=2))
