@@ -5,9 +5,7 @@ from pathlib import Path
 from brain.experience import Experience, RESULT_COMPLETED, RESULT_FAILED
 
 
-def load_experiences(
-        path: Path,
-) -> list[Experience]:
+def load_experiences(path: Path) -> list[Experience]:
     experiences = []
 
     if not path.exists():
@@ -91,9 +89,7 @@ def movement_counts(experiences: list[Experience]) -> tuple[int, int]:
     return new_cells, revisited_cells
 
 
-def navigation_progress_counts(
-        experiences: list[Experience],
-) -> tuple[int, int, int]:
+def navigation_progress_counts(experiences: list[Experience],) -> tuple[int, int, int]:
     progress_values = [
         experience.navigation_progress
         for experience in experiences
@@ -104,6 +100,19 @@ def navigation_progress_counts(
     negative = sum(progress < 0 for progress in progress_values)
 
     return positive, zero, negative
+
+
+def average_navigation_progress(experiences: list[Experience],) -> float | None:
+    progress_values = [
+        experience.navigation_progress
+        for experience in experiences
+        if experience.navigation_progress is not None
+    ]
+
+    if not progress_values:
+        return None
+
+    return sum(progress_values) / len(progress_values)
 
 
 def result_distribution(experiences: list[Experience]) -> Counter[str]:
@@ -131,9 +140,7 @@ def experience_kind_distribution(
     return Counter(experience.kind for experience in experiences)
 
 
-def plan_event_distribution(
-        experiences: list[Experience],
-) -> Counter[str]:
+def plan_event_distribution(experiences: list[Experience],) -> Counter[str]:
     return Counter(
         experience.event
         for experience in experiences
@@ -174,6 +181,7 @@ if __name__ == "__main__":
     )
     new_cells, revisited_cells = movement_counts(experiences)
     positive, zero, negative = navigation_progress_counts(experiences)
+    navigation_average = average_navigation_progress(experiences)
 
     print_distribution("Goals", goals)
     print_distribution("Experience kinds", kinds)
@@ -195,6 +203,11 @@ if __name__ == "__main__":
     print(f"positive: {positive}")
     print(f"zero: {zero}")
     print(f"negative: {negative}")
+    print(
+        "average: n/a"
+        if navigation_average is None
+        else f"average: {navigation_average:.3f}"
+    )
 
     print_distribution("Rewards", rewards)
     print_distribution("Outcomes", outcomes)

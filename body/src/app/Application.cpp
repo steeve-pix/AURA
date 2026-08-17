@@ -22,10 +22,11 @@
 #include "world/MazeGenerator.hpp"
 
 namespace aura::app {
-    Application::Application(std::string brainWorkingDirectory)
+    Application::Application(std::string brainWorkingDirectory, std::unique_ptr<scenario::Scenario> scenario)
         : window_(1280, 720, "AURA"), mazeSeed_(1337), world_(42, 21), agent_({.x = 1, .y = 1}),
           rangeSensor_(3),
-          brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)) {
+          brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)),
+          scenario_(std::move(scenario)) {
         world::MazeGenerator generator{mazeSeed_};
 
         generator.generate(world_, NUM_BATTERIES, NUM_UNKNOWN);
@@ -66,8 +67,8 @@ namespace aura::app {
 
             if (!debug.planGoal.empty()) {
                 planLabel = debug.planGoal + " "
-                        + std::to_string(debug.planCurrentStep + 1) + "/"
-                        + std::to_string(debug.planStepCount);
+                            + std::to_string(debug.planCurrentStep + 1) + "/"
+                            + std::to_string(debug.planStepCount);
 
                 if (!debug.planStepType.empty()) {
                     planLabel += " " + debug.planStepType;
@@ -132,6 +133,8 @@ namespace aura::app {
 
                 brainDebug_ = response.debug;
 
+                scenario_->beforeAction(world_, agent_, response.action);
+
                 executeAction(response.action);
             } catch (const std::exception &error) {
                 std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
@@ -189,25 +192,34 @@ namespace aura::app {
         currentTarget_ = action.target;
         hasTarget_ = true;
 
-        currentPath_ =
+        const auto pathBefore =
                 navigation::findPath(
                     world_,
                     agent_.position(),
-                    currentTarget_
+                    action.target
                 );
 
-        std::optional<int> pathLengthBefore;
+        currentPath_ = pathBefore;
 
-        if (currentTarget_ == agent_.position()) {
-            pathLengthBefore = 0;
-        } else if (!currentPath_.empty()) {
-            pathLengthBefore = static_cast<int>(currentPath_.size());
+        const int pathLengthBefore =
+                agent_.position() == action.target
+                    ? 0
+                    : static_cast<int>(pathBefore.size());
+
+        if (pathBefore.empty() && agent_.position() != action.target) {
+            lastAction_ = {
+                action.type,
+                action.target,
+                false,
+                "unreachable",
+                std::nullopt,
+                std::nullopt
+            };
+            return;
         }
 
-        // Arrival is a successful no-op. An empty path to any other coordinate is
-        // specifically an unreachable navigation target.
-        bool moved = currentTarget_ == agent_.position();
-        std::string result = moved ? "completed" : "unreachable";
+        // Arrival is a successful no-op.
+        bool moved = agent_.position() == action.target;
 
         if (!currentPath_.empty()) {
             const auto current =
@@ -232,27 +244,25 @@ namespace aura::app {
                 offset,
                 world_
             );
-            result = moved ? "completed" : "failed";
         }
 
-        const auto pathAfter = navigation::findPath(
-            world_,
-            agent_.position(),
-            currentTarget_
-        );
-        std::optional<int> pathLengthAfter;
+        const auto pathAfter =
+                navigation::findPath(
+                    world_,
+                    agent_.position(),
+                    action.target
+                );
 
-        if (currentTarget_ == agent_.position()) {
-            pathLengthAfter = 0;
-        } else if (!pathAfter.empty()) {
-            pathLengthAfter = static_cast<int>(pathAfter.size());
-        }
+        const int pathLengthAfter =
+                agent_.position() == action.target
+                    ? 0
+                    : static_cast<int>(pathAfter.size());
 
         lastAction_ = {
-            bridge::ActionType::MoveTo,
-            currentTarget_,
+            action.type,
+            action.target,
             moved,
-            result,
+            moved ? "completed" : "failed",
             pathLengthBefore,
             pathLengthAfter
         };

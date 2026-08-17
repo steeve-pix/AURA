@@ -2,6 +2,7 @@ import unittest
 
 from brain.experience import Experience
 from brain.experience_analysis import (
+    average_navigation_progress,
     body_action_failure_count,
     experience_kind_distribution,
     movement_counts,
@@ -60,6 +61,26 @@ class ExperienceAnalysisTests(unittest.TestCase):
         ]
 
         self.assertEqual(navigation_progress_counts(experiences), (1, 1, 1))
+
+    def test_average_navigation_progress_uses_only_navigation_samples(self):
+        experiences = [
+            experience(navigation_progress=2),
+            experience(navigation_progress=0),
+            experience(navigation_progress=-1),
+            experience(navigation_progress=None),
+        ]
+
+        self.assertAlmostEqual(
+            average_navigation_progress(experiences),
+            1 / 3,
+        )
+
+    def test_average_navigation_progress_is_none_without_navigation_samples(self):
+        self.assertIsNone(
+            average_navigation_progress([
+                experience(navigation_progress=None),
+            ])
+        )
 
     def test_result_distribution_counts_each_result(self):
         experiences = [

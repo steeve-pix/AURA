@@ -12,7 +12,10 @@
 #include "world/World.hpp"
 
 #include <optional>
+#include <memory>
 #include <string>
+
+#include "scenario/Scenario.hpp"
 
 namespace aura::app {
     /// Owns AURA's simulation state and coordinates the body, brain, and renderer.
@@ -22,7 +25,10 @@ namespace aura::app {
     class Application {
     public:
         /// Creates the simulation and configures the Python brain's working directory.
-        Application(std::string brainWorkingDirectory);
+        Application(
+            std::string brainWorkingDirectory,
+            std::unique_ptr<scenario::Scenario> scenario
+        );
 
         /// Launches the brain and runs until the window closes or startup fails.
         int run();
@@ -75,5 +81,7 @@ namespace aura::app {
 
         static constexpr int NUM_BATTERIES = 12;
         static constexpr int NUM_UNKNOWN = 20;
+
+        std::unique_ptr<scenario::Scenario> scenario_;
     };
 }

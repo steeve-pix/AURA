@@ -23,10 +23,7 @@ def calculate_reward(experience: Experience) -> float:
         bounded_progress = max(-3, min(3, experience.navigation_progress))
         reward += bounded_progress * 0.05
 
-    energy_cost = max(
-        0,
-        experience.energy_before - experience.energy_after,
-    )
+    energy_cost = max(0, experience.energy_before - experience.energy_after)
 
     reward -= energy_cost * 0.01
 
