@@ -2,7 +2,12 @@ from typing import Optional, Sequence, Literal
 from dataclasses import dataclass
 from brain.world_memory import WorldMemory
 from brain.planning import Plan
-from brain.experience import Experience, detect_outcome
+from brain.experience import (
+    Experience,
+    RESULT_COMPLETED,
+    RESULT_FAILED,
+    detect_outcome,
+)
 from brain.reward import calculate_reward
 
 
@@ -18,6 +23,9 @@ class Memory:
         self.active_plan: Plan | None = None
         self.experiences: list[Experience] = []
         self.pending_experience: dict | None = None
+        self.plan_failure_count = 0
+        self.replan_count = 0
+        self.body_action_failure_count = 0
 
     def remember_cell(self, position: list[int], cell_type: str) -> None:
         self.known_cells[(position[0], position[1])] = cell_type
@@ -108,7 +116,7 @@ class Memory:
         return recency * confirmation
 
     def remember_investigation_result(self, position: list[int] | tuple[int, int], revealed_type: str) -> None:
-        self.investigation_history[tuple(position)] = revealed_type
+        self.investigation_history[(position[0], position[1])] = revealed_type
 
     def previous_investigation_result(self, position: list[int] | tuple[int, int]) -> str | None:
         return self.investigation_history.get((position[0], position[1]))
@@ -133,12 +141,62 @@ class Memory:
     def record_experience(self, experience: Experience) -> None:
         self.experiences.append(experience)
 
+        if experience.kind == "action" and not experience.succeeded:
+            self.body_action_failure_count += 1
+
+    def record_plan_event(
+            self,
+            *,
+            event: str,
+            goal: str,
+            target: tuple[int, int] | None,
+            observation: dict,
+            reward: float,
+    ) -> Experience:
+        position = tuple(observation["position"])
+        energy = observation["energy"]
+        experience = Experience(
+            step=self.step,
+            kind="plan",
+            event=event,
+            goal=goal,
+            action="",
+            target=target,
+            position_before=position,
+            position_after=position,
+            energy_before=energy,
+            energy_after=energy,
+            succeeded=event != "plan_failed",
+            result=event,
+            visited_new_cell=False,
+            navigation_progress=None,
+            outcome=None,
+            reward=reward,
+        )
+        self.record_experience(experience)
+        return experience
+
+    def record_plan_failure(self) -> None:
+        self.plan_failure_count += 1
+
+    def record_replan(self) -> None:
+        self.replan_count += 1
+
+    def failure_debug(self) -> dict[str, int]:
+        return {
+            "plan_failures": self.plan_failure_count,
+            "replans": self.replan_count,
+            "failed_targets": len(self.failed_targets),
+            "body_action_failures": self.body_action_failure_count,
+        }
+
     def begin_experience(self, *, goal: str, action: dict, observation: dict) -> None:
         if action["action"] == "idle":
             self.pending_experience = None
             return
 
         target = action.get("target")
+        current_position = tuple(observation["position"])
 
         self.pending_experience = {
             "step": self.step,
@@ -147,8 +205,9 @@ class Memory:
             "target": (
                 None if target is None else tuple(target)
             ),
-            "position_before": tuple(observation["position"]),
+            "position_before": current_position,
             "energy_before": observation["energy"],
+            "visited_before": set(self.visit_counts.keys()),
         }
 
     def finish_pending_experience(
@@ -173,24 +232,46 @@ class Memory:
         if (
                 pending["target"] is not None
                 and (
-                    reported_target is None
-                    or tuple(reported_target) != pending["target"]
-                )
+                reported_target is None
+                or tuple(reported_target) != pending["target"]
+        )
         ):
             return None
 
         outcome = detect_outcome(pending, observation)
+        succeeded = last_action.get("succeeded", False)
+        result = last_action.get(
+            "result",
+            RESULT_COMPLETED if succeeded else RESULT_FAILED,
+        )
+        target = pending["target"]
+        position_after = tuple(observation["position"])
+        visited_new_cell = (
+                position_after not in pending["visited_before"]
+        )
+        path_length_before = last_action.get("path_length_before")
+        path_length_after = last_action.get("path_length_after")
+        navigation_progress = (
+            None
+            if path_length_before is None or path_length_after is None
+            else path_length_before - path_length_after
+        )
 
         experience = Experience(
             step=pending["step"],
+            kind="action",
+            event=pending["action"],
             goal=pending["goal"],
             action=pending["action"],
-            target=pending["target"],
+            target=target,
             position_before=pending["position_before"],
-            position_after=tuple(observation["position"]),
+            position_after=position_after,
             energy_before=pending["energy_before"],
             energy_after=observation["energy"],
-            succeeded=last_action.get("succeeded", False),
+            succeeded=succeeded,
+            result=result,
+            visited_new_cell=visited_new_cell,
+            navigation_progress=navigation_progress,
             outcome=outcome,
         )
 

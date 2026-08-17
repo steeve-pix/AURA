@@ -19,6 +19,14 @@ namespace aura::bridge {
             // Missing debug members intentionally retain their empty default values.
             response.debug.goal = debug.value("goal", std::string{});
 
+            if (debug.contains("failures")) {
+                const auto &failures = debug.at("failures");
+                response.debug.planFailures = failures.value("plan_failures", 0);
+                response.debug.replans = failures.value("replans", 0);
+                response.debug.failedTargets = failures.value("failed_targets", 0);
+                response.debug.bodyActionFailures = failures.value("body_action_failures", 0);
+            }
+
             if (debug.contains("known_cells")) {
                 for (const auto &position: debug.at("known_cells")) {
                     response.debug.knownCells.push_back({

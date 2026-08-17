@@ -22,10 +22,11 @@
 #include "world/MazeGenerator.hpp"
 
 namespace aura::app {
-    Application::Application(std::string brainWorkingDirectory)
+    Application::Application(std::string brainWorkingDirectory, std::unique_ptr<scenario::Scenario> scenario)
         : window_(1280, 720, "AURA"), mazeSeed_(1337), world_(42, 21), agent_({.x = 1, .y = 1}),
           rangeSensor_(3),
-          brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)) {
+          brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)),
+          scenario_(std::move(scenario)) {
         world::MazeGenerator generator{mazeSeed_};
 
         generator.generate(world_, NUM_BATTERIES, NUM_UNKNOWN);
@@ -66,8 +67,8 @@ namespace aura::app {
 
             if (!debug.planGoal.empty()) {
                 planLabel = debug.planGoal + " "
-                        + std::to_string(debug.planCurrentStep + 1) + "/"
-                        + std::to_string(debug.planStepCount);
+                            + std::to_string(debug.planCurrentStep + 1) + "/"
+                            + std::to_string(debug.planStepCount);
 
                 if (!debug.planStepType.empty()) {
                     planLabel += " " + debug.planStepType;
@@ -76,7 +77,12 @@ namespace aura::app {
 
             const std::string title =
                     "AURA | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " + exploreScore + " | Energy: " +
-                    std::to_string(energy) + " | Plan: " + planLabel;
+                    std::to_string(energy) + " | Plan: " + planLabel
+                    + " | Failures P/R/T/B: "
+                    + std::to_string(debug.planFailures) + "/"
+                    + std::to_string(debug.replans) + "/"
+                    + std::to_string(debug.failedTargets) + "/"
+                    + std::to_string(debug.bodyActionFailures);
             window_.setTitle(title);
         };
 
@@ -127,6 +133,8 @@ namespace aura::app {
 
                 brainDebug_ = response.debug;
 
+                scenario_->beforeAction(world_, agent_, response.action);
+
                 executeAction(response.action);
             } catch (const std::exception &error) {
                 std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
@@ -157,9 +165,9 @@ namespace aura::app {
         if (validTarget) {
             world_.setCell(action.target, world::CellType::Battery);
 
-            lastAction_ = {bridge::ActionType::Investigate, action.target, true};
+            lastAction_ = {bridge::ActionType::Investigate, action.target, true, "completed"};
         } else {
-            lastAction_ = {bridge::ActionType::Investigate, action.target, false};
+            lastAction_ = {bridge::ActionType::Investigate, action.target, false, "failed"};
         }
     }
 
@@ -175,7 +183,8 @@ namespace aura::app {
         lastAction_ = {
             bridge::ActionType::Move,
             std::nullopt,
-            moved
+            moved,
+            moved ? "completed" : "failed"
         };
     }
 
@@ -183,16 +192,34 @@ namespace aura::app {
         currentTarget_ = action.target;
         hasTarget_ = true;
 
-        currentPath_ =
+        const auto pathBefore =
                 navigation::findPath(
                     world_,
                     agent_.position(),
-                    currentTarget_
+                    action.target
                 );
 
-        // Arrival is a successful no-op. An empty path to any other coordinate is a
-        // navigation failure.
-        bool moved = currentTarget_ == agent_.position();
+        currentPath_ = pathBefore;
+
+        const int pathLengthBefore =
+                agent_.position() == action.target
+                    ? 0
+                    : static_cast<int>(pathBefore.size());
+
+        if (pathBefore.empty() && agent_.position() != action.target) {
+            lastAction_ = {
+                action.type,
+                action.target,
+                false,
+                "unreachable",
+                std::nullopt,
+                std::nullopt
+            };
+            return;
+        }
+
+        // Arrival is a successful no-op.
+        bool moved = agent_.position() == action.target;
 
         if (!currentPath_.empty()) {
             const auto current =
@@ -219,10 +246,25 @@ namespace aura::app {
             );
         }
 
+        const auto pathAfter =
+                navigation::findPath(
+                    world_,
+                    agent_.position(),
+                    action.target
+                );
+
+        const int pathLengthAfter =
+                agent_.position() == action.target
+                    ? 0
+                    : static_cast<int>(pathAfter.size());
+
         lastAction_ = {
-            bridge::ActionType::MoveTo,
-            currentTarget_,
-            moved
+            action.type,
+            action.target,
+            moved,
+            moved ? "completed" : "failed",
+            pathLengthBefore,
+            pathLengthAfter
         };
     }
 
@@ -232,7 +274,8 @@ namespace aura::app {
         lastAction_ = {
             bridge::ActionType::Idle,
             std::nullopt,
-            true
+            true,
+            "completed"
         };
     }
 

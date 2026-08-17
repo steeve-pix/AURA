@@ -154,7 +154,10 @@ int main() {
         aura::bridge::LastAction{
             aura::bridge::ActionType::MoveTo,
             aura::world::Position{8, 3},
-            false
+            true,
+            "completed",
+            1,
+            0
         }
     };
 
@@ -164,8 +167,11 @@ int main() {
     if (serialized.find("\"last_action\":") == std::string::npos ||
         serialized.find("\"type\":\"move_to\"") == std::string::npos ||
         serialized.find("\"target\":[8,3]") == std::string::npos ||
-        serialized.find("\"succeeded\":false") == std::string::npos) {
-        std::cout << "FAIL: observation should include the last move_to result\n";
+        serialized.find("\"succeeded\":true") == std::string::npos ||
+        serialized.find("\"result\":\"completed\"") == std::string::npos ||
+        serialized.find("\"path_length_before\":1") == std::string::npos ||
+        serialized.find("\"path_length_after\":0") == std::string::npos) {
+        std::cout << "FAIL: observation should include move_to route progress\n";
         ++failures;
     }
 
@@ -174,6 +180,12 @@ int main() {
         "target":[7,3],
         "debug":{
             "goal":"recharge",
+            "failures":{
+                "plan_failures":3,
+                "replans":2,
+                "failed_targets":4,
+                "body_action_failures":1
+            },
             "plan":{
                 "goal":"recharge",
                 "current_step":0,
@@ -190,7 +202,11 @@ int main() {
         response.debug.planFailed ||
         response.debug.planStepType != "move_to" ||
         !response.debug.hasPlanStepTarget ||
-        response.debug.planStepTarget != aura::world::Position{7, 3}) {
+        response.debug.planStepTarget != aura::world::Position{7, 3} ||
+        response.debug.planFailures != 3 ||
+        response.debug.replans != 2 ||
+        response.debug.failedTargets != 4 ||
+        response.debug.bodyActionFailures != 1) {
         std::cout << "FAIL: brain response should expose active plan debug state\n";
         ++failures;
     }

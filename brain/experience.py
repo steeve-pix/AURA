@@ -1,9 +1,22 @@
 from dataclasses import dataclass
+from typing import Literal
+
+
+ExperienceKind = Literal[
+    "action",
+    "plan",
+]
+
+RESULT_COMPLETED = "completed"
+RESULT_FAILED = "failed"
+RESULT_UNREACHABLE = "unreachable"
 
 
 @dataclass
 class Experience:
     step: int
+    kind: ExperienceKind
+    event: str
     goal: str
     action: str
 
@@ -16,6 +29,10 @@ class Experience:
     energy_after: int
 
     succeeded: bool
+    result: str
+
+    visited_new_cell: bool = False
+    navigation_progress: int | None = None
 
     outcome: str | None = None
     reward: float = 0.0

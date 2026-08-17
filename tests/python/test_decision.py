@@ -46,6 +46,8 @@ class DecisionTests(unittest.TestCase):
 
         self.assertTrue(replan_failed_recharge(observation, memory))
         self.assertEqual(memory.active_plan.goal_target, battery_b)
+        self.assertEqual(memory.failure_debug()["plan_failures"], 1)
+        self.assertEqual(memory.failure_debug()["replans"], 1)
 
     def test_recharge_replanning_does_not_reselect_failed_battery(self):
         memory = Memory()

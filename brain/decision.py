@@ -93,6 +93,7 @@ def replan_failed_recharge(observation, memory: Memory, ) -> bool:
     ):
         return False
 
+    memory.record_plan_failure()
     memory.clear_active_plan()
     replacement = create_recharge_plan(observation, memory)
 
@@ -100,6 +101,7 @@ def replan_failed_recharge(observation, memory: Memory, ) -> bool:
         return False
 
     memory.set_active_plan(replacement)
+    memory.record_replan()
     return True
 
 
@@ -330,6 +332,7 @@ def replan_failed_investigation(
     ):
         return False
 
+    memory.record_plan_failure()
     target_position = failed_plan.goal_target
     memory.clear_active_plan()
 
@@ -346,6 +349,7 @@ def replan_failed_investigation(
         return False
 
     memory.set_active_plan(replacement)
+    memory.record_replan()
     return True
 
 

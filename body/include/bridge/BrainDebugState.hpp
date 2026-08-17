@@ -30,5 +30,11 @@ namespace aura::bridge {
         std::string planStepType;
         world::Position planStepTarget{};
         bool hasPlanStepTarget = false;
+
+        /// Runtime failure counters reported by the brain for diagnostics only.
+        int planFailures = 0;
+        int replans = 0;
+        int failedTargets = 0;
+        int bodyActionFailures = 0;
     };
 }

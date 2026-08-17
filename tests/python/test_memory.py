@@ -192,6 +192,7 @@ class MemoryTests(unittest.TestCase):
             memory.failed_target_count((8, 3)),
             1
         )
+        self.assertEqual(memory.failure_debug()["failed_targets"], 1)
 
 
 if __name__ == "__main__":
