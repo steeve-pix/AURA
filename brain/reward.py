@@ -16,6 +16,14 @@ def calculate_reward(experience: Experience) -> float:
     elif experience.result == RESULT_COMPLETED:
         reward += 0.1
 
+    if experience.discovered_new_cell:
+        reward += 0.1
+
+    if experience.progressed_toward_target is True:
+        reward += 0.05
+    elif experience.progressed_toward_target is False:
+        reward -= 0.03
+
     energy_cost = max(
         0,
         experience.energy_before - experience.energy_after,
@@ -26,4 +34,4 @@ def calculate_reward(experience: Experience) -> float:
     if experience.outcome == "Battery":
         reward += 1.0
 
-    return round(reward,2)
+    return round(reward, 2)

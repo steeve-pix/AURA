@@ -39,6 +39,8 @@ def load_experiences(
                         "result",
                         RESULT_COMPLETED if data["succeeded"] else RESULT_FAILED,
                     ),
+                    discovered_new_cell=data.get("discovered_new_cell", False),
+                    progressed_toward_target=data.get("progressed_toward_target"),
                     outcome=data.get("outcome"),
                     reward=data.get("reward", 0.0),
                 )

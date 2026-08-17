@@ -16,6 +16,8 @@ def experience(
         energy_after: int = 90,
         outcome: str | None = None,
         result: str | None = None,
+        discovered_new_cell: bool = False,
+        progressed_toward_target: bool | None = None,
 ) -> Experience:
     return Experience(
         step=10,
@@ -32,6 +34,8 @@ def experience(
             if result is not None
             else RESULT_COMPLETED if succeeded else RESULT_FAILED
         ),
+        discovered_new_cell=discovered_new_cell,
+        progressed_toward_target=progressed_toward_target,
         outcome=outcome,
     )
 
@@ -71,6 +75,26 @@ class RewardTests(unittest.TestCase):
 
         self.assertLess(unreachable, failed)
         self.assertLess(failed, completed)
+
+    def test_new_exploration_is_more_rewarding_than_repeated_exploration(self):
+        new_cell = calculate_reward(experience(
+            discovered_new_cell=True,
+        ))
+        known_cell = calculate_reward(experience(
+            discovered_new_cell=False,
+        ))
+
+        self.assertGreater(new_cell, known_cell)
+
+    def test_target_progress_is_more_rewarding_than_no_progress(self):
+        progress = calculate_reward(experience(
+            progressed_toward_target=True,
+        ))
+        no_progress = calculate_reward(experience(
+            progressed_toward_target=False,
+        ))
+
+        self.assertGreater(progress, no_progress)
 
 
 if __name__ == "__main__":

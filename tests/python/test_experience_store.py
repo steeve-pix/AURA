@@ -48,6 +48,8 @@ class ExperienceStoreTests(unittest.TestCase):
             self.assertEqual(data["position_after"], [3, 2])
             self.assertEqual(data["reward"], 0.09)
             self.assertEqual(data["result"], "completed")
+            self.assertFalse(data["discovered_new_cell"])
+            self.assertIsNone(data["progressed_toward_target"])
 
     def test_append_preserves_existing_experiences(self):
         with tempfile.TemporaryDirectory() as directory:

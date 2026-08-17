@@ -7,6 +7,7 @@ from brain.experience import (
     RESULT_COMPLETED,
     RESULT_FAILED,
     detect_outcome,
+    manhattan_distance,
 )
 from brain.reward import calculate_reward
 
@@ -113,7 +114,7 @@ class Memory:
         return recency * confirmation
 
     def remember_investigation_result(self, position: list[int] | tuple[int, int], revealed_type: str) -> None:
-        self.investigation_history[tuple(position)] = revealed_type
+        self.investigation_history[(position[0],position[1])] = revealed_type
 
     def previous_investigation_result(self, position: list[int] | tuple[int, int]) -> str | None:
         return self.investigation_history.get((position[0], position[1]))
@@ -144,6 +145,7 @@ class Memory:
             return
 
         target = action.get("target")
+        current_position = tuple(observation["position"])
 
         self.pending_experience = {
             "step": self.step,
@@ -152,8 +154,9 @@ class Memory:
             "target": (
                 None if target is None else tuple(target)
             ),
-            "position_before": tuple(observation["position"]),
+            "position_before": current_position,
             "energy_before": observation["energy"],
+            "known_cells_before": set(self.known_cells.keys()),
         }
 
     def finish_pending_experience(
@@ -190,18 +193,37 @@ class Memory:
             "result",
             RESULT_COMPLETED if succeeded else RESULT_FAILED,
         )
+        target = pending["target"]
+        position_after = tuple(observation["position"])
+        discovered_new_cell = (
+            position_after not in pending["known_cells_before"]
+        )
+        progressed_toward_target = None
+
+        if target is not None:
+            distance_before = manhattan_distance(
+                pending["position_before"],
+                target,
+            )
+            distance_after = manhattan_distance(
+                position_after,
+                target,
+            )
+            progressed_toward_target = distance_after < distance_before
 
         experience = Experience(
             step=pending["step"],
             goal=pending["goal"],
             action=pending["action"],
-            target=pending["target"],
+            target=target,
             position_before=pending["position_before"],
-            position_after=tuple(observation["position"]),
+            position_after=position_after,
             energy_before=pending["energy_before"],
             energy_after=observation["energy"],
             succeeded=succeeded,
             result=result,
+            discovered_new_cell=discovered_new_cell,
+            progressed_toward_target=progressed_toward_target,
             outcome=outcome,
         )
 

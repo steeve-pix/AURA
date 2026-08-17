@@ -5,6 +5,30 @@ from brain.reward import calculate_reward
 
 
 class ExperienceTests(unittest.TestCase):
+    @staticmethod
+    def finish_move(
+            memory: Memory,
+            *,
+            action: dict,
+            position_before: tuple[int, int],
+            position_after: tuple[int, int],
+    ):
+        memory.begin_experience(
+            goal="explore" if action["action"] == "move" else "recharge",
+            action=action,
+            observation={"position": list(position_before), "energy": 90},
+        )
+        return memory.finish_pending_experience({
+            "position": list(position_after),
+            "energy": 89,
+            "last_action": {
+                "type": action["action"],
+                "target": action.get("target"),
+                "succeeded": True,
+                "result": "completed",
+            },
+        })
+
     def test_begin_creates_pending_experience(self):
         memory = Memory()
         memory.step = 10
@@ -227,6 +251,63 @@ class ExperienceTests(unittest.TestCase):
 
         recorded = memory.experiences[0]
         self.assertEqual(recorded.reward, calculate_reward(recorded))
+
+    def test_new_destination_cell_is_recorded_as_discovered(self):
+        experience = self.finish_move(
+            Memory(),
+            action={"action": "move", "direction": "east"},
+            position_before=(2, 2),
+            position_after=(3, 2),
+        )
+
+        self.assertTrue(experience.discovered_new_cell)
+
+    def test_known_destination_cell_is_not_recorded_as_discovered(self):
+        memory = Memory()
+        memory.remember_cell([3, 2], "Empty")
+
+        experience = self.finish_move(
+            memory,
+            action={"action": "move", "direction": "east"},
+            position_before=(2, 2),
+            position_after=(3, 2),
+        )
+
+        self.assertFalse(experience.discovered_new_cell)
+
+    def test_movement_closer_to_target_records_progress(self):
+        experience = self.finish_move(
+            Memory(),
+            action={"action": "move_to", "target": [5, 2]},
+            position_before=(2, 2),
+            position_after=(3, 2),
+        )
+
+        self.assertTrue(experience.progressed_toward_target)
+
+    def test_movement_farther_from_or_equal_to_target_is_not_progress(self):
+        cases = ((2, 2), (2, 3))
+
+        for position_after in cases:
+            with self.subTest(position_after=position_after):
+                experience = self.finish_move(
+                    Memory(),
+                    action={"action": "move_to", "target": [5, 2]},
+                    position_before=(2, 2),
+                    position_after=position_after,
+                )
+
+                self.assertFalse(experience.progressed_toward_target)
+
+    def test_action_without_target_has_no_progress_measurement(self):
+        experience = self.finish_move(
+            Memory(),
+            action={"action": "move", "direction": "east"},
+            position_before=(2, 2),
+            position_after=(3, 2),
+        )
+
+        self.assertIsNone(experience.progressed_toward_target)
 
 
 if __name__ == "__main__":
