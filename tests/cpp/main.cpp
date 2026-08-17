@@ -154,7 +154,8 @@ int main() {
         aura::bridge::LastAction{
             aura::bridge::ActionType::MoveTo,
             aura::world::Position{8, 3},
-            false
+            false,
+            "unreachable"
         }
     };
 
@@ -164,7 +165,8 @@ int main() {
     if (serialized.find("\"last_action\":") == std::string::npos ||
         serialized.find("\"type\":\"move_to\"") == std::string::npos ||
         serialized.find("\"target\":[8,3]") == std::string::npos ||
-        serialized.find("\"succeeded\":false") == std::string::npos) {
+        serialized.find("\"succeeded\":false") == std::string::npos ||
+        serialized.find("\"result\":\"unreachable\"") == std::string::npos) {
         std::cout << "FAIL: observation should include the last move_to result\n";
         ++failures;
     }

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from brain.experience import Experience
+from brain.experience import Experience, RESULT_COMPLETED, RESULT_FAILED
 
 
 def load_experiences(
@@ -35,6 +35,10 @@ def load_experiences(
                     energy_before=data["energy_before"],
                     energy_after=data["energy_after"],
                     succeeded=data["succeeded"],
+                    result=data.get(
+                        "result",
+                        RESULT_COMPLETED if data["succeeded"] else RESULT_FAILED,
+                    ),
                     outcome=data.get("outcome"),
                     reward=data.get("reward", 0.0),
                 )
@@ -74,6 +78,7 @@ if __name__ == "__main__":
     summary = {
         "Goals":Counter(e.goal for e in experiences),
         "Actions":Counter(e.action for e in experiences),
+        "Results":Counter(e.result for e in experiences),
         "Outcomes":Counter(e.outcome for e in experiences),
     }
 

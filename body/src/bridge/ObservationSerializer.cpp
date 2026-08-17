@@ -47,7 +47,8 @@ namespace aura::bridge {
 
             json["last_action"] = {
                 {"type", actionTypeName(lastAction.type)},
-                {"succeeded", lastAction.succeeded}
+                {"succeeded", lastAction.succeeded},
+                {"result", lastAction.result}
             };
 
             if (lastAction.target.has_value()) {

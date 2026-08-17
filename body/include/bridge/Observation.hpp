@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 
 #include "bridge/Action.hpp"
 #include "sensors/LocalObservation.hpp"
@@ -16,6 +17,8 @@ namespace aura::bridge {
         std::optional<world::Position> target;
         /// Whether the body completed the requested action.
         bool succeeded;
+        /// Physical result of the attempt: completed, failed, or unreachable.
+        std::string result;
     };
 
     /// Read-only world snapshot supplied to the Python brain for one decision cycle.

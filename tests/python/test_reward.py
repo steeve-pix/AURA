@@ -1,6 +1,11 @@
 import unittest
 
-from brain.experience import Experience
+from brain.experience import (
+    Experience,
+    RESULT_COMPLETED,
+    RESULT_FAILED,
+    RESULT_UNREACHABLE,
+)
 from brain.reward import calculate_reward
 
 
@@ -10,6 +15,7 @@ def experience(
         energy_before: int = 90,
         energy_after: int = 90,
         outcome: str | None = None,
+        result: str | None = None,
 ) -> Experience:
     return Experience(
         step=10,
@@ -21,6 +27,11 @@ def experience(
         energy_before=energy_before,
         energy_after=energy_after,
         succeeded=succeeded,
+        result=(
+            result
+            if result is not None
+            else RESULT_COMPLETED if succeeded else RESULT_FAILED
+        ),
         outcome=outcome,
     )
 
@@ -43,6 +54,23 @@ class RewardTests(unittest.TestCase):
         no_outcome = calculate_reward(experience(outcome=None))
 
         self.assertGreater(battery, no_outcome)
+
+    def test_result_rewards_are_ordered_by_action_quality(self):
+        unreachable = calculate_reward(experience(
+            succeeded=False,
+            result=RESULT_UNREACHABLE,
+        ))
+        failed = calculate_reward(experience(
+            succeeded=False,
+            result=RESULT_FAILED,
+        ))
+        completed = calculate_reward(experience(
+            succeeded=True,
+            result=RESULT_COMPLETED,
+        ))
+
+        self.assertLess(unreachable, failed)
+        self.assertLess(failed, completed)
 
 
 if __name__ == "__main__":

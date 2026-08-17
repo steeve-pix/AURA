@@ -18,6 +18,7 @@ def sample_experience(step: int) -> Experience:
         energy_before=90,
         energy_after=89,
         succeeded=True,
+        result="completed",
         reward=0.09,
     )
 
@@ -46,6 +47,7 @@ class ExperienceStoreTests(unittest.TestCase):
             self.assertEqual(data["position_before"], [2, 2])
             self.assertEqual(data["position_after"], [3, 2])
             self.assertEqual(data["reward"], 0.09)
+            self.assertEqual(data["result"], "completed")
 
     def test_append_preserves_existing_experiences(self):
         with tempfile.TemporaryDirectory() as directory:

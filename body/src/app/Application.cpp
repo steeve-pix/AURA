@@ -157,9 +157,9 @@ namespace aura::app {
         if (validTarget) {
             world_.setCell(action.target, world::CellType::Battery);
 
-            lastAction_ = {bridge::ActionType::Investigate, action.target, true};
+            lastAction_ = {bridge::ActionType::Investigate, action.target, true, "completed"};
         } else {
-            lastAction_ = {bridge::ActionType::Investigate, action.target, false};
+            lastAction_ = {bridge::ActionType::Investigate, action.target, false, "failed"};
         }
     }
 
@@ -175,7 +175,8 @@ namespace aura::app {
         lastAction_ = {
             bridge::ActionType::Move,
             std::nullopt,
-            moved
+            moved,
+            moved ? "completed" : "failed"
         };
     }
 
@@ -190,9 +191,10 @@ namespace aura::app {
                     currentTarget_
                 );
 
-        // Arrival is a successful no-op. An empty path to any other coordinate is a
-        // navigation failure.
+        // Arrival is a successful no-op. An empty path to any other coordinate is
+        // specifically an unreachable navigation target.
         bool moved = currentTarget_ == agent_.position();
+        std::string result = moved ? "completed" : "unreachable";
 
         if (!currentPath_.empty()) {
             const auto current =
@@ -217,12 +219,14 @@ namespace aura::app {
                 offset,
                 world_
             );
+            result = moved ? "completed" : "failed";
         }
 
         lastAction_ = {
             bridge::ActionType::MoveTo,
             currentTarget_,
-            moved
+            moved,
+            result
         };
     }
 
@@ -232,7 +236,8 @@ namespace aura::app {
         lastAction_ = {
             bridge::ActionType::Idle,
             std::nullopt,
-            true
+            true,
+            "completed"
         };
     }
 

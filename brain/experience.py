@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
 
+RESULT_COMPLETED = "completed"
+RESULT_FAILED = "failed"
+RESULT_UNREACHABLE = "unreachable"
+
+
 @dataclass
 class Experience:
     step: int
@@ -17,6 +22,7 @@ class Experience:
 
     succeeded: bool
 
+    result: str
     outcome: str | None = None
     reward: float = 0.0
 

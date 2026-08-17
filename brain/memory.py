@@ -2,7 +2,12 @@ from typing import Optional, Sequence, Literal
 from dataclasses import dataclass
 from brain.world_memory import WorldMemory
 from brain.planning import Plan
-from brain.experience import Experience, detect_outcome
+from brain.experience import (
+    Experience,
+    RESULT_COMPLETED,
+    RESULT_FAILED,
+    detect_outcome,
+)
 from brain.reward import calculate_reward
 
 
@@ -180,6 +185,11 @@ class Memory:
             return None
 
         outcome = detect_outcome(pending, observation)
+        succeeded = last_action.get("succeeded", False)
+        result = last_action.get(
+            "result",
+            RESULT_COMPLETED if succeeded else RESULT_FAILED,
+        )
 
         experience = Experience(
             step=pending["step"],
@@ -190,7 +200,8 @@ class Memory:
             position_after=tuple(observation["position"]),
             energy_before=pending["energy_before"],
             energy_after=observation["energy"],
-            succeeded=last_action.get("succeeded", False),
+            succeeded=succeeded,
+            result=result,
             outcome=outcome,
         )
 

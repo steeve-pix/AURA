@@ -47,7 +47,8 @@ Example:
   "last_action": {
     "type": "move_to",
     "target": [6, 2],
-    "succeeded": true
+    "succeeded": true,
+    "result": "completed"
   }
 }
 ```
@@ -59,15 +60,16 @@ observations as a partial map.
 pathfinding result for each visible object. An unreachable object has `reachable: false` and `path_length: null`.
 
 `last_action` reports the outcome of the action executed after the previous observation. It is `null` before the body
-has executed an action. A `move_to` result includes the requested target so the brain can associate a failure with the
-correct remembered location.
+has executed an action. Its `result` is one of `completed`, `failed`, or `unreachable`. A `move_to` result includes the
+requested target so the brain can associate a failure with the correct remembered location.
 
 ```json
 {
   "last_action": {
     "type": "move_to",
     "target": [8, 3],
-    "succeeded": false
+    "succeeded": false,
+    "result": "unreachable"
   }
 }
 ```

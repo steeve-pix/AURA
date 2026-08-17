@@ -56,6 +56,7 @@ class ExperienceTests(unittest.TestCase):
         self.assertEqual(experience.position_after, (3, 2))
         self.assertEqual(experience.energy_before, 90)
         self.assertEqual(experience.energy_after, 89)
+        self.assertEqual(experience.result, "completed")
 
     def test_body_success_is_copied_to_experience(self):
         memory = Memory()
@@ -76,6 +77,75 @@ class ExperienceTests(unittest.TestCase):
         })
 
         self.assertFalse(memory.experiences[0].succeeded)
+        self.assertEqual(memory.experiences[0].result, "failed")
+
+    def test_unreachable_result_is_copied_from_body_feedback(self):
+        memory = Memory()
+        memory.begin_experience(
+            goal="recharge",
+            action={"action": "move_to", "target": [5, 2]},
+            observation={"position": [2, 2], "energy": 90},
+        )
+
+        memory.finish_pending_experience({
+            "position": [2, 2],
+            "energy": 90,
+            "last_action": {
+                "type": "move_to",
+                "target": [5, 2],
+                "succeeded": False,
+                "result": "unreachable",
+            },
+        })
+
+        experience = memory.experiences[0]
+        self.assertFalse(experience.succeeded)
+        self.assertEqual(experience.result, "unreachable")
+
+    def test_successful_body_feedback_records_completed_result(self):
+        memory = Memory()
+        memory.begin_experience(
+            goal="explore",
+            action={"action": "move", "direction": "east"},
+            observation={"position": [2, 2], "energy": 90},
+        )
+
+        memory.finish_pending_experience({
+            "position": [3, 2],
+            "energy": 89,
+            "last_action": {
+                "type": "move",
+                "target": None,
+                "succeeded": True,
+                "result": "completed",
+            },
+        })
+
+        self.assertEqual(memory.experiences[0].result, "completed")
+
+    def test_battery_is_an_outcome_not_a_result(self):
+        memory = Memory()
+        memory.begin_experience(
+            goal="investigate",
+            action={"action": "investigate", "target": [5, 2]},
+            observation={"position": [4, 2], "energy": 90},
+        )
+
+        memory.finish_pending_experience({
+            "position": [4, 2],
+            "energy": 90,
+            "nearby_objects": [{"type": "Battery", "position": [5, 2]}],
+            "last_action": {
+                "type": "investigate",
+                "target": [5, 2],
+                "succeeded": True,
+                "result": "completed",
+            },
+        })
+
+        experience = memory.experiences[0]
+        self.assertEqual(experience.result, "completed")
+        self.assertEqual(experience.outcome, "Battery")
 
     def test_idle_action_does_not_create_pending_experience(self):
         memory = Memory()
