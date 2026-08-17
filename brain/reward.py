@@ -16,13 +16,12 @@ def calculate_reward(experience: Experience) -> float:
     elif experience.result == RESULT_COMPLETED:
         reward += 0.1
 
-    if experience.discovered_new_cell:
+    if experience.visited_new_cell:
         reward += 0.1
 
-    if experience.progressed_toward_target is True:
-        reward += 0.05
-    elif experience.progressed_toward_target is False:
-        reward -= 0.03
+    if experience.navigation_progress is not None:
+        bounded_progress = max(-3, min(3, experience.navigation_progress))
+        reward += bounded_progress * 0.05
 
     energy_cost = max(
         0,

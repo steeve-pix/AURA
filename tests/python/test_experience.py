@@ -12,6 +12,8 @@ class ExperienceTests(unittest.TestCase):
             action: dict,
             position_before: tuple[int, int],
             position_after: tuple[int, int],
+            path_length_before: int | None = None,
+            path_length_after: int | None = None,
     ):
         memory.begin_experience(
             goal="explore" if action["action"] == "move" else "recharge",
@@ -26,6 +28,8 @@ class ExperienceTests(unittest.TestCase):
                 "target": action.get("target"),
                 "succeeded": True,
                 "result": "completed",
+                "path_length_before": path_length_before,
+                "path_length_after": path_length_after,
             },
         })
 
@@ -252,7 +256,7 @@ class ExperienceTests(unittest.TestCase):
         recorded = memory.experiences[0]
         self.assertEqual(recorded.reward, calculate_reward(recorded))
 
-    def test_new_destination_cell_is_recorded_as_discovered(self):
+    def test_unvisited_destination_cell_is_recorded_as_new_visit(self):
         experience = self.finish_move(
             Memory(),
             action={"action": "move", "direction": "east"},
@@ -260,9 +264,22 @@ class ExperienceTests(unittest.TestCase):
             position_after=(3, 2),
         )
 
-        self.assertTrue(experience.discovered_new_cell)
+        self.assertTrue(experience.visited_new_cell)
 
-    def test_known_destination_cell_is_not_recorded_as_discovered(self):
+    def test_previously_visited_destination_is_not_recorded_as_new_visit(self):
+        memory = Memory()
+        memory.record_visit([3, 2])
+
+        experience = self.finish_move(
+            memory,
+            action={"action": "move", "direction": "east"},
+            position_before=(2, 2),
+            position_after=(3, 2),
+        )
+
+        self.assertFalse(experience.visited_new_cell)
+
+    def test_known_but_unvisited_destination_is_recorded_as_new_visit(self):
         memory = Memory()
         memory.remember_cell([3, 2], "Empty")
 
@@ -273,33 +290,92 @@ class ExperienceTests(unittest.TestCase):
             position_after=(3, 2),
         )
 
-        self.assertFalse(experience.discovered_new_cell)
+        self.assertTrue(experience.visited_new_cell)
 
-    def test_movement_closer_to_target_records_progress(self):
+    def test_failed_body_action_increments_failure_debug_counter(self):
+        memory = Memory()
+        memory.begin_experience(
+            goal="recharge",
+            action={"action": "move_to", "target": [5, 2]},
+            observation={"position": [2, 2], "energy": 90},
+        )
+
+        memory.finish_pending_experience({
+            "position": [2, 2],
+            "energy": 90,
+            "last_action": {
+                "type": "move_to",
+                "target": [5, 2],
+                "succeeded": False,
+                "result": "unreachable",
+            },
+        })
+
+        self.assertEqual(memory.failure_debug()["body_action_failures"], 1)
+
+    def test_plan_event_records_direct_strategic_experience(self):
+        memory = Memory()
+        memory.step = 12
+
+        experience = memory.record_plan_event(
+            event="plan_failed",
+            goal="investigate",
+            target=(5, 2),
+            observation={"position": [4, 2], "energy": 89},
+            reward=-0.40,
+        )
+
+        self.assertEqual(experience.kind, "plan")
+        self.assertEqual(experience.event, "plan_failed")
+        self.assertEqual(experience.goal, "investigate")
+        self.assertEqual(experience.target, (5, 2))
+        self.assertEqual(experience.position_before, (4, 2))
+        self.assertEqual(experience.position_after, (4, 2))
+        self.assertEqual(experience.energy_before, 89)
+        self.assertEqual(experience.energy_after, 89)
+        self.assertFalse(experience.succeeded)
+        self.assertEqual(experience.result, "plan_failed")
+        self.assertEqual(experience.reward, -0.40)
+        self.assertIs(memory.experiences[-1], experience)
+
+    def test_plan_failure_does_not_increment_body_failure_counter(self):
+        memory = Memory()
+
+        memory.record_plan_event(
+            event="plan_failed",
+            goal="recharge",
+            target=(5, 2),
+            observation={"position": [2, 2], "energy": 20},
+            reward=-0.40,
+        )
+
+        self.assertEqual(memory.failure_debug()["body_action_failures"], 0)
+
+    def test_reduced_route_cost_records_navigation_progress(self):
         experience = self.finish_move(
             Memory(),
             action={"action": "move_to", "target": [5, 2]},
             position_before=(2, 2),
             position_after=(3, 2),
+            path_length_before=8,
+            path_length_after=7,
         )
 
-        self.assertTrue(experience.progressed_toward_target)
+        self.assertEqual(experience.navigation_progress, 1)
 
-    def test_movement_farther_from_or_equal_to_target_is_not_progress(self):
-        cases = ((2, 2), (2, 3))
+    def test_arrival_uses_zero_after_cost_to_record_progress(self):
+        experience = self.finish_move(
+            Memory(),
+            action={"action": "move_to", "target": [5, 2]},
+            position_before=(4, 2),
+            position_after=(5, 2),
+            path_length_before=1,
+            path_length_after=0,
+        )
 
-        for position_after in cases:
-            with self.subTest(position_after=position_after):
-                experience = self.finish_move(
-                    Memory(),
-                    action={"action": "move_to", "target": [5, 2]},
-                    position_before=(2, 2),
-                    position_after=position_after,
-                )
+        self.assertEqual(experience.navigation_progress, 1)
 
-                self.assertFalse(experience.progressed_toward_target)
-
-    def test_action_without_target_has_no_progress_measurement(self):
+    def test_non_navigation_action_has_no_navigation_progress(self):
         experience = self.finish_move(
             Memory(),
             action={"action": "move", "direction": "east"},
@@ -307,7 +383,17 @@ class ExperienceTests(unittest.TestCase):
             position_after=(3, 2),
         )
 
-        self.assertIsNone(experience.progressed_toward_target)
+        self.assertIsNone(experience.navigation_progress)
+
+    def test_missing_route_cost_has_no_navigation_progress(self):
+        experience = self.finish_move(
+            Memory(),
+            action={"action": "move_to", "target": [5, 2]},
+            position_before=(2, 2),
+            position_after=(3, 2),
+        )
+
+        self.assertIsNone(experience.navigation_progress)
 
 
 if __name__ == "__main__":

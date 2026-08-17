@@ -76,7 +76,12 @@ namespace aura::app {
 
             const std::string title =
                     "AURA | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " + exploreScore + " | Energy: " +
-                    std::to_string(energy) + " | Plan: " + planLabel;
+                    std::to_string(energy) + " | Plan: " + planLabel
+                    + " | Failures P/R/T/B: "
+                    + std::to_string(debug.planFailures) + "/"
+                    + std::to_string(debug.replans) + "/"
+                    + std::to_string(debug.failedTargets) + "/"
+                    + std::to_string(debug.bodyActionFailures);
             window_.setTitle(title);
         };
 
@@ -191,6 +196,14 @@ namespace aura::app {
                     currentTarget_
                 );
 
+        std::optional<int> pathLengthBefore;
+
+        if (currentTarget_ == agent_.position()) {
+            pathLengthBefore = 0;
+        } else if (!currentPath_.empty()) {
+            pathLengthBefore = static_cast<int>(currentPath_.size());
+        }
+
         // Arrival is a successful no-op. An empty path to any other coordinate is
         // specifically an unreachable navigation target.
         bool moved = currentTarget_ == agent_.position();
@@ -222,11 +235,26 @@ namespace aura::app {
             result = moved ? "completed" : "failed";
         }
 
+        const auto pathAfter = navigation::findPath(
+            world_,
+            agent_.position(),
+            currentTarget_
+        );
+        std::optional<int> pathLengthAfter;
+
+        if (currentTarget_ == agent_.position()) {
+            pathLengthAfter = 0;
+        } else if (!pathAfter.empty()) {
+            pathLengthAfter = static_cast<int>(pathAfter.size());
+        }
+
         lastAction_ = {
             bridge::ActionType::MoveTo,
             currentTarget_,
             moved,
-            result
+            result,
+            pathLengthBefore,
+            pathLengthAfter
         };
     }
 

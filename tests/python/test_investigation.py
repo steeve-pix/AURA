@@ -113,6 +113,8 @@ class TestInvestigation(unittest.TestCase):
         self.assertEqual(replacement.goal_target, (12, 10))
         self.assertNotEqual(replacement.current_step().target, failed_approach)
         self.assertEqual(replacement.current_step().target, (12, 9))
+        self.assertEqual(memory.failure_debug()["plan_failures"], 1)
+        self.assertEqual(memory.failure_debug()["replans"], 1)
 
     def test_replanning_fails_cleanly_without_another_approach(self):
         memory = Memory()

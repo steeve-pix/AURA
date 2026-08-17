@@ -1,20 +1,22 @@
 from dataclasses import dataclass
+from typing import Literal
+
+
+ExperienceKind = Literal[
+    "action",
+    "plan",
+]
 
 RESULT_COMPLETED = "completed"
 RESULT_FAILED = "failed"
 RESULT_UNREACHABLE = "unreachable"
 
 
-def manhattan_distance(
-        a: tuple[int, int],
-        b: tuple[int, int],
-) -> int:
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
-
 @dataclass
 class Experience:
     step: int
+    kind: ExperienceKind
+    event: str
     goal: str
     action: str
 
@@ -29,8 +31,8 @@ class Experience:
     succeeded: bool
     result: str
 
-    discovered_new_cell: bool = False
-    progressed_toward_target: bool | None = None
+    visited_new_cell: bool = False
+    navigation_progress: int | None = None
 
     outcome: str | None = None
     reward: float = 0.0

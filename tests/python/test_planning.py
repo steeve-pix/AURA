@@ -225,6 +225,7 @@ class PlanTests(unittest.TestCase):
         })
 
         self.assertFalse(plan.is_complete())
+        self.assertTrue(plan.has_failed())
 
     def test_failed_matching_move_marks_plan_failed(self):
         plan = Plan(

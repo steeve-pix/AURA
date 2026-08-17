@@ -90,6 +90,12 @@ class BrainProcessTests(unittest.TestCase):
             self.assertEqual(second["step"], 1)
             self.assertEqual(first["world_id"], first_world)
             self.assertEqual(second["world_id"], second_world)
+            self.assertEqual(responses[0]["debug"]["failures"], {
+                "plan_failures": 0,
+                "replans": 0,
+                "failed_targets": 0,
+                "body_action_failures": 0,
+            })
 
 
 if __name__ == "__main__":

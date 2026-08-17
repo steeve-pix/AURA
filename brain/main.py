@@ -4,10 +4,82 @@ from typing import Any
 from pathlib import Path
 
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
+from brain.experience import Experience
 from brain.goals import choose_goal, goal_scores
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
 from brain.planning import plan_debug, update_plan_from_observation
+
+
+PLAN_FAILED_REWARD = -0.40
+REPLAN_REWARD = 0.05
+PLAN_COMPLETED_REWARD = 0.75
+
+
+def persist_experience(experience, memory_directory: Path, world_id: str) -> None:
+    append_experience(
+        experience,
+        experience_path_for_world(memory_directory, world_id),
+    )
+
+
+def update_active_plan_and_record_events(
+        memory,
+        observation: dict,
+) -> list[Experience]:
+    active_plan = memory.active_plan
+
+    if active_plan is None:
+        return []
+
+    events = []
+    update_plan_from_observation(active_plan, observation)
+
+    if active_plan.is_complete():
+        events.append(memory.record_plan_event(
+            event="plan_completed",
+            goal=active_plan.goal,
+            target=active_plan.goal_target,
+            observation=observation,
+            reward=PLAN_COMPLETED_REWARD,
+        ))
+        memory.clear_active_plan()
+        return events
+
+    if not active_plan.has_failed():
+        return events
+
+    failed_step = active_plan.current_step()
+
+    if failed_step is not None and failed_step.target is not None:
+        memory.mark_target_failed(failed_step.target)
+
+    events.append(memory.record_plan_event(
+        event="plan_failed",
+        goal=active_plan.goal,
+        target=active_plan.goal_target,
+        observation=observation,
+        reward=PLAN_FAILED_REWARD,
+    ))
+
+    replanned = (
+        replan_failed_investigation(observation, memory)
+        or replan_failed_recharge(observation, memory)
+    )
+
+    if not replanned:
+        memory.clear_active_plan()
+        return events
+
+    replacement_plan = memory.active_plan
+    events.append(memory.record_plan_event(
+        event="replan",
+        goal=replacement_plan.goal,
+        target=replacement_plan.goal_target,
+        observation=observation,
+        reward=REPLAN_REWARD,
+    ))
+    return events
 
 
 def main() -> None:
@@ -37,13 +109,10 @@ def main() -> None:
         completed_experience = memory.finish_pending_experience(observation)
 
         if completed_experience is not None:
-            experience_path = experience_path_for_world(
+            persist_experience(
+                completed_experience,
                 memory_directory,
                 world_id,
-            )
-            append_experience(
-                completed_experience,
-                experience_path,
             )
 
         last_action = observation.get("last_action")
@@ -56,13 +125,6 @@ def main() -> None:
                 and last_action.get("target") is not None):
             target = tuple(last_action["target"])
             memory.mark_target_failed(target)
-
-            if last_action["type"] == "investigate":
-                if (
-                        memory.active_plan is not None
-                        and memory.active_plan.goal == "investigate"
-                ):
-                    memory.clear_active_plan()
 
         if last_action and last_action.get("type") == "investigate" and last_action.get("succeeded", False):
             x, y = last_action["target"]
@@ -109,20 +171,17 @@ def main() -> None:
                     battery
                 )
 
-        if memory.active_plan is not None:
-            update_plan_from_observation(
-                memory.active_plan,
-                observation,
-            )
+        plan_events = update_active_plan_and_record_events(
+            memory,
+            observation,
+        )
 
-            if memory.active_plan.is_complete():
-                memory.clear_active_plan()
-            elif memory.active_plan.has_failed():
-                if (
-                        not replan_failed_investigation(observation, memory)
-                        and not replan_failed_recharge(observation, memory)
-                ):
-                    memory.clear_active_plan()
+        for plan_event in plan_events:
+            persist_experience(
+                plan_event,
+                memory_directory,
+                world_id,
+            )
 
         save_memory(memory, memory_path, world_id)
 
@@ -144,6 +203,7 @@ def main() -> None:
                 list(position) for position in memory.visit_counts.keys()
             ],
             "plan": plan_debug(memory.active_plan),
+            "failures": memory.failure_debug(),
         }
 
         print(json.dumps(decision), flush=True)

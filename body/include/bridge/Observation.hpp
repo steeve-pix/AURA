@@ -19,6 +19,10 @@ namespace aura::bridge {
         bool succeeded;
         /// Physical result of the attempt: completed, failed, or unreachable.
         std::string result;
+        /// Remaining BFS route cost before a navigation action, when reachable.
+        std::optional<int> pathLengthBefore{};
+        /// Remaining BFS route cost after a navigation action, when reachable.
+        std::optional<int> pathLengthAfter{};
     };
 
     /// Read-only world snapshot supplied to the Python brain for one decision cycle.

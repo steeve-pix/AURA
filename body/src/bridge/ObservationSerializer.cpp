@@ -55,6 +55,16 @@ namespace aura::bridge {
                 const auto &target = lastAction.target.value();
                 json["last_action"]["target"] = {target.x, target.y};
             }
+
+            if (lastAction.pathLengthBefore.has_value()) {
+                json["last_action"]["path_length_before"] =
+                        lastAction.pathLengthBefore.value();
+            }
+
+            if (lastAction.pathLengthAfter.has_value()) {
+                json["last_action"]["path_length_after"] =
+                        lastAction.pathLengthAfter.value();
+            }
         } else {
             // An explicit null distinguishes the first cycle from an omitted field.
             json["last_action"] = nullptr;

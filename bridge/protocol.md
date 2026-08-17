@@ -48,7 +48,9 @@ Example:
     "type": "move_to",
     "target": [6, 2],
     "succeeded": true,
-    "result": "completed"
+    "result": "completed",
+    "path_length_before": 4,
+    "path_length_after": 3
   }
 }
 ```
@@ -62,6 +64,8 @@ pathfinding result for each visible object. An unreachable object has `reachable
 `last_action` reports the outcome of the action executed after the previous observation. It is `null` before the body
 has executed an action. Its `result` is one of `completed`, `failed`, or `unreachable`. A `move_to` result includes the
 requested target so the brain can associate a failure with the correct remembered location.
+Successful `move_to` feedback also reports the shortest BFS route length before and after the physical step. Reaching the
+target reports `path_length_after: 0`; non-navigation actions omit both path-length fields.
 
 ```json
 {
