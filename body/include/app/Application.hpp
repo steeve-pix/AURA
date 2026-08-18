@@ -11,8 +11,9 @@
 #include "world/Position.hpp"
 #include "world/World.hpp"
 
-#include <optional>
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "scenario/Scenario.hpp"
@@ -27,7 +28,9 @@ namespace aura::app {
         /// Creates the simulation and configures the Python brain's working directory.
         Application(
             std::string brainWorkingDirectory,
-            std::unique_ptr<scenario::Scenario> scenario
+            std::unique_ptr<scenario::Scenario> scenario,
+            std::uint32_t mazeSeed,
+            std::optional<int> maxSteps = std::nullopt
         );
 
         /// Launches the brain and runs until the window closes or startup fails.
@@ -61,6 +64,7 @@ namespace aura::app {
         render::Window window_;
 
         std::uint32_t mazeSeed_;
+        std::optional<int> maxSteps_;
 
         world::World world_;
         agent::Agent agent_;
@@ -81,8 +85,10 @@ namespace aura::app {
         bridge::BrainDebugState brainDebug_;
 
         static constexpr int NUM_BATTERIES = 12;
-        static constexpr int NUM_UNKNOWN = 20;
+        static constexpr int NUM_UNKNOWN = 50;
         static constexpr int UNKNOWN_BATTERY_PERCENT = 30;
+        static constexpr int INITIAL_ENERGY = 40;
+        static constexpr int INITIAL_BATTERY_MAXIMUM_DISTANCE = 30;
 
         std::unique_ptr<scenario::Scenario> scenario_;
     };

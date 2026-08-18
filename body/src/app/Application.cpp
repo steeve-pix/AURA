@@ -24,14 +24,25 @@
 #include "world/MazeGenerator.hpp"
 
 namespace aura::app {
-    Application::Application(std::string brainWorkingDirectory, std::unique_ptr<scenario::Scenario> scenario)
-        : window_(1280, 720, "AURA"), mazeSeed_(1337), world_(42, 21), agent_({.x = 1, .y = 1}),
+    Application::Application(
+        std::string brainWorkingDirectory,
+        std::unique_ptr<scenario::Scenario> scenario,
+        std::uint32_t mazeSeed,
+        std::optional<int> maxSteps
+    )
+        : window_(1280, 720, "AURA"), mazeSeed_(mazeSeed), maxSteps_(maxSteps),
+          world_(42, 21), agent_({.x = 1, .y = 1}, INITIAL_ENERGY),
           rangeSensor_(3),
           brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)),
           scenario_(std::move(scenario)) {
         world::MazeGenerator generator{mazeSeed_};
 
-        generator.generate(world_, NUM_BATTERIES, NUM_UNKNOWN);
+        generator.generate(
+            world_,
+            NUM_BATTERIES,
+            NUM_UNKNOWN,
+            INITIAL_BATTERY_MAXIMUM_DISTANCE
+        );
 
         int unknownCount = 0;
         for (int x = 0; x < world_.width(); ++x) {
@@ -72,6 +83,7 @@ namespace aura::app {
         }
 
         double lastUpdateTime = glfwGetTime();
+        int completedSteps = 0;
 
         constexpr double updateInterval = 0.01;
 
@@ -118,13 +130,17 @@ namespace aura::app {
 
         // Rendering remains continuous while simulation and brain updates run at a
         // fixed cadence.
-        while (!window_.shouldClose()) {
+        while (
+            !window_.shouldClose()
+            && (!maxSteps_.has_value() || completedSteps < *maxSteps_)
+        ) {
             Window::pollEvents();
 
             const double now = glfwGetTime();
 
             if (now - lastUpdateTime >= updateInterval) {
                 update();
+                ++completedSteps;
 
                 lastUpdateTime = now;
             }
@@ -166,6 +182,8 @@ namespace aura::app {
                 scenario_->beforeAction(world_, agent_, response.action);
 
                 executeAction(response.action);
+
+                scenario_->afterAction(world_, agent_, response.action);
             } catch (const std::exception &error) {
                 std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
 
@@ -318,7 +336,11 @@ namespace aura::app {
                 + ":" + std::to_string(world_.width())
                 + "x" + std::to_string(world_.height())
                 + ":b" + std::to_string(NUM_BATTERIES)
-                + ":u" + std::to_string(NUM_UNKNOWN);
+                + ":u" + std::to_string(NUM_UNKNOWN)
+                + ":e" + std::to_string(INITIAL_ENERGY)
+                + ":ib" + std::to_string(UNKNOWN_BATTERY_PERCENT)
+                + ":bd" + std::to_string(INITIAL_BATTERY_MAXIMUM_DISTANCE)
+                + ":s" + scenario_->id();
         const auto local =
                 sensors::LocalSensor::observe(world_, agent_);
 

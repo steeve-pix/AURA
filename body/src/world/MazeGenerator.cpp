@@ -1,6 +1,7 @@
 #include "world/MazeGenerator.hpp"
 
 #include <algorithm>
+#include <queue>
 #include <random>
 #include <stack>
 #include <utility>
@@ -11,7 +12,12 @@ namespace aura::world {
         : seed_(seed) {
     }
 
-void MazeGenerator::generate(World &world, int batteryCount, int unknownCount) const {
+void MazeGenerator::generate(
+    World &world,
+    int batteryCount,
+    int unknownCount,
+    int guaranteedBatteryMaximumDistance
+) const {
     const int width = world.width();
     const int height = world.height();
 
@@ -102,6 +108,76 @@ void MazeGenerator::generate(World &world, int batteryCount, int unknownCount) c
 
     // One seeded shuffle gives deterministic, non-overlapping placement slots.
     std::shuffle(passageCells.begin(), passageCells.end(), random);
+
+    if (
+        batteryCount > 0
+        && guaranteedBatteryMaximumDistance > 0
+        && !passageCells.empty()
+    ) {
+        const auto distanceIndex = [width](Position position) {
+            return position.y * width + position.x;
+        };
+        std::vector<int> distance(width * height, -1);
+        std::queue<Position> frontier;
+        const Position spawn{1, 1};
+
+        distance[distanceIndex(spawn)] = 0;
+        frontier.push(spawn);
+
+        constexpr Position directions[] = {
+            {0, -1},
+            {1, 0},
+            {0, 1},
+            {-1, 0},
+        };
+
+        while (!frontier.empty()) {
+            const Position current = frontier.front();
+            frontier.pop();
+
+            for (const Position direction: directions) {
+                const Position next{
+                    current.x + direction.x,
+                    current.y + direction.y
+                };
+
+                if (
+                    next.x < 0 || next.x >= width
+                    || next.y < 0 || next.y >= height
+                    || isWall[next.x][next.y]
+                    || distance[distanceIndex(next)] >= 0
+                ) {
+                    continue;
+                }
+
+                distance[distanceIndex(next)] =
+                        distance[distanceIndex(current)] + 1;
+                frontier.push(next);
+            }
+        }
+
+        auto guaranteedBattery = passageCells.begin();
+        int selectedDistance = -1;
+
+        for (
+            auto candidate = passageCells.begin();
+            candidate != passageCells.end();
+            ++candidate
+        ) {
+            const int candidateDistance =
+                    distance[distanceIndex(*candidate)];
+
+            if (
+                candidateDistance > selectedDistance
+                && candidateDistance <= guaranteedBatteryMaximumDistance
+            ) {
+                guaranteedBattery = candidate;
+                selectedDistance = candidateDistance;
+            }
+        }
+
+        std::iter_swap(passageCells.begin(), guaranteedBattery);
+    }
 
     int cellIndex = 0;
 
