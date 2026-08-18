@@ -54,3 +54,11 @@ def baseline_mse(
     loss_fn = nn.MSELoss()
 
     return loss_fn(predictions, y_test).item()
+
+def predict(
+model:ValueModel,
+x:torch.Tensor) -> torch.Tensor:
+    model.eval()
+
+    with torch.no_grad():
+        return model(x)

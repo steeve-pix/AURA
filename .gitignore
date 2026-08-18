@@ -12,6 +12,7 @@ __pycache__/
 
 # Runtime experience / training data
 data/experiences/
+data/
 
 # OS files
 .DS_Store

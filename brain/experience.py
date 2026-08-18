@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Literal
 
-
 ExperienceKind = Literal[
     "action",
     "plan",
@@ -56,5 +55,9 @@ def detect_outcome(
     for obj in observation.get("nearby_objects", []):
         if tuple(obj["position"]) == target:
             return obj["type"]
+
+    for cell in observation.get("visible_cells", []):
+        if tuple(cell["position"]) == target and cell["type"] == "Empty":
+            return "Empty"
 
     return None

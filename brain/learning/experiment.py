@@ -7,13 +7,18 @@ import torch
 from brain.experience import Experience
 from brain.experience_analysis import load_experiences
 from brain.learning.dataset import build_dataset, to_tensors
+from brain.learning.diagnostics import (
+    ACTION_NAMES,
+    ActionDiagnostics,
+    calculate_action_diagnostics,
+)
 from brain.learning.model import ValueModel
 from brain.learning.train import (
     baseline_mse,
     evaluate_model,
+    predict,
     train_model,
 )
-
 
 DEFAULT_TRAIN_SEEDS = tuple(range(2001, 2009))
 DEFAULT_TEST_SEEDS = tuple(range(2009, 2013))
@@ -30,6 +35,7 @@ class ExperimentResult:
     training_actions: int
     training_failures: int
     training_investigations: int
+    action_diagnostics: dict[str, ActionDiagnostics]
 
 
 def experience_paths_for_seeds(
@@ -132,8 +138,18 @@ def run_experiment(
         )
     )
 
-    x_train, y_train = build_dataset(train_experiences)
-    x_test, y_test = build_dataset(test_experiences)
+    train_action_experiences = [
+        experience
+        for experience in train_experiences
+        if experience.kind == "action"
+    ]
+    test_action_experiences = [
+        experience
+        for experience in test_experiences
+        if experience.kind == "action"
+    ]
+    x_train, y_train = build_dataset(train_action_experiences)
+    x_test, y_test = build_dataset(test_action_experiences)
 
     if not x_train or not x_test:
         raise ValueError(
@@ -166,6 +182,11 @@ def run_experiment(
         y_train_tensor,
         y_test_tensor,
     )
+    predictions = predict(model, x_test_tensor)
+    diagnostics = calculate_action_diagnostics(
+        test_action_experiences,
+        predictions,
+    )
 
     return ExperimentResult(
         first_train_loss=losses[0],
@@ -175,6 +196,7 @@ def run_experiment(
         training_actions=action_count,
         training_failures=failure_count,
         training_investigations=investigation_count,
+        action_diagnostics=diagnostics,
     )
 
 
@@ -243,6 +265,26 @@ def main() -> None:
     print(f"Final train loss: {result.final_train_loss:.6f}")
     print(f"Neural model test loss: {result.test_loss:.6f}")
     print(f"Mean baseline loss: {result.baseline_loss:.6f}")
+
+    print("\nValue model diagnostics:")
+
+    for action_name in ACTION_NAMES:
+        diagnostics = result.action_diagnostics.get(action_name)
+
+        if diagnostics is None:
+            continue
+
+        print(f"\nAction: {action_name}")
+        print(f"Count: {diagnostics.count}")
+        print(
+            "Average actual reward: "
+            f"{diagnostics.average_actual_reward:.6f}"
+        )
+        print(
+            "Average predicted reward: "
+            f"{diagnostics.average_predicted_reward:.6f}"
+        )
+        print(f"MSE: {diagnostics.mse:.6f}")
 
 
 if __name__ == "__main__":
