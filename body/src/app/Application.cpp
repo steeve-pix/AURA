@@ -1,8 +1,10 @@
 #include "app/Application.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <optional>
 #include <ostream>
+#include <random>
 #include <sstream>
 #include <iomanip>
 #include <vector>
@@ -30,6 +32,34 @@ namespace aura::app {
         world::MazeGenerator generator{mazeSeed_};
 
         generator.generate(world_, NUM_BATTERIES, NUM_UNKNOWN);
+
+        int unknownCount = 0;
+        for (int x = 0; x < world_.width(); ++x) {
+            for (int y = 0; y < world_.height(); ++y) {
+                if (world_.cellAt({x, y}) == world::CellType::Unknown) {
+                    ++unknownCount;
+                }
+            }
+        }
+
+        const int batteryRevealCount =
+                (unknownCount * UNKNOWN_BATTERY_PERCENT + 50) / 100;
+        investigationOutcomes_.assign(
+            batteryRevealCount,
+            world::CellType::Battery
+        );
+        investigationOutcomes_.insert(
+            investigationOutcomes_.end(),
+            unknownCount - batteryRevealCount,
+            world::CellType::Empty
+        );
+
+        std::mt19937 investigationRandom{mazeSeed_};
+        std::shuffle(
+            investigationOutcomes_.begin(),
+            investigationOutcomes_.end(),
+            investigationRandom
+        );
     }
 
     int Application::run() {
@@ -163,7 +193,10 @@ namespace aura::app {
                 world::CellType::Unknown;
 
         if (validTarget) {
-            world_.setCell(action.target, world::CellType::Battery);
+            const auto revealedType = investigationOutcomes_.back();
+            investigationOutcomes_.pop_back();
+
+            world_.setCell(action.target, revealedType);
 
             lastAction_ = {bridge::ActionType::Investigate, action.target, true, "completed"};
         } else {

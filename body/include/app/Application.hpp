@@ -72,6 +72,7 @@ namespace aura::app {
         std::optional<bridge::LastAction> lastAction_{};
 
         std::vector<world::Position> currentPath_;
+        std::vector<world::CellType> investigationOutcomes_;
 
         world::Position currentTarget_{};
         bool hasTarget_ = false;
@@ -81,6 +82,7 @@ namespace aura::app {
 
         static constexpr int NUM_BATTERIES = 12;
         static constexpr int NUM_UNKNOWN = 20;
+        static constexpr int UNKNOWN_BATTERY_PERCENT = 30;
 
         std::unique_ptr<scenario::Scenario> scenario_;
     };

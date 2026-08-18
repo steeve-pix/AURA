@@ -118,7 +118,7 @@ The loader still accepts the earlier battery-only format for migration.
 
 ## World and controls
 
-The current application generates a deterministic 42×21 maze using seed `1337`, with 12 Batteries and 20 Unknowns. AURA starts at `(1, 1)` with 100 energy. Each successful cardinal movement costs one energy; entering a Battery cell restores full energy. Investigating an adjacent Unknown currently reveals a Battery.
+The current application generates a deterministic 42×21 maze using seed `1337`, with 12 Batteries and 20 Unknowns. AURA starts at `(1, 1)` with 100 energy. Each successful cardinal movement costs one energy; entering a Battery cell restores full energy. Investigations draw from a seeded, shuffled pool containing approximately 70% Empty outcomes and 30% Battery outcomes, rounded to whole cells. This prevents extreme random distributions while keeping the reveal order unpredictable and reproducible.
 
 The OpenGL window displays the maze, AURA, sensor coverage, remembered/visited cells, current route, target, goal scores, energy, and active-plan summary. Close the window to stop the simulation.
 

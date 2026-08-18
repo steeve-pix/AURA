@@ -14,12 +14,12 @@ RESULT_UNREACHABLE = "unreachable"
 
 @dataclass
 class Experience:
-    step: int
     kind: ExperienceKind
     event: str
+
+    step: int
     goal: str
     action: str
-
     target: tuple[int, int] | None
 
     position_before: tuple[int, int]
@@ -30,6 +30,9 @@ class Experience:
 
     succeeded: bool
     result: str
+
+    path_length_before: int | None = None
+    memory_trust_before: float | None = None
 
     visited_new_cell: bool = False
     navigation_progress: int | None = None

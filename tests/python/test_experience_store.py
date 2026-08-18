@@ -22,6 +22,8 @@ def sample_experience(step: int) -> Experience:
         energy_after=89,
         succeeded=True,
         result="completed",
+        path_length_before=8,
+        memory_trust_before=0.6,
         navigation_progress=1,
         reward=0.09,
     )
@@ -54,12 +56,16 @@ class ExperienceStoreTests(unittest.TestCase):
             self.assertEqual(data["position_after"], [3, 2])
             self.assertEqual(data["reward"], 0.09)
             self.assertEqual(data["result"], "completed")
+            self.assertEqual(data["path_length_before"], 8)
+            self.assertEqual(data["memory_trust_before"], 0.6)
             self.assertFalse(data["visited_new_cell"])
             self.assertNotIn("discovered_new_cell", data)
             self.assertEqual(data["navigation_progress"], 1)
             self.assertNotIn("progressed_toward_target", data)
 
             loaded = load_experiences(path)
+            self.assertEqual(loaded[0].path_length_before, 8)
+            self.assertEqual(loaded[0].memory_trust_before, 0.6)
             self.assertEqual(loaded[0].navigation_progress, 1)
 
     def test_append_preserves_existing_experiences(self):

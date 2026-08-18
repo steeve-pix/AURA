@@ -153,7 +153,7 @@ class Memory:
             observation: dict,
             reward: float,
     ) -> Experience:
-        position = tuple(observation["position"])
+        position = (observation["position"][0], observation["position"][1])
         energy = observation["energy"]
         experience = Experience(
             step=self.step,
@@ -196,18 +196,33 @@ class Memory:
             return
 
         target = action.get("target")
+        target_position = (
+            None if target is None else (target[0], target[1])
+        )
+
         current_position = tuple(observation["position"])
+        memory_trust_before = None
+
+        if (
+                target_position is not None
+                and self.world_memory.has_entity(
+            target_position,
+            "Battery",
+        )
+        ):
+            memory_trust_before = self.battery_trust(
+                target_position
+            )
 
         self.pending_experience = {
             "step": self.step,
             "goal": goal,
             "action": action["action"],
-            "target": (
-                None if target is None else tuple(target)
-            ),
+            "target": target_position,
             "position_before": current_position,
             "energy_before": observation["energy"],
             "visited_before": set(self.visit_counts.keys()),
+            "memory_trust_before": memory_trust_before,
         }
 
     def finish_pending_experience(
@@ -245,7 +260,7 @@ class Memory:
             RESULT_COMPLETED if succeeded else RESULT_FAILED,
         )
         target = pending["target"]
-        position_after = tuple(observation["position"])
+        position_after = (observation["position"][0], observation["position"][1])
         visited_new_cell = (
                 position_after not in pending["visited_before"]
         )
@@ -270,6 +285,8 @@ class Memory:
             energy_after=observation["energy"],
             succeeded=succeeded,
             result=result,
+            path_length_before=path_length_before,
+            memory_trust_before=pending["memory_trust_before"],
             visited_new_cell=visited_new_cell,
             navigation_progress=navigation_progress,
             outcome=outcome,

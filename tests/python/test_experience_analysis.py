@@ -1,4 +1,6 @@
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 
 from brain.experience import Experience
 from brain.experience_analysis import (
@@ -9,6 +11,7 @@ from brain.experience_analysis import (
     result_distribution,
     reward_distribution,
     plan_event_distribution,
+    print_table,
     navigation_progress_counts,
 )
 
@@ -81,6 +84,21 @@ class ExperienceAnalysisTests(unittest.TestCase):
                 experience(navigation_progress=None),
             ])
         )
+
+    def test_print_table_aligns_labels_and_values(self):
+        output = StringIO()
+
+        with redirect_stdout(output):
+            print_table(
+                "Summary",
+                [("Experiences", 8910), ("Success rate", "99.93%")],
+            )
+
+        rendered = output.getvalue()
+
+        self.assertIn("Summary", rendered)
+        self.assertIn("| Experiences  |   8910 |", rendered)
+        self.assertIn("| Success rate | 99.93% |", rendered)
 
     def test_result_distribution_counts_each_result(self):
         experiences = [
