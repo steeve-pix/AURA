@@ -9,17 +9,41 @@ def train_model(
     x_train: torch.Tensor,
     y_train: torch.Tensor,
     epochs: int = 100,
+    sample_weights: torch.Tensor | None = None,
 ) -> list[float]:
-    loss_fn = nn.MSELoss()
+    if (
+        sample_weights is not None
+        and sample_weights.shape != y_train.shape
+    ):
+        raise ValueError(
+            "Sample weights and training targets must have the same shape."
+        )
+
+    loss_fn = nn.MSELoss(reduction="none")
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     losses = []
 
     model.train()
 
-    for _ in range(epochs):
+    for epoch in range(epochs):
         optimizer.zero_grad()
         predictions = model(x_train)
-        loss = loss_fn(predictions, y_train)
+        errors = loss_fn(predictions, y_train)
+
+        if epoch == 0:
+            print("Per-example error shape:", errors.shape)
+            print("First five squared errors:")
+            print(errors[:5])
+
+            if sample_weights is not None:
+                print("Sample weight shape:", sample_weights.shape)
+
+        weighted_errors = (
+            errors
+            if sample_weights is None
+            else errors * sample_weights
+        )
+        loss = weighted_errors.mean()
         loss.backward()
         optimizer.step()
         losses.append(loss.item())

@@ -1,4 +1,6 @@
 import argparse
+import math
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -165,6 +167,26 @@ def run_experiment(
         y_test,
     )
 
+    action_counts = Counter(
+        experience.action
+        for experience in train_action_experiences
+    )
+    total_actions = sum(action_counts.values())
+    action_weights = {
+        action: math.sqrt(total_actions / count)
+        for action, count in action_counts.items()
+    }
+    sample_weights = torch.tensor(
+        [
+            action_weights[experience.action]
+            for experience in train_action_experiences
+        ],
+        dtype=torch.float32,
+    ).unsqueeze(1)
+
+    print("Training action counts:", dict(action_counts))
+    print("Training action weights:", action_weights)
+
     torch.manual_seed(seed)
     model = ValueModel()
     losses = train_model(
@@ -172,6 +194,7 @@ def run_experiment(
         x_train_tensor,
         y_train_tensor,
         epochs=epochs,
+        sample_weights=sample_weights,
     )
     test_loss = evaluate_model(
         model,

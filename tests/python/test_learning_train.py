@@ -8,6 +8,21 @@ from brain.learning.train import baseline_mse, train_model
 
 
 class LearningTrainTests(unittest.TestCase):
+    def test_weighted_training_rejects_misaligned_weights(self):
+        model = ValueModel()
+        x_train = torch.zeros((3, 12))
+        y_train = torch.zeros((3, 1))
+        weights = torch.ones((2, 1))
+
+        with self.assertRaises(ValueError):
+            train_model(
+                model,
+                x_train,
+                y_train,
+                epochs=1,
+                sample_weights=weights,
+            )
+
     def test_baseline_predicts_training_mean(self):
         y_train = torch.tensor([
             [0.1],
