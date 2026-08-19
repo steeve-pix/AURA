@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+
+from brain import experience
 from brain.experience import Experience
 
 GOAL_TYPES = [
@@ -53,28 +56,39 @@ ABLATION_NAMES = (
 )
 
 
-def encode_energy(experience: Experience) -> float:
-    return experience.energy_before / 100.0
+@dataclass
+class ValueInput:
+    energy: int
+    goal: str
+    action: str
+    target: tuple[int, int] | None
+    position: tuple[int, int]
+    path_length: int | None
+    memory_trust: float | None
 
 
-def encode_goal(experience: Experience) -> list[float]:
-    return [1.0 if experience.goal == goal else 0.0 for goal in GOAL_TYPES]
+def encode_energy(value_input: ValueInput) -> float:
+    return value_input.energy / 100.0
 
 
-def encode_action(experience: Experience) -> list[float]:
-    return [1.0 if experience.action == action else 0.0 for action in ACTION_TYPES]
+def encode_goal(value_input: ValueInput) -> list[float]:
+    return [1.0 if value_input.goal == goal else 0.0 for goal in GOAL_TYPES]
 
 
-def encode_has_target(experience: Experience) -> float:
-    return 1.0 if experience.target is not None else 0.0
+def encode_action(value_input: ValueInput) -> list[float]:
+    return [1.0 if value_input.action == action else 0.0 for action in ACTION_TYPES]
 
 
-def encode_target_offset(experience: Experience) -> tuple[float, float]:
-    if experience.target is None:
+def encode_has_target(value_input: ValueInput) -> float:
+    return 1.0 if value_input.target is not None else 0.0
+
+
+def encode_target_offset(value_input: ValueInput) -> tuple[float, float]:
+    if value_input.target is None:
         return 0.0, 0.0
 
-    target_x, target_y = experience.target
-    aura_x, aura_y = experience.position_before
+    target_x, target_y = value_input.target
+    aura_x, aura_y = value_input.position
 
     dx, dy = aura_x - target_x, aura_y - target_y
 
@@ -84,29 +98,43 @@ def encode_target_offset(experience: Experience) -> tuple[float, float]:
     )
 
 
-def encode_path_length(experience: Experience) -> float:
-    if experience.path_length_before is None:
+def encode_path_length(value_input: ValueInput) -> float:
+    if value_input.path_length is None:
         return 0.0
 
-    return experience.path_length_before / PATH_LENGTH_SCALE
+    return value_input.path_length / PATH_LENGTH_SCALE
 
 
-def encode_memory_trust(experience: Experience) -> float:
-    if experience.memory_trust_before is None:
+def encode_memory_trust(value_input: ValueInput) -> float:
+    if value_input.memory_trust is None:
         return 0.0
 
-    return experience.memory_trust_before
+    return value_input.memory_trust
+
+
+def encode_value_input(value_input: ValueInput) -> list[float]:
+    energy = encode_energy(value_input)
+    goal = encode_goal(value_input)
+    action = encode_action(value_input)
+    has_target = encode_has_target(value_input)
+
+    dx, dy = encode_target_offset(value_input)
+
+    path_length = encode_path_length(value_input)
+    memory_trust = encode_memory_trust(value_input)
+
+    return [energy, *goal, *action, has_target, dx, dy, path_length, memory_trust]
 
 
 def encode_experience(experience: Experience) -> list[float]:
-    energy = encode_energy(experience)
-    goal = encode_goal(experience)
-    action = encode_action(experience)
-    has_target = encode_has_target(experience)
+    value_input = ValueInput(
+        energy=experience.energy_before,
+        goal=experience.goal,
+        action=experience.action,
+        target=experience.target,
+        position=experience.position_before,
+        path_length=experience.path_length_before,
+        memory_trust=experience.memory_trust_before
+    )
 
-    dx, dy = encode_target_offset(experience)
-    path_length = encode_path_length(experience)
-
-    memory_trust = encode_memory_trust(experience)
-
-    return [energy, *goal, *action, has_target, dx, dy, path_length, memory_trust]
+    return encode_value_input(value_input)
