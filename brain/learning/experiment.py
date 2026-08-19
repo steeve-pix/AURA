@@ -19,7 +19,7 @@ from brain.learning.train import (
     baseline_mse,
     evaluate_model,
     predict,
-    train_model,
+    train_model, per_action_baseline_mse,
 )
 
 DEFAULT_TRAIN_SEEDS = tuple(range(2001, 2009))
@@ -34,6 +34,7 @@ class ExperimentResult:
     final_train_loss: float
     test_loss: float
     baseline_loss: float
+    action_baseline_loss: float
     training_actions: int
     training_failures: int
     training_investigations: int
@@ -41,8 +42,8 @@ class ExperimentResult:
 
 
 def experience_paths_for_seeds(
-    directory: Path,
-    seeds: list[int] | tuple[int, ...],
+        directory: Path,
+        seeds: list[int] | tuple[int, ...],
 ) -> list[Path]:
     paths = []
 
@@ -72,10 +73,10 @@ def load_experience_files(paths: list[Path]) -> list[Experience]:
 
 
 def validate_training_data(
-    experiences: list[Experience],
-    *,
-    minimum_failures: int = DEFAULT_MINIMUM_FAILURES,
-    minimum_investigations: int = DEFAULT_MINIMUM_INVESTIGATIONS,
+        experiences: list[Experience],
+        *,
+        minimum_failures: int = DEFAULT_MINIMUM_FAILURES,
+        minimum_investigations: int = DEFAULT_MINIMUM_INVESTIGATIONS,
 ) -> tuple[int, int, int]:
     actions = [
         experience
@@ -112,13 +113,13 @@ def validate_training_data(
 
 
 def run_experiment(
-    train_paths: list[Path],
-    test_paths: list[Path],
-    *,
-    epochs: int = 100,
-    seed: int = 42,
-    minimum_failures: int = DEFAULT_MINIMUM_FAILURES,
-    minimum_investigations: int = DEFAULT_MINIMUM_INVESTIGATIONS,
+        train_paths: list[Path],
+        test_paths: list[Path],
+        *,
+        epochs: int = 100,
+        seed: int = 42,
+        minimum_failures: int = DEFAULT_MINIMUM_FAILURES,
+        minimum_investigations: int = DEFAULT_MINIMUM_INVESTIGATIONS,
 ) -> ExperimentResult:
     if epochs <= 0:
         raise ValueError("Epochs must be positive.")
@@ -171,9 +172,12 @@ def run_experiment(
         experience.action
         for experience in train_action_experiences
     )
+
+    num_action_types = len(action_counts)
     total_actions = sum(action_counts.values())
+
     action_weights = {
-        action: math.sqrt(total_actions / count)
+        action: total_actions /(num_action_types * count)
         for action, count in action_counts.items()
     }
     sample_weights = torch.tensor(
@@ -205,6 +209,8 @@ def run_experiment(
         y_train_tensor,
         y_test_tensor,
     )
+
+    action_baseline_loss =per_action_baseline_mse(train_action_experiences,test_action_experiences)
     predictions = predict(model, x_test_tensor)
     diagnostics = calculate_action_diagnostics(
         test_action_experiences,
@@ -216,6 +222,7 @@ def run_experiment(
         final_train_loss=losses[-1],
         test_loss=test_loss,
         baseline_loss=baseline_loss,
+        action_baseline_loss=action_baseline_loss,
         training_actions=action_count,
         training_failures=failure_count,
         training_investigations=investigation_count,
@@ -288,6 +295,7 @@ def main() -> None:
     print(f"Final train loss: {result.final_train_loss:.6f}")
     print(f"Neural model test loss: {result.test_loss:.6f}")
     print(f"Mean baseline loss: {result.baseline_loss:.6f}")
+    print(f"Per-action baseline loss: {result.action_baseline_loss:.6f}")
 
     print("\nValue model diagnostics:")
 
