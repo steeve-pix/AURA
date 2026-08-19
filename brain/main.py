@@ -7,6 +7,8 @@ from brain.decision import (decide, replan_failed_investigation, replan_failed_r
 from brain.experience import Experience
 from brain.goals import choose_goal, goal_scores
 from brain.experience_store import append_experience, experience_path_for_world
+from brain.learning.features import ValueInput, encode_value_input
+from brain.learning.inference import predict_value
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
 from brain.planning import plan_debug, update_plan_from_observation
 from brain.learning.model_io import load_model
@@ -63,8 +65,8 @@ def update_active_plan_and_record_events(
     ))
 
     replanned = (
-        replan_failed_investigation(observation, memory)
-        or replan_failed_recharge(observation, memory)
+            replan_failed_investigation(observation, memory)
+            or replan_failed_recharge(observation, memory)
     )
 
     if not replanned:
@@ -196,7 +198,30 @@ def main() -> None:
 
         decision = decide(observation, goal, memory)
 
-        memory.begin_experience(goal=goal, action=decision, observation=observation)
+        pending = memory.begin_experience(goal=goal, action=decision, observation=observation)
+
+        if value_model is not None and pending is not None:
+            value_input = ValueInput(
+                energy=pending["energy_before"],
+                goal=pending["goal"],
+                action=pending["action"],
+                target=pending["target"],
+                position=pending["position_before"],
+                path_length=None,
+                memory_trust=pending["memory_trust_before"],
+            )
+
+            feature_vector = encode_value_input(value_input)
+
+            predicted_reward = predict_value(value_model, feature_vector)
+
+            print(
+                f"[value-model] "
+                f"goal: {goal} "
+                f"action: {decision['action']} "
+                f"predicted_reward: {predicted_reward:+.3f}",
+                file=sys.stderr,
+            )
 
         # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {

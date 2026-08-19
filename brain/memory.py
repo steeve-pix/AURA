@@ -190,10 +190,10 @@ class Memory:
             "body_action_failures": self.body_action_failure_count,
         }
 
-    def begin_experience(self, *, goal: str, action: dict, observation: dict) -> None:
+    def begin_experience(self, *, goal: str, action: dict, observation: dict) -> dict | None:
         if action["action"] == "idle":
             self.pending_experience = None
-            return
+            return None
 
         target = action.get("target")
         target_position = (
@@ -224,6 +224,8 @@ class Memory:
             "visited_before": set(self.visit_counts.keys()),
             "memory_trust_before": memory_trust_before,
         }
+
+        return self.pending_experience
 
     def finish_pending_experience(
             self,

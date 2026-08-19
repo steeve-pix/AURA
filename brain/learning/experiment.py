@@ -212,7 +212,7 @@ def run_experiment(
         sample_weights=sample_weights,
     )
 
-    model_path = Path("data/models/value_moel.pt")
+    model_path = Path("data/models/value_model.pt")
     save_model(model, model_path)
     print(f"Model saved at {model_path}")
 

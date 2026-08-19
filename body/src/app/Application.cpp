@@ -33,7 +33,7 @@ namespace aura::app {
         : window_(1280, 720, "AURA"), mazeSeed_(mazeSeed), maxSteps_(maxSteps),
           world_(42, 21), agent_({.x = 1, .y = 1}, INITIAL_ENERGY),
           rangeSensor_(3),
-          brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)),
+          brain_("./.venv/bin/python3", "-mbrain.main", std::move(brainWorkingDirectory)),
           scenario_(std::move(scenario)) {
         world::MazeGenerator generator{mazeSeed_};
 

@@ -6,7 +6,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -56,7 +55,7 @@ class BrainProcessTests(unittest.TestCase):
             run_brain(working_directory, [observation(world_id, [1, 1])])
 
             saved = json.loads(
-                (working_directory / "data" / "maze_release-restart_9x9_b1_u1.json").read_text()
+                (working_directory / "data" / "world_memory" / "maze_release-restart_9x9_b1_u1.json").read_text()
             )
             visits = {
                 tuple(item["position"]): item["count"]
@@ -79,10 +78,10 @@ class BrainProcessTests(unittest.TestCase):
             ])
 
             first = json.loads(
-                (working_directory / "data" / "maze_release-seed-a_9x9_b1_u1.json").read_text()
+                (working_directory / "data" / "world_memory" / "maze_release-seed-a_9x9_b1_u1.json").read_text()
             )
             second = json.loads(
-                (working_directory / "data" / "maze_release-seed-b_9x9_b1_u1.json").read_text()
+                (working_directory / "data" / "world_memory" / "maze_release-seed-b_9x9_b1_u1.json").read_text()
             )
 
             self.assertEqual(len(responses), 3)
