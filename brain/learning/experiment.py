@@ -23,6 +23,7 @@ from brain.learning.train import (
     predict,
     train_model, per_action_baseline_mse,
 )
+from brain.learning.model_io import save_model
 
 DEFAULT_TRAIN_SEEDS = tuple(range(2001, 2009))
 DEFAULT_TEST_SEEDS = tuple(range(2009, 2013))
@@ -210,6 +211,11 @@ def run_experiment(
         epochs=epochs,
         sample_weights=sample_weights,
     )
+
+    model_path = Path("data/models/value_moel.pt")
+    save_model(model, model_path)
+    print(f"Model saved at {model_path}")
+
     test_loss = evaluate_model(
         model,
         x_test_tensor,

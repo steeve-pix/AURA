@@ -166,7 +166,7 @@ def main() -> None:
                     abs(battery_x - aura_x) <= sensor_radius and abs(battery_y - aura_y) <= sensor_radius
             )
 
-            if (within_sensor_range and battery not in visible_batteries):
+            if within_sensor_range and battery not in visible_batteries:
                 memory.forget_battery(
                     battery
                 )
