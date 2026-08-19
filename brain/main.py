@@ -9,7 +9,7 @@ from brain.goals import choose_goal, goal_scores
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
 from brain.planning import plan_debug, update_plan_from_observation
-
+from brain.learning.model_io import load_model
 
 PLAN_FAILED_REWARD = -0.40
 REPLAN_REWARD = 0.05
@@ -88,6 +88,12 @@ def main() -> None:
     memory = None
     active_world_id = None
     memory_path = None
+
+    model_path = Path("data/models/value_model.pt")
+    value_model = None
+
+    if model_path.exists():
+        value_model = load_model(model_path)
 
     for raw in sys.stdin:
         raw = raw.strip()
