@@ -8,6 +8,7 @@ import torch
 
 from brain.experience import Experience
 from brain.experience_analysis import load_experiences
+from brain.learning.ablation import evaluate_feature_ablation
 from brain.learning.dataset import build_dataset, to_tensors
 from brain.learning.diagnostics import (
     ACTION_NAMES,
@@ -15,6 +16,7 @@ from brain.learning.diagnostics import (
     calculate_action_diagnostics,
 )
 from brain.learning.model import ValueModel
+from brain.learning.features import ABLATION_NAMES
 from brain.learning.train import (
     baseline_mse,
     evaluate_model,
@@ -26,6 +28,15 @@ DEFAULT_TRAIN_SEEDS = tuple(range(2001, 2009))
 DEFAULT_TEST_SEEDS = tuple(range(2009, 2013))
 DEFAULT_MINIMUM_FAILURES = 100
 DEFAULT_MINIMUM_INVESTIGATIONS = 300
+DEFAULT_ABLATIONS = (
+    "energy",
+    "goal",
+    "action",
+    "has_target",
+    "target_offset",
+    "path_length",
+    "memory_trust"
+)
 
 
 @dataclass(frozen=True)
@@ -39,6 +50,7 @@ class ExperimentResult:
     training_failures: int
     training_investigations: int
     action_diagnostics: dict[str, ActionDiagnostics]
+    ablation_losses: dict[str, float]
 
 
 def experience_paths_for_seeds(
@@ -120,6 +132,7 @@ def run_experiment(
         seed: int = 42,
         minimum_failures: int = DEFAULT_MINIMUM_FAILURES,
         minimum_investigations: int = DEFAULT_MINIMUM_INVESTIGATIONS,
+        ablation_features: tuple[str, ...] = DEFAULT_ABLATIONS,
 ) -> ExperimentResult:
     if epochs <= 0:
         raise ValueError("Epochs must be positive.")
@@ -177,7 +190,7 @@ def run_experiment(
     total_actions = sum(action_counts.values())
 
     action_weights = {
-        action: total_actions /(num_action_types * count)
+        action: total_actions / (num_action_types * count)
         for action, count in action_counts.items()
     }
     sample_weights = torch.tensor(
@@ -187,9 +200,6 @@ def run_experiment(
         ],
         dtype=torch.float32,
     ).unsqueeze(1)
-
-    print("Training action counts:", dict(action_counts))
-    print("Training action weights:", action_weights)
 
     torch.manual_seed(seed)
     model = ValueModel()
@@ -210,12 +220,26 @@ def run_experiment(
         y_test_tensor,
     )
 
-    action_baseline_loss =per_action_baseline_mse(train_action_experiences,test_action_experiences)
+    action_baseline_loss = per_action_baseline_mse(train_action_experiences, test_action_experiences)
     predictions = predict(model, x_test_tensor)
     diagnostics = calculate_action_diagnostics(
         test_action_experiences,
         predictions,
     )
+
+    ablation_losses = {}
+
+    for feature_name in ablation_features:
+        ablation_losses[feature_name] = evaluate_feature_ablation(
+            feature_name=feature_name,
+            x_train=x_train_tensor,
+            y_train=y_train_tensor,
+            x_test=x_test_tensor,
+            y_test=y_test_tensor,
+            sample_weights=sample_weights,
+            epochs=epochs,
+            seed=seed,
+        )
 
     return ExperimentResult(
         first_train_loss=losses[0],
@@ -227,6 +251,7 @@ def run_experiment(
         training_failures=failure_count,
         training_investigations=investigation_count,
         action_diagnostics=diagnostics,
+        ablation_losses=ablation_losses,
     )
 
 
@@ -264,6 +289,12 @@ def main() -> None:
         type=int,
         default=DEFAULT_MINIMUM_INVESTIGATIONS,
     )
+    parser.add_argument(
+        "--ablate-features",
+        choices=ABLATION_NAMES,
+        nargs="+",
+        default=DEFAULT_ABLATIONS,
+    )
     args = parser.parse_args()
 
     if set(args.train_seeds) & set(args.test_seeds):
@@ -284,20 +315,50 @@ def main() -> None:
             epochs=args.epochs,
             minimum_failures=args.minimum_failures,
             minimum_investigations=args.minimum_investigations,
+            ablation_features=tuple(args.ablate_features),
         )
     except ValueError as error:
         parser.error(str(error))
 
-    print(f"Training action experiences: {result.training_actions}")
-    print(f"Training failed actions: {result.training_failures}")
-    print(f"Training investigations: {result.training_investigations}")
-    print(f"First train loss: {result.first_train_loss:.6f}")
-    print(f"Final train loss: {result.final_train_loss:.6f}")
-    print(f"Neural model test loss: {result.test_loss:.6f}")
-    print(f"Mean baseline loss: {result.baseline_loss:.6f}")
-    print(f"Per-action baseline loss: {result.action_baseline_loss:.6f}")
+    print("Training data")
+    print(f"  Actions:        {result.training_actions}")
+    print(f"  Failed:         {result.training_failures}")
+    print(f"  Investigations: {result.training_investigations}")
 
-    print("\nValue model diagnostics:")
+    print("\nEvaluation")
+    print(f"  First weighted train loss: {result.first_train_loss:.6f}")
+    print(f"  Final weighted train loss: {result.final_train_loss:.6f}")
+    print(f"  Held-out test MSE:          {result.test_loss:.6f}")
+    print(f"  Global-mean baseline MSE:   {result.baseline_loss:.6f}")
+    print(f"  Per-action baseline MSE:    {result.action_baseline_loss:.6f}")
+    print("\n Feature ablations")
+
+    print(
+        f"  {'Removed input':<18} "
+        f"{'Test MSE':>10} "
+        f"{'Difference':>12}"
+    )
+
+    print(
+        f"  {'None (full model)':<18} "
+        f"{result.test_loss:>10.6f} "
+        f"{0.0:>+12.6f}"
+    )
+
+    for feature_name, loss in result.ablation_losses.items():
+        difference = loss - result.test_loss
+
+        print(
+            f"  {feature_name:<18} "
+            f"{loss:>10.6f} "
+            f"{difference:>+12.6f}"
+        )
+
+    print("\nPer-action diagnostics")
+    print(
+        f"  {'Action':<12} {'Count':>6} {'Actual':>10} "
+        f"{'Predicted':>10} {'MSE':>10}"
+    )
 
     for action_name in ACTION_NAMES:
         diagnostics = result.action_diagnostics.get(action_name)
@@ -305,17 +366,12 @@ def main() -> None:
         if diagnostics is None:
             continue
 
-        print(f"\nAction: {action_name}")
-        print(f"Count: {diagnostics.count}")
         print(
-            "Average actual reward: "
-            f"{diagnostics.average_actual_reward:.6f}"
+            f"  {action_name:<12} {diagnostics.count:>6} "
+            f"{diagnostics.average_actual_reward:>10.6f} "
+            f"{diagnostics.average_predicted_reward:>10.6f} "
+            f"{diagnostics.mse:>10.6f}"
         )
-        print(
-            "Average predicted reward: "
-            f"{diagnostics.average_predicted_reward:.6f}"
-        )
-        print(f"MSE: {diagnostics.mse:.6f}")
 
 
 if __name__ == "__main__":

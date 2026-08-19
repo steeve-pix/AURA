@@ -28,18 +28,10 @@ def train_model(
 
     model.train()
 
-    for epoch in range(epochs):
+    for _ in range(epochs):
         optimizer.zero_grad()
         predictions = model(x_train)
         errors = loss_fn(predictions, y_train)
-
-        if epoch == 0:
-            print("Per-example error shape:", errors.shape)
-            print("First five squared errors:")
-            print(errors[:5])
-
-            if sample_weights is not None:
-                print("Sample weight shape:", sample_weights.shape)
 
         weighted_errors = (
             errors

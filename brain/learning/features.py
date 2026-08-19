@@ -15,6 +15,43 @@ ACTION_TYPES = [
 POSITION_SCALE = 50.0
 PATH_LENGTH_SCALE = 50.0
 
+FEATURE_NAMES = (
+    "energy",
+    "goal_explore",
+    "goal_recharge",
+    "goal_investigate",
+    "action_move",
+    "action_move_to",
+    "action_investigate",
+    "has_target",
+    "target_dx",
+    "target_dy",
+    "path_length",
+    "memory_trust",
+)
+
+FEATURE_GROUPS = {
+    "goal": (
+        "goal_explore",
+        "goal_recharge",
+        "goal_investigate",
+    ),
+    "action": (
+        "action_move",
+        "action_move_to",
+        "action_investigate",
+    ),
+    "target_offset": (
+        "target_dx",
+        "target_dy",
+    )
+}
+
+ABLATION_NAMES = (
+    *FEATURE_NAMES,
+    *FEATURE_GROUPS.keys(),
+)
+
 
 def encode_energy(experience: Experience) -> float:
     return experience.energy_before / 100.0
