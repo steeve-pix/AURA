@@ -6,7 +6,7 @@ from pathlib import Path
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
 from brain.experience import Experience
 from brain.goals import choose_goal, goal_scores, recharge_is_urgent
-from brain.learning.diagnostics import RunningValueDiagnostics
+from brain.learning.diagnostics import RunningValueDiagnostics, ACTION_NAMES
 from brain.plan_supervisor import supervise_goal
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.learning.features import ValueInput, encode_value_input
@@ -127,27 +127,40 @@ def main() -> None:
                 actual = completed_experience.reward
                 error = abs(actual - prediction)
 
-                value_diagnostics.record(prediction, actual)
+                value_diagnostics.record(action=completed_experience.action, predicted=prediction, actual=actual)
 
-                if value_diagnostics.count % 100 == 0:
+                if value_diagnostics.overall.count % 100 == 0:
                     print(
-                        f"[value-model result] "
+                        f"\n[value-model result] "
                         f"predicted={prediction:+.3f} "
                         f"actual={actual:+.3f} "
                         f"error={error:.3f}",
+                        end="\n\n",
                         file=sys.stderr,
                         flush=True,
                     )
 
                     print(
                         f"[value-model] "
-                        f"samples={value_diagnostics.count} "
-                        f"mae={value_diagnostics.mae():.3f} "
-                        f"mse={value_diagnostics.mse():.3f}",
-                        end="\n",
+                        f"live samples={value_diagnostics.overall.count} "
+                        f"mae={value_diagnostics.overall.mae():.3f} "
+                        f"mse={value_diagnostics.overall.mse():.3f}",
                         file=sys.stderr,
                         flush=True,
                     )
+
+                    for action_name in ACTION_NAMES:
+                        action_diagnostics = value_diagnostics.by_action[action_name]
+
+                        print(
+                            f"[value-model] "
+                            f"{action_name:<11} "
+                            f"n={action_diagnostics.count:<3} "
+                            f"mae={action_diagnostics.mae():.3f} "
+                            f"mse={action_diagnostics.mse():.3f}",
+                            file=sys.stderr,
+                            flush=True,
+                        )
 
             memory.pending_value_prediction = None
 

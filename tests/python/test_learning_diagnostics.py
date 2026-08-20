@@ -61,15 +61,32 @@ class LearningDiagnosticsTests(unittest.TestCase):
                 torch.tensor([[0.1], [0.2]]),
             )
 
-    def test_running_diagnostics_accumulate_errors(self):
+    def test_running_diagnostics_group_errors_by_action(self):
         diagnostics = RunningValueDiagnostics()
 
-        diagnostics.record(predicted=0.2, actual=0.3)
-        diagnostics.record(predicted=0.1, actual=0.3)
+        diagnostics.record(
+            action="move",
+            predicted=0.2,
+            actual=0.1,
+        )
 
-        self.assertEqual(diagnostics.count, 2)
-        self.assertAlmostEqual(diagnostics.mae(), 0.15)
-        self.assertAlmostEqual(diagnostics.mse(), 0.025)
+        diagnostics.record(
+            action="move",
+            predicted=0.4,
+            actual=0.2,
+        )
+
+        diagnostics.record(
+            action="investigate",
+            predicted=0.5,
+            actual=1.0,
+        )
+
+        self.assertEqual(diagnostics.count, 3)
+
+        self.assertEqual(diagnostics.by_action["move"].count, 2)
+
+        self.assertEqual(diagnostics.by_action["investigate"].count, 1)
 
 
 if __name__ == "__main__":

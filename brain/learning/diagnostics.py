@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass
 
 import torch
@@ -19,7 +20,7 @@ class ActionDiagnostics:
     mse: float
 
 
-class RunningValueDiagnostics:
+class RunningErrorTotals:
     def __init__(self):
         self.count = 0
         self.absolute_error_sum = 0.0
@@ -43,6 +44,32 @@ class RunningValueDiagnostics:
             return 0.0
 
         return self.squared_error_sum / self.count
+
+
+class RunningValueDiagnostics:
+    def __init__(self):
+        self.overall = RunningErrorTotals()
+        self.by_action = {
+            action_name: RunningErrorTotals() for action_name in ACTION_NAMES
+        }
+
+    @property
+    def count(self) -> int:
+        return self.overall.count
+
+    def record(self, *, action: str, predicted: float, actual: float) -> None:
+        self.overall.record(predicted, actual)
+
+        if action not in self.by_action:
+            self.by_action[action] = RunningErrorTotals()
+
+        self.by_action[action].record(predicted, actual)
+
+    def mae(self) -> float:
+        return self.overall.mae()
+
+    def mse(self) -> float:
+        return self.overall.mse()
 
 
 def calculate_action_diagnostics(
