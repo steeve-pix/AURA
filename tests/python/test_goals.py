@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from brain.goals import choose_goal, investigation_score, recharge_score
+from brain.goals import choose_goal, investigation_score, recharge_score, recharge_is_urgent
 from brain.memory import Memory
 
 
@@ -146,6 +146,24 @@ class TestGoals(unittest.TestCase):
         memory.remember_investigation_result([12, 5], "Battery")
 
         self.assertEqual(investigation_score(observation, memory), 0.0)
+
+    def test_low_energy_makes_recharge_urgent(self):
+        observation = {
+            "energy": 30,
+            "position": [1, 1],
+            "nearby_objects": []
+        }
+
+        self.assertTrue(recharge_is_urgent(observation))
+
+    def test_high_energy_is_not_urgent(self):
+        observation = {
+            "energy": 80,
+            "position": [1, 1],
+            "nearby_objects": []
+        }
+
+        self.assertFalse(recharge_is_urgent(observation))
 
 
 if __name__ == '__main__':

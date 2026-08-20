@@ -39,7 +39,8 @@ def train_test_split(x: list[list[float]], y: list[float], test_ratio: float = 0
 
     return x_train, y_train, x_test, y_test
 
-def to_tensors(x: list[list[float]], y: list[float])->tuple[torch.Tensor, torch.Tensor]:
+
+def to_tensors(x: list[list[float]], y: list[float]) -> tuple[torch.Tensor, torch.Tensor]:
     x_tensor = torch.tensor(x, dtype=torch.float32)
     y_tensor = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
 

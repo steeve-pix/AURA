@@ -63,9 +63,9 @@ pathfinding result for each visible object. An unreachable object has `reachable
 
 `last_action` reports the outcome of the action executed after the previous observation. It is `null` before the body
 has executed an action. Its `result` is one of `completed`, `failed`, or `unreachable`. A `move_to` result includes the
-requested target so the brain can associate a failure with the correct remembered location.
-Successful `move_to` feedback also reports the shortest BFS route length before and after the physical step. Reaching the
-target reports `path_length_after: 0`; non-navigation actions omit both path-length fields.
+requested target so the brain can associate a failure with the correct remembered location. Successful `move_to`
+feedback also reports the shortest BFS route length before and after the physical step. Reaching the target reports
+`path_length_after: 0`; non-navigation actions omit both path-length fields.
 
 ```json
 {
@@ -120,8 +120,8 @@ The `move_to` action asks the C++ body to navigate to a target position. The tar
 
 ### Optional debug data
 
-The brain may include a `debug` object with its current goal, goal scores, known cells, visited cells, and active plan. The C++ body
-uses this only for visualization; it does not affect physical simulation.
+The brain may include a `debug` object with its current goal, goal scores, known cells, visited cells, and active plan.
+The C++ body uses this only for visualization; it does not affect physical simulation.
 
 ```json
 {

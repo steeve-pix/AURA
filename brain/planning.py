@@ -122,9 +122,9 @@ def update_plan_from_observation(plan: Plan, observation, ) -> None:
             return
 
         matching_investigation = (
-            last_action.get("type") == "investigate"
-            and last_action.get("target") is not None
-            and tuple(last_action["target"]) == step.target
+                last_action.get("type") == "investigate"
+                and last_action.get("target") is not None
+                and tuple(last_action["target"]) == step.target
         )
 
         if matching_investigation and not last_action.get("succeeded", False):
