@@ -3,7 +3,7 @@ import unittest
 import torch
 
 from brain.experience import Experience
-from brain.learning.diagnostics import calculate_action_diagnostics
+from brain.learning.diagnostics import calculate_action_diagnostics, RunningValueDiagnostics
 
 
 def make_experience(**overrides) -> Experience:
@@ -60,6 +60,16 @@ class LearningDiagnosticsTests(unittest.TestCase):
                 [make_experience()],
                 torch.tensor([[0.1], [0.2]]),
             )
+
+    def test_running_diagnostics_accumulate_errors(self):
+        diagnostics = RunningValueDiagnostics()
+
+        diagnostics.record(predicted=0.2, actual=0.3)
+        diagnostics.record(predicted=0.1, actual=0.3)
+
+        self.assertEqual(diagnostics.count, 2)
+        self.assertAlmostEqual(diagnostics.mae(), 0.15)
+        self.assertAlmostEqual(diagnostics.mse(), 0.025)
 
 
 if __name__ == "__main__":

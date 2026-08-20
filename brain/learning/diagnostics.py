@@ -4,7 +4,6 @@ import torch
 
 from brain.experience import Experience
 
-
 ACTION_NAMES = (
     "move",
     "move_to",
@@ -20,9 +19,35 @@ class ActionDiagnostics:
     mse: float
 
 
+class RunningValueDiagnostics:
+    def __init__(self):
+        self.count = 0
+        self.absolute_error_sum = 0.0
+        self.squared_error_sum = 0.0
+
+    def record(self, predicted: float, actual: float) -> None:
+        error = predicted - actual
+
+        self.count += 1
+        self.absolute_error_sum += abs(error)
+        self.squared_error_sum += (error * error)
+
+    def mae(self) -> float:
+        if self.count == 0:
+            return 0.0
+
+        return self.absolute_error_sum / self.count
+
+    def mse(self) -> float:
+        if self.count == 0:
+            return 0.0
+
+        return self.squared_error_sum / self.count
+
+
 def calculate_action_diagnostics(
-    action_experiences: list[Experience],
-    predictions: torch.Tensor,
+        action_experiences: list[Experience],
+        predictions: torch.Tensor,
 ) -> dict[str, ActionDiagnostics]:
     if any(experience.kind != "action" for experience in action_experiences):
         raise ValueError("Value model diagnostics require action experiences.")

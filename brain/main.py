@@ -6,6 +6,7 @@ from pathlib import Path
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
 from brain.experience import Experience
 from brain.goals import choose_goal, goal_scores, recharge_is_urgent
+from brain.learning.diagnostics import RunningValueDiagnostics
 from brain.plan_supervisor import supervise_goal
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.learning.features import ValueInput, encode_value_input
@@ -98,6 +99,8 @@ def main() -> None:
     if model_path.exists():
         value_model = load_model(model_path)
 
+    value_diagnostics = RunningValueDiagnostics()
+
     for raw in sys.stdin:
         raw = raw.strip()
 
@@ -124,14 +127,27 @@ def main() -> None:
                 actual = completed_experience.reward
                 error = abs(actual - prediction)
 
-                print(
-                    f"[value-model result] "
-                    f"predicted={prediction:+.3f} "
-                    f"actual={actual:+.3f} "
-                    f"error={error:.3f}\n",
-                    file=sys.stderr,
-                    flush=True,
-                )
+                value_diagnostics.record(prediction, actual)
+
+                if value_diagnostics.count % 100 == 0:
+                    print(
+                        f"[value-model result] "
+                        f"predicted={prediction:+.3f} "
+                        f"actual={actual:+.3f} "
+                        f"error={error:.3f}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+
+                    print(
+                        f"[value-model] "
+                        f"samples={value_diagnostics.count} "
+                        f"mae={value_diagnostics.mae():.3f} "
+                        f"mse={value_diagnostics.mse():.3f}",
+                        end="\n",
+                        file=sys.stderr,
+                        flush=True,
+                    )
 
             memory.pending_value_prediction = None
 
@@ -231,15 +247,6 @@ def main() -> None:
 
             predicted_reward = predict_value(value_model, feature_vector)
             memory.pending_value_prediction = predicted_reward
-
-            print(
-                f"[value-model] "
-                f"goal: {goal} "
-                f"action: {decision['action']} "
-                f"predicted_reward: {predicted_reward:+.3f}",
-                file=sys.stderr,
-                flush=True
-            )
 
         # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {
