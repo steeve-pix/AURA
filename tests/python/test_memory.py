@@ -163,7 +163,7 @@ class MemoryTests(unittest.TestCase):
                 if (
                     entity.entity_type == "Battery"
                     and entity.status == "confirmed"
-                )
+            )
             },
         )
 

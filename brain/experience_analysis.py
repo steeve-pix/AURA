@@ -157,10 +157,10 @@ def print_table(title: str, rows: list[tuple[object, object]], headers: tuple[st
         for label, value in rows
     ]
     left_width = max(
-        len(headers[0]),*(len(label) for label, _ in string_rows),
+        len(headers[0]), *(len(label) for label, _ in string_rows),
     )
     right_width = max(
-        len(headers[1]),    *(len(value) for _, value in string_rows),
+        len(headers[1]), *(len(value) for _, value in string_rows),
     )
     border = f"+-{'-' * left_width}-+-{'-' * right_width}-+"
 

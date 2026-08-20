@@ -6,10 +6,10 @@ DEFAULT_COLLECTION_SEEDS = tuple(range(2001, 2013))
 
 
 def body_command(
-    executable: Path,
-    brain_directory: Path,
-    seed: int,
-    max_steps: int,
+        executable: Path,
+        brain_directory: Path,
+        seed: int,
+        max_steps: int,
 ) -> list[str]:
     return [
         str(executable),

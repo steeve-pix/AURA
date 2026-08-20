@@ -5,7 +5,8 @@ from pathlib import Path
 
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
 from brain.experience import Experience
-from brain.goals import choose_goal, goal_scores
+from brain.goals import choose_goal, goal_scores, recharge_is_urgent
+from brain.plan_supervisor import supervise_goal
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.learning.features import ValueInput, encode_value_input
 from brain.learning.inference import predict_value
@@ -117,11 +118,25 @@ def main() -> None:
         completed_experience = memory.finish_pending_experience(observation)
 
         if completed_experience is not None:
-            persist_experience(
-                completed_experience,
-                memory_directory,
-                world_id,
-            )
+            prediction = memory.pending_value_prediction
+
+            if prediction is not None:
+                actual = completed_experience.reward
+                error = abs(actual - prediction)
+
+                print(
+                    f"[value-model result] "
+                    f"predicted={prediction:+.3f} "
+                    f"actual={actual:+.3f} "
+                    f"error={error:.3f}\n",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
+            memory.pending_value_prediction = None
+
+        if completed_experience is not None:
+            persist_experience(completed_experience, memory_directory, world_id)
 
         last_action = observation.get("last_action")
 
@@ -194,7 +209,8 @@ def main() -> None:
         save_memory(memory, memory_path, world_id)
 
         score = goal_scores(observation, memory)
-        goal = choose_goal(observation, memory)
+        proposed_goal = choose_goal(observation, memory)
+        goal = supervise_goal(memory, proposed_goal=proposed_goal, recharge_urgent=recharge_is_urgent(observation))
 
         decision = decide(observation, goal, memory)
 
@@ -214,6 +230,7 @@ def main() -> None:
             feature_vector = encode_value_input(value_input)
 
             predicted_reward = predict_value(value_model, feature_vector)
+            memory.pending_value_prediction = predicted_reward
 
             print(
                 f"[value-model] "
@@ -221,6 +238,7 @@ def main() -> None:
                 f"action: {decision['action']} "
                 f"predicted_reward: {predicted_reward:+.3f}",
                 file=sys.stderr,
+                flush=True
             )
 
         # Debug metadata shares the response but is never used to execute the action.

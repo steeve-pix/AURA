@@ -3,6 +3,7 @@ import random
 from typing import Any, Union
 
 from brain.memory import Memory
+from brain.memory_store import memory_path_for_world
 from brain.planning import (
     Plan,
     PlanStep,
@@ -45,7 +46,7 @@ def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int
             key=lambda obj: obj["path_length"],
         )
 
-        return tuple(best["position"])
+        return best["position"][0], best["position"][1]
 
     remembered = [
         battery
@@ -121,17 +122,57 @@ def choose_recharge_action(observation, memory):
     return choose_exploration_action(observation, memory)
 
 
-def decide(observation, goal, memory):
-    if (
-            memory.active_plan is not None
-            and memory.active_plan.goal != goal
-    ):
-        memory.clear_active_plan()
+def choose_adjacent_unknown_action(observation, memory: Memory, *,
+                                   exclude_target: tuple[int, int] | None) -> dict | None:
+    aura_position = (observation["position"][0], observation["position"][1])
 
+    candidates = []
+
+    for obj in observation["nearby_objects"]:
+        if obj["type"] != "Unknown":
+            continue
+
+        target = tuple(obj["position"])
+
+        if target == exclude_target:
+            continue
+
+        if memory.is_failed_target(target):
+            continue
+
+        distance = abs(target[0] - aura_position[0]) + abs(target[1] - aura_position[1])
+
+        if distance == 1:
+            candidates.append(obj)
+
+    if not candidates:
+        return None
+
+    target = max(candidates, key=lambda obj: (investigation_target_score(obj, observation, memory),
+                                              tuple(obj["position"])))
+
+    return {
+        "action": "investigate",
+        "target": list(target["position"]),
+    }
+
+
+def decide(observation, goal, memory):
     if (
             memory.active_plan is not None
             and memory.active_plan.goal == goal
     ):
+        if goal == "investigate":
+            opportunistic_action = (
+                choose_adjacent_unknown_action(observation, memory, exclude_target=(
+                    memory.active_plan.goal_target
+                ),
+                                               )
+            )
+
+            if opportunistic_action is not None:
+                return opportunistic_action
+
         return action_from_plan(memory.active_plan)
 
     if goal == "recharge":

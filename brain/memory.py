@@ -23,6 +23,7 @@ class Memory:
         self.active_plan: Plan | None = None
         self.experiences: list[Experience] = []
         self.pending_experience: dict | None = None
+        self.pending_value_prediction: float | None = None
         self.plan_failure_count = 0
         self.replan_count = 0
         self.body_action_failure_count = 0
