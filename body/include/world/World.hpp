@@ -6,12 +6,14 @@
 #include "CellType.hpp"
 #include "Position.hpp"
 
-namespace aura::world {
+namespace aura::world
+{
     /// Owns the rectangular grid and provides bounds-safe spatial queries.
     ///
     /// World stores physical state only. Planning, sensing, and rendering are handled
     /// by separate components that consume this state.
-    class World {
+    class World
+    {
     public:
         /// Allocates a `width` by `height` grid initialized with empty cells.
         World(int width, int height);

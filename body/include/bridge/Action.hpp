@@ -2,9 +2,11 @@
 
 #include "world/Position.hpp"
 
-namespace aura::bridge {
+namespace aura::bridge
+{
     /// Cardinal directions accepted by the brain-to-body protocol.
-    enum class Direction {
+    enum class Direction
+    {
         North,
         East,
         South,
@@ -12,7 +14,8 @@ namespace aura::bridge {
     };
 
     /// Operations the C++ body can execute on behalf of the Python brain.
-    enum class ActionType {
+    enum class ActionType
+    {
         Idle,
         Move,
         MoveTo,
@@ -23,7 +26,8 @@ namespace aura::bridge {
     ///
     /// `direction` is meaningful only for Move. `target` is meaningful only for
     /// MoveTo and Investigate; the parser supplies placeholders for unused fields.
-    struct Action {
+    struct Action
+    {
         ActionType type;
         Direction direction;
         world::Position target;

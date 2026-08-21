@@ -4,11 +4,13 @@
 #include "sensors/LocalObservation.hpp"
 #include "world/World.hpp"
 
-namespace aura::sensors {
+namespace aura::sensors
+{
     /// Reads the four cells that share an edge with AURA's current position.
-    class LocalSensor {
+    class LocalSensor
+    {
     public:
         /// Returns neighboring cell contents in north, east, south, west order.
-        static LocalObservation observe(const world::World &world, const agent::Agent &agent);
+        static LocalObservation observe(const world::World& world, const agent::Agent& agent);
     };
 }

@@ -1,5 +1,5 @@
 import argparse
-import math
+
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,7 +13,8 @@ from brain.learning.dataset import build_dataset, to_tensors
 from brain.learning.diagnostics import (
     ACTION_NAMES,
     ActionDiagnostics,
-    calculate_action_diagnostics,
+    calculate_action_diagnostics, ResultRewardDiagnostics, calculate_action_result_rewards, CompletedMoveToDiagnostics,
+    calculate_completed_move_to_diagnostics,
 )
 from brain.learning.model import ValueModel
 from brain.learning.features import ABLATION_NAMES
@@ -52,6 +53,8 @@ class ExperimentResult:
     training_investigations: int
     action_diagnostics: dict[str, ActionDiagnostics]
     ablation_losses: dict[str, float]
+    move_to_result_diagnostics: dict[str, ResultRewardDiagnostics]
+    completed_move_to_diagnostics: CompletedMoveToDiagnostics
 
 
 def experience_paths_for_seeds(
@@ -160,6 +163,10 @@ def run_experiment(
         for experience in train_experiences
         if experience.kind == "action"
     ]
+
+    move_to_result_diagnostics = calculate_action_result_rewards(train_action_experiences, action="move_to")
+    completed_move_to_diagnostics = calculate_completed_move_to_diagnostics(train_action_experiences)
+
     test_action_experiences = [
         experience
         for experience in test_experiences
@@ -258,6 +265,8 @@ def run_experiment(
         training_investigations=investigation_count,
         action_diagnostics=diagnostics,
         ablation_losses=ablation_losses,
+        move_to_result_diagnostics=move_to_result_diagnostics,
+        completed_move_to_diagnostics=completed_move_to_diagnostics,
     )
 
 
@@ -378,6 +387,58 @@ def main() -> None:
             f"{diagnostics.average_predicted_reward:>10.6f} "
             f"{diagnostics.mse:>10.6f}"
         )
+
+    print("\nTraining move_to results")
+
+    print(
+        f"  {'Result':<12} "
+        f"{'Count':>8} "
+        f"{'Average reward':>16}"
+    )
+
+    for result_name in ("completed", "failed", "unreachable"):
+        diagnostics = (
+            result.move_to_result_diagnostics.get(
+                result_name
+            )
+        )
+
+        if diagnostics is None:
+            print(
+                f"  {result_name:<12} "
+                f"{0:>8} "
+                f"{'n/a':>16}"
+            )
+            continue
+
+        print(
+            f"  {result_name:<12} "
+            f"{diagnostics.count:>8,d} "
+            f"{diagnostics.average_reward:>+16.3f}"
+        )
+
+    move_to = result.completed_move_to_diagnostics
+
+    progress = move_to.average_navigation_progress()
+
+    print("\nTraining completed move_to")
+    print(f"  Count:                {move_to.count}")
+    print(
+        f"  Average reward:       "
+        f"{move_to.average_reward():+.3f}"
+    )
+    print(
+        f"  Average progress:     "
+        f"{'n/a' if progress is None else f'{progress:.3f}'}"
+    )
+    print(
+        f"  Newly visited cells:  "
+        f"{move_to.visited_new_cell_rate():.1%}"
+    )
+    print(
+        f"  Average energy cost:  "
+        f"{move_to.average_energy_cost():.3f}"
+    )
 
 
 if __name__ == "__main__":

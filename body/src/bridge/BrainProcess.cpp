@@ -13,43 +13,52 @@
 #include <errno.h>
 #endif
 
-namespace aura::bridge {
+namespace aura::bridge
+{
     BrainProcess::BrainProcess(std::string pythonExecutable, std::string scriptPath, std::string workingDirectory)
         : pythonExecutable_(std::move(pythonExecutable)),
           scriptPath_(std::move(scriptPath)),
-          workingDirectory_(std::move(workingDirectory)) {
+          workingDirectory_(std::move(workingDirectory))
+    {
     }
 
-    BrainProcess::~BrainProcess() {
+    BrainProcess::~BrainProcess()
+    {
 #if defined(_WIN32)
         // The parent owns only these handles; child-side pipe handles were closed at launch.
-        if (stdinWrite_) {
+        if (stdinWrite_)
+        {
             CloseHandle(stdinWrite_);
             stdinWrite_ = kInvalidIoHandle;
         }
 
-        if (stdoutRead_) {
+        if (stdoutRead_)
+        {
             CloseHandle(stdoutRead_);
             stdoutRead_ = kInvalidIoHandle;
         }
 
-        if (processHandle_) {
+        if (processHandle_)
+        {
             CloseHandle(processHandle_);
             processHandle_ = kInvalidProcessHandle;
         }
 #else
         // Closing stdin first lets a cooperative brain observe EOF before termination.
-        if (stdinWrite_ != kInvalidIoHandle) {
+        if (stdinWrite_ != kInvalidIoHandle)
+        {
             close(stdinWrite_);
             stdinWrite_ = kInvalidIoHandle;
         }
 
-        if (stdoutRead_ != kInvalidIoHandle) {
+        if (stdoutRead_ != kInvalidIoHandle)
+        {
             close(stdoutRead_);
             stdoutRead_ = kInvalidIoHandle;
         }
 
-        if (processHandle_ != kInvalidProcessHandle) {
+        if (processHandle_ != kInvalidProcessHandle)
+        {
             kill(processHandle_, SIGTERM);
             waitpid(processHandle_, nullptr, 0);
             processHandle_ = kInvalidProcessHandle;
@@ -57,7 +66,8 @@ namespace aura::bridge {
 #endif
     }
 
-    bool BrainProcess::launch() {
+    bool BrainProcess::launch()
+    {
 #if defined(_WIN32)
         // Child endpoints remain inheritable while parent endpoints are explicitly private.
         SECURITY_ATTRIBUTES security{};
@@ -68,11 +78,13 @@ namespace aura::bridge {
         HANDLE childStdinRead = nullptr;
         HANDLE childStdoutWrite = nullptr;
 
-        if (!CreatePipe(&childStdinRead, &stdinWrite_, &security, 0)) {
+        if (!CreatePipe(&childStdinRead, &stdinWrite_, &security, 0))
+        {
             return false;
         }
 
-        if (!CreatePipe(&stdoutRead_, &childStdoutWrite, &security, 0)) {
+        if (!CreatePipe(&stdoutRead_, &childStdoutWrite, &security, 0))
+        {
             CloseHandle(childStdinRead);
             CloseHandle(stdinWrite_);
             stdinWrite_ = kInvalidIoHandle;
@@ -112,7 +124,8 @@ namespace aura::bridge {
         CloseHandle(childStdinRead);
         CloseHandle(childStdoutWrite);
 
-        if (!success) {
+        if (!success)
+        {
             CloseHandle(stdinWrite_);
             CloseHandle(stdoutRead_);
             stdinWrite_ = kInvalidIoHandle;
@@ -128,7 +141,8 @@ namespace aura::bridge {
         int stdinPipe[2] = {-1, -1};
         int stdoutPipe[2] = {-1, -1};
 
-        if (pipe(stdinPipe) == -1 || pipe(stdoutPipe) == -1) {
+        if (pipe(stdinPipe) == -1 || pipe(stdoutPipe) == -1)
+        {
             if (stdinPipe[0] != -1) close(stdinPipe[0]);
             if (stdinPipe[1] != -1) close(stdinPipe[1]);
             if (stdoutPipe[0] != -1) close(stdoutPipe[0]);
@@ -137,7 +151,8 @@ namespace aura::bridge {
         }
 
         pid_t pid = fork();
-        if (pid == -1) {
+        if (pid == -1)
+        {
             close(stdinPipe[0]);
             close(stdinPipe[1]);
             close(stdoutPipe[0]);
@@ -145,7 +160,8 @@ namespace aura::bridge {
             return false;
         }
 
-        if (pid == 0) {
+        if (pid == 0)
+        {
             // The child replaces its standard streams before replacing the process image.
             dup2(stdinPipe[0], STDIN_FILENO);
             dup2(stdoutPipe[1], STDOUT_FILENO);
@@ -153,8 +169,10 @@ namespace aura::bridge {
             close(stdinPipe[1]);
             close(stdoutPipe[0]);
 
-            if (!workingDirectory_.empty()) {
-                if (chdir(workingDirectory_.c_str()) != 0) {
+            if (!workingDirectory_.empty())
+            {
+                if (chdir(workingDirectory_.c_str()) != 0)
+                {
                     _exit(1);
                 }
             }
@@ -164,7 +182,7 @@ namespace aura::bridge {
                 pythonExecutable_.c_str(),
                 "-u",
                 scriptPath_.c_str(),
-                static_cast<char *>(nullptr)
+                static_cast<char*>(nullptr)
             );
             _exit(1);
         }
@@ -180,9 +198,11 @@ namespace aura::bridge {
 #endif
     }
 
-    std::string BrainProcess::exchange(std::string_view observationJson) {
+    std::string BrainProcess::exchange(std::string_view observationJson)
+    {
 #if defined(_WIN32)
-        if (!stdinWrite_ || !stdoutRead_) {
+        if (!stdinWrite_ || !stdoutRead_)
+        {
             return {};
         }
 
@@ -199,21 +219,25 @@ namespace aura::bridge {
             nullptr
         );
 
-        if (!writeSuccess) {
+        if (!writeSuccess)
+        {
             return {};
         }
 
         std::string response;
         // Reading through the delimiter avoids returning a partial JSON document.
-        while (true) {
+        while (true)
+        {
             char character = '\0';
             DWORD bytesRead = 0;
             const BOOL readSuccess = ReadFile(stdoutRead_, &character, 1, &bytesRead, nullptr);
-            if (!readSuccess || bytesRead == 0) {
+            if (!readSuccess || bytesRead == 0)
+            {
                 return {};
             }
 
-            if (character == '\n') {
+            if (character == '\n')
+            {
                 break;
             }
 
@@ -222,7 +246,8 @@ namespace aura::bridge {
 
         return response;
 #else
-        if (stdinWrite_ == kInvalidIoHandle || stdoutRead_ == kInvalidIoHandle) {
+        if (stdinWrite_ == kInvalidIoHandle || stdoutRead_ == kInvalidIoHandle)
+        {
             return {};
         }
 
@@ -231,20 +256,24 @@ namespace aura::bridge {
         message.push_back('\n');
 
         const ssize_t written = write(stdinWrite_, message.data(), message.size());
-        if (written != static_cast<ssize_t>(message.size())) {
+        if (written != static_cast<ssize_t>(message.size()))
+        {
             return {};
         }
 
         std::string response;
         // Reading through the delimiter avoids returning a partial JSON document.
-        while (true) {
+        while (true)
+        {
             char character = '\0';
             const ssize_t readCount = read(stdoutRead_, &character, 1);
-            if (readCount != 1) {
+            if (readCount != 1)
+            {
                 return {};
             }
 
-            if (character == '\n') {
+            if (character == '\n')
+            {
                 break;
             }
 

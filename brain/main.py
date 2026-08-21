@@ -6,7 +6,7 @@ from pathlib import Path
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
 from brain.experience import Experience
 from brain.goals import choose_goal, goal_scores, recharge_is_urgent
-from brain.learning.diagnostics import RunningValueDiagnostics, ACTION_NAMES
+from brain.learning.diagnostics import RunningValueDiagnostics, CompletedMoveToDiagnostics
 from brain.plan_supervisor import supervise_goal
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.learning.features import ValueInput, encode_value_input
@@ -27,10 +27,7 @@ def persist_experience(experience, memory_directory: Path, world_id: str) -> Non
     )
 
 
-def update_active_plan_and_record_events(
-        memory,
-        observation: dict,
-) -> list[Experience]:
+def update_active_plan_and_record_events(memory, observation: dict) -> list[Experience]:
     active_plan = memory.active_plan
 
     if active_plan is None:
@@ -100,6 +97,7 @@ def main() -> None:
         value_model = load_model(model_path)
 
     value_diagnostics = RunningValueDiagnostics()
+    live_completed_move_to = CompletedMoveToDiagnostics()
 
     for raw in sys.stdin:
         raw = raw.strip()
@@ -125,42 +123,72 @@ def main() -> None:
 
             if prediction is not None:
                 actual = completed_experience.reward
-                error = abs(actual - prediction)
 
-                value_diagnostics.record(action=completed_experience.action, predicted=prediction, actual=actual)
+                value_diagnostics.record(action=completed_experience.action, result=completed_experience.result,
+                                         predicted=prediction, actual=actual)
+                live_completed_move_to.record(completed_experience)
 
                 if value_diagnostics.overall.count % 100 == 0:
+
+                    progress = (
+                        live_completed_move_to
+                        .average_navigation_progress()
+                    )
+
                     print(
-                        f"\n[value-model result] "
-                        f"predicted={prediction:+.3f} "
-                        f"actual={actual:+.3f} "
-                        f"error={error:.3f}",
-                        end="\n\n",
+                        "[value-model] live completed move_to "
+                        f"n={live_completed_move_to.count} "
+                        f"reward={live_completed_move_to.average_reward():+.3f} "
+                        f"progress="
+                        f"{'n/a' if progress is None else f'{progress:.3f}'} "
+                        f"new_cell="
+                        f"{live_completed_move_to.visited_new_cell_rate():.1%} "
+                        f"energy_cost="
+                        f"{live_completed_move_to.average_energy_cost():.3f}\n",
                         file=sys.stderr,
                         flush=True,
                     )
 
                     print(
-                        f"[value-model] "
-                        f"live samples={value_diagnostics.overall.count} "
-                        f"mae={value_diagnostics.overall.mae():.3f} "
-                        f"mse={value_diagnostics.overall.mse():.3f}",
+                        f"{'action':<11} | "
+                        f"{'result':<11} | "
+                        f"{'n':>6} | "
+                        f"{'actual':>8} | "
+                        f"{'predicted':>9} | "
+                        f"{'MAE':>8} | "
+                        f"{'MSE':>8}",
                         file=sys.stderr,
                         flush=True,
                     )
 
-                    for action_name in ACTION_NAMES:
+                    print(
+                        f"{'-' * 11}-+-"
+                        f"{'-' * 11}-+-"
+                        f"{'-' * 6}-+-"
+                        f"{'-' * 8}-+-"
+                        f"{'-' * 9}-+-"
+                        f"{'-' * 8}-+-"
+                        f"{'-' * 8}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+
+                    for (action_name, result_name), diagnostics in sorted(value_diagnostics.by_action_result.items()):
                         action_diagnostics = value_diagnostics.by_action[action_name]
 
                         print(
-                            f"[value-model] "
-                            f"{action_name:<11} "
-                            f"n={action_diagnostics.count:<3} "
-                            f"mae={action_diagnostics.mae():.3f} "
-                            f"mse={action_diagnostics.mse():.3f}",
+                            f"{action_name:<11} | "
+                            f"{result_name:<11} | "
+                            f"{action_diagnostics.count:>6,d} | "
+                            f"{action_diagnostics.mean_actual():>8.3f} | "
+                            f"{action_diagnostics.mean_prediction():>9.3f} | "
+                            f"{action_diagnostics.mae():>8.3f} | "
+                            f"{action_diagnostics.mse():>8.3f}",
                             file=sys.stderr,
                             flush=True,
                         )
+
+                    print("\n", file=sys.stderr, flush=True)
 
             memory.pending_value_prediction = None
 

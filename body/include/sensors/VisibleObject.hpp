@@ -3,9 +3,11 @@
 #include "world/CellType.hpp"
 #include "world/Position.hpp"
 
-namespace aura::sensors {
+namespace aura::sensors
+{
     /// Actionable sensed object with navigation information from AURA's position.
-    struct VisibleObject {
+    struct VisibleObject
+    {
         /// Object category, currently Battery or Unknown.
         world::CellType type;
         /// Absolute world coordinates of the object.

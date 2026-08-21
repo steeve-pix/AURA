@@ -3,7 +3,6 @@ from collections import defaultdict
 import torch
 from torch import nn
 
-from brain.experience import Experience
 from brain.learning.model import ValueModel
 
 

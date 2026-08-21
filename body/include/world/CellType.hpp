@@ -1,7 +1,9 @@
 #pragma once
-namespace aura::world {
+namespace aura::world
+{
     /// Mutually exclusive physical contents stored in one world cell.
-    enum class CellType {
+    enum class CellType
+    {
         Empty,
         Wall,
         Battery,

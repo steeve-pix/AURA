@@ -6,14 +6,16 @@
 #include <queue>
 #include <vector>
 
-namespace aura::navigation {
+namespace aura::navigation
+{
     std::vector<aura::world::Position> findPath(
-        const aura::world::World &world,
+        const aura::world::World& world,
         aura::world::Position start,
         aura::world::Position goal
-    ) {
+    )
+    {
         const int totalCells =
-                world.width() * world.height();
+            world.width() * world.height();
 
         std::vector<bool> visited(totalCells, false);
         std::vector<world::Position> parent(totalCells);
@@ -23,20 +25,23 @@ namespace aura::navigation {
         std::queue<world::Position> frontier;
 
         const auto indexOf =
-                [&world](world::Position position) {
+            [&world](world::Position position)
+        {
             return position.y * world.width() + position.x;
         };
 
         frontier.push(start);
         visited[indexOf(start)] = true;
 
-        while (!frontier.empty()) {
+        while (!frontier.empty())
+        {
             const world::Position current =
-                    frontier.front();
+                frontier.front();
 
             frontier.pop();
 
-            if (current == goal) {
+            if (current == goal)
+            {
                 break;
             }
 
@@ -47,20 +52,23 @@ namespace aura::navigation {
                 {-1, 0},
             };
 
-            for (const auto direction: directions) {
+            for (const auto direction : directions)
+            {
                 const world::Position next{
                     current.x + direction.x,
                     current.y + direction.y
                 };
 
-                if (!world.canEnter(next)) {
+                if (!world.canEnter(next))
+                {
                     continue;
                 }
 
                 const int nextIndex =
-                        indexOf(next);
+                    indexOf(next);
 
-                if (visited[nextIndex]) {
+                if (visited[nextIndex])
+                {
                     continue;
                 }
 
@@ -71,7 +79,8 @@ namespace aura::navigation {
             }
         }
 
-        if (!visited[indexOf(goal)]) {
+        if (!visited[indexOf(goal)])
+        {
             return {};
         }
 
@@ -80,7 +89,8 @@ namespace aura::navigation {
 
         world::Position current = goal;
 
-        while (!(current == start)) {
+        while (!(current == start))
+        {
             path.push_back(current);
             current = parent[indexOf(current)];
         }

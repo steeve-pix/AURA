@@ -19,12 +19,14 @@ static constexpr IoHandle kInvalidIoHandle = -1;
 static constexpr ChildProcessHandle kInvalidProcessHandle = -1;
 #endif
 
-namespace aura::bridge {
+namespace aura::bridge
+{
     /// Owns the Python brain process and its standard-input/output pipes.
     ///
     /// The class presents the same request-response interface on Windows and POSIX.
     /// Each observation and response is a single newline-terminated JSON message.
-    class BrainProcess {
+    class BrainProcess
+    {
     public:
         /// Stores the process configuration without starting the child process.
         BrainProcess(

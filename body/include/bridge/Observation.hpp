@@ -8,9 +8,11 @@
 #include "sensors/RangeObservation.hpp"
 #include "world/Position.hpp"
 
-namespace aura::bridge {
+namespace aura::bridge
+{
     /// Result of the most recently attempted body action.
-    struct LastAction {
+    struct LastAction
+    {
         /// Category of action that was attempted.
         ActionType type;
         /// Destination when the action addressed a coordinate; otherwise empty.
@@ -26,7 +28,8 @@ namespace aura::bridge {
     };
 
     /// Read-only world snapshot supplied to the Python brain for one decision cycle.
-    struct Observation {
+    struct Observation
+    {
         /// AURA's current world coordinates.
         world::Position position;
         /// Remaining movement energy.

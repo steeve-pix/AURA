@@ -18,12 +18,14 @@
 
 #include "scenario/Scenario.hpp"
 
-namespace aura::app {
+namespace aura::app
+{
     /// Owns AURA's simulation state and coordinates the body, brain, and renderer.
     ///
     /// Application advances the simulation at a fixed cadence while keeping window
     /// rendering responsive between updates. It is the top-level runtime boundary.
-    class Application {
+    class Application
+    {
     public:
         /// Creates the simulation and configures the Python brain's working directory.
         Application(
@@ -44,13 +46,13 @@ namespace aura::app {
         void clearNavigationTarget();
 
         /// Validates and resolves an investigation request adjacent to AURA.
-        void executeInvestigation(const bridge::Action &action);
+        void executeInvestigation(const bridge::Action& action);
 
         /// Applies one cardinal movement request.
-        void executeMove(const bridge::Action &action);
+        void executeMove(const bridge::Action& action);
 
         /// Advances AURA by one step along a shortest path to the requested target.
-        void executeMoveTo(const bridge::Action &action);
+        void executeMoveTo(const bridge::Action& action);
 
         /// Records a successful no-op and clears active navigation state.
         void executeIdle();
@@ -59,7 +61,7 @@ namespace aura::app {
         [[nodiscard]] bridge::Observation buildObservation() const;
 
         /// Dispatches a parsed action to its body-level executor.
-        void executeAction(const bridge::Action &action);
+        void executeAction(const bridge::Action& action);
 
         render::Window window_;
 

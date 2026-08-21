@@ -1,9 +1,7 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
-from typing import Any, Union
 
 from brain.memory import Memory
-from brain.memory_store import memory_path_for_world
 from brain.planning import (
     Plan,
     PlanStep,
@@ -37,7 +35,7 @@ def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int
         if obj["type"] == "Battery"
            and obj.get("reachable", False)
            and obj["path_length"] <= energy - BATTERY_ARRIVAL_RESERVE
-           and not memory.is_failed_target(tuple(obj["position"]))
+           and not memory.is_failed_target((obj["position"][0], obj["position"][1]))
     ]
 
     if visible_batteries:
@@ -132,7 +130,7 @@ def choose_adjacent_unknown_action(observation, memory: Memory, *,
         if obj["type"] != "Unknown":
             continue
 
-        target = tuple(obj["position"])
+        target = (obj["position"][0], obj["position"][1])
 
         if target == exclude_target:
             continue
@@ -271,7 +269,7 @@ def choose_investigation_action(observation, memory: Memory):
         ),
     )
 
-    target_position = tuple(target["position"])
+    target_position = (target["position"][0], target["position"][1])
 
     plan = create_investigation_plan(
         observation,

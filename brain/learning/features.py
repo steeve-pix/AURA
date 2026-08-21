@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from brain import experience
 from brain.experience import Experience
 
 GOAL_TYPES = [
