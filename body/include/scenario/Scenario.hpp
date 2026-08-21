@@ -9,48 +9,37 @@
 #include "bridge/Action.hpp"
 #include "world/World.hpp"
 
-namespace aura::scenario
-{
-    class Scenario
-    {
+namespace aura::scenario {
+    class Scenario {
     public:
         virtual ~Scenario() = default;
 
-        [[nodiscard]] virtual std::string id() const
-        {
+        [[nodiscard]] virtual std::string id() const {
             return "normal";
         }
 
-        virtual void beforeAction(world::World& world, const agent::Agent& agent, const bridge::Action& action)
-        {
+        virtual void beforeAction(world::World &world, const agent::Agent &agent, const bridge::Action &action) {
         }
 
-        virtual void afterAction(world::World& world, const agent::Agent& agent, const bridge::Action& action)
-        {
+        virtual void afterAction(world::World &world, const agent::Agent &agent, const bridge::Action &action) {
         }
     };
 
-    class PeriodicMoveToBlock final : public Scenario
-    {
+    class PeriodicMoveToBlock final : public Scenario {
     public:
         explicit PeriodicMoveToBlock(std::size_t interval)
-            : interval_(interval)
-        {
-            if (interval_ == 0)
-            {
+            : interval_(interval) {
+            if (interval_ == 0) {
                 throw std::invalid_argument{"Scenario interval must be positive."};
             }
         }
 
-        [[nodiscard]] std::string id() const override
-        {
+        [[nodiscard]] std::string id() const override {
             return "challenge" + std::to_string(interval_);
         }
 
-        void beforeAction(world::World& world, const agent::Agent& agent, const bridge::Action& action) override
-        {
-            if (action.type != bridge::ActionType::MoveTo)
-            {
+        void beforeAction(world::World &world, const agent::Agent &agent, const bridge::Action &action) override {
+            if (action.type != bridge::ActionType::MoveTo) {
                 return;
             }
 
@@ -60,8 +49,7 @@ namespace aura::scenario
                 moveToCount_ % interval_ != 0
                 || action.target == agent.position()
                 || !world.canEnter(action.target)
-            )
-            {
+            ) {
                 return;
             }
 
@@ -70,10 +58,8 @@ namespace aura::scenario
             world.setCell(action.target, world::CellType::Wall);
         }
 
-        void afterAction(world::World& world, const agent::Agent& agent, const bridge::Action& action) override
-        {
-            if (!blockedTarget_.has_value())
-            {
+        void afterAction(world::World &world, const agent::Agent &agent, const bridge::Action &action) override {
+            if (!blockedTarget_.has_value()) {
                 return;
             }
 

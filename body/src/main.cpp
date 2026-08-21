@@ -10,38 +10,33 @@
 
 #include "app/Application.hpp"
 
-namespace
-{
+namespace {
     constexpr std::uint32_t DEFAULT_MAZE_SEED = 1337;
     constexpr std::size_t CHALLENGE_MOVE_TO_INTERVAL = 8;
 
-    void printUsage(const char* program)
-    {
+    void printUsage(const char *program) {
         std::cerr
-            << "Usage: " << program
-            << " <brain-working-directory>"
-            << " [--seed N] [--max-steps N] [--challenge-scenario]"
-            << std::endl;
+                << "Usage: " << program
+                << " <brain-working-directory>"
+                << " [--seed N] [--max-steps N] [--challenge-scenario]"
+                << std::endl;
     }
 
-    std::uint32_t parseSeed(const std::string& value)
-    {
+    std::uint32_t parseSeed(const std::string &value) {
         std::size_t parsedCharacters = 0;
         const auto parsed = std::stoull(value, &parsedCharacters);
 
         if (
             parsedCharacters != value.size()
             || parsed > std::numeric_limits<std::uint32_t>::max()
-        )
-        {
+        ) {
             throw std::invalid_argument{"Invalid maze seed."};
         }
 
         return static_cast<std::uint32_t>(parsed);
     }
 
-    int parseMaxSteps(const std::string& value)
-    {
+    int parseMaxSteps(const std::string &value) {
         std::size_t parsedCharacters = 0;
         const auto parsed = std::stoll(value, &parsedCharacters);
 
@@ -49,8 +44,7 @@ namespace
             parsedCharacters != value.size()
             || parsed <= 0
             || parsed > std::numeric_limits<int>::max()
-        )
-        {
+        ) {
             throw std::invalid_argument{"Maximum steps must be positive."};
         }
 
@@ -58,12 +52,10 @@ namespace
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
     using aura::app::Application;
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
         printUsage(argv[0]);
         return 1;
     }
@@ -72,29 +64,24 @@ int main(int argc, char** argv)
     std::optional<int> maxSteps;
     bool challengeScenario = false;
 
-    try
-    {
-        for (int index = 2; index < argc; ++index)
-        {
+    try {
+        for (int index = 2; index < argc; ++index) {
             const std::string option = argv[index];
 
             if (
                 option == "--challenge-scenario"
                 || option == "--replanning-scenario"
-            )
-            {
+            ) {
                 challengeScenario = true;
                 continue;
             }
 
-            if (option == "--seed" && index + 1 < argc)
-            {
+            if (option == "--seed" && index + 1 < argc) {
                 mazeSeed = parseSeed(argv[++index]);
                 continue;
             }
 
-            if (option == "--max-steps" && index + 1 < argc)
-            {
+            if (option == "--max-steps" && index + 1 < argc) {
                 maxSteps = parseMaxSteps(argv[++index]);
                 continue;
             }
@@ -103,9 +90,7 @@ int main(int argc, char** argv)
             printUsage(argv[0]);
             return 1;
         }
-    }
-    catch (const std::exception& error)
-    {
+    } catch (const std::exception &error) {
         std::cerr << error.what() << std::endl;
         printUsage(argv[0]);
         return 1;
@@ -113,14 +98,11 @@ int main(int argc, char** argv)
 
     std::unique_ptr<aura::scenario::Scenario> scenario;
 
-    if (challengeScenario)
-    {
+    if (challengeScenario) {
         scenario = std::make_unique<aura::scenario::PeriodicMoveToBlock>(
             CHALLENGE_MOVE_TO_INTERVAL
         );
-    }
-    else
-    {
+    } else {
         scenario = std::make_unique<aura::scenario::Scenario>();
     }
 

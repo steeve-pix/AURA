@@ -5,75 +5,61 @@
 #include <stdexcept>
 #include <string>
 
-namespace
-{
+namespace {
     // These helpers describe the lexical rules expected by the protocol's string fields.
     // Keeping them local prevents parser details from becoming part of the public bridge API.
-    bool isJsonWhitespace(char character)
-    {
+    bool isJsonWhitespace(char character) {
         return character == ' ' || character == '\t' ||
-            character == '\n' || character == '\r';
+               character == '\n' || character == '\r';
     }
 
-    std::string_view readStringField(std::string_view json, std::string_view key)
-    {
+    std::string_view readStringField(std::string_view json, std::string_view key) {
         const std::size_t keyPosition = json.find(key);
-        if (keyPosition == std::string_view::npos)
-        {
+        if (keyPosition == std::string_view::npos) {
             throw std::invalid_argument("Missing JSON field");
         }
 
         std::size_t position = keyPosition + key.size();
-        while (position < json.size() && isJsonWhitespace(json[position]))
-        {
+        while (position < json.size() && isJsonWhitespace(json[position])) {
             ++position;
         }
 
-        if (position >= json.size() || json[position] != ':')
-        {
+        if (position >= json.size() || json[position] != ':') {
             throw std::invalid_argument("Expected colon after JSON field");
         }
 
         ++position;
-        while (position < json.size() && isJsonWhitespace(json[position]))
-        {
+        while (position < json.size() && isJsonWhitespace(json[position])) {
             ++position;
         }
 
         // ASCII 34 is used here to make the opening and closing delimiter checks identical.
-        if (position >= json.size() || json[position] != static_cast<char>(34))
-        {
+        if (position >= json.size() || json[position] != static_cast<char>(34)) {
             throw std::invalid_argument("Expected a JSON string value");
         }
 
         const std::size_t valueStart = position + 1;
         const std::size_t valueEnd = json.find(static_cast<char>(34), valueStart);
-        if (valueEnd == std::string_view::npos)
-        {
+        if (valueEnd == std::string_view::npos) {
             throw std::invalid_argument("Unterminated JSON string value");
         }
 
         return json.substr(valueStart, valueEnd - valueStart);
     }
 
-    aura::bridge::Direction parseDirection(std::string_view value)
-    {
+    aura::bridge::Direction parseDirection(std::string_view value) {
         using aura::bridge::Direction;
 
-        if (value == "north")
-        {
+        if (value == "north") {
             return Direction::North;
         }
-        if (value == "east")
-        {
+        if (value == "east") {
             return Direction::East;
         }
-        if (value == "south")
-        {
+        if (value == "south") {
             return Direction::South;
         }
-        if (value == "west")
-        {
+        if (value == "west") {
             return Direction::West;
         }
 
@@ -81,24 +67,20 @@ namespace
     }
 }
 
-namespace aura::bridge
-{
-    Action parseAction(std::string_view text)
-    {
+namespace aura::bridge {
+    Action parseAction(std::string_view text) {
         const auto json = nlohmann::json::parse(text);
 
         const std::string action =
-            json.at("action").get<std::string>();
+                json.at("action").get<std::string>();
 
-        if (action == "idle")
-        {
+        if (action == "idle") {
             return {ActionType::Idle, Direction::North, {0, 0}};
         }
 
-        if (action == "move")
-        {
+        if (action == "move") {
             const std::string direction =
-                json.at("direction").get<std::string>();
+                    json.at("direction").get<std::string>();
 
             if (direction == "north")
                 return {ActionType::Move, Direction::North, {0, 0}};
@@ -115,9 +97,8 @@ namespace aura::bridge
             throw std::runtime_error("Unknown movement direction");
         }
 
-        if (action == "move_to")
-        {
-            const auto& target = json.at("target");
+        if (action == "move_to") {
+            const auto &target = json.at("target");
 
             return {
                 ActionType::MoveTo,
@@ -129,9 +110,8 @@ namespace aura::bridge
             };
         }
 
-        if (action == "investigate")
-        {
-            const auto& target = json.at("target");
+        if (action == "investigate") {
+            const auto &target = json.at("target");
 
             return {
                 ActionType::Investigate,

@@ -4,8 +4,7 @@
 
 #include "bridge/BrainResponse.hpp"
 
-namespace aura::bridge
-{
+namespace aura::bridge {
     /// Parses one brain response containing an action and optional debug metadata.
     ///
     /// Invalid JSON or malformed action fields are propagated as parsing exceptions.

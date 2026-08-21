@@ -11,9 +11,9 @@
 #include "world/Position.hpp"
 #include "navigation/Pathfinder.hpp"
 #include "scenario/Scenario.hpp"
+#include "sensors/RangeSensor.hpp"
 
-int main()
-{
+int main() {
     int failures = 0;
 
     aura::world::World world{10, 5};
@@ -21,50 +21,42 @@ int main()
 
     aura::agent::Agent agent(aura::world::Position{2, 2});
 
-    if (!world.isInside({0, 0}))
-    {
+    if (!world.isInside({0, 0})) {
         std::cout << "FAIL: (0,0) should be inside the world\n";
         ++failures;
     }
-    if (!world.isInside({9, 4}))
-    {
+    if (!world.isInside({9, 4})) {
         std::cout << "FAIL: (9,4) should be inside the world\n";
         ++failures;
     }
 
-    if (world.isInside({10, 4}))
-    {
+    if (world.isInside({10, 4})) {
         std::cout << "FAIL: (10,4) should be outside the world\n";
         ++failures;
     }
 
-    if (world.isInside({9, 5}))
-    {
+    if (world.isInside({9, 5})) {
         std::cout << "FAIL: (9,5) should be outside the world\n";
         ++failures;
     }
 
-    if (world.isInside({-1, 0}))
-    {
+    if (world.isInside({-1, 0})) {
         std::cout << "FAIL: (-1,0) should be outside the world\n";
         ++failures;
     }
 
-    if (!agent.moveBy({1, 0}, world))
-    {
+    if (!agent.moveBy({1, 0}, world)) {
         std::cout << "FAIL: valid movement should succeed\n";
         ++failures;
     }
 
-    if (!(agent.position() == aura::world::Position{3, 2}))
-    {
+    if (!(agent.position() == aura::world::Position{3, 2})) {
         std::cout << "FAIL: agent should move to (3,2)\n";
         ++failures;
     }
 
     static_cast<void>(agent.moveBy({1, 0}, world));
-    if (agent.energy() != 98)
-    {
+    if (agent.energy() != 98) {
         std::cout << "FAIL: successful movement should cost 1 energy\n";
         ++failures;
     }
@@ -73,20 +65,17 @@ int main()
 
     const int energyBefore = blockedAgent.energy();
 
-    if (blockedAgent.moveBy({-1, 0}, world))
-    {
+    if (blockedAgent.moveBy({-1, 0}, world)) {
         std::cout << "FAIL: movement into wall should fail\n";
         ++failures;
     }
 
-    if (!(blockedAgent.position() == aura::world::Position{1, 1}))
-    {
+    if (!(blockedAgent.position() == aura::world::Position{1, 1})) {
         std::cout << "FAIL: blocked movement should not change position\n";
         ++failures;
     }
 
-    if (blockedAgent.energy() != energyBefore)
-    {
+    if (blockedAgent.energy() != energyBefore) {
         std::cout << "FAIL: blocked movement should not cost energy\n";
         ++failures;
     }
@@ -95,8 +84,7 @@ int main()
 
     static_cast<void>(blockedAgent.moveBy({1, 0}, world));
 
-    if (blockedAgent.energy() != blockedAgent.maxEnergy())
-    {
+    if (blockedAgent.energy() != blockedAgent.maxEnergy()) {
         std::cout << "FAIL: battery should restore maximum energy\n";
         ++failures;
     }
@@ -112,16 +100,47 @@ int main()
     pathWorld.setCell({3, 3}, aura::world::CellType::Empty);
 
     const auto path =
-        aura::navigation::findPath(
-            pathWorld,
-            {1, 2},
-            {5, 2}
-        );
+            aura::navigation::findPath(
+                pathWorld,
+                {1, 2},
+                {5, 2}
+            );
 
     if (!path.empty() &&
-        path.back() != aura::world::Position{5, 2})
-    {
+        path.back() != aura::world::Position{5, 2}) {
         std::cout << "FAIL: path should end at requested goal\n";
+        ++failures;
+    }
+
+    aura::world::World sensorWorld{7, 5};
+    sensorWorld.addBoundaryWalls();
+
+    aura::agent::Agent sensorAgent{{1, 2}};
+
+    const aura::world::Position batteryPosition{5, 2};
+
+    sensorWorld.setCell(batteryPosition, aura::world::CellType::Battery);
+
+    aura::sensors::RangeSensor sensor{6};
+
+    const auto sensorObservation =
+            sensor.observe(sensorWorld, sensorAgent);
+
+    const auto batteryObject =
+            std::ranges::find_if(sensorObservation.objects,
+                                 [batteryPosition](const auto &object) {
+                                     return object.position == batteryPosition;
+                                 });
+
+    const auto expectedPath =
+            aura::navigation::findPath(sensorWorld, sensorAgent.position(), batteryPosition);
+
+    if (batteryObject == sensorObservation.objects.end() || expectedPath.empty() || !batteryObject->nextStep.has_value()
+        || batteryObject->nextStep.value() != expectedPath.front()) {
+        std::cout
+                << "FAIL: visible object should expose "
+                << "the first BFS route step\n";
+
         ++failures;
     }
 
@@ -131,25 +150,20 @@ int main()
 
     int batteryCount = 0;
 
-    for (int y = 0; y < mazeWorld.height(); ++y)
-    {
-        for (int x = 0; x < mazeWorld.width(); ++x)
-        {
+    for (int y = 0; y < mazeWorld.height(); ++y) {
+        for (int x = 0; x < mazeWorld.width(); ++x) {
             const aura::world::Position position{x, y};
 
-            if (mazeWorld.cellAt(position) == aura::world::CellType::Battery)
-            {
+            if (mazeWorld.cellAt(position) == aura::world::CellType::Battery) {
                 ++batteryCount;
             }
 
             if (position == aura::world::Position{1, 1} ||
-                !mazeWorld.canEnter(position))
-            {
+                !mazeWorld.canEnter(position)) {
                 continue;
             }
 
-            if (aura::navigation::findPath(mazeWorld, {1, 1}, position).empty())
-            {
+            if (aura::navigation::findPath(mazeWorld, {1, 1}, position).empty()) {
                 std::cout << "FAIL: maze passages should connect to the start\n";
                 ++failures;
                 break;
@@ -157,8 +171,7 @@ int main()
         }
     }
 
-    if (batteryCount != 3)
-    {
+    if (batteryCount != 3) {
         std::cout << "FAIL: maze should contain the requested battery count\n";
         ++failures;
     }
@@ -175,43 +188,36 @@ int main()
 
     challenge.beforeAction(scenarioWorld, scenarioAgent, moveToAction);
 
-    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall)
-    {
+    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall) {
         std::cout << "FAIL: challenge should leave the first move_to unchanged\n";
         ++failures;
     }
 
     challenge.beforeAction(scenarioWorld, scenarioAgent, moveToAction);
 
-    if (scenarioWorld.cellAt({3, 3}) != aura::world::CellType::Wall)
-    {
+    if (scenarioWorld.cellAt({3, 3}) != aura::world::CellType::Wall) {
         std::cout << "FAIL: challenge should block the configured move_to interval\n";
         ++failures;
     }
 
     challenge.afterAction(scenarioWorld, scenarioAgent, moveToAction);
 
-    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall)
-    {
+    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall) {
         std::cout << "FAIL: challenge should restore its temporary obstacle\n";
         ++failures;
     }
 
-    for (std::uint32_t seed = 2001; seed <= 2012; ++seed)
-    {
+    for (std::uint32_t seed = 2001; seed <= 2012; ++seed) {
         aura::world::World safeEnergyWorld{42, 21};
         aura::world::MazeGenerator safeEnergyGenerator{seed};
         safeEnergyGenerator.generate(safeEnergyWorld, 12, 50, 30);
         int shortestBatteryPath = safeEnergyWorld.width() * safeEnergyWorld.height();
 
-        for (int x = 0; x < safeEnergyWorld.width(); ++x)
-        {
-            for (int y = 0; y < safeEnergyWorld.height(); ++y)
-            {
+        for (int x = 0; x < safeEnergyWorld.width(); ++x) {
+            for (int y = 0; y < safeEnergyWorld.height(); ++y) {
                 const aura::world::Position target{x, y};
 
-                if (safeEnergyWorld.cellAt(target) != aura::world::CellType::Battery)
-                {
+                if (safeEnergyWorld.cellAt(target) != aura::world::CellType::Battery) {
                     continue;
                 }
 
@@ -227,13 +233,16 @@ int main()
             }
         }
 
-        if (shortestBatteryPath > 30)
-        {
+        if (shortestBatteryPath > 30) {
             std::cout << "FAIL: configured seed should have an energy-safe battery\n";
             ++failures;
             break;
         }
     }
+
+    aura::sensors::RangeObservation nearby;
+
+    nearby.objects.push_back({aura::world::CellType::Battery, {8, 3}, true, 6, aura::world::Position{3, 2}});
 
     const aura::bridge::Observation observation{
         {2, 2},
@@ -244,7 +253,7 @@ int main()
             aura::world::CellType::Empty,
             aura::world::CellType::Empty
         },
-        {},
+        nearby,
         3,
         aura::bridge::LastAction{
             aura::bridge::ActionType::MoveTo,
@@ -257,17 +266,19 @@ int main()
     };
 
     const auto serialized =
-        aura::bridge::serializedObservation(observation);
+            aura::bridge::serializedObservation(observation);
 
-    if (serialized.find("\"last_action\":") == std::string::npos ||
-        serialized.find("\"type\":\"move_to\"") == std::string::npos ||
-        serialized.find("\"target\":[8,3]") == std::string::npos ||
-        serialized.find("\"succeeded\":true") == std::string::npos ||
-        serialized.find("\"result\":\"completed\"") == std::string::npos ||
-        serialized.find("\"path_length_before\":1") == std::string::npos ||
-        serialized.find("\"path_length_after\":0") == std::string::npos)
-    {
-        std::cout << "FAIL: observation should include move_to route progress\n";
+    if (serialized.find(R"("last_action":)") == std::string::npos ||
+        serialized.find(R"("type":"move_to")") == std::string::npos ||
+        serialized.find(R"("target":[8,3])") == std::string::npos ||
+        serialized.find(R"("succeeded":true)") == std::string::npos ||
+        serialized.find(R"("next_step":[3,2])") == std::string::npos ||
+        serialized.find(R"("result":"completed")") == std::string::npos ||
+        serialized.find(R"("path_length_before":1)") == std::string::npos ||
+        serialized.find(R"("path_length_after":0)") == std::string::npos) {
+        std::cout << "FAIL: observation should include"
+                << " the visible object's next BFS step\n";
+        
         ++failures;
     }
 
@@ -302,14 +313,12 @@ int main()
         response.debug.planFailures != 3 ||
         response.debug.replans != 2 ||
         response.debug.failedTargets != 4 ||
-        response.debug.bodyActionFailures != 1)
-    {
+        response.debug.bodyActionFailures != 1) {
         std::cout << "FAIL: brain response should expose active plan debug state\n";
         ++failures;
     }
 
-    if (failures == 0)
-    {
+    if (failures == 0) {
         std::cout << "All tests passed\n";
         return 0;
     }

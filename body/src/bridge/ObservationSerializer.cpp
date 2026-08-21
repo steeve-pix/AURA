@@ -4,26 +4,22 @@
 
 #include <nlohmann/json.hpp>
 
-namespace aura::bridge
-{
-    std::string serializedObservation(const Observation& observation)
-    {
+namespace aura::bridge {
+    std::string serializedObservation(const Observation &observation) {
         nlohmann::json json;
 
         // Protocol names are centralized here so enum spelling never leaks into JSON.
         const auto actionTypeName =
-            [](ActionType type)
-        {
-            switch (type)
-            {
-            case ActionType::Idle:
-                return "idle";
-            case ActionType::Move:
-                return "move";
-            case ActionType::MoveTo:
-                return "move_to";
-            case ActionType::Investigate:
-                return "investigate";
+                [](ActionType type) {
+            switch (type) {
+                case ActionType::Idle:
+                    return "idle";
+                case ActionType::Move:
+                    return "move";
+                case ActionType::MoveTo:
+                    return "move_to";
+                case ActionType::Investigate:
+                    return "investigate";
             }
 
             return "unknown";
@@ -46,9 +42,8 @@ namespace aura::bridge
         json["visible_cells"] = nlohmann::json::array();
         json["nearby_objects"] = nlohmann::json::array();
 
-        if (observation.lastAction.has_value())
-        {
-            const auto& lastAction = observation.lastAction.value();
+        if (observation.lastAction.has_value()) {
+            const auto &lastAction = observation.lastAction.value();
 
             json["last_action"] = {
                 {"type", actionTypeName(lastAction.type)},
@@ -56,46 +51,50 @@ namespace aura::bridge
                 {"result", lastAction.result}
             };
 
-            if (lastAction.target.has_value())
-            {
-                const auto& target = lastAction.target.value();
+            if (lastAction.target.has_value()) {
+                const auto &target = lastAction.target.value();
                 json["last_action"]["target"] = {target.x, target.y};
             }
 
-            if (lastAction.pathLengthBefore.has_value())
-            {
+            if (lastAction.pathLengthBefore.has_value()) {
                 json["last_action"]["path_length_before"] =
-                    lastAction.pathLengthBefore.value();
+                        lastAction.pathLengthBefore.value();
             }
 
-            if (lastAction.pathLengthAfter.has_value())
-            {
+            if (lastAction.pathLengthAfter.has_value()) {
                 json["last_action"]["path_length_after"] =
-                    lastAction.pathLengthAfter.value();
+                        lastAction.pathLengthAfter.value();
             }
-        }
-        else
-        {
+        } else {
             // An explicit null distinguishes the first cycle from an omitted field.
             json["last_action"] = nullptr;
         }
 
-        for (const auto& cell : observation.nearby.cells)
-        {
+        for (const auto &cell: observation.nearby.cells) {
             json["visible_cells"].push_back({
                 {"type", aura::world::toString(cell.type)},
                 {"position", {cell.position.x, cell.position.y}}
             });
         }
 
-        for (const auto& object : observation.nearby.objects)
-        {
-            json["nearby_objects"].push_back({
+        for (const auto &object: observation.nearby.objects) {
+            nlohmann::json objectJson = {
                 {"type", aura::world::toString(object.type)},
                 {"position", {object.position.x, object.position.y}},
                 {"reachable", object.reachable},
-                {"path_length", object.pathLength}
-            });
+                {"path_length", object.pathLength},
+                {"next_step", nullptr}
+            };
+
+            if (object.nextStep.has_value()) {
+                const auto &nextStep = object.nextStep.value();
+
+                objectJson["next_step"] = {
+                    nextStep.x, nextStep.y
+                };
+            }
+
+            json["nearby_objects"].push_back(objectJson);
         }
 
         return json.dump();

@@ -32,21 +32,49 @@ Example:
   "south": "Empty",
   "west": "Empty",
   "visible_cells": [
-    {"position": [3, 2], "type": "Empty"},
-    {"position": [4, 2], "type": "Empty"},
-    {"position": [5, 2], "type": "Wall"}
+    {
+      "position": [
+        3,
+        2
+      ],
+      "type": "Empty"
+    },
+    {
+      "position": [
+        4,
+        2
+      ],
+      "type": "Empty"
+    },
+    {
+      "position": [
+        5,
+        2
+      ],
+      "type": "Wall"
+    }
   ],
   "nearby_objects": [
     {
-      "position": [6, 2],
       "type": "Battery",
+      "position": [
+        20,
+        10
+      ],
       "reachable": true,
-      "path_length": 4
+      "path_length": 12,
+      "next_step": [
+        6,
+        5
+      ]
     }
   ],
   "last_action": {
     "type": "move_to",
-    "target": [6, 2],
+    "target": [
+      6,
+      2
+    ],
     "succeeded": true,
     "result": "completed",
     "path_length_before": 4,
@@ -65,13 +93,17 @@ pathfinding result for each visible object. An unreachable object has `reachable
 has executed an action. Its `result` is one of `completed`, `failed`, or `unreachable`. A `move_to` result includes the
 requested target so the brain can associate a failure with the correct remembered location. Successful `move_to`
 feedback also reports the shortest BFS route length before and after the physical step. Reaching the target reports
-`path_length_after: 0`; non-navigation actions omit both path-length fields.
+`path_length_after: 0`; non-navigation actions omit both path-length fields. `next_step` is the first cell of the
+current BFS route. It is null when the target is unreachable or no movement if required.
 
 ```json
 {
   "last_action": {
     "type": "move_to",
-    "target": [8, 3],
+    "target": [
+      8,
+      3
+    ],
     "succeeded": false,
     "result": "unreachable"
   }
@@ -107,7 +139,13 @@ Example:
 The `move_to` action asks the C++ body to navigate to a target position. The target uses the `[x, y]` coordinate format.
 
 ```json
-{"action":"move_to","target":[7,3]}
+{
+  "action": "move_to",
+  "target": [
+    7,
+    3
+  ]
+}
 ```
 
 ### Investigate a target
@@ -115,7 +153,13 @@ The `move_to` action asks the C++ body to navigate to a target position. The tar
 `investigate` asks the body to move toward a target selected for exploration. It also uses an `[x, y]` target.
 
 ```json
-{"action":"investigate","target":[7,3]}
+{
+  "action": "investigate",
+  "target": [
+    7,
+    3
+  ]
+}
 ```
 
 ### Optional debug data
@@ -126,18 +170,44 @@ The C++ body uses this only for visualization; it does not affect physical simul
 ```json
 {
   "action": "move_to",
-  "target": [7, 3],
+  "target": [
+    7,
+    3
+  ],
   "debug": {
     "goal": "recharge",
-    "goal_scores": {"recharge": 80.0, "explore": 20.0},
-    "known_cells": [[1, 1], [2, 1]],
-    "visited_cells": [[1, 1]],
+    "goal_scores": {
+      "recharge": 80.0,
+      "explore": 20.0
+    },
+    "known_cells": [
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "visited_cells": [
+      [
+        1,
+        1
+      ]
+    ],
     "plan": {
       "goal": "recharge",
       "current_step": 0,
       "step_count": 1,
       "failed": false,
-      "step": {"type": "move_to", "target": [7, 3]}
+      "step": {
+        "type": "move_to",
+        "target": [
+          7,
+          3
+        ]
+      }
     }
   }
 }

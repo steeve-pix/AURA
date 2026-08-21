@@ -3,14 +3,12 @@
 #include "world/Position.hpp"
 #include "world/World.hpp"
 
-namespace aura::agent
-{
+namespace aura::agent {
     /// Holds AURA's position and energy in the simulated world.
     ///
     /// Agent validates physical movement and applies cell interactions. It does not
     /// choose destinations; strategic decisions belong to the Python brain.
-    class Agent
-    {
+    class Agent {
     public:
         /// Places AURA at `position` with the requested initial energy capacity.
         explicit Agent(
@@ -26,7 +24,7 @@ namespace aura::agent
         ///
         /// The move fails without changing state when the offset is invalid, the
         /// destination is blocked or outside the world, or no energy remains.
-        [[nodiscard]] bool moveBy(world::Position offset, const world::World& world);
+        [[nodiscard]] bool moveBy(world::Position offset, const world::World &world);
 
         /// Returns the movement energy currently available.
         [[nodiscard]] int energy() const;
@@ -40,6 +38,6 @@ namespace aura::agent
         int maxEnergy_;
 
         /// Applies any effect associated with the cell AURA currently occupies.
-        void interactWithCell(const world::World& world);
+        void interactWithCell(const world::World &world);
     };
 }

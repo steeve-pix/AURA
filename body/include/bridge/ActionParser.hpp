@@ -4,8 +4,7 @@
 
 #include "bridge/Action.hpp"
 
-namespace aura::bridge
-{
+namespace aura::bridge {
     /// Parses and validates one JSON action emitted by the Python brain.
     ///
     /// Missing fields, malformed JSON, and unsupported action values are reported
