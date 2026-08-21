@@ -118,7 +118,8 @@ namespace aura::app {
             }
 
             const std::string title =
-                    "AURA | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " + exploreScore + " | Energy: " +
+                    "AURA | Seed | " + std::to_string(mazeSeed_) + " | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " +
+                    exploreScore + " | Energy: " +
                     std::to_string(energy) + " | Plan: " + planLabel
                     + " | Failures P/R/T/B: "
                     + std::to_string(debug.planFailures) + "/"

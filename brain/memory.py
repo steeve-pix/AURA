@@ -201,6 +201,22 @@ class Memory:
             None if target is None else (target[0], target[1])
         )
 
+        next_step_was_visited = None
+
+        if action["action"] == "move_to" and target_position is not None:
+            for visible_object in observation.get("nearby_objects", []):
+                if tuple(visible_object["position"]) != target_position:
+                    continue
+
+                next_step = visible_object.get("next_step")
+
+                if next_step is not None:
+                    next_step_position = (next_step[0], next_step[1])
+
+                    next_step_was_visited = self.visit_count(next_step_position) > 0
+
+                break
+
         current_position = tuple(observation["position"])
         memory_trust_before = None
 
@@ -224,14 +240,12 @@ class Memory:
             "energy_before": observation["energy"],
             "visited_before": set(self.visit_counts.keys()),
             "memory_trust_before": memory_trust_before,
+            "next_step_was_visited": next_step_was_visited,
         }
 
         return self.pending_experience
 
-    def finish_pending_experience(
-            self,
-            observation: dict,
-    ) -> Experience | None:
+    def finish_pending_experience(self,observation: dict) -> Experience | None:
         if self.pending_experience is None:
             return None
 
@@ -247,13 +261,7 @@ class Memory:
 
         reported_target = last_action.get("target")
 
-        if (
-                pending["target"] is not None
-                and (
-                reported_target is None
-                or tuple(reported_target) != pending["target"]
-        )
-        ):
+        if pending["target"] is not None and (reported_target is None or tuple(reported_target) != pending["target"]):
             return None
 
         outcome = detect_outcome(pending, observation)
@@ -290,6 +298,7 @@ class Memory:
             result=result,
             path_length_before=path_length_before,
             memory_trust_before=pending["memory_trust_before"],
+            next_step_was_visited=pending["next_step_was_visited"],
             visited_new_cell=visited_new_cell,
             navigation_progress=navigation_progress,
             outcome=outcome,

@@ -94,7 +94,8 @@ def main() -> None:
     value_model = None
 
     if model_path.exists():
-        value_model = load_model(model_path)
+        # value_model = load_model(model_path)
+        value_model = None
 
     value_diagnostics = RunningValueDiagnostics()
     live_completed_move_to = CompletedMoveToDiagnostics()
@@ -282,6 +283,7 @@ def main() -> None:
                 position=pending["position_before"],
                 path_length=None,
                 memory_trust=pending["memory_trust_before"],
+                next_step_was_visited=pending["next_step_was_visited"]
             )
 
             feature_vector = encode_value_input(value_input)
