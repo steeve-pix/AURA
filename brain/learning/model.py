@@ -6,7 +6,7 @@ class ValueModel(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.network = nn.Sequential(
-            nn.Linear(12, 16),
+            nn.Linear(13, 16),
             nn.ReLU(),
             nn.Linear(16, 1),
         )

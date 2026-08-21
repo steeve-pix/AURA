@@ -30,6 +30,7 @@ FEATURE_NAMES = (
     "target_dy",
     "path_length",
     "memory_trust",
+    "next_step_was_visited",
 )
 
 FEATURE_GROUPS = {
@@ -64,6 +65,7 @@ class ValueInput:
     position: tuple[int, int]
     path_length: int | None
     memory_trust: float | None
+    next_step_was_visited: bool | None
 
 
 def encode_energy(value_input: ValueInput) -> float:
@@ -111,6 +113,12 @@ def encode_memory_trust(value_input: ValueInput) -> float:
     return value_input.memory_trust
 
 
+def encode_next_step_was_visited(value_input: ValueInput) -> float:
+    if value_input.next_step_was_visited is None:
+        return 0.0
+    return 1.0 if value_input.next_step_was_visited else 0.0
+
+
 def encode_value_input(value_input: ValueInput) -> list[float]:
     energy = encode_energy(value_input)
     goal = encode_goal(value_input)
@@ -121,8 +129,19 @@ def encode_value_input(value_input: ValueInput) -> list[float]:
 
     path_length = encode_path_length(value_input)
     memory_trust = encode_memory_trust(value_input)
+    next_step_was_visited = encode_next_step_was_visited(value_input)
 
-    return [energy, *goal, *action, has_target, dx, dy, path_length, memory_trust]
+    return [
+        energy,  # 0.0 <= energy <= 1.0
+        *goal,  # [0, 0, 1] | [0, 1, 0] | [1, 0, 0]
+        *action,  # [0, 0, 1] | [0, 1, 0] | [1, 0, 0]
+        has_target,  # 0 or 1
+        dx,  # 0.0 <= dx <= 1.0
+        dy,  # 0.0 <= dy <= 1.0
+        path_length,  # 0.0 <= path_length <= 1.0
+        memory_trust,  # 0.0 <= memory_trust <= 1.0
+        next_step_was_visited  # 0.0 <= next_step_was_visited <= 1.0
+    ]
 
 
 def encode_experience(experience: Experience) -> list[float]:
@@ -133,7 +152,8 @@ def encode_experience(experience: Experience) -> list[float]:
         target=experience.target,
         position=experience.position_before,
         path_length=experience.path_length_before,
-        memory_trust=experience.memory_trust_before
+        memory_trust=experience.memory_trust_before,
+        next_step_was_visited=experience.next_step_was_visited
     )
 
     return encode_value_input(value_input)

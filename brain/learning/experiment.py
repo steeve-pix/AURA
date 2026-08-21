@@ -37,7 +37,8 @@ DEFAULT_ABLATIONS = (
     "has_target",
     "target_offset",
     "path_length",
-    "memory_trust"
+    "memory_trust",
+    "next_step_was_visited",
 )
 
 
@@ -219,7 +220,7 @@ def run_experiment(
         sample_weights=sample_weights,
     )
 
-    model_path = Path("data/models/value_model.pt")
+    model_path = Path("data/models/value_model_1.pt")
     save_model(model, model_path)
     print(f"Model saved at {model_path}")
 
