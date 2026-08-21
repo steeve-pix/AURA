@@ -1,8 +1,14 @@
-from brain import memory
-
 ENERGY_RESERVE = 5
 RECHARGE_CONSIDERATION_THRESHOLD = 70
 HISTORICAL_BATTERY_BONUS = 0.15
+INVESTIGATION_BASE_SCORE = 0.75
+RECHARGE_PLAN_INTERRUPT_SCORE = 0.70
+GOAL_SWITCH_MARGIN = 0.1
+CRITICAL_ENERGY = 8
+
+
+def recharge_is_urgent(observation) -> bool:
+    return observation["energy"] <= CRITICAL_ENERGY or recharge_score(observation) >= RECHARGE_PLAN_INTERRUPT_SCORE
 
 
 def recharge_score(observation):
@@ -43,7 +49,7 @@ def investigation_score(observation, memory):
     if not reachable_unknowns:
         return 0.0
 
-    score = 0.65
+    score = INVESTIGATION_BASE_SCORE
 
     if any(
             memory.previous_investigation_result(obj["position"]) == "Battery"
@@ -60,10 +66,6 @@ def goal_scores(observation, memory):
         "explore": explore_score(observation, memory),
         "investigate": investigation_score(observation, memory),
     }
-
-
-GOAL_SWITCH_MARGIN = 0.1
-CRITICAL_ENERGY = 8
 
 
 def choose_goal(observation, memory):
@@ -84,6 +86,7 @@ def choose_goal(observation, memory):
         return "recharge"
 
     scores = goal_scores(observation, memory)
+
     best_goal = max(scores, key=lambda goal: scores[goal])
     current_goal = memory.active_goal
 
@@ -123,25 +126,15 @@ def goal_completed(goal, observation, memory):
 
     if goal == "investigate":
         plan = memory.active_plan
-        target = None
 
         if plan is not None and plan.goal == "investigate":
-            target = plan.goal_target
+            return plan.is_complete() or plan.has_failed()
 
-        if target is None:
-            return not any(
-                obj["type"] == "Unknown"
-                and not memory.is_failed_target(tuple(obj["position"]))
-                for obj in observation["nearby_objects"]
-            )
-
-        target_is_still_unknown = any(
+        return not any(
             obj["type"] == "Unknown"
-            and tuple(obj["position"]) == target
+            and not memory.is_failed_target(tuple(obj["position"]))
             for obj in observation["nearby_objects"]
         )
-
-        return not target_is_still_unknown
 
     if goal == "explore":
         return False

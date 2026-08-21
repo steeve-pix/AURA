@@ -1,6 +1,8 @@
 # AURA
 
-**AURA (Autonomous Unified Reasoning Agent)** is a local, embodied autonomous-agent project. A Python brain observes and remembers a partially visible world, chooses goals, and builds plans. A C++ body owns the 2D simulation, sensing, energy, pathfinding, action execution, and OpenGL visualization.
+**AURA (Autonomous Unified Reasoning Agent)** is a local, embodied autonomous-agent project. A Python brain observes and
+remembers a partially visible world, chooses goals, and builds plans. A C++ body owns the 2D simulation, sensing,
+energy, pathfinding, action execution, and OpenGL visualization.
 
 The project deliberately uses understandable, deterministic algorithms rather than hiding its behavior behind an LLM.
 
@@ -20,7 +22,8 @@ v0.2.0 moves AURA beyond the original recharge-only milestone. AURA now supports
 - failed-target avoidance and replanning instead of repeatedly choosing impossible destinations;
 - developer visualization of goals, known/visited cells, paths, targets, and the active plan.
 
-Active plans are intentionally runtime state and are not persisted. Durable knowledge is saved; an interrupted process chooses a fresh plan from that knowledge after restart.
+Active plans are intentionally runtime state and are not persisted. Durable knowledge is saved; an interrupted process
+chooses a fresh plan from that knowledge after restart.
 
 ## Architecture
 
@@ -51,7 +54,9 @@ Active plans are intentionally runtime state and are not persisted. Durable know
                     one physical step/tick
 ```
 
-Python decides **what AURA should do**. C++ determines **whether and how the action physically happens**. Every action outcome returns in the next observation, allowing the brain to advance, fail, cancel, or replace a plan using physical evidence.
+Python decides **what AURA should do**. C++ determines **whether and how the action physically happens**. Every action
+outcome returns in the next observation, allowing the brain to advance, fail, cancel, or replace a plan using physical
+evidence.
 
 ## Autonomous loop
 
@@ -79,7 +84,8 @@ goal: investigate
   2. investigate the Unknown target
 ```
 
-The movement step completes only when AURA actually reaches its target. The investigation step completes only after a successful matching action result.
+The movement step completes only when AURA actually reaches its target. The investigation step completes only after a
+successful matching action result.
 
 A recharge plan contains one `move_to` step. Recharging itself remains a physical battery-cell interaction owned by C++.
 
@@ -91,7 +97,8 @@ Each generated world reports a stable identity such as:
 maze:1337:42x21:b12:u20
 ```
 
-The brain converts this identity into a dedicated JSON file under `data/`. A different seed or world configuration receives a different file.
+The brain converts this identity into a dedicated JSON file under `data/`. A different seed or world configuration
+receives a different file.
 
 Saved memory keeps distinct kinds of knowledge separate:
 
@@ -118,9 +125,15 @@ The loader still accepts the earlier battery-only format for migration.
 
 ## World and controls
 
-The current application generates a deterministic 42×21 maze using seed `1337`, with 12 Batteries and 20 Unknowns. AURA starts at `(1, 1)` with 100 energy. Each successful cardinal movement costs one energy; entering a Battery cell restores full energy. Investigating an adjacent Unknown currently reveals a Battery.
+The current application generates a 42×21 maze with 12 Batteries and 50 Unknowns. The seed defaults to `1337` and can be
+changed at runtime. AURA starts at `(1, 1)` with 40 of 100 energy, and generation guarantees that at least one Battery
+is no more than 30 path steps from the spawn. Each successful cardinal movement costs one energy; entering a Battery
+cell restores full energy. Investigations draw from a seeded, shuffled pool containing approximately 70% Empty outcomes
+and 30% Battery outcomes, rounded to whole cells. This prevents extreme random distributions while keeping the reveal
+order unpredictable and reproducible.
 
-The OpenGL window displays the maze, AURA, sensor coverage, remembered/visited cells, current route, target, goal scores, energy, and active-plan summary. Close the window to stop the simulation.
+The OpenGL window displays the maze, AURA, sensor coverage, remembered/visited cells, current route, target, goal
+scores, energy, and active-plan summary. Close the window to stop the simulation.
 
 ## Build and run
 
@@ -144,6 +157,38 @@ Run from the repository root, passing the repository path as the Python brain's 
 ./build/body/aura_body "$PWD"
 ```
 
+Select a maze seed, stop automatically after a fixed number of simulation steps, and enable the deterministic challenge
+scenario with:
+
+```bash
+./build/body/aura_body "$PWD" \
+  --seed 2001 \
+  --max-steps 600 \
+  --challenge-scenario
+```
+
+Challenge mode temporarily blocks every eighth `move_to` target immediately before the body executes it, then restores
+the cell after the failed action is recorded. The challenge therefore creates real `unreachable` feedback without
+accumulating Walls or permanently changing maze connectivity. Normal runs are unchanged. The seed, energy configuration,
+investigation distribution, and scenario name are included in the world identity, so incompatible runs do not append to
+the same memory or experience file.
+
+Collect the default eight training seeds (`2001`–`2008`) and four held-out test seeds (`2009`–`2012`) with:
+
+```bash
+./.venv/bin/python -m brain.learning.collect
+```
+
+Each seed runs for 600 simulation steps and writes its own JSONL experience file. After collection, train only when the
+eight training files contain at least 100 failed actions and 300 investigation actions:
+
+```bash
+./.venv/bin/python -m brain.learning.experiment
+```
+
+The experiment trains on complete training-seed files and evaluates on complete held-out seed files. Plan experiences
+remain excluded from the model dataset.
+
 ## Tests
 
 Run all Python tests:
@@ -159,7 +204,9 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-The suite covers goal selection, entity memory, persistence and legacy loading, per-world isolation, brain-process restart behavior, investigation/recharge plan lifecycles, interruption, failure, and replanning, as well as core C++ world, movement, navigation, serialization, and debug-response parsing.
+The suite covers goal selection, entity memory, persistence and legacy loading, per-world isolation, brain-process
+restart behavior, investigation/recharge plan lifecycles, interruption, failure, and replanning, as well as core C++
+world, movement, navigation, serialization, and debug-response parsing.
 
 ## Project structure
 
@@ -193,8 +240,12 @@ C++ launches one long-lived Python process and exchanges one JSON object per lin
 C++ observation → Python memory/goals/planning → Python action → C++ execution
 ```
 
-Actions currently include `idle`, cardinal `move`, `move_to`, and `investigate`. The optional `debug` response contains presentation-only goal, map, visit, and plan information; it never controls body physics. See [`bridge/protocol.md`](bridge/protocol.md) for field-level examples.
+Actions currently include `idle`, cardinal `move`, `move_to`, and `investigate`. The optional `debug` response contains
+presentation-only goal, map, visit, and plan information; it never controls body physics. See [
+`bridge/protocol.md`](bridge/protocol.md) for field-level examples.
 
 ## Scope
 
-AURA is a learning-focused autonomous-agent system, not a general intelligence product. Its current priorities are reliable embodiment, transparent reasoning, persistent world knowledge, debuggable planning, and a clean brain/body boundary. More advanced learning or language-model features should build on those foundations rather than replace them.
+AURA is a learning-focused autonomous-agent system, not a general intelligence product. Its current priorities are
+reliable embodiment, transparent reasoning, persistent world knowledge, debuggable planning, and a clean brain/body
+boundary. More advanced learning or language-model features should build on those foundations rather than replace them.

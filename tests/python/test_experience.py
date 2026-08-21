@@ -48,6 +48,81 @@ class ExperienceTests(unittest.TestCase):
         self.assertEqual(memory.pending_experience["goal"], "recharge")
         self.assertEqual(memory.pending_experience["target"], (5, 2))
 
+    def test_begin_records_trust_for_remembered_battery_target(self):
+        memory = Memory()
+        memory.step = 10
+        target = (5, 2)
+        memory.remember_battery(target)
+
+        memory.begin_experience(
+            goal="recharge",
+            action={"action": "move_to", "target": list(target)},
+            observation={"position": [2, 2], "energy": 90},
+        )
+
+        self.assertEqual(
+            memory.pending_experience["memory_trust_before"],
+            memory.battery_trust(target),
+        )
+
+    def test_completed_experience_keeps_battery_trust_from_before_action(self):
+        memory = Memory()
+        memory.step = 10
+        target = (5, 2)
+        memory.remember_battery(target)
+        expected_trust = memory.battery_trust(target)
+
+        memory.begin_experience(
+            goal="recharge",
+            action={"action": "move_to", "target": list(target)},
+            observation={"position": [2, 2], "energy": 90},
+        )
+        experience = memory.finish_pending_experience({
+            "position": [3, 2],
+            "energy": 89,
+            "last_action": {
+                "type": "move_to",
+                "target": list(target),
+                "succeeded": True,
+                "result": "completed",
+                "path_length_before": 8,
+                "path_length_after": 7,
+            },
+        })
+
+        self.assertEqual(
+            experience.memory_trust_before,
+            expected_trust,
+        )
+
+    def test_begin_has_no_memory_trust_for_non_battery_target(self):
+        memory = Memory()
+        target = (5, 2)
+        memory.remember_unknown(target)
+
+        memory.begin_experience(
+            goal="investigate",
+            action={"action": "move_to", "target": list(target)},
+            observation={"position": [2, 2], "energy": 90},
+        )
+
+        self.assertIsNone(
+            memory.pending_experience["memory_trust_before"]
+        )
+
+    def test_begin_has_no_memory_trust_without_target(self):
+        memory = Memory()
+
+        memory.begin_experience(
+            goal="explore",
+            action={"action": "move", "direction": "east"},
+            observation={"position": [2, 2], "energy": 90},
+        )
+
+        self.assertIsNone(
+            memory.pending_experience["memory_trust_before"]
+        )
+
     def test_experience_finishes_from_next_observation(self):
         memory = Memory()
         memory.step = 10
@@ -357,10 +432,11 @@ class ExperienceTests(unittest.TestCase):
             action={"action": "move_to", "target": [5, 2]},
             position_before=(2, 2),
             position_after=(3, 2),
-            path_length_before=8,
-            path_length_after=7,
+            path_length_before=12,
+            path_length_after=11,
         )
 
+        self.assertEqual(experience.path_length_before, 12)
         self.assertEqual(experience.navigation_progress, 1)
 
     def test_arrival_uses_zero_after_cost_to_record_progress(self):
@@ -393,6 +469,7 @@ class ExperienceTests(unittest.TestCase):
             position_after=(3, 2),
         )
 
+        self.assertIsNone(experience.path_length_before)
         self.assertIsNone(experience.navigation_progress)
 
 

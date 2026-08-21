@@ -6,7 +6,8 @@
 
 namespace aura::render {
     void GridRenderer::render(const world::World &world, const agent::Agent &agent, int sensorRadius,
-                              const std::vector<world::Position> &path, const world::Position *target, const bridge::BrainDebugState& debug) {
+                              const std::vector<world::Position> &path, const world::Position *target,
+                              const bridge::BrainDebugState &debug) {
         // OpenGL's visible area spans -1 to 1, so each grid cell consumes an equal
         // fraction of that two-unit width and height.
         const float cellWidth =
@@ -21,14 +22,14 @@ namespace aura::render {
         // because rendering does not own or reshape brain data.
         const auto containsPosition =
                 [](const auto &positions, world::Position position) {
-                    for (const auto &item : positions) {
-                        if (item == position) {
-                            return true;
-                        }
-                    }
+            for (const auto &item: positions) {
+                if (item == position) {
+                    return true;
+                }
+            }
 
-                    return false;
-                };
+            return false;
+        };
 
         for (int y = 0; y < world.height(); ++y) {
             for (int x = 0; x < world.width(); ++x) {
@@ -53,8 +54,7 @@ namespace aura::render {
                     glColor3f(0.2F, 0.8F, 0.2F);
                 } else if (cell == world::CellType::Unknown) {
                     glColor3f(1.0F, 0.0F, 0.2F);
-
-                }else {
+                } else {
                     glColor3f(0.12F, 0.12F, 0.15F);
                 }
 

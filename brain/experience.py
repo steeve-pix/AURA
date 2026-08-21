@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Literal
 
-
 ExperienceKind = Literal[
     "action",
     "plan",
@@ -14,12 +13,12 @@ RESULT_UNREACHABLE = "unreachable"
 
 @dataclass
 class Experience:
-    step: int
     kind: ExperienceKind
     event: str
+
+    step: int
     goal: str
     action: str
-
     target: tuple[int, int] | None
 
     position_before: tuple[int, int]
@@ -30,6 +29,9 @@ class Experience:
 
     succeeded: bool
     result: str
+
+    path_length_before: int | None = None
+    memory_trust_before: float | None = None
 
     visited_new_cell: bool = False
     navigation_progress: int | None = None
@@ -53,5 +55,9 @@ def detect_outcome(
     for obj in observation.get("nearby_objects", []):
         if tuple(obj["position"]) == target:
             return obj["type"]
+
+    for cell in observation.get("visible_cells", []):
+        if tuple(cell["position"]) == target and cell["type"] == "Empty":
+            return "Empty"
 
     return None

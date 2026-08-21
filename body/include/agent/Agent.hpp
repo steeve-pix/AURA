@@ -10,8 +10,12 @@ namespace aura::agent {
     /// choose destinations; strategic decisions belong to the Python brain.
     class Agent {
     public:
-        /// Places AURA at `position` with its energy set to the built-in maximum.
-        explicit Agent(world::Position position);
+        /// Places AURA at `position` with the requested initial energy capacity.
+        explicit Agent(
+            world::Position position,
+            int initialEnergy = 100,
+            int maxEnergy = 100
+        );
 
         /// Returns AURA's current grid coordinates.
         [[nodiscard]] world::Position position() const;

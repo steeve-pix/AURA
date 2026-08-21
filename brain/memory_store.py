@@ -11,7 +11,7 @@ def memory_path_for_world(directory: Path, world_id: str) -> Path:
         raise ValueError("Cannot persist memory without a world_id")
 
     filename = re.sub(r"[^A-Za-z0-9._-]+", "_", world_id).strip("_")
-    return directory / f"{filename}.json"
+    return directory / "world_memory" / f"{filename}.json"
 
 
 def save_memory(memory: Memory, path: Path, world_id: str) -> None:

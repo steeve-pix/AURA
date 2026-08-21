@@ -15,5 +15,7 @@ namespace aura::sensors {
         bool reachable;
         /// Number of path steps, or -1 when no route exists.
         int pathLength;
+
+        std::optional<world::Position> nextStep{};
     };
 }

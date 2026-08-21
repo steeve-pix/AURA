@@ -1,8 +1,10 @@
 #include "app/Application.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <optional>
 #include <ostream>
+#include <random>
 #include <sstream>
 #include <iomanip>
 #include <vector>
@@ -22,14 +24,53 @@
 #include "world/MazeGenerator.hpp"
 
 namespace aura::app {
-    Application::Application(std::string brainWorkingDirectory, std::unique_ptr<scenario::Scenario> scenario)
-        : window_(1280, 720, "AURA"), mazeSeed_(1337), world_(42, 21), agent_({.x = 1, .y = 1}),
+    Application::Application(
+        std::string brainWorkingDirectory,
+        std::unique_ptr<scenario::Scenario> scenario,
+        std::uint32_t mazeSeed,
+        std::optional<int> maxSteps
+    )
+        : window_(1280, 720, "AURA"), mazeSeed_(mazeSeed), maxSteps_(maxSteps),
+          world_(42, 21), agent_({.x = 1, .y = 1}, INITIAL_ENERGY),
           rangeSensor_(3),
-          brain_("python3", "-mbrain.main", std::move(brainWorkingDirectory)),
+          brain_("./.venv/bin/python3", "-mbrain.main", std::move(brainWorkingDirectory)),
           scenario_(std::move(scenario)) {
         world::MazeGenerator generator{mazeSeed_};
 
-        generator.generate(world_, NUM_BATTERIES, NUM_UNKNOWN);
+        generator.generate(
+            world_,
+            NUM_BATTERIES,
+            NUM_UNKNOWN,
+            INITIAL_BATTERY_MAXIMUM_DISTANCE
+        );
+
+        int unknownCount = 0;
+        for (int x = 0; x < world_.width(); ++x) {
+            for (int y = 0; y < world_.height(); ++y) {
+                if (world_.cellAt({x, y}) == world::CellType::Unknown) {
+                    ++unknownCount;
+                }
+            }
+        }
+
+        const int batteryRevealCount =
+                (unknownCount * UNKNOWN_BATTERY_PERCENT + 50) / 100;
+        investigationOutcomes_.assign(
+            batteryRevealCount,
+            world::CellType::Battery
+        );
+        investigationOutcomes_.insert(
+            investigationOutcomes_.end(),
+            unknownCount - batteryRevealCount,
+            world::CellType::Empty
+        );
+
+        std::mt19937 investigationRandom{mazeSeed_};
+        std::shuffle(
+            investigationOutcomes_.begin(),
+            investigationOutcomes_.end(),
+            investigationRandom
+        );
     }
 
     int Application::run() {
@@ -42,6 +83,7 @@ namespace aura::app {
         }
 
         double lastUpdateTime = glfwGetTime();
+        int completedSteps = 0;
 
         constexpr double updateInterval = 0.01;
 
@@ -88,13 +130,17 @@ namespace aura::app {
 
         // Rendering remains continuous while simulation and brain updates run at a
         // fixed cadence.
-        while (!window_.shouldClose()) {
+        while (
+            !window_.shouldClose()
+            && (!maxSteps_.has_value() || completedSteps < *maxSteps_)
+        ) {
             Window::pollEvents();
 
             const double now = glfwGetTime();
 
             if (now - lastUpdateTime >= updateInterval) {
                 update();
+                ++completedSteps;
 
                 lastUpdateTime = now;
             }
@@ -136,6 +182,8 @@ namespace aura::app {
                 scenario_->beforeAction(world_, agent_, response.action);
 
                 executeAction(response.action);
+
+                scenario_->afterAction(world_, agent_, response.action);
             } catch (const std::exception &error) {
                 std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
 
@@ -163,7 +211,10 @@ namespace aura::app {
                 world::CellType::Unknown;
 
         if (validTarget) {
-            world_.setCell(action.target, world::CellType::Battery);
+            const auto revealedType = investigationOutcomes_.back();
+            investigationOutcomes_.pop_back();
+
+            world_.setCell(action.target, revealedType);
 
             lastAction_ = {bridge::ActionType::Investigate, action.target, true, "completed"};
         } else {
@@ -285,7 +336,11 @@ namespace aura::app {
                 + ":" + std::to_string(world_.width())
                 + "x" + std::to_string(world_.height())
                 + ":b" + std::to_string(NUM_BATTERIES)
-                + ":u" + std::to_string(NUM_UNKNOWN);
+                + ":u" + std::to_string(NUM_UNKNOWN)
+                + ":e" + std::to_string(INITIAL_ENERGY)
+                + ":ib" + std::to_string(UNKNOWN_BATTERY_PERCENT)
+                + ":bd" + std::to_string(INITIAL_BATTERY_MAXIMUM_DISTANCE)
+                + ":s" + scenario_->id();
         const auto local =
                 sensors::LocalSensor::observe(world_, agent_);
 

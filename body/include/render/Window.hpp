@@ -32,6 +32,7 @@ namespace aura::render {
 
         /// Presents the completed frame by swapping the front and back buffers.
         void display() const;
+
         /// Replaces the native window title.
         void setTitle(const std::string &title) const;
 

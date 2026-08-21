@@ -1,7 +1,8 @@
 import unittest
 
 from brain.decision import decide
-from brain.goals import choose_goal
+from brain.goals import choose_goal, recharge_is_urgent
+from brain.plan_supervisor import supervise_goal
 from brain.memory import Memory
 from brain.planning import update_plan_from_observation
 
@@ -138,7 +139,9 @@ class PlanLifecycleTests(unittest.TestCase):
                 "path_length": 2,
             }],
         }
-        goal = choose_goal(emergency_observation, memory)
+
+        proposed_goal = choose_goal(emergency_observation, memory)
+        goal = supervise_goal(memory,proposed_goal=proposed_goal,recharge_urgent=recharge_is_urgent(emergency_observation))
         action = decide(emergency_observation, goal, memory)
 
         self.assertEqual(goal, "recharge")

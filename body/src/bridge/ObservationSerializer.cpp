@@ -78,12 +78,23 @@ namespace aura::bridge {
         }
 
         for (const auto &object: observation.nearby.objects) {
-            json["nearby_objects"].push_back({
+            nlohmann::json objectJson = {
                 {"type", aura::world::toString(object.type)},
                 {"position", {object.position.x, object.position.y}},
                 {"reachable", object.reachable},
-                {"path_length", object.pathLength}
-            });
+                {"path_length", object.pathLength},
+                {"next_step", nullptr}
+            };
+
+            if (object.nextStep.has_value()) {
+                const auto &nextStep = object.nextStep.value();
+
+                objectJson["next_step"] = {
+                    nextStep.x, nextStep.y
+                };
+            }
+
+            json["nearby_objects"].push_back(objectJson);
         }
 
         return json.dump();

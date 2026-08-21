@@ -38,7 +38,13 @@ namespace aura::sensors {
 
                     const int pathLength =
                             reachable ? static_cast<int>(path.size()) : -1;
-                    observation.objects.push_back({type, scannedPosition, reachable, pathLength});
+
+                    std::optional<world::Position> nextStep;
+
+                    if (!path.empty()) {
+                        nextStep = path.front();
+                    }
+                    observation.objects.push_back({type, scannedPosition, reachable, pathLength, nextStep});
                 }
             }
         }

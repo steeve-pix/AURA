@@ -2,10 +2,14 @@
 #include <stdexcept>
 
 namespace aura::agent {
-    Agent::Agent(world::Position position)
-        : position_(position), energy_(100), maxEnergy_(100) {
-        if (energy_ > maxEnergy_) {
-            throw std::invalid_argument{"Energy cannot be higher than Max Energy."};
+    Agent::Agent(
+        world::Position position,
+        int initialEnergy,
+        int maxEnergy
+    )
+        : position_(position), energy_(initialEnergy), maxEnergy_(maxEnergy) {
+        if (energy_ < 0 || maxEnergy_ <= 0 || energy_ > maxEnergy_) {
+            throw std::invalid_argument{"Invalid initial or maximum energy."};
         }
     }
 

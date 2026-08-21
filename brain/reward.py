@@ -29,5 +29,7 @@ def calculate_reward(experience: Experience) -> float:
 
     if experience.outcome == "Battery":
         reward += 1.0
+    elif experience.outcome == "Empty":
+        reward += 0.05
 
     return round(reward, 2)

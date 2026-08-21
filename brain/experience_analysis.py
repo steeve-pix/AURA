@@ -40,6 +40,8 @@ def load_experiences(path: Path) -> list[Experience]:
                         "result",
                         RESULT_COMPLETED if data["succeeded"] else RESULT_FAILED,
                     ),
+                    path_length_before=data.get("path_length_before"),
+                    memory_trust_before=data.get("memory_trust_before"),
                     visited_new_cell=data.get(
                         "visited_new_cell",
                         data.get("discovered_new_cell", False),
@@ -61,6 +63,7 @@ def success_rate(experiences: list[Experience]) -> float:
 
     return successes / len(experiences)
 
+
 def average_reward(experiences: list[Experience]) -> float:
     if not experiences:
         return 0.0
@@ -73,8 +76,8 @@ def movement_counts(experiences: list[Experience]) -> tuple[int, int]:
         experience
         for experience in experiences
         if (
-            experience.kind == "action"
-            and experience.action in {"move", "move_to"}
+                experience.kind == "action"
+                and experience.action in {"move", "move_to"}
         )
     ]
     new_cells = sum(
@@ -89,7 +92,7 @@ def movement_counts(experiences: list[Experience]) -> tuple[int, int]:
     return new_cells, revisited_cells
 
 
-def navigation_progress_counts(experiences: list[Experience],) -> tuple[int, int, int]:
+def navigation_progress_counts(experiences: list[Experience], ) -> tuple[int, int, int]:
     progress_values = [
         experience.navigation_progress
         for experience in experiences
@@ -102,7 +105,7 @@ def navigation_progress_counts(experiences: list[Experience],) -> tuple[int, int
     return positive, zero, negative
 
 
-def average_navigation_progress(experiences: list[Experience],) -> float | None:
+def average_navigation_progress(experiences: list[Experience], ) -> float | None:
     progress_values = [
         experience.navigation_progress
         for experience in experiences
@@ -140,7 +143,7 @@ def experience_kind_distribution(
     return Counter(experience.kind for experience in experiences)
 
 
-def plan_event_distribution(experiences: list[Experience],) -> Counter[str]:
+def plan_event_distribution(experiences: list[Experience], ) -> Counter[str]:
     return Counter(
         experience.event
         for experience in experiences
@@ -148,11 +151,39 @@ def plan_event_distribution(experiences: list[Experience],) -> Counter[str]:
     )
 
 
-def print_distribution(title: str, distribution: Counter) -> None:
-    print(f"\n{title}:")
+def print_table(title: str, rows: list[tuple[object, object]], headers: tuple[str, str] = ("Metric", "Value")) -> None:
+    string_rows = [
+        (str(label), str(value))
+        for label, value in rows
+    ]
+    left_width = max(
+        len(headers[0]), *(len(label) for label, _ in string_rows),
+    )
+    right_width = max(
+        len(headers[1]), *(len(value) for _, value in string_rows),
+    )
+    border = f"+-{'-' * left_width}-+-{'-' * right_width}-+"
 
-    for value, count in distribution.items():
-        print(f"{value}: {count}")
+    print(f"\n{title}")
+    print(border)
+    print(
+        f"| {headers[0]:<{left_width}} "
+        f"| {headers[1]:>{right_width}} |"
+    )
+    print(border)
+
+    for label, value in string_rows:
+        print(
+            f"| {label:<{left_width}} "
+            f"| {value:>{right_width}} |"
+        )
+
+    print(border)
+
+
+def distribution_rows(distribution: Counter) -> list[tuple[object, object]]:
+    return list(distribution.items())
+
 
 if __name__ == "__main__":
     import sys
@@ -160,10 +191,6 @@ if __name__ == "__main__":
     path = Path(sys.argv[1])
 
     experiences = load_experiences(path)
-
-    print(f"Experiences: {len(experiences)}")
-    print(f"Success rate: {success_rate(experiences):.2%}")
-    print(f"Average reward: {average_reward(experiences):.3f}")
 
     goals = Counter(experience.goal for experience in experiences)
     kinds = experience_kind_distribution(experiences)
@@ -183,31 +210,50 @@ if __name__ == "__main__":
     positive, zero, negative = navigation_progress_counts(experiences)
     navigation_average = average_navigation_progress(experiences)
 
-    print_distribution("Goals", goals)
-    print_distribution("Experience kinds", kinds)
-    print_distribution("Actions", actions)
-    print_distribution("Results", results)
-    print_distribution("Plan events", plan_events)
-
-    print("\nFailures:")
-    print(f"body action failures: {body_action_failure_count(experiences)}")
-    print(f"plan failures: {plan_events['plan_failed']}")
-    print(f"replans: {plan_events['replan']}")
-    print("failed targets: available in runtime P/R/T/B debug only")
-
-    print("\nMovement:")
-    print(f"newly visited: {new_cells}")
-    print(f"revisited cells: {revisited_cells}")
-
-    print("\nNavigation progress:")
-    print(f"positive: {positive}")
-    print(f"zero: {zero}")
-    print(f"negative: {negative}")
-    print(
-        "average: n/a"
-        if navigation_average is None
-        else f"average: {navigation_average:.3f}"
+    print_table("Summary", [
+        ("Experiences", len(experiences)),
+        ("Success rate", f"{success_rate(experiences):.2%}"),
+        ("Average reward", f"{average_reward(experiences):.3f}"),
+    ])
+    print_table("Goals", distribution_rows(goals), ("Goal", "Count"))
+    print_table(
+        "Experience kinds",
+        distribution_rows(kinds),
+        ("Kind", "Count"),
     )
-
-    print_distribution("Rewards", rewards)
-    print_distribution("Outcomes", outcomes)
+    print_table("Actions", distribution_rows(actions), ("Action", "Count"))
+    print_table("Results", distribution_rows(results), ("Result", "Count"))
+    print_table(
+        "Plan events",
+        distribution_rows(plan_events),
+        ("Event", "Count"),
+    )
+    print_table("Failures", [
+        ("Body action failures", body_action_failure_count(experiences)),
+        ("Plan failures", plan_events["plan_failed"]),
+        ("Replans", plan_events["replan"]),
+        ("Failed targets", "runtime P/R/T/B debug only"),
+    ])
+    print_table("Movement", [
+        ("Newly visited", new_cells),
+        ("Revisited cells", revisited_cells),
+    ])
+    print_table("Navigation progress", [
+        ("Positive", positive),
+        ("Zero", zero),
+        ("Negative", negative),
+        (
+            "Average",
+            "n/a" if navigation_average is None else f"{navigation_average:.3f}",
+        ),
+    ])
+    print_table(
+        "Rewards",
+        sorted(rewards.items()),
+        ("Reward", "Count"),
+    )
+    print_table(
+        "Outcomes",
+        distribution_rows(outcomes),
+        ("Outcome", "Count"),
+    )

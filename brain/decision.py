@@ -1,6 +1,5 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
-from typing import Any, Union
 
 from brain.memory import Memory
 from brain.planning import (
@@ -36,7 +35,7 @@ def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int
         if obj["type"] == "Battery"
            and obj.get("reachable", False)
            and obj["path_length"] <= energy - BATTERY_ARRIVAL_RESERVE
-           and not memory.is_failed_target(tuple(obj["position"]))
+           and not memory.is_failed_target((obj["position"][0], obj["position"][1]))
     ]
 
     if visible_batteries:
@@ -45,7 +44,7 @@ def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int
             key=lambda obj: obj["path_length"],
         )
 
-        return tuple(best["position"])
+        return best["position"][0], best["position"][1]
 
     remembered = [
         battery
@@ -121,17 +120,57 @@ def choose_recharge_action(observation, memory):
     return choose_exploration_action(observation, memory)
 
 
-def decide(observation, goal, memory):
-    if (
-            memory.active_plan is not None
-            and memory.active_plan.goal != goal
-    ):
-        memory.clear_active_plan()
+def choose_adjacent_unknown_action(observation, memory: Memory, *,
+                                   exclude_target: tuple[int, int] | None) -> dict | None:
+    aura_position = (observation["position"][0], observation["position"][1])
 
+    candidates = []
+
+    for obj in observation["nearby_objects"]:
+        if obj["type"] != "Unknown":
+            continue
+
+        target = (obj["position"][0], obj["position"][1])
+
+        if target == exclude_target:
+            continue
+
+        if memory.is_failed_target(target):
+            continue
+
+        distance = abs(target[0] - aura_position[0]) + abs(target[1] - aura_position[1])
+
+        if distance == 1:
+            candidates.append(obj)
+
+    if not candidates:
+        return None
+
+    target = max(candidates, key=lambda obj: (investigation_target_score(obj, observation, memory),
+                                              tuple(obj["position"])))
+
+    return {
+        "action": "investigate",
+        "target": list(target["position"]),
+    }
+
+
+def decide(observation, goal, memory):
     if (
             memory.active_plan is not None
             and memory.active_plan.goal == goal
     ):
+        if goal == "investigate":
+            opportunistic_action = (
+                choose_adjacent_unknown_action(observation, memory, exclude_target=(
+                    memory.active_plan.goal_target
+                ),
+                                               )
+            )
+
+            if opportunistic_action is not None:
+                return opportunistic_action
+
         return action_from_plan(memory.active_plan)
 
     if goal == "recharge":
@@ -230,7 +269,7 @@ def choose_investigation_action(observation, memory: Memory):
         ),
     )
 
-    target_position = tuple(target["position"])
+    target_position = (target["position"][0], target["position"][1])
 
     plan = create_investigation_plan(
         observation,

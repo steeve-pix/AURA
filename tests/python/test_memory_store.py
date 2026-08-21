@@ -19,7 +19,7 @@ class MemoryStoreTests(unittest.TestCase):
         first = memory_path_for_world(directory, "maze:1337:82x42:b60:u80")
         second = memory_path_for_world(directory, "maze:42:82x42:b60:u80")
 
-        self.assertEqual(first, directory / "maze_1337_82x42_b60_u80.json")
+        self.assertEqual(first, directory / "world_memory" / "maze_1337_82x42_b60_u80.json")
         self.assertNotEqual(first, second)
 
     def test_rejects_empty_world_id(self):

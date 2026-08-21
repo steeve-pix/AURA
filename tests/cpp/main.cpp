@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cstdint>
 #include <iostream>
 
 #include "agent/Agent.hpp"
@@ -8,6 +10,8 @@
 #include "world/World.hpp"
 #include "world/Position.hpp"
 #include "navigation/Pathfinder.hpp"
+#include "scenario/Scenario.hpp"
+#include "sensors/RangeSensor.hpp"
 
 int main() {
     int failures = 0;
@@ -108,6 +112,38 @@ int main() {
         ++failures;
     }
 
+    aura::world::World sensorWorld{7, 5};
+    sensorWorld.addBoundaryWalls();
+
+    aura::agent::Agent sensorAgent{{1, 2}};
+
+    const aura::world::Position batteryPosition{5, 2};
+
+    sensorWorld.setCell(batteryPosition, aura::world::CellType::Battery);
+
+    aura::sensors::RangeSensor sensor{6};
+
+    const auto sensorObservation =
+            sensor.observe(sensorWorld, sensorAgent);
+
+    const auto batteryObject =
+            std::ranges::find_if(sensorObservation.objects,
+                                 [batteryPosition](const auto &object) {
+                                     return object.position == batteryPosition;
+                                 });
+
+    const auto expectedPath =
+            aura::navigation::findPath(sensorWorld, sensorAgent.position(), batteryPosition);
+
+    if (batteryObject == sensorObservation.objects.end() || expectedPath.empty() || !batteryObject->nextStep.has_value()
+        || batteryObject->nextStep.value() != expectedPath.front()) {
+        std::cout
+                << "FAIL: visible object should expose "
+                << "the first BFS route step\n";
+
+        ++failures;
+    }
+
     aura::world::World mazeWorld{11, 9};
     aura::world::MazeGenerator mazeGenerator{1337};
     mazeGenerator.generate(mazeWorld, 3, 0);
@@ -140,6 +176,74 @@ int main() {
         ++failures;
     }
 
+    aura::world::World scenarioWorld{5, 5};
+    scenarioWorld.addBoundaryWalls();
+    aura::agent::Agent scenarioAgent{{1, 1}};
+    aura::scenario::PeriodicMoveToBlock challenge{2};
+    const aura::bridge::Action moveToAction{
+        aura::bridge::ActionType::MoveTo,
+        aura::bridge::Direction::North,
+        {3, 3}
+    };
+
+    challenge.beforeAction(scenarioWorld, scenarioAgent, moveToAction);
+
+    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall) {
+        std::cout << "FAIL: challenge should leave the first move_to unchanged\n";
+        ++failures;
+    }
+
+    challenge.beforeAction(scenarioWorld, scenarioAgent, moveToAction);
+
+    if (scenarioWorld.cellAt({3, 3}) != aura::world::CellType::Wall) {
+        std::cout << "FAIL: challenge should block the configured move_to interval\n";
+        ++failures;
+    }
+
+    challenge.afterAction(scenarioWorld, scenarioAgent, moveToAction);
+
+    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall) {
+        std::cout << "FAIL: challenge should restore its temporary obstacle\n";
+        ++failures;
+    }
+
+    for (std::uint32_t seed = 2001; seed <= 2012; ++seed) {
+        aura::world::World safeEnergyWorld{42, 21};
+        aura::world::MazeGenerator safeEnergyGenerator{seed};
+        safeEnergyGenerator.generate(safeEnergyWorld, 12, 50, 30);
+        int shortestBatteryPath = safeEnergyWorld.width() * safeEnergyWorld.height();
+
+        for (int x = 0; x < safeEnergyWorld.width(); ++x) {
+            for (int y = 0; y < safeEnergyWorld.height(); ++y) {
+                const aura::world::Position target{x, y};
+
+                if (safeEnergyWorld.cellAt(target) != aura::world::CellType::Battery) {
+                    continue;
+                }
+
+                const auto batteryPath = aura::navigation::findPath(
+                    safeEnergyWorld,
+                    {1, 1},
+                    target
+                );
+                shortestBatteryPath = std::min(
+                    shortestBatteryPath,
+                    static_cast<int>(batteryPath.size())
+                );
+            }
+        }
+
+        if (shortestBatteryPath > 30) {
+            std::cout << "FAIL: configured seed should have an energy-safe battery\n";
+            ++failures;
+            break;
+        }
+    }
+
+    aura::sensors::RangeObservation nearby;
+
+    nearby.objects.push_back({aura::world::CellType::Battery, {8, 3}, true, 6, aura::world::Position{3, 2}});
+
     const aura::bridge::Observation observation{
         {2, 2},
         100,
@@ -149,7 +253,7 @@ int main() {
             aura::world::CellType::Empty,
             aura::world::CellType::Empty
         },
-        {},
+        nearby,
         3,
         aura::bridge::LastAction{
             aura::bridge::ActionType::MoveTo,
@@ -164,14 +268,17 @@ int main() {
     const auto serialized =
             aura::bridge::serializedObservation(observation);
 
-    if (serialized.find("\"last_action\":") == std::string::npos ||
-        serialized.find("\"type\":\"move_to\"") == std::string::npos ||
-        serialized.find("\"target\":[8,3]") == std::string::npos ||
-        serialized.find("\"succeeded\":true") == std::string::npos ||
-        serialized.find("\"result\":\"completed\"") == std::string::npos ||
-        serialized.find("\"path_length_before\":1") == std::string::npos ||
-        serialized.find("\"path_length_after\":0") == std::string::npos) {
-        std::cout << "FAIL: observation should include move_to route progress\n";
+    if (serialized.find(R"("last_action":)") == std::string::npos ||
+        serialized.find(R"("type":"move_to")") == std::string::npos ||
+        serialized.find(R"("target":[8,3])") == std::string::npos ||
+        serialized.find(R"("succeeded":true)") == std::string::npos ||
+        serialized.find(R"("next_step":[3,2])") == std::string::npos ||
+        serialized.find(R"("result":"completed")") == std::string::npos ||
+        serialized.find(R"("path_length_before":1)") == std::string::npos ||
+        serialized.find(R"("path_length_after":0)") == std::string::npos) {
+        std::cout << "FAIL: observation should include"
+                << " the visible object's next BFS step\n";
+        
         ++failures;
     }
 

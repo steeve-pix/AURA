@@ -16,6 +16,7 @@ namespace aura::sensors {
 
         /// Returns the configured sensor radius in grid cells.
         [[nodiscard]] int radius() const;
+
     private:
         int radius_;
     };

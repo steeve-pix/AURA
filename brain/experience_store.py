@@ -12,9 +12,9 @@ def experience_path_for_world(
     safe_world_id = world_id.replace(":", "_")
 
     return (
-        directory
-        / "experiences"
-        / f"{safe_world_id}.jsonl"
+            directory
+            / "experiences"
+            / f"{safe_world_id}.jsonl"
     )
 
 

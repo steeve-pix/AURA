@@ -15,7 +15,12 @@ namespace aura::world {
         ///
         /// Object placement is limited to carved passage cells and is deterministic
         /// for a given seed, world size, and pair of object counts.
-        void generate(World &world, int batteryCount,int unknownCount) const;
+        void generate(
+            World &world,
+            int batteryCount,
+            int unknownCount,
+            int guaranteedBatteryMaximumDistance = 0
+        ) const;
 
     private:
         std::uint32_t seed_;
