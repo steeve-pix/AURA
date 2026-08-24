@@ -18,7 +18,7 @@ from brain.experience_store import append_experience, experience_path_for_world
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
 from brain.navigation_preview import (
     build_navigation_preview_request,
-    validate_navigation_preview_response,
+    navigation_previews_by_target,
 )
 from brain.planning import plan_debug, update_plan_from_observation
 from brain.learning.model_io import load_model
@@ -92,6 +92,62 @@ def update_active_plan_and_record_events(memory, observation: dict) -> list[Expe
     return events
 
 
+def score_and_report_value_candidates(
+    *,
+    value_model,
+    candidates,
+    observation: dict,
+    memory,
+    goal: str,
+    decision: dict,
+    value_reporter: LiveValueReporter,
+    navigation_previews: dict | None = None,
+) -> None:
+    if value_model is None or not candidates:
+        return
+
+    scored_candidates = score_candidates(
+        value_model,
+        candidates,
+        observation,
+        memory,
+        navigation_previews=navigation_previews,
+    )
+    rule_scored = rule_scored_candidate(
+        scored_candidates,
+        rule_goal=goal,
+        rule_action=decision,
+    )
+    model_scored = select_model_candidate(
+        scored_candidates,
+        rule_goal=goal,
+        rule_action=decision,
+    )
+    memory.pending_value_prediction = rule_scored.predicted_reward
+
+    rule_key = decision_key(goal, decision)
+    model_key = decision_key(
+        model_scored.candidate.goal,
+        model_scored.candidate.action,
+    )
+
+    if model_key == rule_key:
+        memory.pending_candidate_comparison = None
+        return
+
+    value_reporter.report_disagreement(
+        scored_candidates,
+        rule_key=rule_key,
+        model_key=model_key,
+    )
+    memory.pending_candidate_comparison = {
+        "rule": rule_key,
+        "rule_prediction": rule_scored.predicted_reward,
+        "model": model_key,
+        "model_prediction": model_scored.predicted_reward,
+    }
+
+
 def main() -> None:
     memory_directory = Path("data")
 
@@ -120,13 +176,23 @@ def main() -> None:
             if pending_preview_cycle is None:
                 raise ValueError("Received an unexpected preview response.")
 
-            validate_navigation_preview_response(
+            navigation_previews = navigation_previews_by_target(
                 pending_preview_cycle["request"],
                 observation,
             )
 
-            # The protocol works before model integration: the preview is
-            # validated, but the cached rule decision remains authoritative.
+            score_and_report_value_candidates(
+                value_model=value_model,
+                candidates=pending_preview_cycle["candidates"],
+                observation=pending_preview_cycle["observation"],
+                memory=memory,
+                goal=pending_preview_cycle["goal"],
+                decision=pending_preview_cycle["decision"],
+                value_reporter=value_reporter,
+                navigation_previews=navigation_previews,
+            )
+
+            # Scoring is advisory. The cached rule decision remains authoritative.
             print(
                 json.dumps(pending_preview_cycle["decision"]),
                 flush=True,
@@ -261,47 +327,6 @@ def main() -> None:
             )
         )
 
-        if value_model is not None and pending is not None:
-            scored_candidates = score_candidates(
-                value_model,
-                candidates,
-                observation,
-                memory,
-            )
-            rule_scored = rule_scored_candidate(
-                scored_candidates,
-                rule_goal=goal,
-                rule_action=decision,
-            )
-            model_scored = select_model_candidate(
-                scored_candidates,
-                rule_goal=goal,
-                rule_action=decision,
-            )
-            memory.pending_value_prediction = rule_scored.predicted_reward
-
-            rule_key = decision_key(goal, decision)
-            model_key = decision_key(
-                model_scored.candidate.goal,
-                model_scored.candidate.action,
-            )
-
-            if model_key != rule_key:
-                value_reporter.report_disagreement(
-                    scored_candidates,
-                    rule_key=rule_key,
-                    model_key=model_key,
-                )
-
-                memory.pending_candidate_comparison = {
-                    "rule": rule_key,
-                    "rule_prediction": rule_scored.predicted_reward,
-                    "model": model_key,
-                    "model_prediction": model_scored.predicted_reward,
-                }
-            else:
-                memory.pending_candidate_comparison = None
-
         # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {
             "goal": goal,
@@ -321,12 +346,24 @@ def main() -> None:
         )
 
         if preview_request is None:
+            score_and_report_value_candidates(
+                value_model=value_model,
+                candidates=candidates,
+                observation=observation,
+                memory=memory,
+                goal=goal,
+                decision=decision,
+                value_reporter=value_reporter,
+            )
             print(json.dumps(decision), flush=True)
             continue
 
         pending_preview_cycle = {
             "request": preview_request,
             "decision": decision,
+            "candidates": candidates,
+            "observation": observation,
+            "goal": goal,
         }
         print(json.dumps(preview_request), flush=True)
 

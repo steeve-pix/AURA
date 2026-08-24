@@ -16,6 +16,8 @@ class CandidateDecision:
 class ScoredCandidate:
     candidate: CandidateDecision
     predicted_reward: float
+    value_input: ValueInput | None = None
+    reachable: bool | None = None
 
 
 def decision_key(goal: str, action: dict) -> tuple:
@@ -135,11 +137,31 @@ def value_input_for_candidate(
         candidate: CandidateDecision,
         observation: dict,
         memory: Memory,
+        navigation_preview: dict | None = None,
 ) -> ValueInput:
     context = memory.pre_action_context(
         action=candidate.action,
         observation=observation,
     )
+
+    path_length = context["path_length_before"]
+    next_step_was_visited = context["next_step_was_visited"]
+
+    if (
+        candidate.action.get("action") == "move_to"
+        and navigation_preview is not None
+    ):
+        if navigation_preview["reachable"]:
+            path_length = navigation_preview["path_length"]
+            next_step = navigation_preview["next_step"]
+            next_step_was_visited = (
+                None
+                if next_step is None
+                else memory.visit_count(tuple(next_step)) > 0
+            )
+        else:
+            path_length = None
+            next_step_was_visited = None
 
     return ValueInput(
         energy=context["energy_before"],
@@ -147,9 +169,9 @@ def value_input_for_candidate(
         action=candidate.action["action"],
         target=context["target"],
         position=context["position_before"],
-        path_length=context["path_length_before"],
+        path_length=path_length,
         memory_trust=context["memory_trust_before"],
-        next_step_was_visited=context["next_step_was_visited"],
+        next_step_was_visited=next_step_was_visited,
     )
 
 
@@ -158,14 +180,22 @@ def score_candidates(
         candidates: list[CandidateDecision],
         observation: dict,
         memory: Memory,
+        navigation_previews: dict[tuple[int, int], dict] | None = None,
 ) -> list[ScoredCandidate]:
     scored = []
 
     for candidate in candidates:
+        target = candidate.action.get("target")
+        navigation_preview = (
+            None
+            if navigation_previews is None or target is None
+            else navigation_previews.get(tuple(target))
+        )
         value_input = value_input_for_candidate(
             candidate,
             observation,
             memory,
+            navigation_preview,
         )
         feature_vector = encode_value_input(value_input)
         prediction = predict_value(model, feature_vector)
@@ -174,6 +204,12 @@ def score_candidates(
             ScoredCandidate(
                 candidate=candidate,
                 predicted_reward=prediction,
+                value_input=value_input,
+                reachable=(
+                    None
+                    if navigation_preview is None
+                    else navigation_preview["reachable"]
+                ),
             )
         )
 

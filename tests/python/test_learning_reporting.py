@@ -7,6 +7,7 @@ from brain.learning.diagnostics import (
     CompletedMoveToDiagnostics,
     RunningValueDiagnostics,
 )
+from brain.learning.features import ValueInput
 from brain.learning.reporting import (
     LiveValueReporter,
     format_candidate_disagreement,
@@ -95,6 +96,16 @@ class LearningReportingTests(unittest.TestCase):
                 action={"action": "investigate", "target": [4, 7]},
             ),
             predicted_reward=0.40,
+            value_input=ValueInput(
+                energy=80,
+                goal="investigate",
+                action="investigate",
+                target=(4, 7),
+                position=(4, 6),
+                path_length=None,
+                memory_trust=None,
+                next_step_was_visited=None,
+            ),
         )
 
         report = format_candidate_disagreement(
@@ -107,6 +118,8 @@ class LearningReportingTests(unittest.TestCase):
         self.assertIn("MODEL", report)
         self.assertIn("explore → move north", report)
         self.assertIn("investigate → investigate (4, 7)", report)
+        self.assertIn("REACHABLE", report)
+        self.assertIn("NEXT VISITED", report)
         self.assertIn("advisory only", report)
 
     def test_result_report_explains_unexecuted_model_actual(self):

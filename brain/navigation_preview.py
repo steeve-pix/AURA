@@ -67,3 +67,20 @@ def validate_navigation_preview_response(
                 raise ValueError("Non-empty paths need a next step.")
         elif path_length is not None or next_step is not None:
             raise ValueError("Unreachable previews cannot contain route data.")
+
+
+def navigation_previews_by_target(
+    request: dict,
+    response: dict,
+) -> dict[tuple[int, int], dict]:
+    validate_navigation_preview_response(request, response)
+
+    requested_by_id = {
+        candidate["id"]: candidate
+        for candidate in request["candidates"]
+    }
+
+    return {
+        tuple(requested_by_id[preview["id"]]["target"]): preview
+        for preview in response["previews"]
+    }

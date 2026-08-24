@@ -3,6 +3,7 @@ import unittest
 from brain.learning.candidates import CandidateDecision
 from brain.navigation_preview import (
     build_navigation_preview_request,
+    navigation_previews_by_target,
     validate_navigation_preview_response,
 )
 
@@ -91,6 +92,10 @@ class NavigationPreviewTests(unittest.TestCase):
         }
 
         validate_navigation_preview_response(request, response)
+
+        previews = navigation_previews_by_target(request, response)
+        self.assertEqual(previews[(20, 9)]["id"], 1)
+        self.assertEqual(previews[(11, 4)]["id"], 2)
 
 
 if __name__ == "__main__":

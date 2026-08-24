@@ -10,6 +10,7 @@ from brain.learning.diagnostics import (
 
 
 DIVIDER = "─" * 78
+CANDIDATE_DIVIDER = "─" * 108
 BOX_WIDTH = 78
 BOX_CONTENT_WIDTH = BOX_WIDTH - 4
 
@@ -122,9 +123,15 @@ def format_candidate_disagreement(scored_candidates: list[ScoredCandidate],*,rul
     lines = [
         "",
         "VALUE MODEL · RULE/MODEL DISAGREEMENT",
-        DIVIDER,
-        f"{'CHOICE':<8} {'DECISION':<43} {'PREDICTED':>10}",
-        f"{'-' * 8} {'-' * 43} {'-' * 10}",
+        CANDIDATE_DIVIDER,
+        (
+            f"{'CHOICE':<8} {'DECISION':<40} {'REACHABLE':>9} "
+            f"{'PATH':>6} {'NEXT VISITED':>12} {'PREDICTED':>10}"
+        ),
+        (
+            f"{'-' * 8} {'-' * 40} {'-' * 9} "
+            f"{'-' * 6} {'-' * 12} {'-' * 10}"
+        ),
     ]
 
     for scored in scored_candidates:
@@ -141,13 +148,31 @@ def format_candidate_disagreement(scored_candidates: list[ScoredCandidate],*,rul
             labels.append("MODEL")
 
         choice = "/".join(labels) or ""
+        value_input = scored.value_input
+        reachable = (
+            "n/a"
+            if scored.reachable is None
+            else "yes" if scored.reachable else "no"
+        )
+        path = (
+            "n/a"
+            if value_input is None or value_input.path_length is None
+            else str(value_input.path_length)
+        )
+        next_visited = (
+            "n/a"
+            if value_input is None
+            or value_input.next_step_was_visited is None
+            else "yes" if value_input.next_step_was_visited else "no"
+        )
         lines.append(
-            f"{choice:<8} {format_decision(key):<43} "
+            f"{choice:<8} {format_decision(key):<40} "
+            f"{reachable:>9} {path:>6} {next_visited:>12} "
             f"{scored.predicted_reward:>+10.3f}"
         )
 
     lines.extend([
-        DIVIDER,
+        CANDIDATE_DIVIDER,
         "The rule decision will execute; the model is advisory only.",
     ])
     return "\n".join(lines)

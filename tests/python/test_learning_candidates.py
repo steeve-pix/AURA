@@ -158,6 +158,60 @@ class LearningCandidateTests(unittest.TestCase):
             memory.battery_trust(target),
         )
 
+    def test_navigation_preview_enriches_move_to_without_changing_memory(self):
+        memory = Memory()
+        memory.record_visit([3, 2])
+        visits_before = dict(memory.visit_counts)
+        candidate = CandidateDecision(
+            goal="recharge",
+            action={"action": "move_to", "target": [20, 9]},
+        )
+
+        value_input = value_input_for_candidate(
+            candidate,
+            {
+                "position": [2, 2],
+                "energy": 80,
+                "nearby_objects": [],
+            },
+            memory,
+            navigation_preview={
+                "id": 1,
+                "reachable": True,
+                "path_length": 8,
+                "next_step": [3, 2],
+            },
+        )
+
+        self.assertEqual(value_input.path_length, 8)
+        self.assertTrue(value_input.next_step_was_visited)
+        self.assertEqual(memory.visit_counts, visits_before)
+
+    def test_unreachable_preview_has_no_navigation_features(self):
+        candidate = CandidateDecision(
+            goal="recharge",
+            action={"action": "move_to", "target": [20, 9]},
+        )
+
+        value_input = value_input_for_candidate(
+            candidate,
+            {
+                "position": [2, 2],
+                "energy": 80,
+                "nearby_objects": [],
+            },
+            Memory(),
+            navigation_preview={
+                "id": 1,
+                "reachable": False,
+                "path_length": None,
+                "next_step": None,
+            },
+        )
+
+        self.assertIsNone(value_input.path_length)
+        self.assertIsNone(value_input.next_step_was_visited)
+
     def test_scoring_returns_one_prediction_per_candidate(self):
         torch.manual_seed(1)
         candidates = candidate_decisions(
@@ -186,6 +240,37 @@ class LearningCandidateTests(unittest.TestCase):
                 for item in scored
             )
         )
+
+    def test_scoring_keeps_preview_context_with_move_to_prediction(self):
+        candidate = CandidateDecision(
+            goal="recharge",
+            action={"action": "move_to", "target": [20, 9]},
+        )
+        memory = Memory()
+        memory.record_visit([3, 2])
+
+        scored = score_candidates(
+            ValueModel(),
+            [candidate],
+            {
+                "position": [2, 2],
+                "energy": 80,
+                "nearby_objects": [],
+            },
+            memory,
+            navigation_previews={
+                (20, 9): {
+                    "id": 1,
+                    "reachable": True,
+                    "path_length": 8,
+                    "next_step": [3, 2],
+                },
+            },
+        )[0]
+
+        self.assertTrue(scored.reachable)
+        self.assertEqual(scored.value_input.path_length, 8)
+        self.assertTrue(scored.value_input.next_step_was_visited)
 
     def test_equal_predictions_prefer_rule_choice(self):
         rule = CandidateDecision(
