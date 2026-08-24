@@ -14,7 +14,7 @@ from brain.learning.diagnostics import (
     ACTION_NAMES,
     ActionDiagnostics,
     calculate_action_diagnostics, ResultRewardDiagnostics, calculate_action_result_rewards, CompletedMoveToDiagnostics,
-    calculate_completed_move_to_diagnostics,
+    calculate_completed_move_to_diagnostics, calculate_move_to_visit_result_rewards,
 )
 from brain.learning.model import ValueModel
 from brain.learning.features import ABLATION_NAMES
@@ -55,6 +55,10 @@ class ExperimentResult:
     action_diagnostics: dict[str, ActionDiagnostics]
     ablation_losses: dict[str, float]
     move_to_result_diagnostics: dict[str, ResultRewardDiagnostics]
+    move_to_visit_result_diagnostics: dict[
+        tuple[bool | None, str],
+        ResultRewardDiagnostics,
+    ]
     completed_move_to_diagnostics: CompletedMoveToDiagnostics
 
 
@@ -166,6 +170,8 @@ def run_experiment(
     ]
 
     move_to_result_diagnostics = calculate_action_result_rewards(train_action_experiences, action="move_to")
+    move_to_visit_result_diagnostics = calculate_move_to_visit_result_rewards(train_action_experiences)
+
     completed_move_to_diagnostics = calculate_completed_move_to_diagnostics(train_action_experiences)
 
     test_action_experiences = [
@@ -267,6 +273,9 @@ def run_experiment(
         action_diagnostics=diagnostics,
         ablation_losses=ablation_losses,
         move_to_result_diagnostics=move_to_result_diagnostics,
+        move_to_visit_result_diagnostics=(
+            move_to_visit_result_diagnostics
+        ),
         completed_move_to_diagnostics=completed_move_to_diagnostics,
     )
 
@@ -417,6 +426,41 @@ def main() -> None:
             f"{diagnostics.count:>8,d} "
             f"{diagnostics.average_reward:>+16.3f}"
         )
+
+    print("\nTraining move_to by next-step visit history")
+
+    for visited in (False, True, None):
+        label = "unknown" if visited is None else str(visited)
+        groups = result.move_to_visit_result_diagnostics
+
+        if not any(key[0] is visited for key in groups):
+            continue
+
+        print(f"\n  next_step_was_visited = {label}")
+        print(
+            f"    {'Result':<12} "
+            f"{'Count':>8} "
+            f"{'Average reward':>16}"
+        )
+
+        for result_name in ("completed", "failed", "unreachable"):
+            diagnostics = groups.get(
+                (visited, result_name)
+            )
+
+            if diagnostics is None:
+                print(
+                    f"    {result_name:<12} "
+                    f"{0:>8} "
+                    f"{'n/a':>16}"
+                )
+                continue
+
+            print(
+                f"    {result_name:<12} "
+                f"{diagnostics.count:>8,d} "
+                f"{diagnostics.average_reward:>+16.3f}"
+            )
 
     move_to = result.completed_move_to_diagnostics
 

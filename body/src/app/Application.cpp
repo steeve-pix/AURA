@@ -6,6 +6,7 @@
 #include <ostream>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <iomanip>
 #include <vector>
 #include <GLFW/glfw3.h>
@@ -14,6 +15,7 @@
 #include "bridge/ActionUtils.hpp"
 #include "bridge/BrainProcess.hpp"
 #include "bridge/BrainResponseParser.hpp"
+#include "bridge/NavigationPreview.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "navigation/Pathfinder.hpp"
@@ -170,13 +172,37 @@ namespace aura::app {
         // report the same outcome twice.
         lastAction_.reset();
 
-        const std::string actionJson =
+        std::string responseJson =
                 brain_.exchange(observationJson);
 
-        if (!actionJson.empty()) {
+        if (!responseJson.empty()) {
             try {
-                const auto response =
-                        bridge::parseBrainResponse(actionJson);
+                auto response =
+                        bridge::parseBrainResponse(responseJson);
+
+                if (response.type == bridge::BrainResponseType::PreviewRequest) {
+                    const auto previews = bridge::previewNavigation(
+                        world_,
+                        agent_.position(),
+                        response.previewCandidates
+                    );
+                    const auto previewJson =
+                            bridge::serializedNavigationPreviewResponse(previews);
+
+                    responseJson = brain_.exchange(previewJson);
+
+                    if (responseJson.empty()) {
+                        return;
+                    }
+
+                    response = bridge::parseBrainResponse(responseJson);
+
+                    if (response.type != bridge::BrainResponseType::Action) {
+                        throw std::invalid_argument(
+                            "Expected an action after navigation preview"
+                        );
+                    }
+                }
 
                 brainDebug_ = response.debug;
 
@@ -186,7 +212,7 @@ namespace aura::app {
 
                 scenario_->afterAction(world_, agent_, response.action);
             } catch (const std::exception &error) {
-                std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
+                std::cerr << "Invalid JSON from brain: " << responseJson << '\n';
 
                 std::cerr << "Reason: " << error.what() << '\n';
             }
@@ -258,6 +284,11 @@ namespace aura::app {
                     ? 0
                     : static_cast<int>(pathBefore.size());
 
+        const std::optional<world::Position> nextStepBefore =
+                pathBefore.empty()
+                    ? std::nullopt
+                    : std::optional<world::Position>{pathBefore.front()};
+
         if (pathBefore.empty() && agent_.position() != action.target) {
             lastAction_ = {
                 action.type,
@@ -310,13 +341,20 @@ namespace aura::app {
                     ? 0
                     : static_cast<int>(pathAfter.size());
 
+        const std::optional<world::Position> nextStepAfter =
+                pathAfter.empty()
+                    ? std::nullopt
+                    : std::optional<world::Position>{pathAfter.front()};
+
         lastAction_ = {
             action.type,
             action.target,
             moved,
             moved ? "completed" : "failed",
             pathLengthBefore,
-            pathLengthAfter
+            pathLengthAfter,
+            nextStepBefore,
+            nextStepAfter
         };
     }
 

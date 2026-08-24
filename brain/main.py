@@ -6,14 +6,23 @@ from pathlib import Path
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
 from brain.experience import Experience
 from brain.goals import choose_goal, goal_scores, recharge_is_urgent
-from brain.learning.diagnostics import RunningValueDiagnostics, CompletedMoveToDiagnostics
+from brain.learning.candidates import (
+    candidate_decisions,
+    decision_key,
+    rule_scored_candidate,
+    score_candidates,
+    select_model_candidate,
+)
 from brain.plan_supervisor import supervise_goal
 from brain.experience_store import append_experience, experience_path_for_world
-from brain.learning.features import ValueInput, encode_value_input
-from brain.learning.inference import predict_value
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
+from brain.navigation_preview import (
+    build_navigation_preview_request,
+    validate_navigation_preview_response,
+)
 from brain.planning import plan_debug, update_plan_from_observation
 from brain.learning.model_io import load_model
+from brain.learning.reporting import LiveValueReporter
 
 PLAN_FAILED_REWARD = -0.40
 REPLAN_REWARD = 0.05
@@ -90,15 +99,14 @@ def main() -> None:
     active_world_id = None
     memory_path = None
 
-    model_path = Path("data/models/value_model.pt")
+    model_path = Path("data/models/value_model_1.pt")
     value_model = None
 
     if model_path.exists():
-        # value_model = load_model(model_path)
-        value_model = None
+        value_model = load_model(model_path)
 
-    value_diagnostics = RunningValueDiagnostics()
-    live_completed_move_to = CompletedMoveToDiagnostics()
+    value_reporter = LiveValueReporter()
+    pending_preview_cycle = None
 
     for raw in sys.stdin:
         raw = raw.strip()
@@ -107,6 +115,27 @@ def main() -> None:
             continue
 
         observation: dict[str, Any] = json.loads(raw)
+
+        if observation.get("type") == "preview_response":
+            if pending_preview_cycle is None:
+                raise ValueError("Received an unexpected preview response.")
+
+            validate_navigation_preview_response(
+                pending_preview_cycle["request"],
+                observation,
+            )
+
+            # The protocol works before model integration: the preview is
+            # validated, but the cached rule decision remains authoritative.
+            print(
+                json.dumps(pending_preview_cycle["decision"]),
+                flush=True,
+            )
+            pending_preview_cycle = None
+            continue
+
+        if pending_preview_cycle is not None:
+            raise ValueError("Expected a preview response before a new observation.")
 
         world_id = observation["world_id"]
 
@@ -121,77 +150,16 @@ def main() -> None:
 
         if completed_experience is not None:
             prediction = memory.pending_value_prediction
+            candidate_comparison = memory.pending_candidate_comparison
 
-            if prediction is not None:
-                actual = completed_experience.reward
-
-                value_diagnostics.record(action=completed_experience.action, result=completed_experience.result,
-                                         predicted=prediction, actual=actual)
-                live_completed_move_to.record(completed_experience)
-
-                if value_diagnostics.overall.count % 100 == 0:
-
-                    progress = (
-                        live_completed_move_to
-                        .average_navigation_progress()
-                    )
-
-                    print(
-                        "[value-model] live completed move_to "
-                        f"n={live_completed_move_to.count} "
-                        f"reward={live_completed_move_to.average_reward():+.3f} "
-                        f"progress="
-                        f"{'n/a' if progress is None else f'{progress:.3f}'} "
-                        f"new_cell="
-                        f"{live_completed_move_to.visited_new_cell_rate():.1%} "
-                        f"energy_cost="
-                        f"{live_completed_move_to.average_energy_cost():.3f}\n",
-                        file=sys.stderr,
-                        flush=True,
-                    )
-
-                    print(
-                        f"{'action':<11} | "
-                        f"{'result':<11} | "
-                        f"{'n':>6} | "
-                        f"{'actual':>8} | "
-                        f"{'predicted':>9} | "
-                        f"{'MAE':>8} | "
-                        f"{'MSE':>8}",
-                        file=sys.stderr,
-                        flush=True,
-                    )
-
-                    print(
-                        f"{'-' * 11}-+-"
-                        f"{'-' * 11}-+-"
-                        f"{'-' * 6}-+-"
-                        f"{'-' * 8}-+-"
-                        f"{'-' * 9}-+-"
-                        f"{'-' * 8}-+-"
-                        f"{'-' * 8}",
-                        file=sys.stderr,
-                        flush=True,
-                    )
-
-                    for (action_name, result_name), diagnostics in sorted(value_diagnostics.by_action_result.items()):
-                        action_diagnostics = value_diagnostics.by_action[action_name]
-
-                        print(
-                            f"{action_name:<11} | "
-                            f"{result_name:<11} | "
-                            f"{action_diagnostics.count:>6,d} | "
-                            f"{action_diagnostics.mean_actual():>8.3f} | "
-                            f"{action_diagnostics.mean_prediction():>9.3f} | "
-                            f"{action_diagnostics.mae():>8.3f} | "
-                            f"{action_diagnostics.mse():>8.3f}",
-                            file=sys.stderr,
-                            flush=True,
-                        )
-
-                    print("\n", file=sys.stderr, flush=True)
+            value_reporter.record_completed(
+                completed_experience,
+                prediction=prediction,
+                candidate_comparison=candidate_comparison,
+            )
 
             memory.pending_value_prediction = None
+            memory.pending_candidate_comparison = None
 
         if completed_experience is not None:
             persist_experience(completed_experience, memory_directory, world_id)
@@ -268,28 +236,71 @@ def main() -> None:
 
         score = goal_scores(observation, memory)
         proposed_goal = choose_goal(observation, memory)
-        goal = supervise_goal(memory, proposed_goal=proposed_goal, recharge_urgent=recharge_is_urgent(observation))
+        recharge_urgent_now = recharge_is_urgent(observation)
+        plan_was_active = memory.active_plan is not None
+        goal = supervise_goal(
+            memory,
+            proposed_goal=proposed_goal,
+            recharge_urgent=recharge_urgent_now,
+        )
 
         decision = decide(observation, goal, memory)
 
         pending = memory.begin_experience(goal=goal, action=decision, observation=observation)
 
+        candidates = (
+            []
+            if pending is None
+            else candidate_decisions(
+                observation,
+                memory,
+                rule_goal=goal,
+                rule_action=decision,
+                recharge_urgent=recharge_urgent_now,
+                plan_was_active=plan_was_active,
+            )
+        )
+
         if value_model is not None and pending is not None:
-            value_input = ValueInput(
-                energy=pending["energy_before"],
-                goal=pending["goal"],
-                action=pending["action"],
-                target=pending["target"],
-                position=pending["position_before"],
-                path_length=None,
-                memory_trust=pending["memory_trust_before"],
-                next_step_was_visited=pending["next_step_was_visited"]
+            scored_candidates = score_candidates(
+                value_model,
+                candidates,
+                observation,
+                memory,
+            )
+            rule_scored = rule_scored_candidate(
+                scored_candidates,
+                rule_goal=goal,
+                rule_action=decision,
+            )
+            model_scored = select_model_candidate(
+                scored_candidates,
+                rule_goal=goal,
+                rule_action=decision,
+            )
+            memory.pending_value_prediction = rule_scored.predicted_reward
+
+            rule_key = decision_key(goal, decision)
+            model_key = decision_key(
+                model_scored.candidate.goal,
+                model_scored.candidate.action,
             )
 
-            feature_vector = encode_value_input(value_input)
+            if model_key != rule_key:
+                value_reporter.report_disagreement(
+                    scored_candidates,
+                    rule_key=rule_key,
+                    model_key=model_key,
+                )
 
-            predicted_reward = predict_value(value_model, feature_vector)
-            memory.pending_value_prediction = predicted_reward
+                memory.pending_candidate_comparison = {
+                    "rule": rule_key,
+                    "rule_prediction": rule_scored.predicted_reward,
+                    "model": model_key,
+                    "model_prediction": model_scored.predicted_reward,
+                }
+            else:
+                memory.pending_candidate_comparison = None
 
         # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {
@@ -305,7 +316,19 @@ def main() -> None:
             "failures": memory.failure_debug(),
         }
 
-        print(json.dumps(decision), flush=True)
+        preview_request = build_navigation_preview_request(
+            candidates
+        )
+
+        if preview_request is None:
+            print(json.dumps(decision), flush=True)
+            continue
+
+        pending_preview_cycle = {
+            "request": preview_request,
+            "decision": decision,
+        }
+        print(json.dumps(preview_request), flush=True)
 
 
 if __name__ == "__main__":

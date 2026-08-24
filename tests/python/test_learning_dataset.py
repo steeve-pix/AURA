@@ -4,6 +4,7 @@ import torch
 
 from brain.experience import Experience
 from brain.learning.dataset import build_dataset, to_tensors
+from brain.learning.features import FEATURE_NAMES
 
 
 def make_experience(**overrides) -> Experience:
@@ -39,7 +40,7 @@ class LearningDatasetTests(unittest.TestCase):
 
         self.assertEqual(
             x_tensor.shape,
-            torch.Size([3, 12]),
+            torch.Size([3, len(FEATURE_NAMES)]),
         )
         self.assertEqual(
             y_tensor.shape,
@@ -66,7 +67,7 @@ class LearningDatasetTests(unittest.TestCase):
         self.assertEqual(len(x), 2)
         self.assertEqual(len(y), 2)
         self.assertTrue(
-            all(len(row) == 12 for row in x)
+            all(len(row) == len(FEATURE_NAMES) for row in x)
         )
         self.assertEqual(
             y,

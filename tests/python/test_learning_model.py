@@ -4,6 +4,7 @@ import torch
 from torch import nn
 
 from brain.learning.dataset import to_tensors
+from brain.learning.features import FEATURE_NAMES
 from brain.learning.model import ValueModel
 
 
@@ -11,7 +12,7 @@ class ValueModelTests(unittest.TestCase):
     def test_value_model_returns_one_prediction(self):
         model = ValueModel()
 
-        x = torch.zeros(12)
+        x = torch.zeros(len(FEATURE_NAMES))
 
         output = model(x)
 
@@ -24,9 +25,9 @@ class ValueModelTests(unittest.TestCase):
         model = ValueModel()
 
         x = [
-            [0.0] * 12,
-            [0.0] * 12,
-            [0.0] * 12,
+            [0.0] * len(FEATURE_NAMES),
+            [0.0] * len(FEATURE_NAMES),
+            [0.0] * len(FEATURE_NAMES),
         ]
         y = [0.09, 0.14, 1.07]
 
@@ -56,9 +57,9 @@ class ValueModelTests(unittest.TestCase):
         model = ValueModel()
 
         x = [
-            [1.0] * 12,
-            [0.5] * 12,
-            [0.25] * 12,
+            [1.0] * len(FEATURE_NAMES),
+            [0.5] * len(FEATURE_NAMES),
+            [0.25] * len(FEATURE_NAMES),
         ]
         y = [0.09, 0.14, 1.07]
         x_tensor, y_tensor = to_tensors(x, y)

@@ -4,7 +4,8 @@ import torch
 
 from brain.experience import Experience
 from brain.learning.diagnostics import calculate_action_diagnostics, RunningValueDiagnostics, \
-    calculate_action_result_rewards, calculate_completed_move_to_diagnostics
+    calculate_action_result_rewards, calculate_completed_move_to_diagnostics, \
+    calculate_move_to_visit_result_rewards
 
 
 def make_experience(**overrides) -> Experience:
@@ -157,6 +158,66 @@ class LearningDiagnosticsTests(unittest.TestCase):
         self.assertAlmostEqual(diagnostics.average_navigation_progress(), 1.0)
         self.assertAlmostEqual(diagnostics.visited_new_cell_rate(), 0.5)
         self.assertAlmostEqual(diagnostics.average_energy_cost(), 1.0)
+
+    def test_move_to_rewards_are_grouped_by_visit_state_and_result(self):
+        experiences = [
+            make_experience(
+                action="move_to",
+                next_step_was_visited=False,
+                result="completed",
+                reward=0.24,
+            ),
+            make_experience(
+                action="move_to",
+                next_step_was_visited=False,
+                result="completed",
+                reward=0.14,
+            ),
+            make_experience(
+                action="move_to",
+                next_step_was_visited=False,
+                result="unreachable",
+                reward=-0.50,
+            ),
+            make_experience(
+                action="move_to",
+                next_step_was_visited=True,
+                result="completed",
+                reward=0.14,
+            ),
+            make_experience(
+                action="move_to",
+                next_step_was_visited=True,
+                result="unreachable",
+                reward=-0.50,
+            ),
+            make_experience(
+                action="move",
+                next_step_was_visited=False,
+                result="completed",
+                reward=0.19,
+            ),
+        ]
+
+        diagnostics = calculate_move_to_visit_result_rewards(
+            experiences
+        )
+
+        new_completed = diagnostics[(False, "completed")]
+        self.assertEqual(new_completed.count, 2)
+        self.assertAlmostEqual(new_completed.average_reward, 0.19)
+
+        new_unreachable = diagnostics[(False, "unreachable")]
+        self.assertEqual(new_unreachable.count, 1)
+        self.assertAlmostEqual(new_unreachable.average_reward, -0.50)
+
+        visited_completed = diagnostics[(True, "completed")]
+        self.assertEqual(visited_completed.count, 1)
+        self.assertAlmostEqual(visited_completed.average_reward, 0.14)
+
+        visited_unreachable = diagnostics[(True, "unreachable")]
+        self.assertEqual(visited_unreachable.count, 1)
+        self.assertAlmostEqual(visited_unreachable.average_reward, -0.50)
 
 
 if __name__ == "__main__":

@@ -38,6 +38,7 @@ class LearningFeatureTests(unittest.TestCase):
             position_before=(3, 2),
             path_length_before=10,
             memory_trust_before=0.67,
+            next_step_was_visited=True,
         )
 
         experience_vector = encode_experience(
@@ -51,6 +52,7 @@ class LearningFeatureTests(unittest.TestCase):
             position=experience.position_before,
             path_length=experience.path_length_before,
             memory_trust=experience.memory_trust_before,
+            next_step_was_visited=experience.next_step_was_visited,
         )
         value_input_vector = encode_value_input(
             value_input
@@ -74,7 +76,7 @@ class LearningFeatureTests(unittest.TestCase):
 
         self.assertEqual(
             encode_experience(experience),
-            [0.72, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, -0.04, 0.0, 0.2, 0.67]
+            [0.72, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, -0.04, 0.0, 0.2, 0.67, 0.0]
         )
 
 

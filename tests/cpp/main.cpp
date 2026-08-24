@@ -6,6 +6,7 @@
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "bridge/BrainResponseParser.hpp"
+#include "bridge/NavigationPreview.hpp"
 #include "world/MazeGenerator.hpp"
 #include "world/World.hpp"
 #include "world/Position.hpp"
@@ -261,7 +262,9 @@ int main() {
             true,
             "completed",
             1,
-            0
+            0,
+            aura::world::Position{3, 2},
+            aura::world::Position{4, 2}
         }
     };
 
@@ -275,7 +278,9 @@ int main() {
         serialized.find(R"("next_step":[3,2])") == std::string::npos ||
         serialized.find(R"("result":"completed")") == std::string::npos ||
         serialized.find(R"("path_length_before":1)") == std::string::npos ||
-        serialized.find(R"("path_length_after":0)") == std::string::npos) {
+        serialized.find(R"("path_length_after":0)") == std::string::npos ||
+        serialized.find(R"("next_step_before":[3,2])") == std::string::npos ||
+        serialized.find(R"("next_step_after":[4,2])") == std::string::npos) {
         std::cout << "FAIL: observation should include"
                 << " the visible object's next BFS step\n";
         
@@ -315,6 +320,55 @@ int main() {
         response.debug.failedTargets != 4 ||
         response.debug.bodyActionFailures != 1) {
         std::cout << "FAIL: brain response should expose active plan debug state\n";
+        ++failures;
+    }
+
+    const auto previewRequest = aura::bridge::parseBrainResponse(R"({
+        "type":"preview_request",
+        "candidates":[
+            {"id":1,"action":"move_to","target":[5,2]},
+            {"id":2,"action":"move_to","target":[0,0]}
+        ]
+    })");
+
+    if (
+        previewRequest.type != aura::bridge::BrainResponseType::PreviewRequest
+        || previewRequest.previewCandidates.size() != 2
+        || previewRequest.previewCandidates[0].id != 1
+        || previewRequest.previewCandidates[0].target !=
+            aura::world::Position{5, 2}
+    ) {
+        std::cout << "FAIL: brain response should parse preview candidates\n";
+        ++failures;
+    }
+
+    aura::world::World previewWorld{7, 5};
+    previewWorld.addBoundaryWalls();
+
+    const auto previews = aura::bridge::previewNavigation(
+        previewWorld,
+        {1, 1},
+        previewRequest.previewCandidates
+    );
+    const auto previewJson =
+            aura::bridge::serializedNavigationPreviewResponse(previews);
+
+    if (
+        previews.size() != 2
+        || !previews[0].reachable
+        || previews[0].pathLength != 5
+        || previews[0].nextStep != aura::world::Position{2, 1}
+        || previews[1].reachable
+        || previews[1].pathLength.has_value()
+        || previews[1].nextStep.has_value()
+        || previewJson.find(R"("type":"preview_response")") ==
+            std::string::npos
+        || previewJson.find(R"("id":1)") == std::string::npos
+        || previewJson.find(R"("path_length":5)") == std::string::npos
+        || previewJson.find(R"("next_step":[2,1])") == std::string::npos
+        || previewJson.find(R"("reachable":false)") == std::string::npos
+    ) {
+        std::cout << "FAIL: navigation preview should preserve IDs and BFS truth\n";
         ++failures;
     }
 
