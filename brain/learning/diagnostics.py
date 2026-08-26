@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 import torch
 
-from brain import reward
 from brain.experience import Experience
 
 ACTION_NAMES = (
@@ -165,7 +164,8 @@ class CompletedMoveToDiagnostics:
         return self.energy_cost_sum / self.count
 
 
-def calculate_action_diagnostics(action_experiences: list[Experience],predictions: torch.Tensor) -> dict[str, ActionDiagnostics]:
+def calculate_action_diagnostics(action_experiences: list[Experience], predictions: torch.Tensor) -> dict[
+    str, ActionDiagnostics]:
     if any(experience.kind != "action" for experience in action_experiences):
         raise ValueError("Value model diagnostics require action experiences.")
 
@@ -232,7 +232,8 @@ def calculate_action_result_rewards(experiences: list[Experience], *, action: st
     }
 
 
-def calculate_move_to_visit_result_rewards(experiences: list[Experience]) -> dict[tuple[bool | None, str], ResultRewardDiagnostics]:
+def calculate_move_to_visit_result_rewards(experiences: list[Experience]) -> dict[
+    tuple[bool | None, str], ResultRewardDiagnostics]:
     rewards_by_visit_and_result = defaultdict(list)
 
     for experience in experiences:
@@ -259,7 +260,7 @@ def calculate_move_to_visit_result_rewards(experiences: list[Experience]) -> dic
     }
 
 
-def calculate_completed_move_to_diagnostics(experiences: list[Experience])->CompletedMoveToDiagnostics:
+def calculate_completed_move_to_diagnostics(experiences: list[Experience]) -> CompletedMoveToDiagnostics:
     diagnostics = CompletedMoveToDiagnostics()
 
     for experience in experiences:

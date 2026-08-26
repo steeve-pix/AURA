@@ -23,6 +23,7 @@ def sample_experience(step: int) -> Experience:
         succeeded=True,
         result="completed",
         path_length_before=8,
+        reachable_before=True,
         memory_trust_before=0.6,
         navigation_progress=1,
         reward=0.09,
@@ -62,8 +63,10 @@ class ExperienceStoreTests(unittest.TestCase):
             self.assertNotIn("discovered_new_cell", data)
             self.assertEqual(data["navigation_progress"], 1)
             self.assertNotIn("progressed_toward_target", data)
+            self.assertTrue(data["reachable_before"])
 
             loaded = load_experiences(path)
+            self.assertTrue(loaded[0].reachable_before)
             self.assertEqual(loaded[0].path_length_before, 8)
             self.assertEqual(loaded[0].memory_trust_before, 0.6)
             self.assertEqual(loaded[0].navigation_progress, 1)

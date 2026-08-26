@@ -29,7 +29,7 @@ def main() -> None:
     parser.add_argument(
         "--body",
         type=Path,
-        default=Path("cmake-build-debug/body/aura_body"),
+        default=Path("build/body/aura_body"),
     )
     parser.add_argument(
         "--brain-directory",

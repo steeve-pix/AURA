@@ -257,14 +257,15 @@ int main() {
         nearby,
         3,
         aura::bridge::LastAction{
-            aura::bridge::ActionType::MoveTo,
-            aura::world::Position{8, 3},
-            true,
-            "completed",
-            1,
-            0,
-            aura::world::Position{3, 2},
-            aura::world::Position{4, 2}
+            .type = aura::bridge::ActionType::MoveTo,
+            .target = aura::world::Position{8, 3},
+            .succeeded = true,
+            .result = "completed",
+            .pathLengthBefore = 1,
+            .pathLengthAfter = 0,
+            .nextStepBefore = aura::world::Position{3, 2},
+            .nextStepAfter = aura::world::Position{4, 2},
+            .reachableBefore = true
         }
     };
 
@@ -280,10 +281,11 @@ int main() {
         serialized.find(R"("path_length_before":1)") == std::string::npos ||
         serialized.find(R"("path_length_after":0)") == std::string::npos ||
         serialized.find(R"("next_step_before":[3,2])") == std::string::npos ||
-        serialized.find(R"("next_step_after":[4,2])") == std::string::npos) {
+        serialized.find(R"("next_step_after":[4,2])") == std::string::npos ||
+        serialized.find(R"("reachable_before":true)") == std::string::npos) {
         std::cout << "FAIL: observation should include"
                 << " the visible object's next BFS step\n";
-        
+
         ++failures;
     }
 
@@ -336,7 +338,7 @@ int main() {
         || previewRequest.previewCandidates.size() != 2
         || previewRequest.previewCandidates[0].id != 1
         || previewRequest.previewCandidates[0].target !=
-            aura::world::Position{5, 2}
+        aura::world::Position{5, 2}
     ) {
         std::cout << "FAIL: brain response should parse preview candidates\n";
         ++failures;
@@ -362,7 +364,7 @@ int main() {
         || previews[1].pathLength.has_value()
         || previews[1].nextStep.has_value()
         || previewJson.find(R"("type":"preview_response")") ==
-            std::string::npos
+        std::string::npos
         || previewJson.find(R"("id":1)") == std::string::npos
         || previewJson.find(R"("path_length":5)") == std::string::npos
         || previewJson.find(R"("next_step":[2,1])") == std::string::npos

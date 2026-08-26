@@ -8,7 +8,6 @@ from brain.learning.diagnostics import (
     RunningValueDiagnostics,
 )
 
-
 DIVIDER = "─" * 78
 CANDIDATE_DIVIDER = "─" * 108
 BOX_WIDTH = 78
@@ -45,7 +44,7 @@ def format_decision(key: tuple) -> str:
     return f"{goal} → {action_label}"
 
 
-def format_live_summary(diagnostics: RunningValueDiagnostics,completed_move_to: CompletedMoveToDiagnostics) -> str:
+def format_live_summary(diagnostics: RunningValueDiagnostics, completed_move_to: CompletedMoveToDiagnostics) -> str:
     progress = completed_move_to.average_navigation_progress()
     progress_text = "n/a" if progress is None else f"{progress:.3f}"
 
@@ -119,7 +118,8 @@ def format_live_summary(diagnostics: RunningValueDiagnostics,completed_move_to: 
     return "\n".join(lines)
 
 
-def format_candidate_disagreement(scored_candidates: list[ScoredCandidate],*,rule_key: tuple,model_key: tuple) -> str:
+def format_candidate_disagreement(scored_candidates: list[ScoredCandidate], *, rule_key: tuple,
+                                  model_key: tuple) -> str:
     lines = [
         "",
         "VALUE MODEL · RULE/MODEL DISAGREEMENT",
@@ -162,7 +162,7 @@ def format_candidate_disagreement(scored_candidates: list[ScoredCandidate],*,rul
         next_visited = (
             "n/a"
             if value_input is None
-            or value_input.next_step_was_visited is None
+               or value_input.next_step_was_visited is None
             else "yes" if value_input.next_step_was_visited else "no"
         )
         lines.append(
@@ -178,7 +178,7 @@ def format_candidate_disagreement(scored_candidates: list[ScoredCandidate],*,rul
     return "\n".join(lines)
 
 
-def format_disagreement_result(comparison: dict,*,rule_actual: float) -> str:
+def format_disagreement_result(comparison: dict, *, rule_actual: float) -> str:
     rule_prediction = comparison["rule_prediction"]
 
     return "\n".join([
@@ -202,10 +202,10 @@ def format_disagreement_result(comparison: dict,*,rule_actual: float) -> str:
 
 class LiveValueReporter:
     def __init__(
-        self,
-        *,
-        output: TextIO | None = None,
-        summary_interval: int = 100,
+            self,
+            *,
+            output: TextIO | None = None,
+            summary_interval: int = 100,
     ) -> None:
         if summary_interval <= 0:
             raise ValueError("Summary interval must be positive.")
@@ -216,11 +216,11 @@ class LiveValueReporter:
         self.completed_move_to = CompletedMoveToDiagnostics()
 
     def record_completed(
-        self,
-        experience: Experience,
-        *,
-        prediction: float | None,
-        candidate_comparison: dict | None,
+            self,
+            experience: Experience,
+            *,
+            prediction: float | None,
+            candidate_comparison: dict | None,
     ) -> None:
         if prediction is not None:
             self.diagnostics.record(
@@ -248,11 +248,11 @@ class LiveValueReporter:
             )
 
     def report_disagreement(
-        self,
-        scored_candidates: list[ScoredCandidate],
-        *,
-        rule_key: tuple,
-        model_key: tuple,
+            self,
+            scored_candidates: list[ScoredCandidate],
+            *,
+            rule_key: tuple,
+            model_key: tuple,
     ) -> None:
         self._print(
             format_candidate_disagreement(

@@ -1,5 +1,4 @@
 import argparse
-
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,15 +15,15 @@ from brain.learning.diagnostics import (
     calculate_action_diagnostics, ResultRewardDiagnostics, calculate_action_result_rewards, CompletedMoveToDiagnostics,
     calculate_completed_move_to_diagnostics, calculate_move_to_visit_result_rewards,
 )
-from brain.learning.model import ValueModel
 from brain.learning.features import ABLATION_NAMES
+from brain.learning.model import ValueModel
+from brain.learning.model_io import save_model
 from brain.learning.train import (
     baseline_mse,
     evaluate_model,
     predict,
     train_model, per_action_baseline_mse,
 )
-from brain.learning.model_io import save_model
 
 DEFAULT_TRAIN_SEEDS = tuple(range(2001, 2009))
 DEFAULT_TEST_SEEDS = tuple(range(2009, 2013))
@@ -39,6 +38,7 @@ DEFAULT_ABLATIONS = (
     "path_length",
     "memory_trust",
     "next_step_was_visited",
+    "reachability",
 )
 
 

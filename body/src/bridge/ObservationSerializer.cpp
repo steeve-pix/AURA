@@ -79,6 +79,10 @@ namespace aura::bridge {
                     nextStep.x, nextStep.y
                 };
             }
+
+            if (lastAction.reachableBefore.has_value()) {
+                json["last_action"]["reachable_before"] = lastAction.reachableBefore.value();
+            }
         } else {
             // An explicit null distinguishes the first cycle from an omitted field.
             json["last_action"] = nullptr;

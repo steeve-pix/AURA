@@ -123,6 +123,7 @@ class LearningCandidateTests(unittest.TestCase):
 
         self.assertTrue(value_input.next_step_was_visited)
         self.assertIsNone(value_input.target)
+        self.assertIsNone(value_input.reachable)
 
     def test_visible_move_to_candidate_uses_known_route_facts(self):
         memory = Memory()
@@ -211,6 +212,7 @@ class LearningCandidateTests(unittest.TestCase):
 
         self.assertIsNone(value_input.path_length)
         self.assertIsNone(value_input.next_step_was_visited)
+        self.assertIs(value_input.reachable, False)
 
     def test_scoring_returns_one_prediction_per_candidate(self):
         torch.manual_seed(1)
@@ -271,6 +273,7 @@ class LearningCandidateTests(unittest.TestCase):
         self.assertTrue(scored.reachable)
         self.assertEqual(scored.value_input.path_length, 8)
         self.assertTrue(scored.value_input.next_step_was_visited)
+
 
     def test_equal_predictions_prefer_rule_choice(self):
         rule = CandidateDecision(

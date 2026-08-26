@@ -1,5 +1,8 @@
+from typing import Any
+
+
 def build_navigation_preview_request(
-    candidates,
+        candidates,
 ) -> dict | None:
     preview_candidates = []
 
@@ -25,8 +28,8 @@ def build_navigation_preview_request(
 
 
 def validate_navigation_preview_response(
-    request: dict,
-    response: dict,
+        request: dict,
+        response: dict,
 ) -> None:
     if response.get("type") != "preview_response":
         raise ValueError("Expected a navigation preview response.")
@@ -61,18 +64,15 @@ def validate_navigation_preview_response(
                 raise ValueError("Reachable previews need a valid path length.")
 
             if path_length > 0 and (
-                not isinstance(next_step, list)
-                or len(next_step) != 2
+                    not isinstance(next_step, list)
+                    or len(next_step) != 2
             ):
                 raise ValueError("Non-empty paths need a next step.")
         elif path_length is not None or next_step is not None:
             raise ValueError("Unreachable previews cannot contain route data.")
 
 
-def navigation_previews_by_target(
-    request: dict,
-    response: dict,
-) -> dict[tuple[int, int], dict]:
+def navigation_previews_by_target(request: dict, response: dict) -> dict[tuple[Any], Any]:
     validate_navigation_preview_response(request, response)
 
     requested_by_id = {

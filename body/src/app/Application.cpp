@@ -120,7 +120,8 @@ namespace aura::app {
             }
 
             const std::string title =
-                    "AURA | Seed | " + std::to_string(mazeSeed_) + " | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " +
+                    "AURA | Seed | " + std::to_string(mazeSeed_) + " | Goal: " + goalLabel + " (" + goalScore +
+                    ") | Explore: " +
                     exploreScore + " | Energy: " +
                     std::to_string(energy) + " | Plan: " + planLabel
                     + " | Failures P/R/T/B: "
@@ -259,10 +260,10 @@ namespace aura::app {
                 );
 
         lastAction_ = {
-            bridge::ActionType::Move,
-            std::nullopt,
-            moved,
-            moved ? "completed" : "failed"
+            .type = bridge::ActionType::Move,
+            .target = std::nullopt,
+            .succeeded = moved,
+            .result = moved ? "completed" : "failed"
         };
     }
 
@@ -287,16 +288,19 @@ namespace aura::app {
         const std::optional<world::Position> nextStepBefore =
                 pathBefore.empty()
                     ? std::nullopt
-                    : std::optional<world::Position>{pathBefore.front()};
+                    : std::optional{pathBefore.front()};
 
         if (pathBefore.empty() && agent_.position() != action.target) {
             lastAction_ = {
-                action.type,
-                action.target,
-                false,
-                "unreachable",
-                std::nullopt,
-                std::nullopt
+                .type = action.type,
+                .target = action.target,
+                .succeeded = false,
+                .result = "unreachable",
+                .pathLengthBefore = std::nullopt,
+                .pathLengthAfter = std::nullopt,
+                .nextStepBefore = std::nullopt,
+                .nextStepAfter = std::nullopt,
+                .reachableBefore = false
             };
             return;
         }
@@ -344,17 +348,18 @@ namespace aura::app {
         const std::optional<world::Position> nextStepAfter =
                 pathAfter.empty()
                     ? std::nullopt
-                    : std::optional<world::Position>{pathAfter.front()};
+                    : std::optional{pathAfter.front()};
 
         lastAction_ = {
-            action.type,
-            action.target,
-            moved,
-            moved ? "completed" : "failed",
-            pathLengthBefore,
-            pathLengthAfter,
-            nextStepBefore,
-            nextStepAfter
+            .type = action.type,
+            .target = action.target,
+            .succeeded = moved,
+            .result = moved ? "completed" : "failed",
+            .pathLengthBefore = pathLengthBefore,
+            .pathLengthAfter = pathLengthAfter,
+            .nextStepBefore = nextStepBefore,
+            .nextStepAfter = nextStepAfter,
+            .reachableBefore = true
         };
     }
 

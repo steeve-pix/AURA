@@ -1,14 +1,15 @@
-from typing import Optional, Sequence, Literal
 from dataclasses import dataclass
-from brain.world_memory import WorldMemory
-from brain.planning import Plan
+from typing import Optional, Sequence, Literal
+
 from brain.experience import (
     Experience,
     RESULT_COMPLETED,
     RESULT_FAILED,
     detect_outcome,
 )
+from brain.planning import Plan
 from brain.reward import calculate_reward
+from brain.world_memory import WorldMemory
 
 DIRECTION_OFFSETS = {
     "north": (0, -1),
@@ -153,15 +154,8 @@ class Memory:
         if experience.kind == "action" and not experience.succeeded:
             self.body_action_failure_count += 1
 
-    def record_plan_event(
-            self,
-            *,
-            event: str,
-            goal: str,
-            target: tuple[int, int] | None,
-            observation: dict,
-            reward: float,
-    ) -> Experience:
+    def record_plan_event(self, *, event: str, goal: str, target: tuple[int, int] | None, observation: dict,
+                          reward: float) -> Experience:
         position = (observation["position"][0], observation["position"][1])
         energy = observation["energy"]
         experience = Experience(
@@ -226,9 +220,9 @@ class Memory:
                 visible_path_length = visible_object.get("path_length")
 
                 if (
-                    visible_object.get("reachable", False)
-                    and visible_path_length is not None
-                    and visible_path_length >= 0
+                        visible_object.get("reachable", False)
+                        and visible_path_length is not None
+                        and visible_path_length >= 0
                 ):
                     path_length_before = visible_path_length
 
@@ -247,18 +241,18 @@ class Memory:
             last_action = observation.get("last_action")
 
             if (
-                next_step_was_visited is None
-                and last_action is not None
-                and last_action.get("type") == "move_to"
-                and last_action.get("target") is not None
-                and tuple(last_action["target"]) == target_position
+                    next_step_was_visited is None
+                    and last_action is not None
+                    and last_action.get("type") == "move_to"
+                    and last_action.get("target") is not None
+                    and tuple(last_action["target"]) == target_position
             ):
                 next_step = last_action.get("next_step_after")
 
                 if next_step is not None:
                     next_step_position = (next_step[0], next_step[1])
                     next_step_was_visited = (
-                        self.visit_count(next_step_position) > 0
+                            self.visit_count(next_step_position) > 0
                     )
 
                 if path_length_before is None:
@@ -308,7 +302,7 @@ class Memory:
 
         return self.pending_experience
 
-    def finish_pending_experience(self,observation: dict) -> Experience | None:
+    def finish_pending_experience(self, observation: dict) -> Experience | None:
         if self.pending_experience is None:
             return None
 
@@ -318,6 +312,11 @@ class Memory:
             return None
 
         pending = self.pending_experience
+
+        reachable_before = None
+
+        if pending["action"] == "move_to":
+            reachable_before = last_action.get("reachable_before")
 
         if last_action.get("type") != pending["action"]:
             return None
@@ -350,7 +349,7 @@ class Memory:
             if next_step_before is not None:
                 next_step_position = tuple(next_step_before)
                 next_step_was_visited = (
-                    next_step_position in pending["visited_before"]
+                        next_step_position in pending["visited_before"]
                 )
 
         path_length_after = last_action.get("path_length_after")
@@ -376,6 +375,7 @@ class Memory:
             path_length_before=path_length_before,
             memory_trust_before=pending["memory_trust_before"],
             next_step_was_visited=next_step_was_visited,
+            reachable_before=reachable_before,
             visited_new_cell=visited_new_cell,
             navigation_progress=navigation_progress,
             outcome=outcome,

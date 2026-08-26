@@ -1,10 +1,11 @@
 import json
 import sys
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
 from brain.experience import Experience
+from brain.experience_store import append_experience, experience_path_for_world
 from brain.goals import choose_goal, goal_scores, recharge_is_urgent
 from brain.learning.candidates import (
     candidate_decisions,
@@ -13,16 +14,15 @@ from brain.learning.candidates import (
     score_candidates,
     select_model_candidate,
 )
-from brain.plan_supervisor import supervise_goal
-from brain.experience_store import append_experience, experience_path_for_world
+from brain.learning.model_io import load_model
+from brain.learning.reporting import LiveValueReporter
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
 from brain.navigation_preview import (
     build_navigation_preview_request,
     navigation_previews_by_target,
 )
+from brain.plan_supervisor import supervise_goal
 from brain.planning import plan_debug, update_plan_from_observation
-from brain.learning.model_io import load_model
-from brain.learning.reporting import LiveValueReporter
 
 PLAN_FAILED_REWARD = -0.40
 REPLAN_REWARD = 0.05
@@ -93,15 +93,15 @@ def update_active_plan_and_record_events(memory, observation: dict) -> list[Expe
 
 
 def score_and_report_value_candidates(
-    *,
-    value_model,
-    candidates,
-    observation: dict,
-    memory,
-    goal: str,
-    decision: dict,
-    value_reporter: LiveValueReporter,
-    navigation_previews: dict | None = None,
+        *,
+        value_model,
+        candidates,
+        observation: dict,
+        memory,
+        goal: str,
+        decision: dict,
+        value_reporter: LiveValueReporter,
+        navigation_previews: dict | None = None,
 ) -> None:
     if value_model is None or not candidates:
         return

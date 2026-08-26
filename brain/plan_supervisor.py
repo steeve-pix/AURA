@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from brain.planning import Plan
 from brain.memory import Memory
+from brain.planning import Plan
 
 PlanDisposition = Literal[
     "continue",

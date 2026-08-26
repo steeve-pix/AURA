@@ -1,6 +1,5 @@
 import unittest
 
-from brain.decision import action_from_plan
 from brain.experience import Experience
 from brain.learning.features import (
     ValueInput,
@@ -39,6 +38,7 @@ class LearningFeatureTests(unittest.TestCase):
             path_length_before=10,
             memory_trust_before=0.67,
             next_step_was_visited=True,
+            reachable_before=True,
         )
 
         experience_vector = encode_experience(
@@ -53,6 +53,7 @@ class LearningFeatureTests(unittest.TestCase):
             path_length=experience.path_length_before,
             memory_trust=experience.memory_trust_before,
             next_step_was_visited=experience.next_step_was_visited,
+            reachable=experience.reachable_before,
         )
         value_input_vector = encode_value_input(
             value_input
@@ -76,7 +77,67 @@ class LearningFeatureTests(unittest.TestCase):
 
         self.assertEqual(
             encode_experience(experience),
-            [0.72, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, -0.04, 0.0, 0.2, 0.67, 0.0]
+            [0.72, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, -0.04, 0.0, 0.2, 0.67, 0.0, 0.0, 0.0]
+        )
+
+    def test_encodes_reachable_move_to(self):
+        value_input = ValueInput(
+            energy=50,
+            goal="recharge",
+            action="move_to",
+            target=(5, 5),
+            position=(1, 1),
+            path_length=8,
+            memory_trust=None,
+            next_step_was_visited=False,
+            reachable=True,
+        )
+
+        vector = encode_value_input(value_input)
+
+        self.assertEqual(
+            vector[-2:],
+            [1.0, 1.0],
+        )
+
+    def test_encodes_unreachable_move_to(self):
+        value_input = ValueInput(
+            energy=50,
+            goal="recharge",
+            action="move_to",
+            target=(5, 5),
+            position=(1, 1),
+            path_length=None,
+            memory_trust=None,
+            next_step_was_visited=None,
+            reachable=False,
+        )
+
+        vector = encode_value_input(value_input)
+
+        self.assertEqual(
+            vector[-2:],
+            [1.0, 0.0],
+        )
+
+    def test_encodes_not_applicable_reachability(self):
+        value_input = ValueInput(
+            energy=50,
+            goal="explore",
+            action="move",
+            target=None,
+            position=(1, 1),
+            path_length=None,
+            memory_trust=None,
+            next_step_was_visited=False,
+            reachable=None,
+        )
+
+        vector = encode_value_input(value_input)
+
+        self.assertEqual(
+            vector[-2:],
+            [0.0, 0.0],
         )
 
 

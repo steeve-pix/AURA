@@ -554,6 +554,93 @@ class ExperienceTests(unittest.TestCase):
         self.assertIsNone(experience.path_length_before)
         self.assertIsNone(experience.navigation_progress)
 
+    def test_move_to_records_reachable_before(self):
+        memory = Memory()
+
+        memory.begin_experience(
+            goal="recharge",
+            action={
+                "action": "move_to",
+                "target": [5, 2],
+            },
+            observation={
+                "position": [2, 2],
+                "energy": 90,
+            }
+        )
+
+        experience = memory.finish_pending_experience({
+            "position": [3, 2],
+            "energy": 89,
+            "last_action": {
+                "type": "move_to",
+                "target": [5, 2],
+                "succeeded": True,
+                "result": "completed",
+                "reachable_before": True,
+                "path_length_before": 3,
+                "path_length_after": 2,
+            }
+        })
+
+        self.assertIs(experience.reachable_before, True)
+
+    def test_move_to_records_unreachable_before(self):
+        memory = Memory()
+
+        memory.begin_experience(
+            goal="recharge",
+            action={
+                "action": "move_to",
+                "target": [5, 2],
+            },
+            observation={
+                "position": [2, 2],
+                "energy": 90,
+            }
+        )
+
+        experience = memory.finish_pending_experience({
+            "position": [2, 2],
+            "energy": 90,
+            "last_action": {
+                "type": "move_to",
+                "target": [5, 2],
+                "succeeded": False,
+                "result": "unreachable",
+                "reachable_before": False,
+            }
+        })
+
+        self.assertIs(experience.reachable_before, False)
+
+    def test_move_has_no_reachability(self):
+        memory = Memory()
+
+        memory.begin_experience(
+            goal="explore",
+            action={
+                "action": "move",
+                "direction": "east",
+            },
+            observation={
+                "position": [2, 2],
+                "energy": 90,
+            },
+        )
+
+        experience = memory.finish_pending_experience({
+            "position": [3, 2],
+            "energy": 89,
+            "last_action": {
+                "type": "move",
+                "succeeded": True,
+                "result": "completed",
+            },
+        })
+
+        self.assertIsNone(experience.reachable_before)
+
 
 if __name__ == "__main__":
     unittest.main()
