@@ -1,3 +1,18 @@
+from dataclasses import dataclass
+from typing import Literal
+
+GoalType = Literal["explore", "investigate", "recharge"]
+
+
+@dataclass(frozen=True)
+class GoalProposal:
+    goal_type: GoalType
+    target: tuple[int, int] | None
+    score: float
+    urgency: float
+    reason: str
+
+
 ENERGY_RESERVE = 5
 RECHARGE_CONSIDERATION_THRESHOLD = 70
 HISTORICAL_BATTERY_BONUS = 0.15

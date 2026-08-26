@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from brain.goals import choose_goal, investigation_score, recharge_score, recharge_is_urgent
+from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent
 from brain.memory import Memory
 
 
@@ -164,6 +164,21 @@ class TestGoals(unittest.TestCase):
         }
 
         self.assertFalse(recharge_is_urgent(observation))
+
+    def test_goal_proposal_keeps_objective_context(self):
+        proposal = GoalProposal(
+            goal_type="investigate",
+            target=(12, 5),
+            score=0.78,
+            urgency=0.20,
+            reason="reachable_unknown"
+        )
+
+        self.assertEqual(proposal.goal_type, "investigate")
+        self.assertEqual(proposal.target, (12, 5))
+        self.assertEqual(proposal.score, 0.78)
+        self.assertEqual(proposal.urgency, 0.20, )
+        self.assertEqual(proposal.reason, "reachable_unknown")
 
 
 if __name__ == '__main__':
