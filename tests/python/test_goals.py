@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import patch
 
-from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent
+from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent, \
+    investigation_goal_proposal
 from brain.memory import Memory
 
 
@@ -179,6 +180,99 @@ class TestGoals(unittest.TestCase):
         self.assertEqual(proposal.score, 0.78)
         self.assertEqual(proposal.urgency, 0.20, )
         self.assertEqual(proposal.reason, "reachable_unknown")
+
+    def test_investigation_proposals_have_targets(self):
+        observation = {
+            "energy": 80,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [5, 2],
+                    "reachable": True,
+                },
+                {
+                    "type": "Unknown",
+                    "position": [12, 8],
+                    "reachable": True,
+                },
+            ],
+        }
+
+        proposals = investigation_goal_proposal(observation, Memory())
+
+        self.assertEqual(
+            [proposal.target for proposal in proposals],
+            [
+                (5, 2),
+                (12, 8)
+            ])
+
+        self.assertTrue(
+            all(proposal.goal_type == "investigate" for proposal in proposals))
+
+    def test_investigation_proposals_exclude_invalid_targets(self):
+        memory = Memory()
+        memory.mark_target_failed((8, 4))
+
+        observation = {
+            "energy": 80,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [5, 2],
+                    "reachable": True,
+                },
+                {
+                    "type": "Unknown",
+                    "position": [7, 3],
+                    "reachable": False,
+                },
+                {
+                    "type": "Unknown",
+                    "position": [8, 4],
+                    "reachable": True,
+                },
+                {
+                    "type": "Battery",
+                    "position": [9, 4],
+                    "reachable": True,
+                },
+            ],
+        }
+
+        proposals = investigation_goal_proposal(observation, memory)
+        self.assertEqual(len(proposals), 1)
+        self.assertEqual(proposals[0].target, (5, 2))
+
+    def test_historical_result_improves_only_matching_proposals(self):
+        memory = Memory()
+        memory.remember_investigation_result((12, 8), "Battery")
+
+        observation = {
+            "energy": 80,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [5, 2],
+                    "reachable": True,
+                },
+                {
+                    "type": "Unknown",
+                    "position": [12, 8],
+                    "reachable": True,
+                },
+            ],
+        }
+
+        proposals = investigation_goal_proposal(observation, memory)
+
+        self.assertGreater(
+            proposals[1].score,
+            proposals[0].score,
+        )
 
 
 if __name__ == '__main__':

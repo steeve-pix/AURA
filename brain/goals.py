@@ -75,6 +75,39 @@ def investigation_score(observation, memory):
     return min(score, 1.0)
 
 
+def investigation_goal_proposal(observation, memory) -> list[GoalProposal]:
+    proposals = []
+
+    for obj in observation["nearby_objects"]:
+        if obj["type"] != "Unknown":
+            continue
+
+        if not obj.get("reachable", False):
+            continue
+
+        target = (obj["position"][0], obj["position"][1])
+
+        if memory.is_failed_target(target):
+            continue
+
+        score = INVESTIGATION_BASE_SCORE
+        reason = "reachable_unknown"
+
+        if memory.previous_investigation_result(target) == "Battery":
+            score += HISTORICAL_BATTERY_BONUS
+            reason = "historical_promising_unknown"
+
+        proposals.append(GoalProposal(
+            goal_type="investigate",
+            target=target,
+            score=min(score, 1.0),
+            urgency=0.0,
+            reason=reason,
+        ))
+
+    return proposals
+
+
 def goal_scores(observation, memory):
     return {
         "recharge": recharge_score(observation),
