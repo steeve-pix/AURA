@@ -1,7 +1,7 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
 
-from brain.goals import investigation_goal_proposals, select_best_investigation_proposal
+from brain.goals import investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal
 from brain.memory import Memory
 from brain.planning import (
     Plan,
@@ -9,78 +9,14 @@ from brain.planning import (
     create_recharge_plan as create_recharge_plan_for_target,
 )
 
-BATTERY_ARRIVAL_RESERVE = 2
-
-
-def remembered_battery_score(memory: Memory, battery: tuple[int, int], aura_position: tuple[int, int], ) -> float:
-    trust = memory.battery_trust(battery)
-    distance = (
-            abs(battery[0] - aura_position[0])
-            + abs(battery[1] - aura_position[1])
-    )
-
-    return trust / (1.0 + distance)
-
-
-def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int] | None:
-    energy = observation["energy"]
-    visible_battery_positions = {
-        tuple(obj["position"])
-        for obj in observation["nearby_objects"]
-        if obj["type"] == "Battery"
-    }
-
-    visible_batteries = [
-        obj
-        for obj in observation["nearby_objects"]
-        if obj["type"] == "Battery"
-           and obj.get("reachable", False)
-           and obj["path_length"] <= energy - BATTERY_ARRIVAL_RESERVE
-           and not memory.is_failed_target((obj["position"][0], obj["position"][1]))
-    ]
-
-    if visible_batteries:
-        best = min(
-            visible_batteries,
-            key=lambda obj: obj["path_length"],
-        )
-
-        return best["position"][0], best["position"][1]
-
-    remembered = [
-        battery
-        for battery in memory.batteries()
-        if battery not in visible_battery_positions
-           and not memory.is_failed_target(battery)
-           and (
-                   abs(battery[0] - observation["position"][0])
-                   + abs(battery[1] - observation["position"][1])
-           ) <= energy - BATTERY_ARRIVAL_RESERVE
-    ]
-
-    if remembered:
-        x, y = observation["position"]
-        aura_position = (x, y)
-
-        return max(
-            remembered,
-            key=lambda battery: remembered_battery_score(
-                memory,
-                battery,
-                aura_position,
-            ),
-        )
-
-    return None
-
 
 def create_recharge_plan(observation, memory: Memory, ) -> Plan | None:
-    target = choose_best_recharge_target(observation, memory)
+    proposal = recharge_goal_proposal(observation, memory)
 
-    if target is None:
+    if proposal is None or proposal.target is None:
         return None
 
-    return create_recharge_plan_for_target(target)
+    return create_recharge_plan_for_target(proposal.target)
 
 
 def replan_failed_recharge(observation, memory: Memory, ) -> bool:

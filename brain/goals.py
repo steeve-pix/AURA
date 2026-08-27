@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Literal
 
+from brain.memory import Memory
+
 GoalType = Literal["explore", "investigate", "recharge"]
 
 
@@ -21,6 +23,93 @@ RECHARGE_PLAN_INTERRUPT_SCORE = 0.70
 GOAL_SWITCH_MARGIN = 0.1
 CRITICAL_ENERGY = 8
 INVESTIGATION_DISTANCE_BONUS = 0.10
+BATTERY_ARRIVAL_RESERVE = 2
+
+
+def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int] | None:
+    energy = observation["energy"]
+    visible_battery_positions = {
+        tuple(obj["position"])
+        for obj in observation["nearby_objects"]
+        if obj["type"] == "Battery"
+    }
+
+    visible_batteries = [
+        obj
+        for obj in observation["nearby_objects"]
+        if obj["type"] == "Battery"
+           and obj.get("reachable", False)
+           and obj["path_length"] <= energy - BATTERY_ARRIVAL_RESERVE
+           and not memory.is_failed_target((obj["position"][0], obj["position"][1]))
+    ]
+
+    if visible_batteries:
+        best = min(
+            visible_batteries,
+            key=lambda obj: obj["path_length"],
+        )
+
+        return best["position"][0], best["position"][1]
+
+    remembered = [
+        battery
+        for battery in memory.batteries()
+        if battery not in visible_battery_positions
+           and not memory.is_failed_target(battery)
+           and (
+                   abs(battery[0] - observation["position"][0])
+                   + abs(battery[1] - observation["position"][1])
+           ) <= energy - BATTERY_ARRIVAL_RESERVE
+    ]
+
+    if remembered:
+        x, y = observation["position"]
+        aura_position = (x, y)
+
+        return max(
+            remembered,
+            key=lambda battery: remembered_battery_score(
+                memory,
+                battery,
+                aura_position,
+            ),
+        )
+
+    return None
+
+
+def remembered_battery_score(memory: Memory, battery: tuple[int, int], aura_position: tuple[int, int], ) -> float:
+    trust = memory.battery_trust(battery)
+    distance = (
+            abs(battery[0] - aura_position[0])
+            + abs(battery[1] - aura_position[1])
+    )
+
+    return trust / (1.0 + distance)
+
+
+def recharge_goal_proposal(observation, memory: Memory, ) -> GoalProposal | None:
+    target = choose_best_recharge_target(observation, memory)
+
+    if target is None:
+        return None
+
+    score = recharge_score(observation)
+
+    visible_targets = {tuple(obj["position"]) for obj in observation["nearby_objects"] if
+                       obj["type"] == "Battery" and obj.get("reachable", False)}
+
+    reason = "visible_viable_battery" if target in visible_targets else "remembered_viable_battery"
+
+    urgency = score if recharge_is_urgent(observation) else 0.0
+
+    return GoalProposal(
+        goal_type="recharge",
+        target=target,
+        score=score,
+        urgency=urgency,
+        reason=reason
+    )
 
 
 def investigation_route_cost(obj, observation) -> int:

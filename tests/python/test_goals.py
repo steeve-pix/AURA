@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent, \
-    investigation_goal_proposals, select_best_investigation_proposal
+    investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal
 from brain.memory import Memory
 
 
@@ -362,6 +362,68 @@ class TestGoals(unittest.TestCase):
         self.assertIsNone(
             select_best_investigation_proposal([]),
         )
+
+    def test_recharge_proposal_contains_selected_battery(self):
+        observation = {
+            "energy": 30,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [8, 4],
+                    "reachable": True,
+                    "path_length": 9,
+                },
+                {
+                    "type": "Battery",
+                    "position": [5, 2],
+                    "reachable": True,
+                    "path_length": 5,
+                },
+            ],
+        }
+
+        proposal = recharge_goal_proposal(observation, Memory())
+
+        self.assertIsNotNone(proposal)
+        self.assertEqual(proposal.goal_type, "recharge")
+        self.assertEqual(proposal.target, (5, 2))
+        self.assertEqual(proposal.reason, "visible_viable_battery")
+
+    def test_recharge_proposal_rejects_energy_infeasible_battery(self):
+        observation = {
+            "energy": 10,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [8, 4],
+                    "reachable": True,
+                    "path_length": 12,
+                },
+            ],
+        }
+
+        proposal = recharge_goal_proposal(observation, Memory())
+
+        self.assertIsNone(proposal)
+
+    def test_recharge_proposal_can_use_remembered_battery(self):
+        memory = Memory()
+        memory.remember_battery((5, 2))
+
+        observation = {
+            "energy": 30,
+            "position": [1, 1],
+            "nearby_objects": [],
+        }
+
+        proposal = recharge_goal_proposal(observation, memory)
+
+        self.assertIsNotNone(proposal)
+
+        self.assertEqual(proposal.target, (5, 2))
+        self.assertEqual(proposal.reason, "remembered_viable_battery")
 
 
 if __name__ == '__main__':
