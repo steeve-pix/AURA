@@ -6,7 +6,7 @@ from brain.planning import (
     PlanStep,
     create_recharge_plan,
     plan_debug,
-    update_plan_from_observation,
+    update_plan_from_observation, MAX_STEPS_WITHOUT_PLAN_PROGRESS,
 )
 
 
@@ -419,6 +419,96 @@ class PlanTests(unittest.TestCase):
         }, current_step=11)
 
         self.assertEqual(plan.last_progress_step, 10)
+
+    def test_plan_fails_after_no_progress_threshold(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [2, 2],
+                "last_action": None,
+            },
+            current_step=(10 + MAX_STEPS_WITHOUT_PLAN_PROGRESS),
+        )
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "stalled")
+
+    def test_plan_remains_active_before_stall_threshold(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [2, 2],
+                "last_action": None,
+            },
+            current_step=(
+                    10
+                    + MAX_STEPS_WITHOUT_PLAN_PROGRESS
+                    - 1
+            ),
+        )
+
+        self.assertFalse(plan.has_failed())
+
+    def test_navigation_progress_prevents_stall_at_threshold(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                ),
+            ],
+        )
+
+        current_step = 10 + MAX_STEPS_WITHOUT_PLAN_PROGRESS
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [3, 2],
+                "last_action": {
+                    "type": "move_to",
+                    "target": [10, 2],
+                    "succeeded": True,
+                    "result": "completed",
+                    "path_length_before": 8,
+                    "path_length_after": 7,
+                },
+            },
+            current_step=current_step,
+        )
+
+        self.assertFalse(plan.has_failed())
+        self.assertEqual(plan.last_progress_step, current_step)
 
 
 if __name__ == "__main__":

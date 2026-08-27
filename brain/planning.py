@@ -6,6 +6,19 @@ PlanStepType = Literal[
     "investigate",
 ]
 
+MAX_STEPS_WITHOUT_PLAN_PROGRESS = 12
+
+
+def mark_stalled_if_needed(plan: Plan, *, current_step: int | None) -> None:
+    if current_step is None:
+        return
+
+    if plan.is_complete() or plan.has_failed():
+        return
+
+    if plan.steps_since_progress(current_step) >= MAX_STEPS_WITHOUT_PLAN_PROGRESS:
+        plan.mark_failed("stalled")
+
 
 @dataclass
 class PlanStep:
@@ -151,12 +164,15 @@ def update_plan_from_observation(plan: Plan, observation, *, current_step: int |
         if current_position == step.target:
             plan.advance(current_step=current_step)
 
+        mark_stalled_if_needed(plan, current_step=current_step)
+
         return
 
     if step.step_type == "investigate":
         last_action = observation.get("last_action")
 
         if not last_action:
+            mark_stalled_if_needed(plan, current_step=current_step)
             return
 
         matching_investigation = (
@@ -172,3 +188,5 @@ def update_plan_from_observation(plan: Plan, observation, *, current_step: int |
 
         if matching_investigation and last_action.get("succeeded", False):
             plan.advance(current_step=current_step)
+
+        mark_stalled_if_needed(plan, current_step=current_step)
