@@ -357,6 +357,69 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(plan.is_complete())
         self.assertEqual(plan.last_progress_step, 14)
 
+    def test_shorter_route_records_progress_without_advancing(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                ),
+            ]
+        )
+
+        update_plan_from_observation(plan,
+                                     {
+                                         "position": [3, 2],
+                                         "last_action": {
+                                             "type": "move_to",
+                                             "target": [10, 2],
+                                             "succeeded": True,
+                                             "result": "completed",
+                                             "path_length_before": 8,
+                                             "path_length_after": 7,
+                                         },
+                                     },
+                                     current_step=11,
+                                     )
+
+        # The final destination was not reached.
+        self.assertEqual(plan.current_index, 0)
+
+        # But navigation genuinely progressed.
+        self.assertEqual(plan.last_progress_step, 11)
+
+    def test_equal_route_cost_does_not_record_progress(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                )
+            ]
+        )
+
+        update_plan_from_observation(plan, {
+            "position": [3, 2],
+            "last_action": {
+                "type": "move_to",
+                "target": [10, 2],
+                "succeeded": True,
+                "result": "completed",
+                "path_length_before": 7,
+                "path_length_after": 7,
+            }
+        }, current_step=11)
+
+        self.assertEqual(plan.last_progress_step, 10)
+
 
 if __name__ == "__main__":
     unittest.main()

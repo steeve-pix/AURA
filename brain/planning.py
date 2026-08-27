@@ -129,12 +129,22 @@ def update_plan_from_observation(plan: Plan, observation, *, current_step: int |
     if step.step_type == "move_to":
         last_action = observation.get("last_action")
 
-        if (last_action and last_action.get("type") == "move_to" and not last_action.get("succeeded", False)
-                and last_action.get("target") is not None
-                and tuple(last_action["target"]) == step.target):
+        matching_move_to = (last_action is not None and last_action.get("type") == "move_to" and last_action.get(
+            "target") is not None and tuple(last_action["target"]) == step.target)
+
+        if matching_move_to and not last_action.get("succeeded", False):
             body_result = last_action.get("result", "failed")
+
             plan.mark_failed(f"move_to_{body_result}")
+
             return
+
+        if matching_move_to and last_action.get("succeeded", False) and current_step is not None:
+            path_before = last_action.get("path_length_before")
+            path_after = last_action.get("path_length_after")
+
+            if path_before is not None and path_after is not None and path_after < path_before:
+                plan.record_progress(current_step)
 
         current_position = tuple(observation["position"])
 
