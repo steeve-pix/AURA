@@ -35,6 +35,8 @@ def supervise_goal(memory: Memory, *, proposed_goal: str, recharge_urgent: bool)
     plan = memory.active_plan
 
     if plan is None:
+        memory.set_active_goal(proposed_goal)
+
         return proposed_goal
 
     review = review_plan(

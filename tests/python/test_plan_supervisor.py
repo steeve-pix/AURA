@@ -1,11 +1,8 @@
 import unittest
 
-from brain.plan_supervisor import (
-    review_plan,
-)
-from brain.planning import Plan, PlanStep
 from brain.memory import Memory
 from brain.plan_supervisor import review_plan, supervise_goal
+from brain.planning import Plan, PlanStep
 
 
 def active_plan(
@@ -171,6 +168,15 @@ class PlanSupervisorTests(unittest.TestCase):
 
         self.assertEqual(goal, "explore")
         self.assertIsNone(memory.active_plan)
+        self.assertEqual(memory.active_goal, "explore")
+
+    def test_supervision_replaces_old_goal_without_plan(self):
+        memory = Memory()
+
+        goal = supervise_goal(memory, proposed_goal="explore", recharge_urgent=False)
+
+        self.assertEqual(goal, "explore")
+        self.assertEqual(memory.active_goal, "explore")
 
 
 if __name__ == "__main__":

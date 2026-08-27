@@ -6,7 +6,7 @@ from typing import Any
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
 from brain.experience import Experience
 from brain.experience_store import append_experience, experience_path_for_world
-from brain.goals import choose_goal, goal_scores, recharge_is_urgent
+from brain.goals import goal_scores, recharge_is_urgent, propose_goal
 from brain.learning.candidates import (
     candidate_decisions,
     decision_key,
@@ -294,8 +294,12 @@ def main() -> None:
         save_memory(memory, memory_path, world_id)
 
         score = goal_scores(observation, memory)
-        proposed_goal = choose_goal(observation, memory)
+        proposal = propose_goal(observation, memory)
+
+        proposed_goal = proposal.goal_type
+
         recharge_urgent_now = recharge_is_urgent(observation)
+
         plan_was_active = memory.active_plan is not None
         goal = supervise_goal(
             memory,
@@ -324,6 +328,13 @@ def main() -> None:
         decision["debug"] = {
             "goal": goal,
             "goal_scores": score,
+            "goal_proposal": {
+                "type": proposal.goal_type,
+                "target": (None if proposal.target is None else list(proposal.target)),
+                "score": proposal.score,
+                "urgency": proposal.urgency,
+                "reason": proposal.reason,
+            },
             "known_cells": [
                 list(position) for position in memory.known_cells.keys()
             ],
