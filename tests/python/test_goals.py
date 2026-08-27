@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent, \
-    investigation_goal_proposal
+    investigation_goal_proposals, select_best_investigation_proposal
 from brain.memory import Memory
 
 
@@ -199,7 +199,7 @@ class TestGoals(unittest.TestCase):
             ],
         }
 
-        proposals = investigation_goal_proposal(observation, Memory())
+        proposals = investigation_goal_proposals(observation, Memory())
 
         self.assertEqual(
             [proposal.target for proposal in proposals],
@@ -242,7 +242,7 @@ class TestGoals(unittest.TestCase):
             ],
         }
 
-        proposals = investigation_goal_proposal(observation, memory)
+        proposals = investigation_goal_proposals(observation, memory)
         self.assertEqual(len(proposals), 1)
         self.assertEqual(proposals[0].target, (5, 2))
 
@@ -267,7 +267,7 @@ class TestGoals(unittest.TestCase):
             ],
         }
 
-        proposals = investigation_goal_proposal(observation, memory)
+        proposals = investigation_goal_proposals(observation, memory)
 
         self.assertGreater(
             proposals[1].score,
@@ -294,7 +294,7 @@ class TestGoals(unittest.TestCase):
             ],
         }
 
-        proposals = investigation_goal_proposal(observation, Memory())
+        proposals = investigation_goal_proposals(observation, Memory())
 
         by_target = {proposal.target: proposal for proposal in proposals}
 
@@ -325,12 +325,42 @@ class TestGoals(unittest.TestCase):
             ],
         }
 
-        proposals = investigation_goal_proposal(observation, Memory())
+        proposals = investigation_goal_proposals(observation, Memory())
         by_target = {proposal.target: proposal for proposal in proposals}
 
         self.assertGreater(
             by_target[(6, 1)].score,
             by_target[(3, 1)].score,
+        )
+
+    def test_selects_highest_scoring_investigation_proposal(self):
+        proposals = [
+            GoalProposal(
+                goal_type="investigate",
+                target=(5, 2),
+                score=0.76,
+                urgency=0.0,
+                reason="reachable_unknown",
+            ),
+            GoalProposal(
+                goal_type="investigate",
+                target=(8, 4),
+                score=0.84,
+                urgency=0.0,
+                reason="reachable_unknown",
+            )
+        ]
+
+        selected = select_best_investigation_proposal(proposals)
+
+        self.assertEqual(
+            selected.target,
+            (8, 4),
+        )
+
+    def test_no_investigation_proposals_selects_nothing(self):
+        self.assertIsNone(
+            select_best_investigation_proposal([]),
         )
 
 

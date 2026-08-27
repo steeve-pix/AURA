@@ -6,7 +6,6 @@ from brain.decision import (
     decide,
     replan_failed_recharge,
 )
-from brain.goals import choose_goal
 from brain.memory import Memory
 from brain.planning import (
     Plan,
@@ -687,6 +686,45 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(action, {"action": "move_to", "target": [5, 1]})
         self.assertEqual(memory.active_plan.goal, "investigate")
         self.assertEqual(memory.active_plan.steps[1].target, (5, 2))
+
+    def test_investigation_uses_bfs_route_cost(self):
+        memory = Memory()
+
+        observation = {
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    # Geometrically closer, but expensive route.
+                    "type": "Unknown",
+                    "position": [3, 1],
+                    "reachable": True,
+                    "path_length": 9,
+                },
+                {
+                    # Geometrically farther, but cheaper route.
+                    "type": "Unknown",
+                    "position": [6, 1],
+                    "reachable": True,
+                    "path_length": 5,
+                },
+            ],
+            "visible_cells": [
+                {
+                    "position": [3, 2],
+                    "type": "Empty",
+                },
+                {
+                    "position": [6, 2],
+                    "type": "Empty",
+                },
+            ],
+        }
+
+        choose_investigation_action(observation, memory)
+
+        self.assertIsNotNone(memory.active_plan)
+
+        self.assertEqual(memory.active_plan.goal_target, (6, 1))
 
 
 if __name__ == "__main__":

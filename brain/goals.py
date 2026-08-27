@@ -88,7 +88,7 @@ def investigation_score(observation, memory):
     return min(score, 1.0)
 
 
-def investigation_goal_proposal(observation, memory) -> list[GoalProposal]:
+def investigation_goal_proposals(observation, memory) -> list[GoalProposal]:
     proposals = []
 
     for obj in observation["nearby_objects"]:
@@ -123,6 +123,13 @@ def investigation_goal_proposal(observation, memory) -> list[GoalProposal]:
         ))
 
     return proposals
+
+
+def select_best_investigation_proposal(proposals: list[GoalProposal]) -> GoalProposal | None:
+    if not proposals:
+        return None
+
+    return max(proposals, key=lambda proposal: (proposal.score, proposal.target))
 
 
 def goal_scores(observation, memory):

@@ -93,16 +93,9 @@ def update_active_plan_and_record_events(memory, observation: dict) -> list[Expe
 
 
 def score_and_report_value_candidates(
-        *,
-        value_model,
-        candidates,
-        observation: dict,
-        memory,
-        goal: str,
-        decision: dict,
+        *, value_model, candidates, observation: dict, memory, goal: str, decision: dict,
         value_reporter: LiveValueReporter,
-        navigation_previews: dict | None = None,
-) -> None:
+        navigation_previews: dict | None = None) -> None:
     if value_model is None or not candidates:
         return
 
