@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent, \
     investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, goal_proposals, \
-    exploration_goal_proposal, select_goal_proposal
+    exploration_goal_proposal, select_goal_proposal, propose_goal
 from brain.memory import Memory
 
 
@@ -568,6 +568,84 @@ class TestGoals(unittest.TestCase):
 
         self.assertEqual(selected.goal_type, "recharge", )
 
+    def test_propose_goal_returns_target_specific_objective(self):
+        memory = Memory()
+
+        observation = {
+            "energy": 80,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [5, 2],
+                    "reachable": True,
+                    "path_length": 5,
+                },
+            ],
+        }
+
+        proposal = propose_goal(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(proposal.goal_type,"investigate")
+        self.assertEqual(proposal.target,(5, 2))
+
+    def test_propose_goal_does_not_mutate_memory(self):
+        memory = Memory()
+        memory.set_active_goal("explore")
+
+        observation = {
+            "energy": 80,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [5, 2],
+                    "reachable": True,
+                    "path_length": 5,
+                },
+            ],
+        }
+
+        proposal = propose_goal(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            proposal.goal_type,
+            "investigate",
+        )
+
+        # Reasoning selected investigate, but did not
+        # commit that decision to Memory.
+        self.assertEqual(
+            memory.active_goal,
+            "explore",
+        )
+
+    def test_propose_goal_prioritizes_energy_emergency(self):
+        memory = Memory()
+        memory.set_active_goal("investigate")
+
+        observation = {
+            "energy": 5,
+            "position": [1, 1],
+            "nearby_objects": [],
+        }
+
+        proposal = propose_goal(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(proposal.goal_type,"recharge")
+        self.assertGreater(proposal.urgency,0.0)
+
+        # Still unchanged because proposing is pure.
+        self.assertEqual(memory.active_goal,"investigate")
 
 if __name__ == '__main__':
     unittest.main()

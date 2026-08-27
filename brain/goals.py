@@ -305,6 +305,23 @@ def goal_scores(observation, memory):
     }
 
 
+def propose_goal(observation, memory) -> GoalProposal:
+    current_goal = memory.active_goal
+
+    if current_goal is not None and goal_completed(current_goal, observation, memory):
+        # Treat a completed goal as inactive during
+        # reasoning, but do not mutate Memory here.
+        current_goal = None
+
+    proposals = goal_proposals(observation, memory)
+
+    return select_goal_proposal(
+        proposals,
+        current_goal=current_goal,
+        energy=observation["energy"]
+    )
+
+
 def choose_goal(observation, memory):
     current_goal = memory.active_goal
 
