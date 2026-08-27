@@ -20,6 +20,19 @@ INVESTIGATION_BASE_SCORE = 0.75
 RECHARGE_PLAN_INTERRUPT_SCORE = 0.70
 GOAL_SWITCH_MARGIN = 0.1
 CRITICAL_ENERGY = 8
+INVESTIGATION_DISTANCE_BONUS = 0.10
+
+
+def investigation_route_cost(obj, observation) -> int:
+    path_length = obj.get("path_length")
+
+    if path_length is not None and path_length >= 0:
+        return path_length
+
+    aura_x, aura_y = observation["position"]
+    target_x, target_y = obj["position"]
+
+    return abs(aura_x - target_x) + abs(aura_y - target_y)
 
 
 def recharge_is_urgent(observation) -> bool:
@@ -92,6 +105,10 @@ def investigation_goal_proposal(observation, memory) -> list[GoalProposal]:
 
         score = INVESTIGATION_BASE_SCORE
         reason = "reachable_unknown"
+
+        route_cost = investigation_route_cost(obj, observation)
+
+        score += INVESTIGATION_DISTANCE_BONUS / (1.0 + route_cost)
 
         if memory.previous_investigation_result(target) == "Battery":
             score += HISTORICAL_BATTERY_BONUS

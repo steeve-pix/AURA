@@ -274,6 +274,65 @@ class TestGoals(unittest.TestCase):
             proposals[0].score,
         )
 
+    def test_shorter_route_produces_better_proposal(self):
+        observation = {
+            "energy": 80,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [3, 1],
+                    "reachable": True,
+                    "path_length": 2,
+                },
+                {
+                    "type": "Unknown",
+                    "position": [8, 1],
+                    "reachable": True,
+                    "path_length": 7,
+                },
+            ],
+        }
+
+        proposals = investigation_goal_proposal(observation, Memory())
+
+        by_target = {proposal.target: proposal for proposal in proposals}
+
+        self.assertGreater(
+            by_target[(3, 1)].score,
+            by_target[(8, 1)].score,
+        )
+
+    def test_proposals_prefer_bfs_cost_over_manhattan_distance(self):
+        observation = {
+            "energy": 80,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    # Geometrically close, but behind a detour.
+                    "type": "Unknown",
+                    "position": [3, 1],
+                    "reachable": True,
+                    "path_length": 9,
+                },
+                {
+                    # Geometrically farther, but route is cheaper.
+                    "type": "Unknown",
+                    "position": [6, 1],
+                    "reachable": True,
+                    "path_length": 5,
+                },
+            ],
+        }
+
+        proposals = investigation_goal_proposal(observation, Memory())
+        by_target = {proposal.target: proposal for proposal in proposals}
+
+        self.assertGreater(
+            by_target[(6, 1)].score,
+            by_target[(3, 1)].score,
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
