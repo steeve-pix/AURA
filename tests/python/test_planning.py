@@ -142,6 +142,9 @@ class PlanTests(unittest.TestCase):
                 "type": "move_to",
                 "target": [11, 5],
             },
+            "created_step": 0,
+            "last_progress_step": 0,
+            "failure_reason": None,
         })
 
     def test_plan_debug_is_none_without_active_plan(self):
@@ -328,6 +331,31 @@ class PlanTests(unittest.TestCase):
 
         self.assertEqual(plan.age(8), 0)
         self.assertEqual(plan.steps_since_progress(8), 0)
+
+    def test_arrival_records_plan_progress_step(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(4, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(plan, {"position": [4, 2],
+                                            "last_action": {
+                                                "type": "move_to",
+                                                "target": [4, 2],
+                                                "succeeded": True,
+                                                "result": "completed",
+                                            }, }, current_step=14)
+
+        self.assertTrue(plan.is_complete())
+        self.assertEqual(plan.last_progress_step, 14)
 
 
 if __name__ == "__main__":

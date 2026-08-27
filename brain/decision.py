@@ -16,7 +16,7 @@ def create_recharge_plan(observation, memory: Memory, ) -> Plan | None:
     if proposal is None or proposal.target is None:
         return None
 
-    return create_recharge_plan_for_target(proposal.target)
+    return create_recharge_plan_for_target(proposal.target, created_step=memory.step)
 
 
 def replan_failed_recharge(observation, memory: Memory, ) -> bool:
@@ -217,6 +217,8 @@ def create_investigation_plan(observation, memory: Memory, target_position: tupl
         plan = Plan(
             goal="investigate",
             goal_target=target_position,
+            created_step=memory.step,
+            last_progress_step=memory.step,
             steps=[
                 PlanStep(
                     step_type="investigate",
@@ -262,6 +264,8 @@ def create_investigation_plan(observation, memory: Memory, target_position: tupl
     plan = Plan(
         goal="investigate",
         goal_target=target_position,
+        created_step=memory.step,
+        last_progress_step=memory.step,
         steps=[
             PlanStep(
                 step_type="move_to",

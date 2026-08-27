@@ -22,7 +22,7 @@ from brain.navigation_preview import (
     navigation_previews_by_target,
 )
 from brain.plan_supervisor import supervise_goal
-from brain.planning import plan_debug, update_plan_from_observation
+from brain.planning import plan_debug, update_plan_from_observation, Plan
 
 PLAN_FAILED_REWARD = -0.40
 REPLAN_REWARD = 0.05
@@ -43,7 +43,7 @@ def update_active_plan_and_record_events(memory, observation: dict) -> list[Expe
         return []
 
     events = []
-    update_plan_from_observation(active_plan, observation)
+    update_plan_from_observation(active_plan, observation, current_step=memory.step)
 
     if active_plan.is_complete():
         events.append(memory.record_plan_event(

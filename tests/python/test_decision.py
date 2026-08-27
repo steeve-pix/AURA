@@ -726,6 +726,61 @@ class DecisionTests(unittest.TestCase):
 
         self.assertEqual(memory.active_plan.goal_target, (6, 1))
 
+    def test_investigation_plan_records_creation_step(self):
+        memory = Memory()
+        memory.step = 12
+
+        observation = {
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [3, 1],
+                    "reachable": True,
+                    "path_length": 2,
+                },
+            ],
+            "visible_cells": [
+                {
+                    "position": [3, 2],
+                    "type": "Empty",
+                },
+            ],
+        }
+
+        choose_investigation_action(observation, memory)
+
+        self.assertEqual(memory.active_plan.created_step, 12)
+        self.assertEqual(memory.active_plan.last_progress_step, 12)
+
+    def test_failed_move_records_body_result(self):
+        plan = Plan(
+            goal="recharge",
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [2, 2],
+                "nearby_objects": [],
+                "last_action": {
+                    "type": "move_to",
+                    "target": [4, 2],
+                    "succeeded": False,
+                    "result": "unreachable",
+                },
+            },
+        )
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "move_to_unreachable")
+
 
 if __name__ == "__main__":
     unittest.main()
