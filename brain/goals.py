@@ -247,6 +247,49 @@ def goal_proposals(observation, memory) -> list[GoalProposal]:
     return proposals
 
 
+def best_proposal_for_type(proposals: list[GoalProposal], goal_type: GoalType) -> GoalProposal | None:
+    matching = [proposal for proposal in proposals if proposal.goal_type == goal_type]
+
+    if not matching:
+        return None
+
+    return max(matching, key=lambda proposal: proposal.score)
+
+
+def select_goal_proposal(proposals: list[GoalProposal], *, current_goal: GoalType | None, energy: int) -> GoalProposal:
+    if not proposals:
+        raise ValueError("At least one goal proposal is required.")
+
+    urgent = [proposal for proposal in proposals if proposal.urgency > 0.0]
+
+    if urgent:
+        return max(urgent, key=lambda proposal: (proposal.urgency, proposal.score))
+
+    if current_goal == "recharge" and energy < 100:
+        recharge = best_proposal_for_type(proposals, "recharge")
+
+        if recharge is not None:
+            return recharge
+
+    best = max(proposals, key=lambda proposal: proposal.score)
+
+    if current_goal is None:
+        return best
+
+    current = best_proposal_for_type(proposals, current_goal)
+
+    if current is None:
+        return best
+
+    if best.goal_type == current_goal:
+        return best
+
+    if best.score >= current.score + GOAL_SWITCH_MARGIN:
+        return best
+
+    return current
+
+
 def select_best_investigation_proposal(proposals: list[GoalProposal]) -> GoalProposal | None:
     if not proposals:
         return None

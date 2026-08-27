@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent, \
     investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, goal_proposals, \
-    exploration_goal_proposal
+    exploration_goal_proposal, select_goal_proposal
 from brain.memory import Memory
 
 
@@ -489,6 +489,84 @@ class TestGoals(unittest.TestCase):
         self.assertEqual(proposal.goal_type, "explore")
         self.assertIsNone(proposal.target)
         self.assertEqual(proposal.reason, "local_exploration")
+
+    def test_selector_chooses_highest_score_without_current_goal(self):
+        proposals = [
+            GoalProposal(
+                "explore",
+                None,
+                0.40,
+                0.0,
+                "exploration",
+            ),
+            GoalProposal(
+                "investigate",
+                (5, 2),
+                0.80,
+                0.0,
+                "unknown",
+            ),
+        ]
+
+        selected = select_goal_proposal(
+            proposals,
+            current_goal=None,
+            energy=80,
+        )
+
+        self.assertEqual(selected.goal_type, "investigate")
+
+    def test_selector_keeps_current_goal_within_margin(self):
+        proposals = [
+            GoalProposal(
+                "explore",
+                None,
+                0.60,
+                0.0,
+                "exploration",
+            ),
+            GoalProposal(
+                "investigate",
+                (5, 2),
+                0.65,
+                0.0,
+                "unknown",
+            ),
+        ]
+
+        selected = select_goal_proposal(
+            proposals,
+            current_goal="explore",
+            energy=80,
+        )
+
+        self.assertEqual(selected.goal_type, "explore")
+
+    def test_selector_keeps_recharge_until_full(self):
+        proposals = [
+            GoalProposal(
+                "recharge",
+                (4, 2),
+                0.40,
+                0.0,
+                "battery",
+            ),
+            GoalProposal(
+                "investigate",
+                (5, 2),
+                0.90,
+                0.0,
+                "unknown",
+            ),
+        ]
+
+        selected = select_goal_proposal(
+            proposals,
+            current_goal="recharge",
+            energy=60,
+        )
+
+        self.assertEqual(selected.goal_type, "recharge", )
 
 
 if __name__ == '__main__':
