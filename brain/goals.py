@@ -214,6 +214,39 @@ def investigation_goal_proposals(observation, memory) -> list[GoalProposal]:
     return proposals
 
 
+def exploration_goal_proposal(observation, memory) -> GoalProposal:
+    return GoalProposal(
+        goal_type="explore",
+        target=None,
+        score=explore_score(observation, memory),
+        urgency=0.0,
+        reason="local_exploration",
+    )
+
+
+def goal_proposals(observation, memory) -> list[GoalProposal]:
+    proposals = []
+
+    recharge = recharge_goal_proposal(observation, memory)
+
+    if recharge is None:
+        recharge_score_value = recharge_score(observation)
+
+        recharge = GoalProposal(
+            goal_type="recharge",
+            target=None,
+            score=recharge_score_value,
+            urgency=recharge_score_value if recharge_is_urgent(observation) else 0.0,
+            reason="no_viable_battery"
+        )
+
+    proposals.append(recharge)
+    proposals.append(exploration_goal_proposal(observation, memory))
+    proposals.extend(investigation_goal_proposals(observation, memory))
+
+    return proposals
+
+
 def select_best_investigation_proposal(proposals: list[GoalProposal]) -> GoalProposal | None:
     if not proposals:
         return None

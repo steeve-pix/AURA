@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import patch
 
 from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent, \
-    investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal
+    investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, goal_proposals, \
+    exploration_goal_proposal
 from brain.memory import Memory
 
 
@@ -424,6 +425,70 @@ class TestGoals(unittest.TestCase):
 
         self.assertEqual(proposal.target, (5, 2))
         self.assertEqual(proposal.reason, "remembered_viable_battery")
+
+    def test_goal_proposals_include_available_objectives(self):
+        observation = {
+            "energy": 30,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [5, 2],
+                    "reachable": True,
+                    "path_length": 5,
+                },
+                {
+                    "type": "Unknown",
+                    "position": [7, 3],
+                    "reachable": True,
+                    "path_length": 7,
+                },
+            ],
+        }
+
+        proposals = goal_proposals(observation, Memory())
+
+        proposal_types = [proposal.goal_type for proposal in proposals]
+
+        self.assertEqual(
+            proposal_types,
+            [
+                "recharge",
+                "explore",
+                "investigate",
+            ],
+        )
+
+        self.assertEqual(proposals[0].target, (5, 2))
+        self.assertIsNone(proposals[1].target)
+        self.assertEqual(proposals[2].target, (7, 3))
+
+    def test_critical_energy_proposes_untargeted_recharge(self):
+        observation = {
+            "energy": 5,
+            "position": [1, 1],
+            "nearby_objects": []
+        }
+
+        proposals = goal_proposals(observation, Memory())
+
+        recharge = proposals[0]
+
+        self.assertEqual(recharge.goal_type, "recharge")
+        self.assertIsNone(recharge.target)
+        self.assertEqual(recharge.reason, "no_viable_battery")
+        self.assertGreater(recharge.urgency, 0.0)
+
+    def test_exploration_proposal_has_no_target_yet(self):
+        proposal = exploration_goal_proposal({
+            "energy": 80,
+            "position": [2, 2],
+            "nearby_objects": []
+        }, Memory())
+
+        self.assertEqual(proposal.goal_type, "explore")
+        self.assertIsNone(proposal.target)
+        self.assertEqual(proposal.reason, "local_exploration")
 
 
 if __name__ == '__main__':
