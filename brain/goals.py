@@ -298,11 +298,16 @@ def select_best_investigation_proposal(proposals: list[GoalProposal]) -> GoalPro
 
 
 def goal_scores(observation, memory):
-    return {
-        "recharge": recharge_score(observation),
-        "explore": explore_score(observation, memory),
-        "investigate": investigation_score(observation, memory),
+    scores:dict[GoalType, float] = {
+        "recharge": 0.0,
+        "explore": 0.0,
+        "investigate": 0.0,
     }
+
+    for proposal in goal_proposals(observation, memory):
+        scores[proposal.goal_type] = max(scores[proposal.goal_type],proposal.score)
+
+    return scores
 
 
 def propose_goal(observation, memory) -> GoalProposal:
@@ -320,46 +325,6 @@ def propose_goal(observation, memory) -> GoalProposal:
         current_goal=current_goal,
         energy=observation["energy"]
     )
-
-
-def choose_goal(observation, memory):
-    current_goal = memory.active_goal
-
-    if current_goal is not None and goal_completed(current_goal, observation, memory):
-        memory.clear_active_goal()
-        current_goal = None
-
-    energy = observation["energy"]
-
-    if energy <= CRITICAL_ENERGY:
-        memory.set_active_goal("recharge")
-        return "recharge"
-
-    # Recharge remains sticky until full so score fluctuations cannot strand AURA mid-route.
-    if memory.active_goal == "recharge" and energy < 100:
-        return "recharge"
-
-    scores = goal_scores(observation, memory)
-
-    best_goal = max(scores, key=lambda goal: scores[goal])
-    current_goal = memory.active_goal
-
-    if current_goal is None:
-        memory.set_active_goal(best_goal)
-        return best_goal
-
-    current_score = scores.get(current_goal, 0.0)
-    best_score = scores[best_goal]
-
-    if best_goal == current_goal:
-        return current_goal
-
-    # Hysteresis avoids rapid goal switching when two scores are nearly equal.
-    if best_score >= current_score + GOAL_SWITCH_MARGIN:
-        memory.set_active_goal(best_goal)
-        return best_goal
-
-    return current_goal
 
 
 def shortest_battery_path(observation):

@@ -1,7 +1,6 @@
 import unittest
-from unittest.mock import patch
 
-from brain.goals import GoalProposal, choose_goal, investigation_score, recharge_score, recharge_is_urgent, \
+from brain.goals import GoalProposal, investigation_score, recharge_score, recharge_is_urgent, \
     investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, goal_proposals, \
     exploration_goal_proposal, select_goal_proposal, propose_goal
 from brain.memory import Memory
@@ -14,72 +13,6 @@ class TestGoals(unittest.TestCase):
             "position": [4, 2],
             "nearby_objects": [],
         }
-
-    @patch("brain.goals.goal_scores")
-    def test_no_active_goal_chooses_highest_score(self, mocked_scores):
-        mocked_scores.return_value = {
-            "recharge": 0.20,
-            "explore": 0.60,
-            "investigate": 0.75,
-        }
-        memory = Memory()
-
-        self.assertEqual(choose_goal(self.observation, memory), "investigate")
-        self.assertEqual(memory.active_goal, "investigate")
-
-    @patch("brain.goals.goal_scores")
-    def test_current_goal_stays_when_challenger_is_within_margin(self, mocked_scores):
-        mocked_scores.return_value = {
-            "recharge": 0.20,
-            "explore": 0.60,
-            "investigate": 0.65,
-        }
-        memory = Memory()
-        memory.set_active_goal("explore")
-
-        self.assertEqual(choose_goal(self.observation, memory), "explore")
-        self.assertEqual(memory.active_goal, "explore")
-
-    @patch("brain.goals.goal_scores")
-    def test_switches_when_challenger_clearly_wins(self, mocked_scores):
-        mocked_scores.return_value = {
-            "recharge": 0.20,
-            "explore": 0.60,
-            "investigate": 0.75,
-        }
-        memory = Memory()
-        memory.set_active_goal("explore")
-
-        self.assertEqual(choose_goal(self.observation, memory), "investigate")
-        self.assertEqual(memory.active_goal, "investigate")
-
-    @patch("brain.goals.goal_scores")
-    def test_keeps_current_goal_when_it_remains_best(self, mocked_scores):
-        mocked_scores.return_value = {
-            "recharge": 0.20,
-            "explore": 0.70,
-            "investigate": 0.65,
-        }
-        memory = Memory()
-        memory.set_active_goal("explore")
-
-        self.assertEqual(choose_goal(self.observation, memory), "explore")
-        self.assertEqual(memory.active_goal, "explore")
-
-    @patch("brain.goals.goal_scores")
-    def test_critical_energy_forces_recharge(self, mocked_scores):
-        mocked_scores.return_value = {
-            "recharge": 0.85,
-            "explore": 0.60,
-            "investigate": 0.95,
-        }
-        observation = dict(self.observation, energy=8)
-        memory = Memory()
-        memory.set_active_goal("investigate")
-
-        self.assertEqual(choose_goal(observation, memory), "recharge")
-        self.assertEqual(memory.active_goal, "recharge")
-        mocked_scores.assert_not_called()
 
     def test_route_cost_makes_recharge_urgent(self):
         observation = dict(
@@ -589,8 +522,8 @@ class TestGoals(unittest.TestCase):
             memory,
         )
 
-        self.assertEqual(proposal.goal_type,"investigate")
-        self.assertEqual(proposal.target,(5, 2))
+        self.assertEqual(proposal.goal_type, "investigate")
+        self.assertEqual(proposal.target, (5, 2))
 
     def test_propose_goal_does_not_mutate_memory(self):
         memory = Memory()
@@ -641,11 +574,70 @@ class TestGoals(unittest.TestCase):
             memory,
         )
 
-        self.assertEqual(proposal.goal_type,"recharge")
-        self.assertGreater(proposal.urgency,0.0)
+        self.assertEqual(proposal.goal_type, "recharge")
+        self.assertGreater(proposal.urgency, 0.0)
 
         # Still unchanged because proposing is pure.
-        self.assertEqual(memory.active_goal,"investigate")
+        self.assertEqual(memory.active_goal, "investigate")
+
+    def test_selector_switches_when_challenger_clearly_wins(self):
+        proposals = [
+            GoalProposal(
+                "explore",
+                None,
+                0.60,
+                0.0,
+                "exploration",
+            ),
+            GoalProposal(
+                "investigate",
+                (5, 2),
+                0.80,
+                0.0,
+                "unknown",
+            ),
+        ]
+
+        selected = select_goal_proposal(
+            proposals,
+            current_goal="explore",
+            energy=80,
+        )
+
+        self.assertEqual(
+            selected.goal_type,
+            "investigate",
+        )
+
+    def test_selector_keeps_current_goal_when_it_is_best(self):
+        proposals = [
+            GoalProposal(
+                "explore",
+                None,
+                0.70,
+                0.0,
+                "exploration",
+            ),
+            GoalProposal(
+                "investigate",
+                (5, 2),
+                0.65,
+                0.0,
+                "unknown",
+            ),
+        ]
+
+        selected = select_goal_proposal(
+            proposals,
+            current_goal="explore",
+            energy=80,
+        )
+
+        self.assertEqual(
+            selected.goal_type,
+            "explore",
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
