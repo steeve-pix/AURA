@@ -22,6 +22,23 @@ class Plan:
     current_index: int = 0
     failed: bool = False
 
+    created_step: int = 0
+    last_progress_step: int = 0
+    failure_reason: str | None = None
+
+    def mark_failed(self, reason: str) -> None:
+        self.failed = True
+        self.failure_reason = reason
+
+    def record_progress(self, step: int) -> None:
+        self.last_progress_step = step
+
+    def age(self, current_step: int) -> int:
+        return max(0, current_step - self.created_step)
+
+    def steps_since_progress(self, current_step: int) -> int:
+        return max(0, current_step - self.last_progress_step)
+
     def is_complete(self) -> bool:
         return self.current_index >= len(self.steps)
 

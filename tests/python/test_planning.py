@@ -295,6 +295,40 @@ class PlanTests(unittest.TestCase):
 
         self.assertIsNone(memory.active_plan)
 
+    def test_plan_records_creation_and_progress_steps(self):
+        plan = Plan(
+            goal="investigate",
+            created_step=10,
+            last_progress_step=10,
+        )
+
+        self.assertEqual(plan.age(14), 4)
+        self.assertEqual(plan.steps_since_progress(14), 4)
+
+        plan.record_progress(13)
+
+        self.assertEqual(plan.steps_since_progress(14), 1)
+
+    def test_plan_records_failure_reason(self):
+        plan = Plan(
+            goal="investigate",
+        )
+
+        plan.mark_failed("unreachable")
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "unreachable")
+
+    def test_plan_age_never_becomes_negative(self):
+        plan = Plan(
+            goal="explore",
+            created_step=10,
+            last_progress_step=10,
+        )
+
+        self.assertEqual(plan.age(8), 0)
+        self.assertEqual(plan.steps_since_progress(8), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
