@@ -24,6 +24,48 @@ GOAL_SWITCH_MARGIN = 0.1
 CRITICAL_ENERGY = 8
 INVESTIGATION_DISTANCE_BONUS = 0.10
 BATTERY_ARRIVAL_RESERVE = 2
+CARDINAL_OFFSET = (
+    (0, -1),
+    (1, 0),
+    (0, 1),
+    (-1, 0)
+)
+
+
+def exploration_frontiers(observation, memory: Memory) -> list[tuple[int, int]]:
+    current = tuple(observation["position"])
+
+    frontiers = []
+
+    for position, cell_type in memory.known_cells.items():
+        if position == current:
+            continue
+
+        if cell_type in {"Wall", "Unknown"}:
+            continue
+
+        if memory.is_failed_target(position):
+            continue
+
+        borders_unmapped_space = any(
+            (position[0] + dx, position[1] + dy) not in memory.known_cells for dx, dy in CARDINAL_OFFSET)
+
+        if borders_unmapped_space:
+            frontiers.append(position)
+
+    return frontiers
+
+
+def select_exploration_frontier(observation, memory: Memory) -> tuple[int, int] | None:
+    frontiers = exploration_frontiers(observation, memory)
+
+    if not frontiers:
+        return None
+
+    current = tuple(observation["position"])
+
+    return min(frontiers, key=lambda position: (memory.visit_count(position), abs(position[0] - current[0]),
+                                                abs(position[1] - current[1]), position))
 
 
 def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int] | None:
@@ -215,12 +257,14 @@ def investigation_goal_proposals(observation, memory) -> list[GoalProposal]:
 
 
 def exploration_goal_proposal(observation, memory) -> GoalProposal:
+    target = select_exploration_frontier(observation, memory)
+
     return GoalProposal(
         goal_type="explore",
-        target=None,
+        target=target,
         score=explore_score(observation, memory),
         urgency=0.0,
-        reason="local_exploration",
+        reason="frontier_exploration" if target is not None else "local_exploration",
     )
 
 
@@ -298,14 +342,14 @@ def select_best_investigation_proposal(proposals: list[GoalProposal]) -> GoalPro
 
 
 def goal_scores(observation, memory):
-    scores:dict[GoalType, float] = {
+    scores: dict[GoalType, float] = {
         "recharge": 0.0,
         "explore": 0.0,
         "investigate": 0.0,
     }
 
     for proposal in goal_proposals(observation, memory):
-        scores[proposal.goal_type] = max(scores[proposal.goal_type],proposal.score)
+        scores[proposal.goal_type] = max(scores[proposal.goal_type], proposal.score)
 
     return scores
 

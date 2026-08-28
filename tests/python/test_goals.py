@@ -2,7 +2,7 @@ import unittest
 
 from brain.goals import GoalProposal, investigation_score, recharge_score, recharge_is_urgent, \
     investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, goal_proposals, \
-    exploration_goal_proposal, select_goal_proposal, propose_goal
+    exploration_goal_proposal, select_goal_proposal, propose_goal, exploration_frontiers, select_exploration_frontier
 from brain.memory import Memory
 
 
@@ -412,7 +412,7 @@ class TestGoals(unittest.TestCase):
         self.assertEqual(recharge.reason, "no_viable_battery")
         self.assertGreater(recharge.urgency, 0.0)
 
-    def test_exploration_proposal_has_no_target_yet(self):
+    def test_exploration_proposal_uses_local_fallback_without_frontier(self):
         proposal = exploration_goal_proposal({
             "energy": 80,
             "position": [2, 2],
@@ -638,6 +638,81 @@ class TestGoals(unittest.TestCase):
             "explore",
         )
 
+    def test_known_walkable_edge_cell_is_frontier(self):
+        memory = Memory()
+        memory.remember_cell([1, 1], "Empty")
+        memory.remember_cell([2, 1], "Empty")
 
+        frontiers = exploration_frontiers(
+            {
+                "position": [1, 1],
+            },
+            memory,
+        )
+
+        self.assertEqual(
+            frontiers,
+            [(2, 1)],
+        )
+
+    def test_wall_is_not_exploration_frontier(self):
+        memory = Memory()
+        memory.remember_cell([1, 1], "Empty")
+        memory.remember_cell([2, 1], "Wall")
+
+        frontiers = exploration_frontiers(
+            {
+                "position": [1, 1],
+            },
+            memory,
+        )
+
+        self.assertEqual(
+            frontiers,
+            [],
+        )
+
+    def test_exploration_prefers_less_visited_frontier(self):
+        memory = Memory()
+        memory.remember_cell([1, 1], "Empty")
+        memory.remember_cell([2, 1], "Empty")
+        memory.remember_cell([1, 2], "Empty")
+
+        memory.record_visit([2, 1])
+
+        selected = select_exploration_frontier(
+            {
+                "position": [1, 1],
+            },
+            memory,
+        )
+
+        self.assertEqual(
+            selected,
+            (1, 2),
+        )
+
+    def test_exploration_proposal_targets_frontier(self):
+        memory = Memory()
+        memory.remember_cell([1, 1], "Empty")
+        memory.remember_cell([2, 1], "Empty")
+
+        proposal = exploration_goal_proposal(
+            {
+                "energy": 80,
+                "position": [1, 1],
+                "nearby_objects": [],
+            },
+            memory,
+        )
+
+        self.assertEqual(
+            proposal.target,
+            (2, 1),
+        )
+        self.assertEqual(
+            proposal.reason,
+            "frontier_exploration",
+        )
 if __name__ == '__main__':
     unittest.main()
