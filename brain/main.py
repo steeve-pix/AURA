@@ -149,7 +149,7 @@ def main() -> None:
     active_world_id = None
     memory_path = None
 
-    model_path = Path("data/models/value_model_1.pt")
+    model_path = Path("data/models/value_model_2.pt")
     value_model = None
 
     if model_path.exists():
