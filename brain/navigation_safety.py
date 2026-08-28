@@ -75,6 +75,9 @@ def navigation_decision_is_energy_safe(
     if preview is None:
         return False
 
+    if not preview.get("reachable", False):
+        return False
+
     if goal == "explore":
         return exploration_route_is_energy_safe(
             observation,

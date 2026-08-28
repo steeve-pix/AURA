@@ -106,7 +106,8 @@ def update_active_plan_and_record_events(memory, observation: dict) -> list[Expe
 def score_and_report_value_candidates(
         *, value_model, candidates, observation: dict, memory, goal: str, decision: dict,
         value_reporter: LiveValueReporter,
-        navigation_previews: dict | None = None) -> None:
+        navigation_previews: dict | None = None,
+        goal_target: tuple[int, int] | None = None) -> None:
     if value_model is None or not candidates:
         return
 
@@ -122,8 +123,46 @@ def score_and_report_value_candidates(
         rule_goal=goal,
         rule_action=decision,
     )
-    model_scored = select_model_candidate(
+    eligible_candidates = [
+        candidate
+        for candidate in candidates
+        if navigation_decision_is_energy_safe(
+            goal=candidate.goal,
+            goal_target=(
+                goal_target
+                if candidate.goal == "recharge"
+                else None
+            ),
+            action=candidate.action,
+            observation=observation,
+            navigation_previews=navigation_previews or {},
+        )
+    ]
+    eligible_keys = {
+        decision_key(candidate.goal, candidate.action)
+        for candidate in eligible_candidates
+    }
+    eligible_scored_candidates = [
+        scored
+        for scored in scored_candidates
+        if decision_key(
+            scored.candidate.goal,
+            scored.candidate.action,
+        ) in eligible_keys
+    ]
+
+    value_reporter.report_candidates(
         scored_candidates,
+        eligible_keys=eligible_keys,
+    )
+
+    if not eligible_scored_candidates:
+        memory.pending_value_prediction = rule_scored.predicted_reward
+        memory.pending_candidate_comparison = None
+        return
+
+    model_scored = select_model_candidate(
+        eligible_scored_candidates,
         rule_goal=goal,
         rule_action=decision,
     )
@@ -283,6 +322,7 @@ def main() -> None:
                 decision=pending_preview_cycle["decision"],
                 value_reporter=value_reporter,
                 navigation_previews=navigation_previews,
+                goal_target=cached_goal_target,
             )
 
             decision_proposal = pending_preview_cycle[
@@ -515,6 +555,16 @@ def main() -> None:
                 goal=goal,
                 decision=decision,
                 value_reporter=value_reporter,
+                goal_target=(
+                    memory.active_plan.goal_target
+                    if memory.active_plan is not None
+                    else (
+                        None
+                        if decision_proposal is None
+                        or decision_proposal.plan is None
+                        else decision_proposal.plan.goal_target
+                    )
+                ),
             )
 
             if decision_proposal is not None:

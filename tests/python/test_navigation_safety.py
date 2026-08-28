@@ -246,6 +246,29 @@ class NavigationSafetyTests(unittest.TestCase):
             )
         )
 
+    def test_unreachable_investigation_move_is_not_eligible(self):
+        self.assertFalse(
+            navigation_decision_is_energy_safe(
+                goal="investigate",
+                goal_target=None,
+                action={
+                    "action": "move_to",
+                    "target": [3, 1],
+                },
+                observation=self.observation(
+                    energy=100,
+                    battery_path=5,
+                ),
+                navigation_previews={
+                    (3, 1): {
+                        "reachable": False,
+                        "path_length": None,
+                        "next_step": None,
+                    },
+                },
+            )
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

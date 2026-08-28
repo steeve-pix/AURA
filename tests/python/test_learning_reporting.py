@@ -1,5 +1,6 @@
 import unittest
 from io import StringIO
+from unittest.mock import patch
 
 from brain.experience import Experience
 from brain.learning.candidates import CandidateDecision, ScoredCandidate
@@ -10,10 +11,13 @@ from brain.learning.diagnostics import (
 from brain.learning.features import ValueInput
 from brain.learning.reporting import (
     LiveValueReporter,
+    format_candidate_scores,
     format_candidate_disagreement,
     format_disagreement_result,
     format_live_summary,
 )
+from brain.main import score_and_report_value_candidates
+from brain.memory import Memory
 
 
 def make_experience(**overrides) -> Experience:
@@ -37,6 +41,55 @@ def make_experience(**overrides) -> Experience:
 
 
 class LearningReportingTests(unittest.TestCase):
+    def test_unreachable_proposal_cannot_be_model_choice(self):
+        rule = ScoredCandidate(
+            CandidateDecision(
+                goal="explore",
+                action={"action": "move", "direction": "east"},
+            ),
+            predicted_reward=0.10,
+        )
+        unreachable = ScoredCandidate(
+            CandidateDecision(
+                goal="explore",
+                action={"action": "move_to", "target": [4, 1]},
+            ),
+            predicted_reward=0.90,
+            reachable=False,
+        )
+        output = StringIO()
+        memory = Memory()
+
+        with patch(
+                "brain.main.score_candidates",
+                return_value=[rule, unreachable],
+        ):
+            score_and_report_value_candidates(
+                value_model=object(),
+                candidates=[rule.candidate, unreachable.candidate],
+                observation={
+                    "position": [1, 1],
+                    "energy": 80,
+                    "nearby_objects": [],
+                },
+                memory=memory,
+                goal="explore",
+                decision=rule.candidate.action,
+                value_reporter=LiveValueReporter(output=output),
+                navigation_previews={
+                    (4, 1): {
+                        "reachable": False,
+                        "path_length": None,
+                        "next_step": None,
+                    },
+                },
+            )
+
+        self.assertEqual(memory.pending_value_prediction, 0.10)
+        self.assertIsNone(memory.pending_candidate_comparison)
+        self.assertIn("VALUE MODEL · CANDIDATES", output.getvalue())
+        self.assertIn("no", output.getvalue())
+
     def test_live_summary_contains_aligned_metrics(self):
         diagnostics = RunningValueDiagnostics()
         diagnostics.record(
@@ -121,6 +174,36 @@ class LearningReportingTests(unittest.TestCase):
         self.assertIn("REACHABLE", report)
         self.assertIn("NEXT VISITED", report)
         self.assertIn("advisory only", report)
+
+    def test_candidate_scores_mark_eligibility(self):
+        scored = ScoredCandidate(
+            CandidateDecision(
+                goal="explore",
+                action={"action": "move_to", "target": [4, 7]},
+            ),
+            predicted_reward=0.23,
+            value_input=ValueInput(
+                energy=80,
+                goal="explore",
+                action="move_to",
+                target=(4, 7),
+                position=(4, 6),
+                path_length=3,
+                memory_trust=None,
+                next_step_was_visited=False,
+            ),
+            reachable=True,
+        )
+
+        report = format_candidate_scores(
+            [scored],
+            eligible_keys=set(),
+        )
+
+        self.assertIn("VALUE MODEL · CANDIDATES", report)
+        self.assertIn("ELIGIBLE", report)
+        self.assertIn("explore → move_to (4, 7)", report)
+        self.assertIn("no", report)
 
     def test_result_report_explains_unexecuted_model_actual(self):
         report = format_disagreement_result(

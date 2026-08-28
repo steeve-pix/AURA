@@ -178,6 +178,56 @@ def format_candidate_disagreement(scored_candidates: list[ScoredCandidate], *, r
     return "\n".join(lines)
 
 
+def format_candidate_scores(
+        scored_candidates: list[ScoredCandidate],
+        *,
+        eligible_keys: set[tuple],
+) -> str:
+    lines = [
+        "",
+        "VALUE MODEL · CANDIDATES",
+        CANDIDATE_DIVIDER,
+        (
+            f"{'DECISION':<40} {'ELIGIBLE':>9} {'REACHABLE':>9} "
+            f"{'PATH':>6} {'NEXT VISITED':>12} {'VALUE':>10}"
+        ),
+        CANDIDATE_DIVIDER,
+    ]
+
+    for scored in scored_candidates:
+        key = decision_key(
+            scored.candidate.goal,
+            scored.candidate.action,
+        )
+        value_input = scored.value_input
+        reachable = (
+            "n/a"
+            if scored.reachable is None
+            else "yes" if scored.reachable else "no"
+        )
+        path = (
+            "n/a"
+            if value_input is None or value_input.path_length is None
+            else str(value_input.path_length)
+        )
+        next_visited = (
+            "n/a"
+            if value_input is None
+               or value_input.next_step_was_visited is None
+            else "yes" if value_input.next_step_was_visited else "no"
+        )
+        eligible = "yes" if key in eligible_keys else "no"
+
+        lines.append(
+            f"{format_decision(key):<40} {eligible:>9} "
+            f"{reachable:>9} {path:>6} {next_visited:>12} "
+            f"{scored.predicted_reward:>+10.3f}"
+        )
+
+    lines.append(CANDIDATE_DIVIDER)
+    return "\n".join(lines)
+
+
 def format_disagreement_result(comparison: dict, *, rule_actual: float) -> str:
     rule_prediction = comparison["rule_prediction"]
 
@@ -259,6 +309,19 @@ class LiveValueReporter:
                 scored_candidates,
                 rule_key=rule_key,
                 model_key=model_key,
+            )
+        )
+
+    def report_candidates(
+            self,
+            scored_candidates: list[ScoredCandidate],
+            *,
+            eligible_keys: set[tuple],
+    ) -> None:
+        self._print(
+            format_candidate_scores(
+                scored_candidates,
+                eligible_keys=eligible_keys,
             )
         )
 
