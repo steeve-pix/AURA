@@ -510,6 +510,120 @@ class PlanTests(unittest.TestCase):
         self.assertFalse(plan.has_failed())
         self.assertEqual(plan.last_progress_step, current_step)
 
+    def test_offscreen_goal_target_remains_valid(self):
+        plan = Plan(
+            goal="investigate",
+            goal_target=(12, 5),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(11, 5),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [1, 1],
+                "sensor_radius": 3,
+                "nearby_objects": [],
+                "last_action": None,
+            },
+            current_step=1,
+        )
+
+        self.assertFalse(plan.has_failed())
+
+    def test_visible_missing_goal_target_fails_plan(self):
+        plan = Plan(
+            goal="investigate",
+            goal_target=(4, 2),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(3, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [1, 2],
+                "sensor_radius": 5,
+                "nearby_objects": [],
+                "last_action": None,
+            },
+            current_step=1,
+        )
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "goal_target_invalid")
+
+    def test_visible_matching_goal_target_remains_valid(self):
+        plan = Plan(
+            goal="investigate",
+            goal_target=(4, 2),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(3, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [1, 2],
+                "sensor_radius": 5,
+                "nearby_objects": [
+                    {
+                        "type": "Unknown",
+                        "position": [4, 2],
+                        "reachable": True,
+                    },
+                ],
+                "last_action": None,
+            },
+            current_step=1,
+        )
+
+        self.assertFalse(plan.has_failed())
+
+    def test_wrong_entity_type_invalidates_goal_target(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(4, 2),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [1, 2],
+                "sensor_radius": 5,
+                "nearby_objects": [
+                    {
+                        "type": "Unknown",
+                        "position": [4, 2],
+                        "reachable": True,
+                    },
+                ],
+                "last_action": None,
+            },
+            current_step=1,
+        )
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "goal_target_invalid")
+
 
 if __name__ == "__main__":
     unittest.main()

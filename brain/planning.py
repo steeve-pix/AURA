@@ -7,6 +7,40 @@ PlanStepType = Literal[
 ]
 
 MAX_STEPS_WITHOUT_PLAN_PROGRESS = 12
+GOAL_ENTITY_TYPES = {
+    "investigate": "Unknown",
+    "recharge": "Battery",
+}
+
+
+def mark_invalid_goal_target_if_observed(plan: Plan, observation: dict) -> None:
+    if plan.is_complete() or plan.has_failed() or plan.goal_target is None:
+        return
+
+    expected_type = GOAL_ENTITY_TYPES.get(plan.goal)
+
+    if expected_type is None:
+        return
+
+    sensor_radius = observation.get("sensor_radius")
+
+    if sensor_radius is None:
+        return
+
+    current = tuple(observation["position"])
+
+    target = plan.goal_target
+
+    target_is_visible = (abs(target[0] - current[0]) <= sensor_radius and abs(target[1] - current[1]) <= sensor_radius)
+
+    if not target_is_visible:
+        return
+
+    target_still_exists = any(tuple(obj["position"]) == target and obj["type"] == expected_type for obj in
+                              observation.get("nearby_objects", []))
+
+    if not target_still_exists:
+        plan.mark_failed("goal_target_invalid")
 
 
 def mark_stalled_if_needed(plan: Plan, *, current_step: int | None) -> None:
@@ -164,6 +198,8 @@ def update_plan_from_observation(plan: Plan, observation, *, current_step: int |
         if current_position == step.target:
             plan.advance(current_step=current_step)
 
+        mark_invalid_goal_target_if_observed(plan, observation)
+
         mark_stalled_if_needed(plan, current_step=current_step)
 
         return
@@ -172,6 +208,7 @@ def update_plan_from_observation(plan: Plan, observation, *, current_step: int |
         last_action = observation.get("last_action")
 
         if not last_action:
+            mark_invalid_goal_target_if_observed(plan, observation)
             mark_stalled_if_needed(plan, current_step=current_step)
             return
 
@@ -189,4 +226,5 @@ def update_plan_from_observation(plan: Plan, observation, *, current_step: int |
         if matching_investigation and last_action.get("succeeded", False):
             plan.advance(current_step=current_step)
 
+        mark_invalid_goal_target_if_observed(plan, observation)
         mark_stalled_if_needed(plan, current_step=current_step)
