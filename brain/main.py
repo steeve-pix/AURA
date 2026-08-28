@@ -6,7 +6,7 @@ from typing import Any
 from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
 from brain.experience import Experience
 from brain.experience_store import append_experience, experience_path_for_world
-from brain.goals import goal_scores, recharge_is_urgent, propose_goal
+from brain.goals import goal_scores, propose_goal
 from brain.learning.candidates import (
     candidate_decisions,
     decision_key,
@@ -22,7 +22,7 @@ from brain.navigation_preview import (
     navigation_previews_by_target,
 )
 from brain.plan_supervisor import supervise_goal
-from brain.planning import plan_debug, update_plan_from_observation, Plan
+from brain.planning import plan_debug, update_plan_from_observation
 
 PLAN_FAILED_REWARD = -0.40
 REPLAN_REWARD = 0.05
@@ -296,15 +296,12 @@ def main() -> None:
         score = goal_scores(observation, memory)
         proposal = propose_goal(observation, memory)
 
-        proposed_goal = proposal.goal_type
-
-        recharge_urgent_now = recharge_is_urgent(observation)
+        recharge_urgent_now = proposal.goal_type == "recharge" and proposal.urgency > 0.0
 
         plan_was_active = memory.active_plan is not None
         goal = supervise_goal(
             memory,
-            proposed_goal=proposed_goal,
-            recharge_urgent=recharge_urgent_now,
+            proposal=proposal
         )
 
         decision = decide(observation, goal, memory)
