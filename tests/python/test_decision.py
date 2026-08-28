@@ -885,6 +885,36 @@ class DecisionTests(unittest.TestCase):
             memory.active_plan
         )
 
+    def test_decide_explore_uses_frontier_plan(self):
+        memory = Memory()
+        memory.remember_cell((1, 1), "Empty")
+        memory.remember_cell((2, 1), "Empty")
+
+        observation = {
+            "position": [1, 1],
+            "energy": 100,
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Wall",
+            "visible_cells": [],
+            "nearby_objects": [],
+        }
+
+        # Configure known_cells so your fixture contains
+        # a valid exploration frontier.
+
+        action = decide(
+            observation,
+            "explore",
+            memory,
+        )
+
+        self.assertEqual(action["action"], "move_to")
+        self.assertIsNotNone(memory.active_plan)
+        self.assertEqual(memory.active_plan.goal, "explore")
+        self.assertEqual(memory.active_plan.goal_target, (2, 1))
+
 
 if __name__ == "__main__":
     unittest.main()

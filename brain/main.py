@@ -311,6 +311,7 @@ def main() -> None:
         candidates = (
             []
             if pending is None
+            or value_model is None
             else candidate_decisions(
                 observation,
                 memory,

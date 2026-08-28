@@ -103,7 +103,7 @@ def decide(observation, goal, memory):
         return choose_recharge_action(observation, memory)
 
     if goal == "explore":
-        return choose_local_exploration_action(observation, memory)
+        return choose_exploration_action(observation, memory)
 
     if goal == "investigate":
         return choose_investigation_action(observation, memory)
