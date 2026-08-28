@@ -17,13 +17,21 @@ DIRECTION_OFFSETS = {
     "south": (0, 1),
     "west": (-1, 0),
 }
+FAILED_TARGET_COOLDOWN = 20
+
+
+@dataclass
+class FailedTargetRecord:
+    position: tuple[int, int]
+    failure_count: int
+    last_failed_step: int
 
 
 class Memory:
     def __init__(self) -> None:
         self.known_cells: dict[tuple[int, int], str] = {}
         self.visit_counts: dict[tuple[int, int], int] = {}
-        self.failed_targets: set[tuple[int, int]] = set()
+        self.failed_targets: dict[tuple[int, int], FailedTargetRecord] = {}
         self.active_goal: Optional[str] = None
         self.step = 0
         self.investigation_history: dict[tuple[int, int], str] = {}
@@ -71,16 +79,39 @@ class Memory:
 
     def mark_target_failed(self, position: Sequence[int]) -> None:
         key = (position[0], position[1])
-        self.failed_targets.add(key)
+
+        existing = self.failed_targets.get(key)
+
+        if existing is None:
+            self.failed_targets[key] = FailedTargetRecord(position=key, failure_count=1, last_failed_step=self.step)
+            return
+
+        existing.failure_count += 1
+        existing.last_failed_step = self.step
 
     def record_failed_target(self, position: Sequence[int]) -> None:
         self.mark_target_failed(position)
 
     def failed_target_count(self, position: tuple[int, int]) -> int:
-        return 1 if position in self.failed_targets else 0
+        record = self.failed_targets.get(position)
+
+        if record is None:
+            return 0
+
+        return record.failure_count
 
     def is_failed_target(self, position: tuple[int, int]) -> bool:
-        return self.failed_target_count(position) >= 1
+        record = self.failed_targets.get(position)
+
+        if record is None:
+            return False
+
+        steps_since_failure = self.step - record.last_failed_step
+
+        return steps_since_failure < FAILED_TARGET_COOLDOWN
+
+    def active_failed_target_count(self) -> int:
+        return sum(1 for position in self.failed_targets if self.is_failed_target(position))
 
     def least_visited_position(self) -> Optional[tuple[int, int]]:
         walkable_positions = [
@@ -189,7 +220,7 @@ class Memory:
         return {
             "plan_failures": self.plan_failure_count,
             "replans": self.replan_count,
-            "failed_targets": len(self.failed_targets),
+            "failed_targets": self.active_failed_target_count(),
             "body_action_failures": self.body_action_failure_count,
         }
 
