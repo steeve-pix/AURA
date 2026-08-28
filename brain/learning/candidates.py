@@ -56,8 +56,15 @@ def _append_unique(candidates: list[CandidateDecision], candidate: CandidateDeci
     candidates.append(candidate)
 
 
-def candidate_decisions(observation: dict, memory: Memory, *, rule_goal: str, rule_action: dict, recharge_urgent: bool,
-                        plan_is_committed: bool) -> list[CandidateDecision]:
+def propose_decisions(
+        observation: dict,
+        memory: Memory,
+        *,
+        rule_goal: str,
+        rule_action: dict,
+        recharge_urgent: bool,
+        plan_is_committed: bool,
+) -> list[CandidateDecision]:
     candidates = [
         CandidateDecision(
             goal=rule_goal,
@@ -121,6 +128,58 @@ def candidate_decisions(observation: dict, memory: Memory, *, rule_goal: str, ru
         )
 
     return candidates
+
+
+def candidate_decisions(
+        observation: dict,
+        memory: Memory,
+        *,
+        rule_goal: str,
+        rule_action: dict,
+        recharge_urgent: bool,
+        plan_is_committed: bool,
+) -> list[CandidateDecision]:
+    return propose_decisions(
+        observation,
+        memory,
+        rule_goal=rule_goal,
+        rule_action=rule_action,
+        recharge_urgent=recharge_urgent,
+        plan_is_committed=plan_is_committed,
+    )
+
+
+def format_decision_proposals(
+        proposals: list[CandidateDecision],
+        *,
+        rule_goal: str,
+        rule_action: dict,
+) -> str:
+    def describe(candidate: CandidateDecision) -> str:
+        action = candidate.action
+        target = action.get("target")
+
+        if target is not None:
+            action_text = f'{action["action"]} ({target[0]}, {target[1]})'
+        elif action.get("direction") is not None:
+            action_text = f'{action["action"]} {action["direction"]}'
+        else:
+            action_text = action["action"]
+
+        return f"{candidate.goal} → {action_text}"
+
+    lines = ["DECISION PROPOSALS", ""]
+    lines.extend(
+        f"{index}. {describe(candidate)}"
+        for index, candidate in enumerate(proposals, start=1)
+    )
+    lines.extend([
+        "",
+        "RULE CHOICE",
+        describe(CandidateDecision(rule_goal, rule_action)),
+    ])
+
+    return "\n".join(lines)
 
 
 def value_input_for_candidate(candidate: CandidateDecision, observation: dict, memory: Memory,

@@ -7,6 +7,8 @@ from brain.learning.candidates import (
     ScoredCandidate,
     candidate_decisions,
     decision_key,
+    format_decision_proposals,
+    propose_decisions,
     score_candidates,
     select_model_candidate,
     value_input_for_candidate,
@@ -36,6 +38,46 @@ def observation_with_adjacent_unknown() -> dict:
 
 
 class LearningCandidateTests(unittest.TestCase):
+    def test_proposals_do_not_mutate_memory(self):
+        memory = Memory()
+        rule_action = {
+            "action": "move",
+            "direction": "east",
+        }
+
+        proposals = propose_decisions(
+            observation_with_adjacent_unknown(),
+            memory,
+            rule_goal="explore",
+            rule_action=rule_action,
+            recharge_urgent=False,
+            plan_is_committed=False,
+        )
+
+        self.assertEqual(proposals[0].action, rule_action)
+        self.assertIsNone(memory.active_plan)
+
+    def test_formats_proposals_and_rule_choice(self):
+        output = format_decision_proposals(
+            [
+                CandidateDecision(
+                    goal="investigate",
+                    action={"action": "move_to", "target": [11, 9]},
+                ),
+                CandidateDecision(
+                    goal="explore",
+                    action={"action": "move", "direction": "east"},
+                ),
+            ],
+            rule_goal="investigate",
+            rule_action={"action": "move_to", "target": [11, 9]},
+        )
+
+        self.assertIn("DECISION PROPOSALS", output)
+        self.assertIn("1. investigate → move_to (11, 9)", output)
+        self.assertIn("2. explore → move east", output)
+        self.assertIn("RULE CHOICE", output)
+
     def test_candidates_include_rule_legal_moves_and_adjacent_investigation(self):
         memory = Memory()
         rule_action = {

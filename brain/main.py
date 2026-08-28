@@ -21,7 +21,8 @@ from brain.learning.candidates import (
     decision_key,
     rule_scored_candidate,
     score_candidates,
-    select_model_candidate, CandidateDecision, candidate_decisions,
+    select_model_candidate, CandidateDecision, format_decision_proposals,
+    propose_decisions,
 )
 from brain.learning.model_io import load_model
 from brain.learning.reporting import LiveValueReporter
@@ -446,15 +447,35 @@ def main() -> None:
         pending = memory.begin_experience(goal=goal, action=decision, observation=observation)
 
         if pending is None:
+            decision_proposals = []
+        else:
+            decision_proposals = propose_decisions(
+                observation,
+                memory,
+                rule_goal=goal,
+                rule_action=decision,
+                recharge_urgent=recharge_urgent_now,
+                plan_is_committed=plan_is_committed,
+            )
+
+        if pending is None:
             candidates = []
         elif value_model is None:
             # The rule system still needs a C++ preview
             # to validate move_to energy safety.
             candidates = [CandidateDecision(goal=goal, action=dict(decision))]
         else:
-            candidates = candidate_decisions(observation, memory, rule_goal=goal, rule_action=decision,
-                                             recharge_urgent=recharge_urgent_now,
-                                             plan_is_committed=plan_is_committed)
+            candidates = decision_proposals
+
+        if decision_proposals:
+            print(
+                format_decision_proposals(
+                    decision_proposals,
+                    rule_goal=goal,
+                    rule_action=decision,
+                ),
+                file=sys.stderr,
+            )
 
         # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {
