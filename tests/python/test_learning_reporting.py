@@ -3,6 +3,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from brain.experience import Experience
+from brain.learning.disagreement_analysis import DisagreementAnalysis
 from brain.learning.candidates import CandidateDecision, ScoredCandidate
 from brain.learning.diagnostics import (
     CompletedMoveToDiagnostics,
@@ -89,6 +90,52 @@ class LearningReportingTests(unittest.TestCase):
         self.assertIsNone(memory.pending_candidate_comparison)
         self.assertIn("VALUE MODEL · CANDIDATES", output.getvalue())
         self.assertIn("no", output.getvalue())
+
+    def test_model_disagreement_creates_pending_record(self):
+        rule = ScoredCandidate(
+            CandidateDecision(
+                goal="explore",
+                action={"action": "move", "direction": "east"},
+            ),
+            predicted_reward=0.14,
+        )
+        model = ScoredCandidate(
+            CandidateDecision(
+                goal="explore",
+                action={"action": "move", "direction": "west"},
+            ),
+            predicted_reward=0.18,
+        )
+        memory = Memory()
+        memory.step = 10
+        analysis = DisagreementAnalysis()
+
+        with patch(
+                "brain.main.score_candidates",
+                return_value=[rule, model],
+        ):
+            score_and_report_value_candidates(
+                value_model=object(),
+                candidates=[rule.candidate, model.candidate],
+                observation={
+                    "position": [1, 1],
+                    "energy": 80,
+                    "nearby_objects": [],
+                },
+                memory=memory,
+                goal="explore",
+                decision=rule.candidate.action,
+                value_reporter=LiveValueReporter(output=StringIO()),
+                disagreement_analysis=analysis,
+            )
+
+        record = memory.pending_disagreement
+
+        self.assertIsNotNone(record)
+        self.assertEqual(record.step, 10)
+        self.assertEqual(record.rule_action, "move")
+        self.assertEqual(record.model_action, "move")
+        self.assertAlmostEqual(record.model_claimed_advantage(), 0.04)
 
     def test_live_summary_contains_aligned_metrics(self):
         diagnostics = RunningValueDiagnostics()

@@ -2,6 +2,10 @@ import sys
 from typing import TextIO
 
 from brain.experience import Experience
+from brain.learning.disagreement_analysis import (
+    DisagreementRecord,
+    DisagreementStatistics,
+)
 from brain.learning.candidates import ScoredCandidate, decision_key
 from brain.learning.diagnostics import (
     CompletedMoveToDiagnostics,
@@ -250,6 +254,65 @@ def format_disagreement_result(comparison: dict, *, rule_actual: float) -> str:
     ])
 
 
+def format_disagreement_outcome(
+        record: DisagreementRecord,
+        statistics: DisagreementStatistics,
+) -> str:
+    rule_target = (
+        ""
+        if record.rule_target is None
+        else f" {record.rule_target}"
+    )
+    model_target = (
+        ""
+        if record.model_target is None
+        else f" {record.model_target}"
+    )
+    rule_actual = record.rule_actual_reward or 0.0
+    rule_error = record.rule_prediction_error() or 0.0
+    actual_vs_model = record.rule_actual_vs_model_prediction() or 0.0
+    mae = "n/a" if statistics.rule_prediction_mae is None else f"{statistics.rule_prediction_mae:.3f}"
+    advantage = (
+        "n/a"
+        if statistics.average_claimed_advantage is None
+        else f"{statistics.average_claimed_advantage:+.3f}"
+    )
+
+    return "\n".join([
+        "",
+        "VALUE MODEL · DISAGREEMENT OUTCOME",
+        DIVIDER,
+        "RULE",
+        f"  {record.rule_goal} → {record.rule_action}{rule_target}",
+        f"  predicted   {record.rule_predicted_value:+.3f}",
+        f"  actual      {rule_actual:+.3f}",
+        f"  error       {rule_error:.3f}",
+        "",
+        "MODEL",
+        f"  {record.model_goal} → {record.model_action}{model_target}",
+        f"  predicted   {record.model_predicted_value:+.3f}",
+        "",
+        "MODEL CLAIMED ADVANTAGE",
+        f"  {record.model_claimed_advantage():+.3f}",
+        "",
+        "RULE ACTUAL VS MODEL PREDICTION",
+        f"  {actual_vs_model:+.3f}",
+        DIVIDER,
+        f"Disagreements: {statistics.count}",
+        f"Rule prediction MAE: {mae}",
+        f"Average claimed advantage: {advantage}",
+        (
+            "Rule actual > model predicted alternative: "
+            f"{statistics.rule_actual_exceeds_model_prediction} / {statistics.count}"
+        ),
+        (
+            "Model predicted alternative > rule actual: "
+            f"{statistics.model_prediction_exceeds_rule_actual} / {statistics.count}"
+        ),
+        DIVIDER,
+    ])
+
+
 class LiveValueReporter:
     def __init__(
             self,
@@ -309,6 +372,18 @@ class LiveValueReporter:
                 scored_candidates,
                 rule_key=rule_key,
                 model_key=model_key,
+            )
+        )
+
+    def report_disagreement_outcome(
+            self,
+            record: DisagreementRecord,
+            statistics: DisagreementStatistics,
+    ) -> None:
+        self._print(
+            format_disagreement_outcome(
+                record,
+                statistics,
             )
         )
 

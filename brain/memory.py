@@ -7,6 +7,7 @@ from brain.experience import (
     RESULT_FAILED,
     detect_outcome,
 )
+from brain.learning.disagreement_analysis import DisagreementRecord
 from brain.planning import Plan
 from brain.reward import calculate_reward
 from brain.world_memory import WorldMemory
@@ -41,6 +42,7 @@ class Memory:
         self.pending_experience: dict | None = None
         self.pending_value_prediction: float | None = None
         self.pending_candidate_comparison: dict | None = None
+        self.pending_disagreement: DisagreementRecord | None = None
         self.plan_failure_count = 0
         self.replan_count = 0
         self.body_action_failure_count = 0

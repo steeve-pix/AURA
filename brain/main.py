@@ -17,6 +17,7 @@ from brain.decision import (
 from brain.experience import Experience
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.goals import goal_scores, propose_goal
+from brain.learning.disagreement_analysis import DisagreementAnalysis
 from brain.learning.candidates import (
     decision_key,
     rule_scored_candidate,
@@ -107,7 +108,8 @@ def score_and_report_value_candidates(
         *, value_model, candidates, observation: dict, memory, goal: str, decision: dict,
         value_reporter: LiveValueReporter,
         navigation_previews: dict | None = None,
-        goal_target: tuple[int, int] | None = None) -> None:
+        goal_target: tuple[int, int] | None = None,
+        disagreement_analysis: DisagreementAnalysis | None = None) -> None:
     if value_model is None or not candidates:
         return
 
@@ -159,6 +161,7 @@ def score_and_report_value_candidates(
     if not eligible_scored_candidates:
         memory.pending_value_prediction = rule_scored.predicted_reward
         memory.pending_candidate_comparison = None
+        memory.pending_disagreement = None
         return
 
     model_scored = select_model_candidate(
@@ -176,6 +179,7 @@ def score_and_report_value_candidates(
 
     if model_key == rule_key:
         memory.pending_candidate_comparison = None
+        memory.pending_disagreement = None
         return
 
     value_reporter.report_disagreement(
@@ -189,6 +193,17 @@ def score_and_report_value_candidates(
         "model": model_key,
         "model_prediction": model_scored.predicted_reward,
     }
+
+    if disagreement_analysis is not None:
+        memory.pending_disagreement = disagreement_analysis.begin(
+            step=memory.step,
+            rule_goal=goal,
+            rule_action=decision,
+            rule_predicted_value=rule_scored.predicted_reward,
+            model_goal=model_scored.candidate.goal,
+            model_action=model_scored.candidate.action,
+            model_predicted_value=model_scored.predicted_reward,
+        )
 
 
 def main() -> None:
@@ -205,6 +220,7 @@ def main() -> None:
         value_model = load_model(model_path)
 
     value_reporter = LiveValueReporter()
+    disagreement_analysis = DisagreementAnalysis()
     pending_preview_cycle = None
 
     for raw in sys.stdin:
@@ -323,6 +339,7 @@ def main() -> None:
                 value_reporter=value_reporter,
                 navigation_previews=navigation_previews,
                 goal_target=cached_goal_target,
+                disagreement_analysis=disagreement_analysis,
             )
 
             decision_proposal = pending_preview_cycle[
@@ -360,15 +377,31 @@ def main() -> None:
         if completed_experience is not None:
             prediction = memory.pending_value_prediction
             candidate_comparison = memory.pending_candidate_comparison
+            pending_disagreement = memory.pending_disagreement
 
             value_reporter.record_completed(
                 completed_experience,
                 prediction=prediction,
-                candidate_comparison=candidate_comparison,
+                candidate_comparison=(
+                    None
+                    if pending_disagreement is not None
+                    else candidate_comparison
+                ),
             )
+
+            if pending_disagreement is not None:
+                completed_disagreement = disagreement_analysis.complete(
+                    pending_disagreement,
+                    rule_actual_reward=completed_experience.reward,
+                )
+                value_reporter.report_disagreement_outcome(
+                    completed_disagreement,
+                    disagreement_analysis.statistics(),
+                )
 
             memory.pending_value_prediction = None
             memory.pending_candidate_comparison = None
+            memory.pending_disagreement = None
 
         if completed_experience is not None:
             persist_experience(completed_experience, memory_directory, world_id)
@@ -565,6 +598,7 @@ def main() -> None:
                         else decision_proposal.plan.goal_target
                     )
                 ),
+                disagreement_analysis=disagreement_analysis,
             )
 
             if decision_proposal is not None:
