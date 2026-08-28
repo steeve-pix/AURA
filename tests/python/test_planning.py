@@ -6,7 +6,7 @@ from brain.planning import (
     PlanStep,
     create_recharge_plan,
     plan_debug,
-    update_plan_from_observation,
+    update_plan_from_observation, MAX_STEPS_WITHOUT_PLAN_PROGRESS,
 )
 
 
@@ -142,6 +142,9 @@ class PlanTests(unittest.TestCase):
                 "type": "move_to",
                 "target": [11, 5],
             },
+            "created_step": 0,
+            "last_progress_step": 0,
+            "failure_reason": None,
         })
 
     def test_plan_debug_is_none_without_active_plan(self):
@@ -294,6 +297,332 @@ class PlanTests(unittest.TestCase):
             memory.clear_active_plan()
 
         self.assertIsNone(memory.active_plan)
+
+    def test_plan_records_creation_and_progress_steps(self):
+        plan = Plan(
+            goal="investigate",
+            created_step=10,
+            last_progress_step=10,
+        )
+
+        self.assertEqual(plan.age(14), 4)
+        self.assertEqual(plan.steps_since_progress(14), 4)
+
+        plan.record_progress(13)
+
+        self.assertEqual(plan.steps_since_progress(14), 1)
+
+    def test_plan_records_failure_reason(self):
+        plan = Plan(
+            goal="investigate",
+        )
+
+        plan.mark_failed("unreachable")
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "unreachable")
+
+    def test_plan_age_never_becomes_negative(self):
+        plan = Plan(
+            goal="explore",
+            created_step=10,
+            last_progress_step=10,
+        )
+
+        self.assertEqual(plan.age(8), 0)
+        self.assertEqual(plan.steps_since_progress(8), 0)
+
+    def test_arrival_records_plan_progress_step(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(4, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(plan, {"position": [4, 2],
+                                            "last_action": {
+                                                "type": "move_to",
+                                                "target": [4, 2],
+                                                "succeeded": True,
+                                                "result": "completed",
+                                            }, }, current_step=14)
+
+        self.assertTrue(plan.is_complete())
+        self.assertEqual(plan.last_progress_step, 14)
+
+    def test_shorter_route_records_progress_without_advancing(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                ),
+            ]
+        )
+
+        update_plan_from_observation(plan,
+                                     {
+                                         "position": [3, 2],
+                                         "last_action": {
+                                             "type": "move_to",
+                                             "target": [10, 2],
+                                             "succeeded": True,
+                                             "result": "completed",
+                                             "path_length_before": 8,
+                                             "path_length_after": 7,
+                                         },
+                                     },
+                                     current_step=11,
+                                     )
+
+        # The final destination was not reached.
+        self.assertEqual(plan.current_index, 0)
+
+        # But navigation genuinely progressed.
+        self.assertEqual(plan.last_progress_step, 11)
+
+    def test_equal_route_cost_does_not_record_progress(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                )
+            ]
+        )
+
+        update_plan_from_observation(plan, {
+            "position": [3, 2],
+            "last_action": {
+                "type": "move_to",
+                "target": [10, 2],
+                "succeeded": True,
+                "result": "completed",
+                "path_length_before": 7,
+                "path_length_after": 7,
+            }
+        }, current_step=11)
+
+        self.assertEqual(plan.last_progress_step, 10)
+
+    def test_plan_fails_after_no_progress_threshold(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [2, 2],
+                "last_action": None,
+            },
+            current_step=(10 + MAX_STEPS_WITHOUT_PLAN_PROGRESS),
+        )
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "stalled")
+
+    def test_plan_remains_active_before_stall_threshold(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [2, 2],
+                "last_action": None,
+            },
+            current_step=(
+                    10
+                    + MAX_STEPS_WITHOUT_PLAN_PROGRESS
+                    - 1
+            ),
+        )
+
+        self.assertFalse(plan.has_failed())
+
+    def test_navigation_progress_prevents_stall_at_threshold(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(10, 2),
+            created_step=10,
+            last_progress_step=10,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(10, 2),
+                ),
+            ],
+        )
+
+        current_step = 10 + MAX_STEPS_WITHOUT_PLAN_PROGRESS
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [3, 2],
+                "last_action": {
+                    "type": "move_to",
+                    "target": [10, 2],
+                    "succeeded": True,
+                    "result": "completed",
+                    "path_length_before": 8,
+                    "path_length_after": 7,
+                },
+            },
+            current_step=current_step,
+        )
+
+        self.assertFalse(plan.has_failed())
+        self.assertEqual(plan.last_progress_step, current_step)
+
+    def test_offscreen_goal_target_remains_valid(self):
+        plan = Plan(
+            goal="investigate",
+            goal_target=(12, 5),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(11, 5),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [1, 1],
+                "sensor_radius": 3,
+                "nearby_objects": [],
+                "last_action": None,
+            },
+            current_step=1,
+        )
+
+        self.assertFalse(plan.has_failed())
+
+    def test_visible_missing_goal_target_fails_plan(self):
+        plan = Plan(
+            goal="investigate",
+            goal_target=(4, 2),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(3, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [1, 2],
+                "sensor_radius": 5,
+                "nearby_objects": [],
+                "last_action": None,
+            },
+            current_step=1,
+        )
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "goal_target_invalid")
+
+    def test_visible_matching_goal_target_remains_valid(self):
+        plan = Plan(
+            goal="investigate",
+            goal_target=(4, 2),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(3, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [1, 2],
+                "sensor_radius": 5,
+                "nearby_objects": [
+                    {
+                        "type": "Unknown",
+                        "position": [4, 2],
+                        "reachable": True,
+                    },
+                ],
+                "last_action": None,
+            },
+            current_step=1,
+        )
+
+        self.assertFalse(plan.has_failed())
+
+    def test_wrong_entity_type_invalidates_goal_target(self):
+        plan = Plan(
+            goal="recharge",
+            goal_target=(4, 2),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [1, 2],
+                "sensor_radius": 5,
+                "nearby_objects": [
+                    {
+                        "type": "Unknown",
+                        "position": [4, 2],
+                        "reachable": True,
+                    },
+                ],
+                "last_action": None,
+            },
+            current_step=1,
+        )
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "goal_target_invalid")
 
 
 if __name__ == "__main__":

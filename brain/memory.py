@@ -17,13 +17,21 @@ DIRECTION_OFFSETS = {
     "south": (0, 1),
     "west": (-1, 0),
 }
+FAILED_TARGET_COOLDOWN = 20
+
+
+@dataclass
+class FailedTargetRecord:
+    position: tuple[int, int]
+    failure_count: int
+    last_failed_step: int
 
 
 class Memory:
     def __init__(self) -> None:
         self.known_cells: dict[tuple[int, int], str] = {}
         self.visit_counts: dict[tuple[int, int], int] = {}
-        self.failed_targets: set[tuple[int, int]] = set()
+        self.failed_targets: dict[tuple[int, int], FailedTargetRecord] = {}
         self.active_goal: Optional[str] = None
         self.step = 0
         self.investigation_history: dict[tuple[int, int], str] = {}
@@ -71,16 +79,39 @@ class Memory:
 
     def mark_target_failed(self, position: Sequence[int]) -> None:
         key = (position[0], position[1])
-        self.failed_targets.add(key)
+
+        existing = self.failed_targets.get(key)
+
+        if existing is None:
+            self.failed_targets[key] = FailedTargetRecord(position=key, failure_count=1, last_failed_step=self.step)
+            return
+
+        existing.failure_count += 1
+        existing.last_failed_step = self.step
 
     def record_failed_target(self, position: Sequence[int]) -> None:
         self.mark_target_failed(position)
 
     def failed_target_count(self, position: tuple[int, int]) -> int:
-        return 1 if position in self.failed_targets else 0
+        record = self.failed_targets.get(position)
+
+        if record is None:
+            return 0
+
+        return record.failure_count
 
     def is_failed_target(self, position: tuple[int, int]) -> bool:
-        return self.failed_target_count(position) >= 1
+        record = self.failed_targets.get(position)
+
+        if record is None:
+            return False
+
+        steps_since_failure = self.step - record.last_failed_step
+
+        return steps_since_failure < FAILED_TARGET_COOLDOWN
+
+    def active_failed_target_count(self) -> int:
+        return sum(1 for position in self.failed_targets if self.is_failed_target(position))
 
     def least_visited_position(self) -> Optional[tuple[int, int]]:
         walkable_positions = [
@@ -189,9 +220,12 @@ class Memory:
         return {
             "plan_failures": self.plan_failure_count,
             "replans": self.replan_count,
-            "failed_targets": len(self.failed_targets),
+            "failed_targets": self.active_failed_target_count(),
             "body_action_failures": self.body_action_failure_count,
         }
+
+    def cancel_pending_experience(self) -> None:
+        self.pending_experience = None
 
     def pre_action_context(self, *, action: dict, observation: dict) -> dict:
         target = action.get("target")
@@ -277,6 +311,7 @@ class Memory:
             "target": target_position,
             "position_before": current_position,
             "energy_before": observation["energy"],
+            "reachable_before": None,
             "path_length_before": path_length_before,
             "memory_trust_before": memory_trust_before,
             "next_step_was_visited": next_step_was_visited,
@@ -302,6 +337,42 @@ class Memory:
 
         return self.pending_experience
 
+    def apply_navigation_preview_to_pending(
+            self,
+            preview: dict,
+    ) -> None:
+        pending = self.pending_experience
+
+        if (
+                pending is None
+                or pending["action"] != "move_to"
+        ):
+            return
+
+        reachable = preview.get("reachable")
+
+        pending["reachable_before"] = reachable
+
+        if reachable is not True:
+            pending["path_length_before"] = None
+            pending["next_step_was_visited"] = None
+            return
+
+        pending["path_length_before"] = preview.get(
+            "path_length"
+        )
+
+        next_step = preview.get("next_step")
+
+        if next_step is None:
+            pending["next_step_was_visited"] = None
+            return
+
+        pending["next_step_was_visited"] = (
+            tuple(next_step)
+            in pending["visited_before"]
+        )
+
     def finish_pending_experience(self, observation: dict) -> Experience | None:
         if self.pending_experience is None:
             return None
@@ -313,9 +384,14 @@ class Memory:
 
         pending = self.pending_experience
 
-        reachable_before = None
+        reachable_before = pending.get(
+            "reachable_before"
+        )
 
-        if pending["action"] == "move_to":
+        if (
+                pending["action"] == "move_to"
+                and reachable_before is None
+        ):
             reachable_before = last_action.get("reachable_before")
 
         if last_action.get("type") != pending["action"]:

@@ -178,33 +178,65 @@ int main() {
     }
 
     aura::world::World scenarioWorld{5, 5};
+
     scenarioWorld.addBoundaryWalls();
+
     aura::agent::Agent scenarioAgent{{1, 1}};
+
     aura::scenario::PeriodicMoveToBlock challenge{2};
-    const aura::bridge::Action moveToAction{
+
+    const aura::bridge::Action firstTarget{
         aura::bridge::ActionType::MoveTo,
         aura::bridge::Direction::North,
         {3, 3}
     };
 
-    challenge.beforeAction(scenarioWorld, scenarioAgent, moveToAction);
+    challenge.beforeAction(scenarioWorld, scenarioAgent, firstTarget);
 
-    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall) {
-        std::cout << "FAIL: challenge should leave the first move_to unchanged\n";
+    if (scenarioWorld.cellAt({2, 1}) == aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: first distinct target "
+                << "should not be obstructed\n";
         ++failures;
     }
 
-    challenge.beforeAction(scenarioWorld, scenarioAgent, moveToAction);
+    // Continuing the same plan must not count as
+    // another target attempt.
+    challenge.beforeAction(scenarioWorld, scenarioAgent, firstTarget);
 
-    if (scenarioWorld.cellAt({3, 3}) != aura::world::CellType::Wall) {
-        std::cout << "FAIL: challenge should block the configured move_to interval\n";
+    if (scenarioWorld.cellAt({2, 1}) == aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: repeated move_to ticks "
+                << "should not retrigger challenge\n";
         ++failures;
     }
 
-    challenge.afterAction(scenarioWorld, scenarioAgent, moveToAction);
+    const aura::bridge::Action secondTarget{aura::bridge::ActionType::MoveTo, aura::bridge::Direction::North, {3, 1}};
 
-    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall) {
-        std::cout << "FAIL: challenge should restore its temporary obstacle\n";
+    challenge.beforeAction(scenarioWorld, scenarioAgent, secondTarget);
+
+    // The first BFS step is obstructed.
+    if (scenarioWorld.cellAt({2, 1}) != aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: configured target attempt "
+                << "should obstruct its route\n";
+        ++failures;
+    }
+
+    // The final objective must remain valid.
+    if (scenarioWorld.cellAt({3, 1}) == aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: challenge should not turn "
+                << "the objective into a wall\n";
+        ++failures;
+    }
+
+    challenge.afterAction(scenarioWorld, scenarioAgent, secondTarget);
+
+    if (scenarioWorld.cellAt({2, 1}) == aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: challenge should restore "
+                << "its temporary route obstacle\n";
         ++failures;
     }
 

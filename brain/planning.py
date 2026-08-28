@@ -6,6 +6,53 @@ PlanStepType = Literal[
     "investigate",
 ]
 
+MAX_STEPS_WITHOUT_PLAN_PROGRESS = 12
+GOAL_ENTITY_TYPES = {
+    "investigate": "Unknown",
+    "recharge": "Battery",
+}
+
+
+def mark_invalid_goal_target_if_observed(plan: Plan, observation: dict) -> None:
+    if plan.is_complete() or plan.has_failed() or plan.goal_target is None:
+        return
+
+    expected_type = GOAL_ENTITY_TYPES.get(plan.goal)
+
+    if expected_type is None:
+        return
+
+    sensor_radius = observation.get("sensor_radius")
+
+    if sensor_radius is None:
+        return
+
+    current = tuple(observation["position"])
+
+    target = plan.goal_target
+
+    target_is_visible = (abs(target[0] - current[0]) <= sensor_radius and abs(target[1] - current[1]) <= sensor_radius)
+
+    if not target_is_visible:
+        return
+
+    target_still_exists = any(tuple(obj["position"]) == target and obj["type"] == expected_type for obj in
+                              observation.get("nearby_objects", []))
+
+    if not target_still_exists:
+        plan.mark_failed("goal_target_invalid")
+
+
+def mark_stalled_if_needed(plan: Plan, *, current_step: int | None) -> None:
+    if current_step is None:
+        return
+
+    if plan.is_complete() or plan.has_failed():
+        return
+
+    if plan.steps_since_progress(current_step) >= MAX_STEPS_WITHOUT_PLAN_PROGRESS:
+        plan.mark_failed("stalled")
+
 
 @dataclass
 class PlanStep:
@@ -22,6 +69,23 @@ class Plan:
     current_index: int = 0
     failed: bool = False
 
+    created_step: int = 0
+    last_progress_step: int = 0
+    failure_reason: str | None = None
+
+    def mark_failed(self, reason: str) -> None:
+        self.failed = True
+        self.failure_reason = reason
+
+    def record_progress(self, step: int) -> None:
+        self.last_progress_step = step
+
+    def age(self, current_step: int) -> int:
+        return max(0, current_step - self.created_step)
+
+    def steps_since_progress(self, current_step: int) -> int:
+        return max(0, current_step - self.last_progress_step)
+
     def is_complete(self) -> bool:
         return self.current_index >= len(self.steps)
 
@@ -34,15 +98,22 @@ class Plan:
     def has_failed(self) -> bool:
         return self.failed
 
-    def advance(self) -> None:
-        if not self.is_complete():
-            self.current_index += 1
+    def advance(self, *, current_step: int | None = None) -> None:
+        if self.is_complete():
+            return
+
+        self.current_index += 1
+
+        if current_step is not None:
+            self.record_progress(current_step)
 
 
-def create_recharge_plan(target: tuple[int, int], ) -> Plan:
+def create_recharge_plan(target: tuple[int, int], *, created_step: int = 0) -> Plan:
     return Plan(
         goal="recharge",
         goal_target=target,
+        created_step=created_step,
+        last_progress_step=created_step,
         steps=[
             PlanStep(
                 step_type="move_to",
@@ -77,10 +148,13 @@ def plan_debug(plan: Plan | None) -> dict | None:
                 ),
             }
         ),
+        "created_step": plan.created_step,
+        "last_progress_step": plan.last_progress_step,
+        "failure_reason": plan.failure_reason,
     }
 
 
-def update_plan_from_observation(plan: Plan, observation, ) -> None:
+def update_plan_from_observation(plan: Plan, observation, *, current_step: int | None = None) -> None:
     step = plan.current_step()
 
     if step is None:
@@ -96,22 +170,37 @@ def update_plan_from_observation(plan: Plan, observation, ) -> None:
         # and therefore do not appear in nearby_objects. An explicitly observed,
         # unreachable target is enough to invalidate the step.
         if observed_target is not None and not observed_target.get("reachable", False):
-            plan.failed = True
+            plan.mark_failed("target_unreachable")
             return
 
     if step.step_type == "move_to":
         last_action = observation.get("last_action")
 
-        if (last_action and last_action.get("type") == "move_to" and not last_action.get("succeeded", False)
-                and last_action.get("target") is not None
-                and tuple(last_action["target"]) == step.target):
-            plan.failed = True
+        matching_move_to = (last_action is not None and last_action.get("type") == "move_to" and last_action.get(
+            "target") is not None and tuple(last_action["target"]) == step.target)
+
+        if matching_move_to and not last_action.get("succeeded", False):
+            body_result = last_action.get("result", "failed")
+
+            plan.mark_failed(f"move_to_{body_result}")
+
             return
+
+        if matching_move_to and last_action.get("succeeded", False) and current_step is not None:
+            path_before = last_action.get("path_length_before")
+            path_after = last_action.get("path_length_after")
+
+            if path_before is not None and path_after is not None and path_after < path_before:
+                plan.record_progress(current_step)
 
         current_position = tuple(observation["position"])
 
         if current_position == step.target:
-            plan.advance()
+            plan.advance(current_step=current_step)
+
+        mark_invalid_goal_target_if_observed(plan, observation)
+
+        mark_stalled_if_needed(plan, current_step=current_step)
 
         return
 
@@ -119,6 +208,8 @@ def update_plan_from_observation(plan: Plan, observation, ) -> None:
         last_action = observation.get("last_action")
 
         if not last_action:
+            mark_invalid_goal_target_if_observed(plan, observation)
+            mark_stalled_if_needed(plan, current_step=current_step)
             return
 
         matching_investigation = (
@@ -128,8 +219,12 @@ def update_plan_from_observation(plan: Plan, observation, ) -> None:
         )
 
         if matching_investigation and not last_action.get("succeeded", False):
-            plan.failed = True
+            body_result = last_action.get("result", "failed")
+            plan.mark_failed(f"investigate_{body_result}")
             return
 
         if matching_investigation and last_action.get("succeeded", False):
-            plan.advance()
+            plan.advance(current_step=current_step)
+
+        mark_invalid_goal_target_if_observed(plan, observation)
+        mark_stalled_if_needed(plan, current_step=current_step)

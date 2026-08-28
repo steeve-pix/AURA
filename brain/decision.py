@@ -1,6 +1,8 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
 
+from brain.goals import investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, \
+    exploration_goal_proposal, investigation_route_cost, route_fits_energy_budget
 from brain.memory import Memory
 from brain.planning import (
     Plan,
@@ -8,78 +10,35 @@ from brain.planning import (
     create_recharge_plan as create_recharge_plan_for_target,
 )
 
-BATTERY_ARRIVAL_RESERVE = 2
 
+def create_recharge_search_plan(observation, memory: Memory) -> Plan | None:
+    exploration = exploration_goal_proposal(observation, memory)
 
-def remembered_battery_score(memory: Memory, battery: tuple[int, int], aura_position: tuple[int, int], ) -> float:
-    trust = memory.battery_trust(battery)
-    distance = (
-            abs(battery[0] - aura_position[0])
-            + abs(battery[1] - aura_position[1])
+    if exploration.target is None:
+        return None
+
+    return Plan(
+        goal="recharge",
+        goal_target=None,
+        created_step=memory.step,
+        last_progress_step=memory.step,
+        steps=[
+            PlanStep(
+                step_type="move_to",
+                target=exploration.target,
+                requires_reachable_target=True
+            )
+        ]
     )
-
-    return trust / (1.0 + distance)
-
-
-def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int] | None:
-    energy = observation["energy"]
-    visible_battery_positions = {
-        tuple(obj["position"])
-        for obj in observation["nearby_objects"]
-        if obj["type"] == "Battery"
-    }
-
-    visible_batteries = [
-        obj
-        for obj in observation["nearby_objects"]
-        if obj["type"] == "Battery"
-           and obj.get("reachable", False)
-           and obj["path_length"] <= energy - BATTERY_ARRIVAL_RESERVE
-           and not memory.is_failed_target((obj["position"][0], obj["position"][1]))
-    ]
-
-    if visible_batteries:
-        best = min(
-            visible_batteries,
-            key=lambda obj: obj["path_length"],
-        )
-
-        return best["position"][0], best["position"][1]
-
-    remembered = [
-        battery
-        for battery in memory.batteries()
-        if battery not in visible_battery_positions
-           and not memory.is_failed_target(battery)
-           and (
-                   abs(battery[0] - observation["position"][0])
-                   + abs(battery[1] - observation["position"][1])
-           ) <= energy - BATTERY_ARRIVAL_RESERVE
-    ]
-
-    if remembered:
-        x, y = observation["position"]
-        aura_position = (x, y)
-
-        return max(
-            remembered,
-            key=lambda battery: remembered_battery_score(
-                memory,
-                battery,
-                aura_position,
-            ),
-        )
-
-    return None
 
 
 def create_recharge_plan(observation, memory: Memory, ) -> Plan | None:
-    target = choose_best_recharge_target(observation, memory)
+    proposal = recharge_goal_proposal(observation, memory)
 
-    if target is None:
+    if proposal is None or proposal.target is None:
         return None
 
-    return create_recharge_plan_for_target(target)
+    return create_recharge_plan_for_target(proposal.target, created_step=memory.step)
 
 
 def replan_failed_recharge(observation, memory: Memory, ) -> bool:
@@ -105,10 +64,7 @@ def replan_failed_recharge(observation, memory: Memory, ) -> bool:
 
 
 def choose_recharge_action(observation, memory):
-    if (
-            memory.active_plan is not None
-            and memory.active_plan.goal == "recharge"
-    ):
+    if memory.active_plan is not None and memory.active_plan.goal == "recharge":
         return action_from_plan(memory.active_plan)
 
     plan = create_recharge_plan(observation, memory)
@@ -117,49 +73,43 @@ def choose_recharge_action(observation, memory):
         memory.set_active_plan(plan)
         return action_from_plan(plan)
 
-    return choose_exploration_action(observation, memory)
+    search_plan = create_recharge_search_plan(observation, memory)
+
+    if search_plan is not None:
+        memory.set_active_plan(search_plan)
+        return action_from_plan(search_plan)
+
+    return choose_local_exploration_action(observation, memory)
 
 
 def choose_adjacent_unknown_action(observation, memory: Memory, *,
                                    exclude_target: tuple[int, int] | None) -> dict | None:
     aura_position = (observation["position"][0], observation["position"][1])
 
-    candidates = []
+    proposals = investigation_goal_proposals(observation, memory)
 
-    for obj in observation["nearby_objects"]:
-        if obj["type"] != "Unknown":
-            continue
+    adjacent_proposals = [
+        proposal for proposal in proposals if proposal.target is not None
+                                              and proposal.target != exclude_target and (
+                                                      abs(proposal.target[0] - aura_position[0]) + abs(
+                                                  proposal.target[1] - aura_position[1])) == 1]
 
-        target = (obj["position"][0], obj["position"][1])
+    selected = select_best_investigation_proposal(adjacent_proposals)
 
-        if target == exclude_target:
-            continue
-
-        if memory.is_failed_target(target):
-            continue
-
-        distance = abs(target[0] - aura_position[0]) + abs(target[1] - aura_position[1])
-
-        if distance == 1:
-            candidates.append(obj)
-
-    if not candidates:
+    if selected is None or selected.target is None:
         return None
-
-    target = max(candidates, key=lambda obj: (investigation_target_score(obj, observation, memory),
-                                              tuple(obj["position"])))
 
     return {
         "action": "investigate",
-        "target": list(target["position"]),
+        "target": list(selected.target),
     }
 
 
 def decide(observation, goal, memory):
-    if (
-            memory.active_plan is not None
-            and memory.active_plan.goal == goal
-    ):
+    if observation["energy"] <= 0:
+        return {"action": "idle"}
+
+    if memory.active_plan is not None and memory.active_plan.goal == goal:
         if goal == "investigate":
             opportunistic_action = (
                 choose_adjacent_unknown_action(observation, memory, exclude_target=(
@@ -206,7 +156,42 @@ def action_from_plan(plan: Plan) -> dict:
     return {"action": "idle"}
 
 
+def create_exploration_plan(observation, memory: Memory) -> Plan | None:
+    proposal = exploration_goal_proposal(observation, memory)
+
+    if proposal.target is None:
+        return None
+
+    return Plan(
+        goal="explore",
+        goal_target=proposal.target,
+        created_step=memory.step,
+        last_progress_step=memory.step,
+        steps=[
+            PlanStep(
+                step_type="move_to",
+                target=proposal.target,
+                requires_reachable_target=True
+            )
+        ]
+    )
+
+
 def choose_exploration_action(observation, memory: Memory):
+    if memory.active_plan is not None and memory.active_plan.goal == "explore":
+        return action_from_plan(memory.active_plan)
+
+    plan = create_exploration_plan(observation, memory)
+
+    if plan is not None:
+        memory.set_active_plan(plan)
+
+        return action_from_plan(plan)
+
+    return choose_local_exploration_action(observation, memory)
+
+
+def choose_local_exploration_action(observation, memory: Memory):
     """Choose a high-level action that serves the current goal."""
     aura_x, aura_y = observation["position"]
 
@@ -253,23 +238,14 @@ def choose_investigation_action(observation, memory: Memory):
     ):
         return action_from_plan(memory.active_plan)
 
-    unknown_objects = [
-        obj for obj in observation["nearby_objects"]
-        if obj["type"] == "Unknown" and obj["reachable"]
-           and not memory.is_failed_target((int(obj["position"][0]), int(obj["position"][1])))
-    ]
-    if not unknown_objects:
+    proposals = investigation_goal_proposals(observation, memory)
+
+    selected = select_best_investigation_proposal(proposals)
+
+    if selected is None or selected.target is None:
         return {"action": "idle"}
 
-    target = max(
-        unknown_objects,
-        key=lambda obj: (
-            investigation_target_score(obj, observation, memory),
-            tuple(obj["position"]),
-        ),
-    )
-
-    target_position = (target["position"][0], target["position"][1])
+    target_position = selected.target
 
     plan = create_investigation_plan(
         observation,
@@ -293,6 +269,11 @@ def create_investigation_plan(observation, memory: Memory, target_position: tupl
     if target_object is None or not target_object.get("reachable", False) or memory.is_failed_target(target_position):
         return None
 
+    route_cost = investigation_route_cost(target_object, observation)
+
+    if not route_fits_energy_budget(route_cost, observation["energy"]):
+        return None
+
     aura_position = tuple(observation["position"])
     target_x, target_y = target_position
 
@@ -301,6 +282,8 @@ def create_investigation_plan(observation, memory: Memory, target_position: tupl
         plan = Plan(
             goal="investigate",
             goal_target=target_position,
+            created_step=memory.step,
+            last_progress_step=memory.step,
             steps=[
                 PlanStep(
                     step_type="investigate",
@@ -346,6 +329,8 @@ def create_investigation_plan(observation, memory: Memory, target_position: tupl
     plan = Plan(
         goal="investigate",
         goal_target=target_position,
+        created_step=memory.step,
+        last_progress_step=memory.step,
         steps=[
             PlanStep(
                 step_type="move_to",
@@ -390,24 +375,3 @@ def replan_failed_investigation(
     memory.set_active_plan(replacement)
     memory.record_replan()
     return True
-
-
-HISTORICAL_BATTERY_BONUS = 0.15
-
-
-def investigation_target_score(obj, observation, memory: Memory) -> float:
-    aura_x, aura_y = observation["position"]
-    target_x, target_y = obj["position"]
-
-    distance = (abs(target_x - aura_x) + abs(target_y - aura_y))
-
-    distance_score = 1.0 / (1.0 + distance)
-
-    previous_result = (memory.previous_investigation_result(obj["position"]))
-
-    history_bonus = 0.0
-
-    if previous_result == "Battery":
-        history_bonus = HISTORICAL_BATTERY_BONUS
-
-    return distance_score + history_bonus

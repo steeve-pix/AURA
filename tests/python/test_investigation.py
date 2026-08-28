@@ -13,6 +13,7 @@ from brain.planning import Plan, PlanStep, update_plan_from_observation
 class TestInvestigation(unittest.TestCase):
     def test_moves_to_adjacent_cell_before_investigating(self):
         observation = {
+            "energy": 10,
             "position": [10, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [11, 10]},
@@ -40,6 +41,7 @@ class TestInvestigation(unittest.TestCase):
     def test_builds_two_step_investigation_plan(self):
         memory = Memory()
         observation = {
+            "energy": 10,
             "position": [10, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [11, 10]},
@@ -75,6 +77,7 @@ class TestInvestigation(unittest.TestCase):
     def test_failed_approach_replans_same_goal_through_another_approach(self):
         memory = Memory()
         observation = {
+            "energy": 10,
             "position": [10, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [11, 10]},
@@ -132,6 +135,7 @@ class TestInvestigation(unittest.TestCase):
         ))
         memory.mark_target_failed(failed_approach)
         observation = {
+            "energy": 10,
             "position": [10, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [11, 10]},
@@ -167,6 +171,7 @@ class TestInvestigation(unittest.TestCase):
         ))
         memory.mark_target_failed((11, 10))
         observation = {
+            "energy": 10,
             "position": [10, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [11, 10]},
@@ -199,6 +204,7 @@ class TestInvestigation(unittest.TestCase):
     def test_action_from_plan_does_not_advance_plan(self):
         memory = Memory()
         observation = {
+            "energy": 10,
             "position": [10, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [11, 10]},
@@ -231,6 +237,7 @@ class TestInvestigation(unittest.TestCase):
     def test_investigates_unknown_from_adjacent_cell(self):
         memory = Memory()
         observation = {
+            "energy": 10,
             "position": [11, 10],
             "visible_cells": [],
             "nearby_objects": [
@@ -279,6 +286,7 @@ class TestInvestigation(unittest.TestCase):
             ],
         ))
         first_observation = {
+            "energy": 10,
             "position": [11, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [13, 10]},
@@ -317,6 +325,7 @@ class TestInvestigation(unittest.TestCase):
             ],
         ))
         observation = {
+            "energy": 10,
             "position": [11, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [13, 10]},

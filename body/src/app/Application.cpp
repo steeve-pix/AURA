@@ -134,19 +134,23 @@ namespace aura::app {
 
         // Rendering remains continuous while simulation and brain updates run at a
         // fixed cadence.
-        while (
-            !window_.shouldClose()
-            && (!maxSteps_.has_value() || completedSteps < *maxSteps_)
-        ) {
+        while (!window_.shouldClose() && (!maxSteps_.has_value() || completedSteps < *maxSteps_)) {
             Window::pollEvents();
 
             const double now = glfwGetTime();
 
             if (now - lastUpdateTime >= updateInterval) {
+                const bool exhaustedBeforeUpdate =
+                        agent_.energy() <= 0;
+
                 update();
                 ++completedSteps;
 
                 lastUpdateTime = now;
+
+                if (exhaustedBeforeUpdate) {
+                    break;
+                }
             }
 
             setWindowTitle(brainDebug_, agent_.energy());
@@ -206,6 +210,10 @@ namespace aura::app {
                 }
 
                 brainDebug_ = response.debug;
+
+                if (agent_.energy() <= 0) {
+                    return;
+                }
 
                 scenario_->beforeAction(world_, agent_, response.action);
 

@@ -4,10 +4,11 @@ from brain.decision import (
     choose_investigation_action,
     create_recharge_plan as create_selected_recharge_plan,
     decide,
-    replan_failed_recharge,
+    replan_failed_recharge, choose_exploration_action, choose_recharge_action,
 )
-from brain.goals import choose_goal
+from brain.goals import recharge_goal_proposal
 from brain.memory import Memory
+from brain.plan_supervisor import supervise_goal
 from brain.planning import (
     Plan,
     PlanStep,
@@ -622,6 +623,7 @@ class DecisionTests(unittest.TestCase):
         memory.remember_investigation_result([6, 2], "Battery")
 
         observation = {
+            "energy": 20,
             "position": [2, 2],
             "nearby_objects": [
                 {
@@ -687,6 +689,349 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(action, {"action": "move_to", "target": [5, 1]})
         self.assertEqual(memory.active_plan.goal, "investigate")
         self.assertEqual(memory.active_plan.steps[1].target, (5, 2))
+
+    def test_investigation_uses_bfs_route_cost(self):
+        memory = Memory()
+
+        observation = {
+            "energy": 10,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    # Geometrically closer, but expensive route.
+                    "type": "Unknown",
+                    "position": [3, 1],
+                    "reachable": True,
+                    "path_length": 9,
+                },
+                {
+                    # Geometrically farther, but cheaper route.
+                    "type": "Unknown",
+                    "position": [6, 1],
+                    "reachable": True,
+                    "path_length": 5,
+                },
+            ],
+            "visible_cells": [
+                {
+                    "position": [3, 2],
+                    "type": "Empty",
+                },
+                {
+                    "position": [6, 2],
+                    "type": "Empty",
+                },
+            ],
+        }
+
+        choose_investigation_action(observation, memory)
+
+        self.assertIsNotNone(memory.active_plan)
+
+        self.assertEqual(memory.active_plan.goal_target, (6, 1))
+
+    def test_investigation_plan_records_creation_step(self):
+        memory = Memory()
+        memory.step = 12
+
+        observation = {
+            "energy": 10,
+            "position": [1, 1],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [3, 1],
+                    "reachable": True,
+                    "path_length": 2,
+                },
+            ],
+            "visible_cells": [
+                {
+                    "position": [3, 2],
+                    "type": "Empty",
+                },
+            ],
+        }
+
+        choose_investigation_action(observation, memory)
+
+        self.assertEqual(memory.active_plan.created_step, 12)
+        self.assertEqual(memory.active_plan.last_progress_step, 12)
+
+    def test_failed_move_records_body_result(self):
+        plan = Plan(
+            goal="recharge",
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 2),
+                ),
+            ],
+        )
+
+        update_plan_from_observation(
+            plan,
+            {
+                "position": [2, 2],
+                "nearby_objects": [],
+                "last_action": {
+                    "type": "move_to",
+                    "target": [4, 2],
+                    "succeeded": False,
+                    "result": "unreachable",
+                },
+            },
+        )
+
+        self.assertTrue(plan.has_failed())
+        self.assertEqual(plan.failure_reason, "move_to_unreachable")
+
+    def test_exploration_creates_frontier_plan(self):
+        memory = Memory()
+        memory.step = 12
+
+        memory.remember_cell(
+            [1, 1],
+            "Empty",
+        )
+        memory.remember_cell(
+            [2, 1],
+            "Empty",
+        )
+
+        observation = {
+            "position": [1, 1],
+            "energy": 80,
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Wall",
+            "nearby_objects": [],
+        }
+
+        action = choose_exploration_action(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [2, 1],
+            },
+        )
+        self.assertIsNotNone(memory.active_plan)
+        self.assertEqual(memory.active_plan.goal, "explore")
+        self.assertEqual(memory.active_plan.goal_target, (2, 1))
+        self.assertEqual(memory.active_plan.created_step, 12)
+
+    def test_exploration_plan_keeps_selected_frontier(self):
+        memory = Memory()
+
+        original_plan = Plan(
+            goal="explore",
+            goal_target=(5, 1),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(5, 1),
+                ),
+            ],
+        )
+
+        memory.set_active_plan(original_plan)
+
+        memory.remember_cell([1, 1], "Empty")
+        memory.remember_cell([2, 1], "Empty")
+
+        action = choose_exploration_action(
+            {
+                "position": [1, 1],
+                "energy": 80,
+                "nearby_objects": [],
+            },
+            memory,
+        )
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [5, 1],
+            },
+        )
+        self.assertIs(memory.active_plan, original_plan)
+
+    def test_exploration_without_frontier_uses_local_move(self):
+        memory = Memory()
+
+        action = choose_exploration_action(
+            {
+                "position": [1, 1],
+                "energy": 80,
+                "north": "Wall",
+                "east": "Empty",
+                "south": "Wall",
+                "west": "Wall",
+                "nearby_objects": [],
+            },
+            memory,
+        )
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move",
+                "direction": "east",
+            },
+        )
+        self.assertIsNone(
+            memory.active_plan
+        )
+
+    def test_decide_explore_uses_frontier_plan(self):
+        memory = Memory()
+        memory.remember_cell((1, 1), "Empty")
+        memory.remember_cell((2, 1), "Empty")
+
+        observation = {
+            "position": [1, 1],
+            "energy": 100,
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Wall",
+            "visible_cells": [],
+            "nearby_objects": [],
+        }
+
+        # Configure known_cells so your fixture contains
+        # a valid exploration frontier.
+
+        action = decide(
+            observation,
+            "explore",
+            memory,
+        )
+
+        self.assertEqual(action["action"], "move_to")
+        self.assertIsNotNone(memory.active_plan)
+        self.assertEqual(memory.active_plan.goal, "explore")
+        self.assertEqual(memory.active_plan.goal_target, (2, 1))
+
+    def test_recharge_without_battery_creates_search_plan(self):
+        memory = Memory()
+        memory.known_cells[(1, 1)] = "Empty"
+        memory.known_cells[(2, 1)] = "Empty"
+
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [],
+        }
+
+        action = choose_recharge_action(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [2, 1],
+            },
+        )
+
+        self.assertEqual(memory.active_plan.goal, "recharge")
+
+        self.assertIsNone(memory.active_plan.goal_target)
+
+    def test_discovered_battery_replaces_recharge_search_plan(self):
+        memory = Memory()
+
+        search_plan = Plan(
+            goal="recharge",
+            goal_target=None,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 3),
+                    requires_reachable_target=True
+                )
+            ]
+        )
+
+        memory.set_active_plan(search_plan)
+        memory.set_active_goal("recharge")
+
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [6, 2],
+                    "reachable": True,
+                    "path_length": 6,
+                }
+            ],
+        }
+
+        proposal = recharge_goal_proposal(observation, memory)
+
+        self.assertIsNotNone(proposal)
+
+        goal = supervise_goal(memory, proposal=proposal)
+
+        # The supervisor removed the old frontier-search plan.
+        self.assertIsNone(memory.active_plan)
+
+        action = decide(observation, goal, memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [6, 2],
+            },
+        )
+
+        # Decision created a new plan aimed at the Battery.
+        self.assertIsNotNone(memory.active_plan)
+
+        self.assertEqual(memory.active_plan.goal, "recharge")
+        self.assertEqual(memory.active_plan.goal_target, (6, 2))
+
+    def test_zero_energy_forces_idle(self):
+        memory = Memory()
+        memory.set_active_plan(
+            Plan(
+                goal="explore",
+                goal_target=(20, 10),
+                steps=[
+                    PlanStep(
+                        step_type="move_to",
+                        target=(20, 10),
+                    ),
+                ]
+            )
+        )
+
+        observation = {
+            "position": [1, 1],
+            "energy": 0,
+            "nearby_objects": [],
+        }
+
+        action = decide(
+            observation,
+            "explore",
+            memory,
+        )
+
+        self.assertEqual(action, {"action": "idle"})
 
 
 if __name__ == "__main__":

@@ -40,7 +40,7 @@ DEFAULT_ABLATIONS = (
     "next_step_was_visited",
     "reachability",
 )
-
+save_to_path = "data/models/value_model_2.pt"
 
 @dataclass(frozen=True)
 class ExperimentResult:
@@ -226,7 +226,7 @@ def run_experiment(
         sample_weights=sample_weights,
     )
 
-    model_path = Path("data/models/value_model_1.pt")
+    model_path = Path(save_to_path)
     save_model(model, model_path)
     print(f"Model saved at {model_path}")
 

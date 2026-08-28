@@ -205,6 +205,54 @@ class ExperienceTests(unittest.TestCase):
         self.assertFalse(experience.succeeded)
         self.assertEqual(experience.result, "unreachable")
 
+    def test_preview_reachability_is_kept_when_body_later_fails(self):
+        memory = Memory()
+
+        memory.begin_experience(
+            goal="explore",
+            action={
+                "action": "move_to",
+                "target": [5, 2],
+            },
+            observation={
+                "position": [2, 2],
+                "energy": 90,
+            },
+        )
+
+        memory.apply_navigation_preview_to_pending({
+            "reachable": True,
+            "path_length": 3,
+            "next_step": [3, 2],
+        })
+
+        experience = memory.finish_pending_experience({
+            "position": [2, 2],
+            "energy": 90,
+            "last_action": {
+                "type": "move_to",
+                "target": [5, 2],
+                "succeeded": False,
+                "result": "unreachable",
+                "reachable_before": False,
+            },
+        })
+
+        self.assertTrue(
+            experience.reachable_before
+        )
+        self.assertEqual(
+            experience.path_length_before,
+            3,
+        )
+        self.assertFalse(
+            experience.next_step_was_visited
+        )
+        self.assertEqual(
+            experience.result,
+            "unreachable",
+        )
+
     def test_successful_body_feedback_records_completed_result(self):
         memory = Memory()
         memory.begin_experience(

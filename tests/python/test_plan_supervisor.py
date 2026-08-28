@@ -1,11 +1,9 @@
 import unittest
 
-from brain.plan_supervisor import (
-    review_plan,
-)
-from brain.planning import Plan, PlanStep
+from brain.goals import GoalProposal
 from brain.memory import Memory
 from brain.plan_supervisor import review_plan, supervise_goal
+from brain.planning import Plan, PlanStep
 
 
 def active_plan(
@@ -23,12 +21,21 @@ def active_plan(
     )
 
 
+def goal_proposal(goal_type, *, target=None, score: float = 0.50, urgency: float = 0.0) -> GoalProposal:
+    return GoalProposal(
+        goal_type=goal_type,
+        target=target,
+        score=score,
+        urgency=urgency,
+        reason="test",
+    )
+
+
 class PlanSupervisorTests(unittest.TestCase):
     def test_valid_plan_continues(self):
         review = review_plan(
             active_plan(),
-            proposed_goal="investigate",
-            recharge_urgent=False,
+            proposal=goal_proposal("explore"),
         )
 
         self.assertEqual(
@@ -39,8 +46,7 @@ class PlanSupervisorTests(unittest.TestCase):
     def test_exploration_does_not_interrupt_plan(self):
         review = review_plan(
             active_plan(),
-            proposed_goal="explore",
-            recharge_urgent=False,
+            proposal=goal_proposal("explore"),
         )
 
         self.assertEqual(
@@ -51,8 +57,7 @@ class PlanSupervisorTests(unittest.TestCase):
     def test_urgent_recharge_interrupts_investigation(self):
         review = review_plan(
             active_plan(),
-            proposed_goal="recharge",
-            recharge_urgent=True,
+            proposal=goal_proposal("recharge", urgency=1.0),
         )
 
         self.assertEqual(
@@ -66,13 +71,33 @@ class PlanSupervisorTests(unittest.TestCase):
 
         review = review_plan(
             plan,
-            proposed_goal="investigate",
-            recharge_urgent=False,
+            proposal=goal_proposal("investigate"))
+
+        self.assertEqual(
+            review.disposition,
+            "failed",
+        )
+
+    def test_failed_review_preserves_plan_failure_reason(self):
+        plan = active_plan()
+        plan.mark_failed(
+            "stalled"
+        )
+
+        review = review_plan(
+            plan,
+            proposal=goal_proposal(
+                "investigate"
+            ),
         )
 
         self.assertEqual(
             review.disposition,
             "failed",
+        )
+        self.assertEqual(
+            review.reason,
+            "stalled",
         )
 
     def test_complete_plan_is_reported(self):
@@ -83,8 +108,7 @@ class PlanSupervisorTests(unittest.TestCase):
 
         review = review_plan(
             plan,
-            proposed_goal="explore",
-            recharge_urgent=False,
+            proposal=goal_proposal("explore"),
         )
 
         self.assertEqual(
@@ -95,8 +119,7 @@ class PlanSupervisorTests(unittest.TestCase):
     def test_recharge_does_not_interrupt_itself(self):
         review = review_plan(
             active_plan(goal="recharge"),
-            proposed_goal="recharge",
-            recharge_urgent=True,
+            proposal=goal_proposal("recharge"),
         )
 
         self.assertEqual(
@@ -110,8 +133,7 @@ class PlanSupervisorTests(unittest.TestCase):
 
         review = review_plan(
             plan,
-            proposed_goal="explore",
-            recharge_urgent=False,
+            proposal=goal_proposal("explore"),
         )
 
         self.assertEqual(
@@ -128,8 +150,7 @@ class PlanSupervisorTests(unittest.TestCase):
 
         goal = supervise_goal(
             memory,
-            proposed_goal="explore",
-            recharge_urgent=False,
+            proposal=goal_proposal("explore"),
         )
 
         self.assertEqual(goal, "investigate")
@@ -149,8 +170,7 @@ class PlanSupervisorTests(unittest.TestCase):
 
         goal = supervise_goal(
             memory,
-            proposed_goal="recharge",
-            recharge_urgent=True,
+            proposal=goal_proposal("recharge", urgency=1.0),
         )
 
         self.assertEqual(goal, "recharge")
@@ -165,13 +185,122 @@ class PlanSupervisorTests(unittest.TestCase):
 
         goal = supervise_goal(
             memory,
-            proposed_goal="explore",
-            recharge_urgent=False,
+            proposal=goal_proposal("explore"),
         )
 
         self.assertEqual(goal, "explore")
         self.assertIsNone(memory.active_plan)
+        self.assertEqual(memory.active_goal, "explore")
 
+    def test_supervision_replaces_old_goal_without_plan(self):
+        memory = Memory()
+
+        goal = supervise_goal(
+            memory,
+            proposal=goal_proposal("explore"),
+        )
+
+        self.assertEqual(goal, "explore")
+        self.assertEqual(memory.active_goal, "explore")
+
+    def test_battery_interrupts_recharge_search_plan(self):
+        search_plan = Plan(
+            goal="recharge",
+            goal_target=None,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 3),
+                ),
+            ],
+        )
+
+        proposal = goal_proposal(
+            "recharge",
+            target=(7, 5),
+            score=0.9,
+            urgency=0.9,
+        )
+
+        review = review_plan(
+            search_plan,
+            proposal=proposal,
+        )
+
+        self.assertEqual(
+            review.disposition,
+            "interrupt",
+        )
+
+        self.assertEqual(
+            review.reason,
+            "battery_found",
+        )
+
+    def test_recharge_search_continues_without_battery(self):
+        search_plan = Plan(
+            goal="recharge",
+            goal_target=None,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 3),
+                ),
+            ],
+        )
+
+        proposal = goal_proposal(
+            "recharge",
+            target=None,
+            score=0.9,
+            urgency=0.9,
+        )
+
+        review = review_plan(
+            search_plan,
+            proposal=proposal,
+        )
+
+        self.assertEqual(
+            review.disposition,
+            "continue",
+        )
+
+    def test_energy_interruption_defers_exploration_target(self):
+        memory = Memory()
+
+        target = (34, 13)
+
+        plan = Plan(
+            goal="explore",
+            goal_target=target,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=target,
+                ),
+            ],
+        )
+
+        memory.set_active_plan(plan)
+
+        proposal = goal_proposal(
+            "recharge",
+            target=(2, 1),
+            urgency=1.0,
+        )
+
+        goal = supervise_goal(
+            memory,
+            proposal=proposal,
+        )
+
+        self.assertEqual(goal, "recharge")
+        self.assertIsNone(memory.active_plan)
+
+        self.assertTrue(
+            memory.is_failed_target(target)
+        )
 
 if __name__ == "__main__":
     unittest.main()

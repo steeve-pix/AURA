@@ -3,16 +3,16 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge)
+from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge,
+                            choose_local_exploration_action)
 from brain.experience import Experience
 from brain.experience_store import append_experience, experience_path_for_world
-from brain.goals import choose_goal, goal_scores, recharge_is_urgent
+from brain.goals import goal_scores, propose_goal
 from brain.learning.candidates import (
-    candidate_decisions,
     decision_key,
     rule_scored_candidate,
     score_candidates,
-    select_model_candidate,
+    select_model_candidate, CandidateDecision, candidate_decisions,
 )
 from brain.learning.model_io import load_model
 from brain.learning.reporting import LiveValueReporter
@@ -21,6 +21,7 @@ from brain.navigation_preview import (
     build_navigation_preview_request,
     navigation_previews_by_target,
 )
+from brain.navigation_safety import navigation_decision_is_energy_safe
 from brain.plan_supervisor import supervise_goal
 from brain.planning import plan_debug, update_plan_from_observation
 
@@ -43,7 +44,7 @@ def update_active_plan_and_record_events(memory, observation: dict) -> list[Expe
         return []
 
     events = []
-    update_plan_from_observation(active_plan, observation)
+    update_plan_from_observation(active_plan, observation, current_step=memory.step)
 
     if active_plan.is_complete():
         events.append(memory.record_plan_event(
@@ -93,16 +94,9 @@ def update_active_plan_and_record_events(memory, observation: dict) -> list[Expe
 
 
 def score_and_report_value_candidates(
-        *,
-        value_model,
-        candidates,
-        observation: dict,
-        memory,
-        goal: str,
-        decision: dict,
+        *, value_model, candidates, observation: dict, memory, goal: str, decision: dict,
         value_reporter: LiveValueReporter,
-        navigation_previews: dict | None = None,
-) -> None:
+        navigation_previews: dict | None = None) -> None:
     if value_model is None or not candidates:
         return
 
@@ -155,7 +149,7 @@ def main() -> None:
     active_world_id = None
     memory_path = None
 
-    model_path = Path("data/models/value_model_1.pt")
+    model_path = Path("data/models/value_model_2.pt")
     value_model = None
 
     if model_path.exists():
@@ -180,6 +174,95 @@ def main() -> None:
                 pending_preview_cycle["request"],
                 observation,
             )
+
+            cached_decision = (
+                pending_preview_cycle["decision"]
+            )
+
+            cached_observation = (
+                pending_preview_cycle["observation"]
+            )
+
+            cached_goal = (
+                pending_preview_cycle["goal"]
+            )
+
+            cached_goal_target = (
+                pending_preview_cycle["goal_target"]
+            )
+
+            if (
+                    cached_decision.get("action")
+                    == "move_to"
+                    and cached_decision.get("target")
+                    is not None
+            ):
+                target = tuple(
+                    cached_decision["target"]
+                )
+
+                preview = (
+                    navigation_previews.get(target)
+                )
+
+                if preview is not None:
+                    memory.apply_navigation_preview_to_pending(
+                        preview
+                    )
+
+            if not navigation_decision_is_energy_safe(
+                    goal=cached_goal,
+                    goal_target=cached_goal_target,
+                    action=cached_decision,
+                    observation=cached_observation,
+                    navigation_previews=
+                    navigation_previews,
+            ):
+                target = tuple(
+                    cached_decision["target"]
+                )
+
+                memory.mark_target_failed(target)
+                memory.clear_active_plan()
+                memory.cancel_pending_experience()
+
+                fallback = (
+                    choose_local_exploration_action(
+                        cached_observation,
+                        memory,
+                    )
+                )
+
+                memory.begin_experience(
+                    goal=cached_goal,
+                    action=fallback,
+                    observation=cached_observation,
+                )
+
+                debug = dict(
+                    cached_decision.get(
+                        "debug",
+                        {},
+                    )
+                )
+
+                debug["plan"] = None
+
+                debug["navigation_safety"] = {
+                    "rejected_target": list(target),
+                    "reason":
+                        "insufficient_round_trip_energy",
+                }
+
+                fallback["debug"] = debug
+
+                print(
+                    json.dumps(fallback),
+                    flush=True,
+                )
+
+                pending_preview_cycle = None
+                continue
 
             score_and_report_value_candidates(
                 value_model=value_model,
@@ -301,36 +384,38 @@ def main() -> None:
         save_memory(memory, memory_path, world_id)
 
         score = goal_scores(observation, memory)
-        proposed_goal = choose_goal(observation, memory)
-        recharge_urgent_now = recharge_is_urgent(observation)
+        proposal = propose_goal(observation, memory)
+
+        recharge_urgent_now = proposal.goal_type == "recharge" and proposal.urgency > 0.0
+
         plan_was_active = memory.active_plan is not None
-        goal = supervise_goal(
-            memory,
-            proposed_goal=proposed_goal,
-            recharge_urgent=recharge_urgent_now,
-        )
+        goal = supervise_goal(memory, proposal=proposal)
 
         decision = decide(observation, goal, memory)
 
         pending = memory.begin_experience(goal=goal, action=decision, observation=observation)
 
-        candidates = (
-            []
-            if pending is None
-            else candidate_decisions(
-                observation,
-                memory,
-                rule_goal=goal,
-                rule_action=decision,
-                recharge_urgent=recharge_urgent_now,
-                plan_was_active=plan_was_active,
-            )
-        )
+        if pending is None:
+            candidates = []
+        elif value_model is None:
+            # The rule system still needs a C++ preview
+            # to validate move_to energy safety.
+            candidates = [CandidateDecision(goal=goal, action=dict(decision))]
+        else:
+            candidates = candidate_decisions(observation, memory, rule_goal=goal, rule_action=decision,
+                                             recharge_urgent=recharge_urgent_now, plan_was_active=plan_was_active)
 
         # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {
             "goal": goal,
             "goal_scores": score,
+            "goal_proposal": {
+                "type": proposal.goal_type,
+                "target": (None if proposal.target is None else list(proposal.target)),
+                "score": proposal.score,
+                "urgency": proposal.urgency,
+                "reason": proposal.reason,
+            },
             "known_cells": [
                 list(position) for position in memory.known_cells.keys()
             ],
@@ -364,6 +449,11 @@ def main() -> None:
             "candidates": candidates,
             "observation": observation,
             "goal": goal,
+            "goal_target": (
+                None
+                if memory.active_plan is None
+                else memory.active_plan.goal_target
+            ),
         }
         print(json.dumps(preview_request), flush=True)
 

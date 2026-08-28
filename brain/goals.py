@@ -1,3 +1,20 @@
+from dataclasses import dataclass
+from typing import Literal
+
+from brain.memory import Memory
+
+GoalType = Literal["explore", "investigate", "recharge"]
+
+
+@dataclass(frozen=True)
+class GoalProposal:
+    goal_type: GoalType
+    target: tuple[int, int] | None
+    score: float
+    urgency: float
+    reason: str
+
+
 ENERGY_RESERVE = 5
 RECHARGE_CONSIDERATION_THRESHOLD = 70
 HISTORICAL_BATTERY_BONUS = 0.15
@@ -5,6 +22,152 @@ INVESTIGATION_BASE_SCORE = 0.75
 RECHARGE_PLAN_INTERRUPT_SCORE = 0.70
 GOAL_SWITCH_MARGIN = 0.1
 CRITICAL_ENERGY = 8
+INVESTIGATION_DISTANCE_BONUS = 0.10
+BATTERY_ARRIVAL_RESERVE = 2
+CARDINAL_OFFSET = (
+    (0, -1),
+    (1, 0),
+    (0, 1),
+    (-1, 0)
+)
+
+
+def route_fits_energy_budget(route_cost: int, energy: int) -> bool:
+    return (route_cost + ENERGY_RESERVE) <= energy
+
+
+def exploration_frontiers(observation, memory: Memory) -> list[tuple[int, int]]:
+    current = tuple(observation["position"])
+
+    frontiers = []
+
+    for position, cell_type in memory.known_cells.items():
+        if position == current:
+            continue
+
+        if cell_type in {"Wall", "Unknown"}:
+            continue
+
+        if memory.is_failed_target(position):
+            continue
+
+        borders_unmapped_space = any(
+            (position[0] + dx, position[1] + dy) not in memory.known_cells for dx, dy in CARDINAL_OFFSET)
+
+        if borders_unmapped_space:
+            frontiers.append(position)
+
+    return frontiers
+
+
+def select_exploration_frontier(observation, memory: Memory) -> tuple[int, int] | None:
+    frontiers = exploration_frontiers(observation, memory)
+
+    if not frontiers:
+        return None
+
+    current = tuple(observation["position"])
+
+    return min(frontiers, key=lambda position: (memory.visit_count(position), abs(position[0] - current[0]),
+                                                abs(position[1] - current[1]), position))
+
+
+def choose_best_recharge_target(observation, memory: Memory, ) -> tuple[int, int] | None:
+    energy = observation["energy"]
+    visible_battery_positions = {
+        tuple(obj["position"])
+        for obj in observation["nearby_objects"]
+        if obj["type"] == "Battery"
+    }
+
+    visible_batteries = [
+        obj
+        for obj in observation["nearby_objects"]
+        if obj["type"] == "Battery"
+           and obj.get("reachable", False)
+           and obj["path_length"] <= energy - BATTERY_ARRIVAL_RESERVE
+           and not memory.is_failed_target((obj["position"][0], obj["position"][1]))
+    ]
+
+    if visible_batteries:
+        best = min(
+            visible_batteries,
+            key=lambda obj: obj["path_length"],
+        )
+
+        return best["position"][0], best["position"][1]
+
+    remembered = [
+        battery
+        for battery in memory.batteries()
+        if battery not in visible_battery_positions
+           and not memory.is_failed_target(battery)
+           and (
+                   abs(battery[0] - observation["position"][0])
+                   + abs(battery[1] - observation["position"][1])
+           ) <= energy - BATTERY_ARRIVAL_RESERVE
+    ]
+
+    if remembered:
+        x, y = observation["position"]
+        aura_position = (x, y)
+
+        return max(
+            remembered,
+            key=lambda battery: remembered_battery_score(
+                memory,
+                battery,
+                aura_position,
+            ),
+        )
+
+    return None
+
+
+def remembered_battery_score(memory: Memory, battery: tuple[int, int], aura_position: tuple[int, int], ) -> float:
+    trust = memory.battery_trust(battery)
+    distance = (
+            abs(battery[0] - aura_position[0])
+            + abs(battery[1] - aura_position[1])
+    )
+
+    return trust / (1.0 + distance)
+
+
+def recharge_goal_proposal(observation, memory: Memory, ) -> GoalProposal | None:
+    target = choose_best_recharge_target(observation, memory)
+
+    if target is None:
+        return None
+
+    score = recharge_score(observation)
+
+    visible_targets = {tuple(obj["position"]) for obj in observation["nearby_objects"] if
+                       obj["type"] == "Battery" and obj.get("reachable", False)}
+
+    reason = "visible_viable_battery" if target in visible_targets else "remembered_viable_battery"
+
+    urgency = score if recharge_is_urgent(observation) else 0.0
+
+    return GoalProposal(
+        goal_type="recharge",
+        target=target,
+        score=score,
+        urgency=urgency,
+        reason=reason
+    )
+
+
+def investigation_route_cost(obj, observation) -> int:
+    path_length = obj.get("path_length")
+
+    if path_length is not None and path_length >= 0:
+        return path_length
+
+    aura_x, aura_y = observation["position"]
+    target_x, target_y = obj["position"]
+
+    return abs(aura_x - target_x) + abs(aura_y - target_y)
 
 
 def recharge_is_urgent(observation) -> bool:
@@ -60,52 +223,159 @@ def investigation_score(observation, memory):
     return min(score, 1.0)
 
 
+def investigation_goal_proposals(observation, memory) -> list[GoalProposal]:
+    proposals = []
+
+    for obj in observation["nearby_objects"]:
+        if obj["type"] != "Unknown":
+            continue
+
+        if not obj.get("reachable", False):
+            continue
+
+        target = (obj["position"][0], obj["position"][1])
+
+        if memory.is_failed_target(target):
+            continue
+
+        score = INVESTIGATION_BASE_SCORE
+        reason = "reachable_unknown"
+
+        route_cost = investigation_route_cost(obj, observation)
+
+        if not route_fits_energy_budget(route_cost, observation["energy"]):
+            continue
+
+        score += INVESTIGATION_DISTANCE_BONUS / (1.0 + route_cost)
+
+        if memory.previous_investigation_result(target) == "Battery":
+            score += HISTORICAL_BATTERY_BONUS
+            reason = "historical_promising_unknown"
+
+        proposals.append(GoalProposal(
+            goal_type="investigate",
+            target=target,
+            score=min(score, 1.0),
+            urgency=0.0,
+            reason=reason,
+        ))
+
+    return proposals
+
+
+def exploration_goal_proposal(observation, memory) -> GoalProposal:
+    target = select_exploration_frontier(observation, memory)
+
+    return GoalProposal(
+        goal_type="explore",
+        target=target,
+        score=explore_score(observation, memory),
+        urgency=0.0,
+        reason="frontier_exploration" if target is not None else "local_exploration",
+    )
+
+
+def goal_proposals(observation, memory) -> list[GoalProposal]:
+    proposals = []
+
+    recharge = recharge_goal_proposal(observation, memory)
+
+    if recharge is None:
+        recharge_score_value = recharge_score(observation)
+
+        recharge = GoalProposal(
+            goal_type="recharge",
+            target=None,
+            score=recharge_score_value,
+            urgency=recharge_score_value if recharge_is_urgent(observation) else 0.0,
+            reason="no_viable_battery"
+        )
+
+    proposals.append(recharge)
+    proposals.append(exploration_goal_proposal(observation, memory))
+    proposals.extend(investigation_goal_proposals(observation, memory))
+
+    return proposals
+
+
+def best_proposal_for_type(proposals: list[GoalProposal], goal_type: GoalType) -> GoalProposal | None:
+    matching = [proposal for proposal in proposals if proposal.goal_type == goal_type]
+
+    if not matching:
+        return None
+
+    return max(matching, key=lambda proposal: proposal.score)
+
+
+def select_goal_proposal(proposals: list[GoalProposal], *, current_goal: GoalType | None, energy: int) -> GoalProposal:
+    if not proposals:
+        raise ValueError("At least one goal proposal is required.")
+
+    urgent = [proposal for proposal in proposals if proposal.urgency > 0.0]
+
+    if urgent:
+        return max(urgent, key=lambda proposal: (proposal.urgency, proposal.score))
+
+    if current_goal == "recharge" and energy < 100:
+        recharge = best_proposal_for_type(proposals, "recharge")
+
+        if recharge is not None:
+            return recharge
+
+    best = max(proposals, key=lambda proposal: proposal.score)
+
+    if current_goal is None:
+        return best
+
+    current = best_proposal_for_type(proposals, current_goal)
+
+    if current is None:
+        return best
+
+    if best.goal_type == current_goal:
+        return best
+
+    if best.score >= current.score + GOAL_SWITCH_MARGIN:
+        return best
+
+    return current
+
+
+def select_best_investigation_proposal(proposals: list[GoalProposal]) -> GoalProposal | None:
+    if not proposals:
+        return None
+
+    return max(proposals, key=lambda proposal: (proposal.score, proposal.target))
+
+
 def goal_scores(observation, memory):
-    return {
-        "recharge": recharge_score(observation),
-        "explore": explore_score(observation, memory),
-        "investigate": investigation_score(observation, memory),
+    scores: dict[GoalType, float] = {
+        "recharge": 0.0,
+        "explore": 0.0,
+        "investigate": 0.0,
     }
 
+    for proposal in goal_proposals(observation, memory):
+        scores[proposal.goal_type] = max(scores[proposal.goal_type], proposal.score)
 
-def choose_goal(observation, memory):
+    return scores
+
+
+def propose_goal(observation, memory) -> GoalProposal:
     current_goal = memory.active_goal
 
     if current_goal is not None and goal_completed(current_goal, observation, memory):
-        memory.clear_active_goal()
+        # Treat a completed goal as inactive during
+        # reasoning, but do not mutate Memory here.
         current_goal = None
 
-    energy = observation["energy"]
+    proposals = goal_proposals(observation, memory)
 
-    if energy <= CRITICAL_ENERGY:
-        memory.set_active_goal("recharge")
-        return "recharge"
-
-    # Recharge remains sticky until full so score fluctuations cannot strand AURA mid-route.
-    if memory.active_goal == "recharge" and energy < 100:
-        return "recharge"
-
-    scores = goal_scores(observation, memory)
-
-    best_goal = max(scores, key=lambda goal: scores[goal])
-    current_goal = memory.active_goal
-
-    if current_goal is None:
-        memory.set_active_goal(best_goal)
-        return best_goal
-
-    current_score = scores.get(current_goal, 0.0)
-    best_score = scores[best_goal]
-
-    if best_goal == current_goal:
-        return current_goal
-
-    # Hysteresis avoids rapid goal switching when two scores are nearly equal.
-    if best_score >= current_score + GOAL_SWITCH_MARGIN:
-        memory.set_active_goal(best_goal)
-        return best_goal
-
-    return current_goal
+    return select_goal_proposal(
+        proposals,
+        current_goal=current_goal,
+        energy=observation["energy"]
+    )
 
 
 def shortest_battery_path(observation):
