@@ -1,5 +1,6 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
+from dataclasses import dataclass
 
 from brain.goals import investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, \
     exploration_goal_proposal, investigation_route_cost, route_fits_energy_budget
@@ -9,6 +10,25 @@ from brain.planning import (
     PlanStep,
     create_recharge_plan as create_recharge_plan_for_target,
 )
+
+
+@dataclass
+class DecisionProposal:
+    goal: str
+    action: dict
+    plan: Plan | None = None
+
+
+def commit_decision(
+        memory: Memory,
+        proposal: DecisionProposal,
+) -> dict:
+    if proposal.plan is not None:
+        memory.set_active_plan(
+            proposal.plan
+        )
+
+    return proposal.action
 
 
 def create_recharge_search_plan(observation, memory: Memory) -> Plan | None:
@@ -232,18 +252,37 @@ def choose_local_exploration_action(observation, memory: Memory):
 
 
 def choose_investigation_action(observation, memory: Memory):
+    return commit_decision(
+        memory,
+        propose_investigation_decision(
+            observation,
+            memory,
+        ),
+    )
+
+
+def propose_investigation_decision(
+        observation,
+        memory: Memory,
+) -> DecisionProposal:
     if (
             memory.active_plan is not None
             and memory.active_plan.goal == "investigate"
     ):
-        return action_from_plan(memory.active_plan)
+        return DecisionProposal(
+            goal="investigate",
+            action=action_from_plan(memory.active_plan),
+        )
 
     proposals = investigation_goal_proposals(observation, memory)
 
     selected = select_best_investigation_proposal(proposals)
 
     if selected is None or selected.target is None:
-        return {"action": "idle"}
+        return DecisionProposal(
+            goal="investigate",
+            action={"action": "idle"},
+        )
 
     target_position = selected.target
 
@@ -254,10 +293,16 @@ def choose_investigation_action(observation, memory: Memory):
     )
 
     if plan is None:
-        return {"action": "idle"}
+        return DecisionProposal(
+            goal="investigate",
+            action={"action": "idle"},
+        )
 
-    memory.set_active_plan(plan)
-    return action_from_plan(plan)
+    return DecisionProposal(
+        goal="investigate",
+        action=action_from_plan(plan),
+        plan=plan,
+    )
 
 
 def create_investigation_plan(observation, memory: Memory, target_position: tuple[int, int], ) -> Plan | None:
@@ -313,7 +358,6 @@ def create_investigation_plan(observation, memory: Memory, target_position: tupl
 
     # Reject the object itself only after every visible adjacent approach is unusable.
     if not approach_candidates:
-        memory.mark_target_failed(target_position)
         return None
 
     approach = min(
@@ -370,6 +414,7 @@ def replan_failed_investigation(
     )
 
     if replacement is None:
+        memory.mark_target_failed(target_position)
         return False
 
     memory.set_active_plan(replacement)

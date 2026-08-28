@@ -3,7 +3,9 @@ import unittest
 from brain.decision import (
     action_from_plan,
     choose_investigation_action,
+    commit_decision,
     decide,
+    propose_investigation_decision,
     replan_failed_investigation,
 )
 from brain.memory import Memory
@@ -11,6 +13,101 @@ from brain.planning import Plan, PlanStep, update_plan_from_observation
 
 
 class TestInvestigation(unittest.TestCase):
+    def test_investigation_proposal_does_not_commit_its_plan(self):
+        memory = Memory()
+        observation = {
+            "energy": 10,
+            "position": [10, 10],
+            "visible_cells": [
+                {"type": "Empty", "position": [11, 10]},
+                {"type": "Wall", "position": [12, 9]},
+                {"type": "Wall", "position": [13, 10]},
+                {"type": "Wall", "position": [12, 11]},
+            ],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [12, 10],
+                    "reachable": True,
+                    "path_length": 2,
+                }
+            ],
+        }
+
+        proposal = propose_investigation_decision(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            proposal.action,
+            {"action": "move_to", "target": [11, 10]},
+        )
+        self.assertIsNotNone(proposal.plan)
+        self.assertIsNone(memory.active_plan)
+
+    def test_committing_investigation_proposal_installs_its_plan(self):
+        memory = Memory()
+        observation = {
+            "energy": 10,
+            "position": [10, 10],
+            "visible_cells": [
+                {"type": "Empty", "position": [11, 10]},
+                {"type": "Wall", "position": [12, 9]},
+                {"type": "Wall", "position": [13, 10]},
+                {"type": "Wall", "position": [12, 11]},
+            ],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [12, 10],
+                    "reachable": True,
+                    "path_length": 2,
+                }
+            ],
+        }
+
+        proposal = propose_investigation_decision(
+            observation,
+            memory,
+        )
+
+        action = commit_decision(memory, proposal)
+
+        self.assertEqual(action, proposal.action)
+        self.assertIs(memory.active_plan, proposal.plan)
+
+    def test_unplannable_investigation_proposal_does_not_mark_target_failed(self):
+        memory = Memory()
+        target = (12, 10)
+        observation = {
+            "energy": 10,
+            "position": [10, 10],
+            "visible_cells": [
+                {"type": "Wall", "position": [11, 10]},
+                {"type": "Wall", "position": [12, 9]},
+                {"type": "Wall", "position": [13, 10]},
+                {"type": "Wall", "position": [12, 11]},
+            ],
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": list(target),
+                    "reachable": True,
+                    "path_length": 2,
+                }
+            ],
+        }
+
+        proposal = propose_investigation_decision(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(proposal.action, {"action": "idle"})
+        self.assertIsNone(proposal.plan)
+        self.assertFalse(memory.is_failed_target(target))
+
     def test_moves_to_adjacent_cell_before_investigating(self):
         observation = {
             "energy": 10,

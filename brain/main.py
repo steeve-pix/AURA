@@ -3,8 +3,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from brain.decision import (decide, replan_failed_investigation, replan_failed_recharge,
-                            choose_local_exploration_action)
+from brain.decision import (
+    DecisionProposal,
+    choose_local_exploration_action,
+    commit_decision,
+    decide,
+    propose_investigation_decision,
+    replan_failed_investigation,
+    replan_failed_recharge,
+)
 from brain.experience import Experience
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.goals import goal_scores, propose_goal
@@ -275,6 +282,16 @@ def main() -> None:
                 navigation_previews=navigation_previews,
             )
 
+            decision_proposal = pending_preview_cycle[
+                "decision_proposal"
+            ]
+
+            if decision_proposal is not None:
+                commit_decision(
+                    memory,
+                    decision_proposal,
+                )
+
             # Scoring is advisory. The cached rule decision remains authoritative.
             print(
                 json.dumps(pending_preview_cycle["decision"]),
@@ -390,7 +407,22 @@ def main() -> None:
 
         goal = supervise_goal(memory, proposal=proposal)
 
-        decision = decide(observation, goal, memory)
+        decision_proposal: DecisionProposal | None = None
+
+        if (
+                goal == "investigate"
+                and (
+                    memory.active_plan is None
+                    or memory.active_plan.goal != "investigate"
+                )
+        ):
+            decision_proposal = propose_investigation_decision(
+                observation,
+                memory,
+            )
+            decision = decision_proposal.action
+        else:
+            decision = decide(observation, goal, memory)
 
         plan_is_committed = memory.active_plan is not None
 
@@ -424,7 +456,11 @@ def main() -> None:
             "visited_cells": [
                 list(position) for position in memory.visit_counts.keys()
             ],
-            "plan": plan_debug(memory.active_plan),
+            "plan": plan_debug(
+                memory.active_plan
+                if decision_proposal is None
+                else decision_proposal.plan
+            ),
             "failures": memory.failure_debug(),
         }
 
@@ -442,6 +478,13 @@ def main() -> None:
                 decision=decision,
                 value_reporter=value_reporter,
             )
+
+            if decision_proposal is not None:
+                commit_decision(
+                    memory,
+                    decision_proposal,
+                )
+
             print(json.dumps(decision), flush=True)
             continue
 
@@ -451,10 +494,16 @@ def main() -> None:
             "candidates": candidates,
             "observation": observation,
             "goal": goal,
+            "decision_proposal": decision_proposal,
             "goal_target": (
-                None
-                if memory.active_plan is None
-                else memory.active_plan.goal_target
+                memory.active_plan.goal_target
+                if memory.active_plan is not None
+                else (
+                    None
+                    if decision_proposal is None
+                    or decision_proposal.plan is None
+                    else decision_proposal.plan.goal_target
+                )
             ),
         }
         print(json.dumps(preview_request), flush=True)
