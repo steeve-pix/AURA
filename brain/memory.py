@@ -224,6 +224,9 @@ class Memory:
             "body_action_failures": self.body_action_failure_count,
         }
 
+    def cancel_pending_experience(self) -> None:
+        self.pending_experience = None
+
     def pre_action_context(self, *, action: dict, observation: dict) -> dict:
         target = action.get("target")
         target_position = (
@@ -308,6 +311,7 @@ class Memory:
             "target": target_position,
             "position_before": current_position,
             "energy_before": observation["energy"],
+            "reachable_before": None,
             "path_length_before": path_length_before,
             "memory_trust_before": memory_trust_before,
             "next_step_was_visited": next_step_was_visited,
@@ -333,6 +337,42 @@ class Memory:
 
         return self.pending_experience
 
+    def apply_navigation_preview_to_pending(
+            self,
+            preview: dict,
+    ) -> None:
+        pending = self.pending_experience
+
+        if (
+                pending is None
+                or pending["action"] != "move_to"
+        ):
+            return
+
+        reachable = preview.get("reachable")
+
+        pending["reachable_before"] = reachable
+
+        if reachable is not True:
+            pending["path_length_before"] = None
+            pending["next_step_was_visited"] = None
+            return
+
+        pending["path_length_before"] = preview.get(
+            "path_length"
+        )
+
+        next_step = preview.get("next_step")
+
+        if next_step is None:
+            pending["next_step_was_visited"] = None
+            return
+
+        pending["next_step_was_visited"] = (
+            tuple(next_step)
+            in pending["visited_before"]
+        )
+
     def finish_pending_experience(self, observation: dict) -> Experience | None:
         if self.pending_experience is None:
             return None
@@ -344,9 +384,14 @@ class Memory:
 
         pending = self.pending_experience
 
-        reachable_before = None
+        reachable_before = pending.get(
+            "reachable_before"
+        )
 
-        if pending["action"] == "move_to":
+        if (
+                pending["action"] == "move_to"
+                and reachable_before is None
+        ):
             reachable_before = last_action.get("reachable_before")
 
         if last_action.get("type") != pending["action"]:
