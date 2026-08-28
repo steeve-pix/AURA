@@ -4,9 +4,11 @@ from brain.decision import (
     choose_investigation_action,
     create_recharge_plan as create_selected_recharge_plan,
     decide,
-    replan_failed_recharge, choose_exploration_action,
+    replan_failed_recharge, choose_exploration_action, choose_recharge_action,
 )
+from brain.goals import recharge_goal_proposal
 from brain.memory import Memory
+from brain.plan_supervisor import supervise_goal
 from brain.planning import (
     Plan,
     PlanStep,
@@ -914,6 +916,90 @@ class DecisionTests(unittest.TestCase):
         self.assertIsNotNone(memory.active_plan)
         self.assertEqual(memory.active_plan.goal, "explore")
         self.assertEqual(memory.active_plan.goal_target, (2, 1))
+
+    def test_recharge_without_battery_creates_search_plan(self):
+        memory = Memory()
+        memory.known_cells[(1, 1)] = "Empty"
+        memory.known_cells[(2, 1)] = "Empty"
+
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [],
+        }
+
+        action = choose_recharge_action(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [2, 1],
+            },
+        )
+
+        self.assertEqual(memory.active_plan.goal, "recharge")
+
+        self.assertIsNone(memory.active_plan.goal_target)
+
+    def test_discovered_battery_replaces_recharge_search_plan(self):
+        memory = Memory()
+
+        search_plan = Plan(
+            goal="recharge",
+            goal_target=None,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 3),
+                    requires_reachable_target=True
+                )
+            ]
+        )
+
+        memory.set_active_plan(search_plan)
+        memory.set_active_goal("recharge")
+
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Battery",
+                    "position": [6, 2],
+                    "reachable": True,
+                    "path_length": 6,
+                }
+            ],
+        }
+
+        proposal = recharge_goal_proposal(observation, memory)
+
+        self.assertIsNotNone(proposal)
+
+        goal = supervise_goal(memory, proposal=proposal)
+
+        # The supervisor removed the old frontier-search plan.
+        self.assertIsNone(memory.active_plan)
+
+        action = decide(observation, goal, memory)
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [6, 2],
+            },
+        )
+
+        # Decision created a new plan aimed at the Battery.
+        self.assertIsNotNone(memory.active_plan)
+
+        self.assertEqual(memory.active_plan.goal, "recharge")
+        self.assertEqual(memory.active_plan.goal_target, (6, 2))
 
 
 if __name__ == "__main__":

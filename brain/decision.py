@@ -11,6 +11,27 @@ from brain.planning import (
 )
 
 
+def create_recharge_search_plan(observation, memory: Memory) -> Plan | None:
+    exploration = exploration_goal_proposal(observation, memory)
+
+    if exploration.target is None:
+        return None
+
+    return Plan(
+        goal="recharge",
+        goal_target=None,
+        created_step=memory.step,
+        last_progress_step=memory.step,
+        steps=[
+            PlanStep(
+                step_type="move_to",
+                target=exploration.target,
+                requires_reachable_target=True
+            )
+        ]
+    )
+
+
 def create_recharge_plan(observation, memory: Memory, ) -> Plan | None:
     proposal = recharge_goal_proposal(observation, memory)
 
@@ -43,10 +64,7 @@ def replan_failed_recharge(observation, memory: Memory, ) -> bool:
 
 
 def choose_recharge_action(observation, memory):
-    if (
-            memory.active_plan is not None
-            and memory.active_plan.goal == "recharge"
-    ):
+    if memory.active_plan is not None and memory.active_plan.goal == "recharge":
         return action_from_plan(memory.active_plan)
 
     plan = create_recharge_plan(observation, memory)
@@ -54,6 +72,12 @@ def choose_recharge_action(observation, memory):
     if plan is not None:
         memory.set_active_plan(plan)
         return action_from_plan(plan)
+
+    search_plan = create_recharge_search_plan(observation, memory)
+
+    if search_plan is not None:
+        memory.set_active_plan(search_plan)
+        return action_from_plan(search_plan)
 
     return choose_local_exploration_action(observation, memory)
 

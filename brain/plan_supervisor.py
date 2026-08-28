@@ -32,10 +32,13 @@ def review_plan(plan: Plan, *, proposal: GoalProposal) -> PlanReview:
     if proposal.goal_type == "recharge" and proposal.urgency and plan.goal != "recharge":
         return PlanReview(disposition="interrupt", reason="urgent_recharge", )
 
+    if plan.goal == "recharge" and plan.goal_target is None and proposal.goal_type == "recharge" and proposal.target is not None:
+        return PlanReview(disposition="interrupt", reason="battery_found")
+
     return PlanReview(disposition="continue", reason="plan_still_valid")
 
 
-def supervise_goal(memory: Memory, *, proposal:GoalProposal) -> str:
+def supervise_goal(memory: Memory, *, proposal: GoalProposal) -> str:
     plan = memory.active_plan
     proposed_goal = proposal.goal_type
 

@@ -203,6 +203,69 @@ class PlanSupervisorTests(unittest.TestCase):
         self.assertEqual(goal, "explore")
         self.assertEqual(memory.active_goal, "explore")
 
+    def test_battery_interrupts_recharge_search_plan(self):
+        search_plan = Plan(
+            goal="recharge",
+            goal_target=None,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 3),
+                ),
+            ],
+        )
+
+        proposal = goal_proposal(
+            "recharge",
+            target=(7, 5),
+            score=0.9,
+            urgency=0.9,
+        )
+
+        review = review_plan(
+            search_plan,
+            proposal=proposal,
+        )
+
+        self.assertEqual(
+            review.disposition,
+            "interrupt",
+        )
+
+        self.assertEqual(
+            review.reason,
+            "battery_found",
+        )
+
+    def test_recharge_search_continues_without_battery(self):
+        search_plan = Plan(
+            goal="recharge",
+            goal_target=None,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(4, 3),
+                ),
+            ],
+        )
+
+        proposal = goal_proposal(
+            "recharge",
+            target=None,
+            score=0.9,
+            urgency=0.9,
+        )
+
+        review = review_plan(
+            search_plan,
+            proposal=proposal,
+        )
+
+        self.assertEqual(
+            review.disposition,
+            "continue",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
