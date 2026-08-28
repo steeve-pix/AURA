@@ -15,6 +15,7 @@
 #include "scenario/Scenario.hpp"
 #include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
+#include "simulation/CounterfactualSimulation.hpp"
 #include "simulation/SimulationSnapshot.hpp"
 
 int main() {
@@ -177,6 +178,75 @@ int main() {
 
     if (batteryCount != 3) {
         std::cout << "FAIL: maze should contain the requested battery count\n";
+        ++failures;
+    }
+
+    aura::world::World counterfactualWorld{5, 5};
+    counterfactualWorld.addBoundaryWalls();
+    counterfactualWorld.setCell({2, 1}, aura::world::CellType::Unknown);
+
+    aura::agent::Agent counterfactualAgent{{1, 1}, 10};
+
+    const auto assertCounterfactualRollback =
+            [&counterfactualWorld, &counterfactualAgent, &failures](
+                    const aura::simulation::CounterfactualResult &result,
+                    aura::world::Position expectedPosition,
+                    int expectedEnergy,
+                    const char *actionName
+            ) {
+                if (!result.succeeded ||
+                    result.result != "completed" ||
+                    result.positionAfter != expectedPosition ||
+                    result.energyAfter != expectedEnergy) {
+                    std::cout << "FAIL: counterfactual " << actionName
+                              << " should report its hypothetical result\n";
+                    ++failures;
+                }
+
+                if (counterfactualAgent.position() != aura::world::Position{1, 1} ||
+                    counterfactualAgent.energy() != 10) {
+                    std::cout << "FAIL: counterfactual " << actionName
+                              << " should restore agent state\n";
+                    ++failures;
+                }
+            };
+
+    const auto moveResult = aura::simulation::simulateAction(
+            counterfactualWorld,
+            counterfactualAgent,
+            {
+                aura::bridge::ActionType::Move,
+                aura::bridge::Direction::East,
+                {}
+            }
+    );
+    assertCounterfactualRollback(moveResult, {2, 1}, 9, "move");
+
+    const auto moveToResult = aura::simulation::simulateAction(
+            counterfactualWorld,
+            counterfactualAgent,
+            {
+                aura::bridge::ActionType::MoveTo,
+                aura::bridge::Direction::North,
+                {3, 1}
+            }
+    );
+    assertCounterfactualRollback(moveToResult, {2, 1}, 9, "move_to");
+
+    const auto investigateResult = aura::simulation::simulateAction(
+            counterfactualWorld,
+            counterfactualAgent,
+            {
+                aura::bridge::ActionType::Investigate,
+                aura::bridge::Direction::North,
+                {2, 1}
+            },
+            aura::world::CellType::Battery
+    );
+    assertCounterfactualRollback(investigateResult, {1, 1}, 10, "investigate");
+
+    if (counterfactualWorld.cellAt({2, 1}) != aura::world::CellType::Unknown) {
+        std::cout << "FAIL: counterfactual investigate should restore world cells\n";
         ++failures;
     }
 
