@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 
 #include "agent/Agent.hpp"
 #include "bridge/Observation.hpp"
@@ -12,7 +13,9 @@
 #include "world/Position.hpp"
 #include "navigation/Pathfinder.hpp"
 #include "scenario/Scenario.hpp"
+#include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
+#include "simulation/SimulationSnapshot.hpp"
 
 int main() {
     int failures = 0;
@@ -174,6 +177,71 @@ int main() {
 
     if (batteryCount != 3) {
         std::cout << "FAIL: maze should contain the requested battery count\n";
+        ++failures;
+    }
+
+    aura::world::World snapshotWorld{5, 5};
+    snapshotWorld.addBoundaryWalls();
+    snapshotWorld.setCell({2, 1}, aura::world::CellType::Battery);
+
+    aura::agent::Agent snapshotAgent{{1, 1}, 50};
+    aura::sensors::RangeSensor snapshotSensor{2};
+
+    const auto serializedSnapshotObservation =
+            [&snapshotWorld, &snapshotAgent, &snapshotSensor] {
+                const aura::bridge::Observation snapshotObservation{
+                    snapshotAgent.position(),
+                    snapshotAgent.energy(),
+                    aura::sensors::LocalSensor::observe(
+                        snapshotWorld,
+                        snapshotAgent
+                    ),
+                    snapshotSensor.observe(snapshotWorld, snapshotAgent),
+                    snapshotSensor.radius(),
+                    std::nullopt,
+                    "snapshot-test"
+                };
+
+                return aura::bridge::serializedObservation(
+                    snapshotObservation
+                );
+            };
+
+    const auto originalObservation =
+            serializedSnapshotObservation();
+    const auto snapshot =
+            aura::simulation::captureSimulationSnapshot(
+                snapshotWorld,
+                snapshotAgent
+            );
+
+    if (!snapshotAgent.moveBy({1, 0}, snapshotWorld)) {
+        std::cout << "FAIL: snapshot test movement should succeed\n";
+        ++failures;
+    }
+
+    snapshotWorld.setCell({3, 1}, aura::world::CellType::Unknown);
+
+    aura::simulation::restoreSimulationSnapshot(
+        snapshotWorld,
+        snapshotAgent,
+        snapshot
+    );
+
+    if (snapshotAgent.position() != aura::world::Position{1, 1} ||
+        snapshotAgent.energy() != 50) {
+        std::cout << "FAIL: snapshot restore should recover agent state\n";
+        ++failures;
+    }
+
+    if (snapshotWorld.cellAt({2, 1}) != aura::world::CellType::Battery ||
+        snapshotWorld.cellAt({3, 1}) != aura::world::CellType::Empty) {
+        std::cout << "FAIL: snapshot restore should recover world cells\n";
+        ++failures;
+    }
+
+    if (serializedSnapshotObservation() != originalObservation) {
+        std::cout << "FAIL: observation after restore should match original state\n";
         ++failures;
     }
 
