@@ -8,6 +8,7 @@ from brain.decision import (
     choose_local_exploration_action,
     commit_decision,
     decide,
+    propose_exploration_decision,
     propose_investigation_decision,
     propose_recharge_decision,
     replan_failed_investigation,
@@ -424,6 +425,15 @@ def main() -> None:
                 or memory.active_plan.goal != "recharge"
         ):
             decision_proposal = propose_recharge_decision(
+                observation,
+                memory,
+            )
+            decision = decision_proposal.action
+        elif goal == "explore" and (
+                memory.active_plan is None
+                or memory.active_plan.goal != "explore"
+        ):
+            decision_proposal = propose_exploration_decision(
                 observation,
                 memory,
             )

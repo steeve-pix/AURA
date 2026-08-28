@@ -5,6 +5,7 @@ from brain.decision import (
     commit_decision,
     create_recharge_plan as create_selected_recharge_plan,
     decide,
+    propose_exploration_decision,
     propose_recharge_decision,
     replan_failed_recharge, choose_exploration_action, choose_recharge_action,
 )
@@ -20,6 +21,51 @@ from brain.planning import (
 
 
 class DecisionTests(unittest.TestCase):
+    def test_exploration_proposal_matches_committed_frontier_plan(self):
+        proposal_memory = Memory()
+        proposal_memory.step = 12
+        proposal_memory.remember_cell([1, 1], "Empty")
+        proposal_memory.remember_cell([2, 1], "Empty")
+        committed_memory = Memory()
+        committed_memory.step = 12
+        committed_memory.remember_cell([1, 1], "Empty")
+        committed_memory.remember_cell([2, 1], "Empty")
+        observation = {
+            "position": [1, 1],
+            "energy": 80,
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Wall",
+            "visible_cells": [],
+            "nearby_objects": [],
+        }
+
+        proposal = propose_exploration_decision(
+            observation,
+            proposal_memory,
+        )
+        committed_action = choose_exploration_action(
+            observation,
+            committed_memory,
+        )
+
+        self.assertEqual(proposal.action, committed_action)
+        self.assertIsNotNone(proposal.plan)
+        self.assertIsNone(proposal_memory.active_plan)
+
+        action = commit_decision(proposal_memory, proposal)
+
+        self.assertEqual(action, committed_action)
+        self.assertEqual(
+            proposal_memory.active_plan.goal_target,
+            committed_memory.active_plan.goal_target,
+        )
+        self.assertEqual(
+            proposal_memory.active_plan.steps,
+            committed_memory.active_plan.steps,
+        )
+
     def test_recharge_proposal_defers_known_battery_plan_commitment(self):
         memory = Memory()
         observation = {

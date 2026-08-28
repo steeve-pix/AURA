@@ -223,17 +223,38 @@ def create_exploration_plan(observation, memory: Memory) -> Plan | None:
 
 
 def choose_exploration_action(observation, memory: Memory):
+    return commit_decision(
+        memory,
+        propose_exploration_decision(
+            observation,
+            memory,
+        ),
+    )
+
+
+def propose_exploration_decision(
+        observation,
+        memory: Memory,
+) -> DecisionProposal:
     if memory.active_plan is not None and memory.active_plan.goal == "explore":
-        return action_from_plan(memory.active_plan)
+        return DecisionProposal(
+            goal="explore",
+            action=action_from_plan(memory.active_plan),
+        )
 
     plan = create_exploration_plan(observation, memory)
 
     if plan is not None:
-        memory.set_active_plan(plan)
+        return DecisionProposal(
+            goal="explore",
+            action=action_from_plan(plan),
+            plan=plan,
+        )
 
-        return action_from_plan(plan)
-
-    return choose_local_exploration_action(observation, memory)
+    return DecisionProposal(
+        goal="explore",
+        action=choose_local_exploration_action(observation, memory),
+    )
 
 
 def choose_local_exploration_action(observation, memory: Memory):
