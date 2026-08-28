@@ -9,6 +9,7 @@ from brain.decision import (
     commit_decision,
     decide,
     propose_investigation_decision,
+    propose_recharge_decision,
     replan_failed_investigation,
     replan_failed_recharge,
 )
@@ -409,14 +410,20 @@ def main() -> None:
 
         decision_proposal: DecisionProposal | None = None
 
-        if (
-                goal == "investigate"
-                and (
-                    memory.active_plan is None
-                    or memory.active_plan.goal != "investigate"
-                )
+        if goal == "investigate" and (
+                memory.active_plan is None
+                or memory.active_plan.goal != "investigate"
         ):
             decision_proposal = propose_investigation_decision(
+                observation,
+                memory,
+            )
+            decision = decision_proposal.action
+        elif goal == "recharge" and (
+                memory.active_plan is None
+                or memory.active_plan.goal != "recharge"
+        ):
+            decision_proposal = propose_recharge_decision(
                 observation,
                 memory,
             )

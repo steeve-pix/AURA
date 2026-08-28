@@ -2,8 +2,10 @@ import unittest
 
 from brain.decision import (
     choose_investigation_action,
+    commit_decision,
     create_recharge_plan as create_selected_recharge_plan,
     decide,
+    propose_recharge_decision,
     replan_failed_recharge, choose_exploration_action, choose_recharge_action,
 )
 from brain.goals import recharge_goal_proposal
@@ -18,6 +20,64 @@ from brain.planning import (
 
 
 class DecisionTests(unittest.TestCase):
+    def test_recharge_proposal_defers_known_battery_plan_commitment(self):
+        memory = Memory()
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [{
+                "type": "Battery",
+                "position": [5, 3],
+                "reachable": True,
+                "path_length": 6,
+            }],
+        }
+
+        proposal = propose_recharge_decision(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            proposal.action,
+            {"action": "move_to", "target": [5, 3]},
+        )
+        self.assertIsNotNone(proposal.plan)
+        self.assertIsNone(memory.active_plan)
+
+        action = commit_decision(memory, proposal)
+
+        self.assertEqual(action, proposal.action)
+        self.assertIs(memory.active_plan, proposal.plan)
+        self.assertEqual(memory.active_plan.goal_target, (5, 3))
+
+    def test_recharge_search_proposal_defers_plan_commitment(self):
+        memory = Memory()
+        memory.known_cells[(1, 1)] = "Empty"
+        memory.known_cells[(2, 1)] = "Empty"
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [],
+        }
+
+        proposal = propose_recharge_decision(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            proposal.action,
+            {"action": "move_to", "target": [2, 1]},
+        )
+        self.assertIsNotNone(proposal.plan)
+        self.assertIsNone(memory.active_plan)
+
+        commit_decision(memory, proposal)
+
+        self.assertEqual(memory.active_plan.goal, "recharge")
+        self.assertIsNone(memory.active_plan.goal_target)
+
     def test_failed_battery_creates_recharge_plan_for_another_battery(self):
         memory = Memory()
         battery_a = (5, 3)

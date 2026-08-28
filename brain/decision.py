@@ -84,22 +84,47 @@ def replan_failed_recharge(observation, memory: Memory, ) -> bool:
 
 
 def choose_recharge_action(observation, memory):
+    return commit_decision(
+        memory,
+        propose_recharge_decision(
+            observation,
+            memory,
+        ),
+    )
+
+
+def propose_recharge_decision(
+        observation,
+        memory: Memory,
+) -> DecisionProposal:
     if memory.active_plan is not None and memory.active_plan.goal == "recharge":
-        return action_from_plan(memory.active_plan)
+        return DecisionProposal(
+            goal="recharge",
+            action=action_from_plan(memory.active_plan),
+        )
 
     plan = create_recharge_plan(observation, memory)
 
     if plan is not None:
-        memory.set_active_plan(plan)
-        return action_from_plan(plan)
+        return DecisionProposal(
+            goal="recharge",
+            action=action_from_plan(plan),
+            plan=plan,
+        )
 
     search_plan = create_recharge_search_plan(observation, memory)
 
     if search_plan is not None:
-        memory.set_active_plan(search_plan)
-        return action_from_plan(search_plan)
+        return DecisionProposal(
+            goal="recharge",
+            action=action_from_plan(search_plan),
+            plan=search_plan,
+        )
 
-    return choose_local_exploration_action(observation, memory)
+    return DecisionProposal(
+        goal="recharge",
+        action=choose_local_exploration_action(observation, memory),
+    )
 
 
 def choose_adjacent_unknown_action(observation, memory: Memory, *,
