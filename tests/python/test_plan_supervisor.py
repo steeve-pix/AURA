@@ -266,6 +266,41 @@ class PlanSupervisorTests(unittest.TestCase):
             "continue",
         )
 
+    def test_energy_interruption_defers_exploration_target(self):
+        memory = Memory()
+
+        target = (34, 13)
+
+        plan = Plan(
+            goal="explore",
+            goal_target=target,
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=target,
+                ),
+            ],
+        )
+
+        memory.set_active_plan(plan)
+
+        proposal = goal_proposal(
+            "recharge",
+            target=(2, 1),
+            urgency=1.0,
+        )
+
+        goal = supervise_goal(
+            memory,
+            proposal=proposal,
+        )
+
+        self.assertEqual(goal, "recharge")
+        self.assertIsNone(memory.active_plan)
+
+        self.assertTrue(
+            memory.is_failed_target(target)
+        )
 
 if __name__ == "__main__":
     unittest.main()

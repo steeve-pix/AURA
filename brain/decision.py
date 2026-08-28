@@ -2,7 +2,7 @@
 import random
 
 from brain.goals import investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, \
-    exploration_goal_proposal
+    exploration_goal_proposal, investigation_route_cost, route_fits_energy_budget
 from brain.memory import Memory
 from brain.planning import (
     Plan,
@@ -106,10 +106,10 @@ def choose_adjacent_unknown_action(observation, memory: Memory, *,
 
 
 def decide(observation, goal, memory):
-    if (
-            memory.active_plan is not None
-            and memory.active_plan.goal == goal
-    ):
+    if observation["energy"] <= 0:
+        return {"action": "idle"}
+
+    if memory.active_plan is not None and memory.active_plan.goal == goal:
         if goal == "investigate":
             opportunistic_action = (
                 choose_adjacent_unknown_action(observation, memory, exclude_target=(
@@ -267,6 +267,11 @@ def create_investigation_plan(observation, memory: Memory, target_position: tupl
     )
 
     if target_object is None or not target_object.get("reachable", False) or memory.is_failed_target(target_position):
+        return None
+
+    route_cost = investigation_route_cost(target_object, observation)
+
+    if not route_fits_energy_budget(route_cost, observation["energy"]):
         return None
 
     aura_position = tuple(observation["position"])

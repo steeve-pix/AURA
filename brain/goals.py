@@ -32,6 +32,10 @@ CARDINAL_OFFSET = (
 )
 
 
+def route_fits_energy_budget(route_cost: int, energy: int) -> bool:
+    return (route_cost + ENERGY_RESERVE) <= energy
+
+
 def exploration_frontiers(observation, memory: Memory) -> list[tuple[int, int]]:
     current = tuple(observation["position"])
 
@@ -238,6 +242,9 @@ def investigation_goal_proposals(observation, memory) -> list[GoalProposal]:
         reason = "reachable_unknown"
 
         route_cost = investigation_route_cost(obj, observation)
+
+        if not route_fits_energy_budget(route_cost, observation["energy"]):
+            continue
 
         score += INVESTIGATION_DISTANCE_BONUS / (1.0 + route_cost)
 

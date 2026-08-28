@@ -54,6 +54,9 @@ def supervise_goal(memory: Memory, *, proposal: GoalProposal) -> str:
 
         return plan.goal
 
+    if review.disposition == "interrupt" and review.reason == "urgent_recharge" and plan.goal == "explore" and plan.goal_target is not None:
+        memory.mark_target_failed(plan.goal_target)
+
     if review.disposition in {"complete", "failed", "interrupt"}:
         memory.clear_active_plan()
         memory.set_active_goal(proposed_goal)

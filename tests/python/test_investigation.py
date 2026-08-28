@@ -279,6 +279,7 @@ class TestInvestigation(unittest.TestCase):
             ],
         ))
         first_observation = {
+            "energy": 10,
             "position": [11, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [13, 10]},
@@ -317,6 +318,7 @@ class TestInvestigation(unittest.TestCase):
             ],
         ))
         observation = {
+            "energy": 10,
             "position": [11, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [13, 10]},

@@ -18,6 +18,7 @@ class PlanLifecycleTests(unittest.TestCase):
     def test_investigation_lifecycle(self):
         memory = Memory()
         observation = {
+            "energy": 10,
             "position": [10, 10],
             "visible_cells": [
                 {"type": "Empty", "position": [11, 10]},
@@ -117,6 +118,7 @@ class PlanLifecycleTests(unittest.TestCase):
     def test_energy_emergency_replaces_investigation_with_recharge_plan(self):
         memory = Memory()
         investigation_observation = {
+            "energy": 10,
             "position": [10, 10],
             "visible_cells": [{"type": "Empty", "position": [11, 10]}],
             "nearby_objects": [{

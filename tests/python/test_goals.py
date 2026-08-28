@@ -714,5 +714,64 @@ class TestGoals(unittest.TestCase):
             proposal.reason,
             "frontier_exploration",
         )
+
+    def test_investigation_excludes_energy_infeasible_target(self):
+        memory = Memory()
+
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [8, 5],
+                    "reachable": True,
+                    "path_length": 30,
+                },
+            ],
+        }
+
+        proposals = investigation_goal_proposals(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            proposals,
+            [],
+        )
+
+    def test_investigation_keeps_energy_feasible_target(self):
+        memory = Memory()
+
+        observation = {
+            "position": [1, 1],
+            "energy": 20,
+            "nearby_objects": [
+                {
+                    "type": "Unknown",
+                    "position": [8, 5],
+                    "reachable": True,
+                    "path_length": 14,
+                },
+            ],
+        }
+
+        proposals = investigation_goal_proposals(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            len(proposals),
+            1,
+        )
+
+        self.assertEqual(
+            proposals[0].target,
+            (8, 5),
+        )
+
+
 if __name__ == '__main__':
     unittest.main()

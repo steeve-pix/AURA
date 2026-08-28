@@ -8,6 +8,7 @@
 #include "agent/Agent.hpp"
 #include "bridge/Action.hpp"
 #include "world/World.hpp"
+#include "navigation/Pathfinder.hpp"
 
 namespace aura::scenario {
     class Scenario {
@@ -40,22 +41,39 @@ namespace aura::scenario {
 
         void beforeAction(world::World &world, const agent::Agent &agent, const bridge::Action &action) override {
             if (action.type != bridge::ActionType::MoveTo) {
+                lastMoveToTarget_.reset();
                 return;
             }
 
-            ++moveToCount_;
+            const bool sameTarget =
+                    lastMoveToTarget_.has_value()
+                    && *lastMoveToTarget_
+                    == action.target;
 
-            if (
-                moveToCount_ % interval_ != 0
-                || action.target == agent.position()
-                || !world.canEnter(action.target)
-            ) {
+            if (sameTarget) {
                 return;
             }
 
-            blockedTarget_ = action.target;
-            blockedCellType_ = world.cellAt(action.target);
-            world.setCell(action.target, world::CellType::Wall);
+            lastMoveToTarget_ = action.target;
+            ++moveToTargetCount_;
+
+            if (moveToTargetCount_ % interval_ != 0) {
+                return;
+            }
+
+            const auto path =
+                    navigation::findPath(world, agent.position(), action.target);
+
+            if (path.empty()) {
+                return;
+            }
+
+            // Obstruct the proposed route, not the
+            // objective itself.
+            blockedTarget_ = path.front();
+            blockedCellType_ = world.cellAt(*blockedTarget_);
+
+            world.setCell(*blockedTarget_, world::CellType::Wall);
         }
 
         void afterAction(world::World &world, const agent::Agent &agent, const bridge::Action &action) override {
@@ -69,7 +87,8 @@ namespace aura::scenario {
 
     private:
         std::size_t interval_;
-        std::size_t moveToCount_ = 0;
+        std::size_t moveToTargetCount_ = 0;
+        std::optional<world::Position> lastMoveToTarget_;
         std::optional<world::Position> blockedTarget_;
         world::CellType blockedCellType_ = world::CellType::Empty;
     };

@@ -623,6 +623,7 @@ class DecisionTests(unittest.TestCase):
         memory.remember_investigation_result([6, 2], "Battery")
 
         observation = {
+            "energy": 20,
             "position": [2, 2],
             "nearby_objects": [
                 {
@@ -693,6 +694,7 @@ class DecisionTests(unittest.TestCase):
         memory = Memory()
 
         observation = {
+            "energy": 10,
             "position": [1, 1],
             "nearby_objects": [
                 {
@@ -733,6 +735,7 @@ class DecisionTests(unittest.TestCase):
         memory.step = 12
 
         observation = {
+            "energy": 10,
             "position": [1, 1],
             "nearby_objects": [
                 {
@@ -1000,6 +1003,35 @@ class DecisionTests(unittest.TestCase):
 
         self.assertEqual(memory.active_plan.goal, "recharge")
         self.assertEqual(memory.active_plan.goal_target, (6, 2))
+
+    def test_zero_energy_forces_idle(self):
+        memory = Memory()
+        memory.set_active_plan(
+            Plan(
+                goal="explore",
+                goal_target=(20, 10),
+                steps=[
+                    PlanStep(
+                        step_type="move_to",
+                        target=(20, 10),
+                    ),
+                ]
+            )
+        )
+
+        observation = {
+            "position": [1, 1],
+            "energy": 0,
+            "nearby_objects": [],
+        }
+
+        action = decide(
+            observation,
+            "explore",
+            memory,
+        )
+
+        self.assertEqual(action, {"action": "idle"})
 
 
 if __name__ == "__main__":
