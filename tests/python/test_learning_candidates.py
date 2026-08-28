@@ -49,7 +49,7 @@ class LearningCandidateTests(unittest.TestCase):
             rule_goal="explore",
             rule_action=rule_action,
             recharge_urgent=False,
-            plan_was_active=False,
+            plan_is_committed=False,
         )
         keys = {
             decision_key(candidate.goal, candidate.action)
@@ -83,7 +83,7 @@ class LearningCandidateTests(unittest.TestCase):
                 "target": [5, 2],
             },
             recharge_urgent=True,
-            plan_was_active=False,
+            plan_is_committed=False,
         )
 
         self.assertEqual(len(candidates), 1)
@@ -99,7 +99,7 @@ class LearningCandidateTests(unittest.TestCase):
                 "target": [4, 2],
             },
             recharge_urgent=False,
-            plan_was_active=True,
+            plan_is_committed=True,
         )
 
         self.assertEqual(len(candidates), 1)
@@ -225,7 +225,7 @@ class LearningCandidateTests(unittest.TestCase):
                 "direction": "east",
             },
             recharge_urgent=False,
-            plan_was_active=False,
+            plan_is_committed=False,
         )
 
         scored = score_candidates(

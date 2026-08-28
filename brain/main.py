@@ -388,10 +388,11 @@ def main() -> None:
 
         recharge_urgent_now = proposal.goal_type == "recharge" and proposal.urgency > 0.0
 
-        plan_was_active = memory.active_plan is not None
         goal = supervise_goal(memory, proposal=proposal)
 
         decision = decide(observation, goal, memory)
+
+        plan_is_committed = memory.active_plan is not None
 
         pending = memory.begin_experience(goal=goal, action=decision, observation=observation)
 
@@ -403,7 +404,8 @@ def main() -> None:
             candidates = [CandidateDecision(goal=goal, action=dict(decision))]
         else:
             candidates = candidate_decisions(observation, memory, rule_goal=goal, rule_action=decision,
-                                             recharge_urgent=recharge_urgent_now, plan_was_active=plan_was_active)
+                                             recharge_urgent=recharge_urgent_now,
+                                             plan_is_committed=plan_is_committed)
 
         # Debug metadata shares the response but is never used to execute the action.
         decision["debug"] = {

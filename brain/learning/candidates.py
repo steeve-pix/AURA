@@ -57,7 +57,7 @@ def _append_unique(candidates: list[CandidateDecision], candidate: CandidateDeci
 
 
 def candidate_decisions(observation: dict, memory: Memory, *, rule_goal: str, rule_action: dict, recharge_urgent: bool,
-                        plan_was_active: bool) -> list[CandidateDecision]:
+                        plan_is_committed: bool) -> list[CandidateDecision]:
     candidates = [
         CandidateDecision(
             goal=rule_goal,
@@ -67,7 +67,7 @@ def candidate_decisions(observation: dict, memory: Memory, *, rule_goal: str, ru
 
     # Advisory alternatives still respect the rule system's safety and
     # commitment boundaries.
-    if recharge_urgent or rule_goal == "recharge" or plan_was_active:
+    if recharge_urgent or rule_goal == "recharge" or plan_is_committed:
         return candidates
 
     for direction in (
