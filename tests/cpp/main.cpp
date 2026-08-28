@@ -7,6 +7,7 @@
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "bridge/BrainResponseParser.hpp"
+#include "bridge/Counterfactual.hpp"
 #include "bridge/NavigationPreview.hpp"
 #include "world/MazeGenerator.hpp"
 #include "world/World.hpp"
@@ -244,6 +245,15 @@ int main() {
             aura::world::CellType::Battery
     );
     assertCounterfactualRollback(investigateResult, {1, 1}, 10, "investigate");
+
+    if (
+        moveToResult.pathLengthBefore != 2
+        || moveToResult.pathLengthAfter != 1
+        || investigateResult.outcome != aura::world::CellType::Battery
+    ) {
+        std::cout << "FAIL: counterfactual results should include reward inputs\n";
+        ++failures;
+    }
 
     if (counterfactualWorld.cellAt({2, 1}) != aura::world::CellType::Unknown) {
         std::cout << "FAIL: counterfactual investigate should restore world cells\n";
@@ -511,6 +521,56 @@ int main() {
         aura::world::Position{5, 2}
     ) {
         std::cout << "FAIL: brain response should parse preview candidates\n";
+        ++failures;
+    }
+
+    const auto counterfactualRequest = aura::bridge::parseBrainResponse(R"({
+        "type":"counterfactual_request",
+        "candidates":[
+            {
+                "choice":"rule",
+                "decision":{"action":"move","direction":"east"}
+            },
+            {
+                "choice":"model",
+                "decision":{"action":"move_to","target":[5,2]}
+            }
+        ]
+    })");
+
+    if (
+        counterfactualRequest.type !=
+            aura::bridge::BrainResponseType::CounterfactualRequest
+        || counterfactualRequest.counterfactualCandidates.size() != 2
+        || counterfactualRequest.counterfactualCandidates[0].choice != "rule"
+        || counterfactualRequest.counterfactualCandidates[1].action.target !=
+            aura::world::Position{5, 2}
+    ) {
+        std::cout << "FAIL: body should parse counterfactual candidates\n";
+        ++failures;
+    }
+
+    const auto counterfactualJson =
+        aura::bridge::serializedCounterfactualResponse({
+            {
+                "rule",
+                moveResult
+            },
+            {
+                "model",
+                investigateResult
+            }
+        });
+
+    if (
+        counterfactualJson.find(R"("type":"counterfactual_response")") ==
+            std::string::npos
+        || counterfactualJson.find(R"("choice":"rule")") ==
+            std::string::npos
+        || counterfactualJson.find(R"("outcome":"Battery")") ==
+            std::string::npos
+    ) {
+        std::cout << "FAIL: body should serialize counterfactual outcomes\n";
         ++failures;
     }
 

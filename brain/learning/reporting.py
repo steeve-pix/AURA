@@ -313,6 +313,52 @@ def format_disagreement_outcome(
     ])
 
 
+def format_counterfactual_outcome(
+        record: DisagreementRecord,
+        statistics: DisagreementStatistics,
+) -> str:
+    actual_advantage = record.actual_model_advantage() or 0.0
+    average_advantage = (
+        "n/a"
+        if statistics.average_actual_model_advantage is None
+        else f"{statistics.average_actual_model_advantage:+.3f}"
+    )
+    rule_mae = (
+        "n/a"
+        if statistics.rule_counterfactual_prediction_mae is None
+        else f"{statistics.rule_counterfactual_prediction_mae:.3f}"
+    )
+    model_mae = (
+        "n/a"
+        if statistics.model_counterfactual_prediction_mae is None
+        else f"{statistics.model_counterfactual_prediction_mae:.3f}"
+    )
+
+    return "\n".join([
+        "",
+        "COUNTERFACTUAL DISAGREEMENT",
+        DIVIDER,
+        (
+            f"RULE   predicted {record.rule_predicted_value:+.3f}   "
+            f"actual {record.rule_counterfactual_reward or 0.0:+.3f}"
+        ),
+        (
+            f"MODEL  predicted {record.model_predicted_value:+.3f}   "
+            f"actual {record.model_counterfactual_reward or 0.0:+.3f}"
+        ),
+        f"Actual model advantage: {actual_advantage:+.3f}",
+        DIVIDER,
+        f"Disagreements: {statistics.counterfactual_count}",
+        f"Model candidate actually better: {statistics.model_actual_wins}",
+        f"Rule candidate actually better:  {statistics.rule_actual_wins}",
+        f"Tie:                             {statistics.actual_ties}",
+        f"Average actual model advantage:  {average_advantage}",
+        f"Rule prediction MAE:              {rule_mae}",
+        f"Model prediction MAE:             {model_mae}",
+        DIVIDER,
+    ])
+
+
 class LiveValueReporter:
     def __init__(
             self,
@@ -382,6 +428,18 @@ class LiveValueReporter:
     ) -> None:
         self._print(
             format_disagreement_outcome(
+                record,
+                statistics,
+            )
+        )
+
+    def report_counterfactual_outcome(
+            self,
+            record: DisagreementRecord,
+            statistics: DisagreementStatistics,
+    ) -> None:
+        self._print(
+            format_counterfactual_outcome(
                 record,
                 statistics,
             )

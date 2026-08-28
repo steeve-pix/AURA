@@ -4,6 +4,7 @@
 
 #include "agent/Agent.hpp"
 #include "bridge/BrainDebugState.hpp"
+#include "bridge/BrainResponse.hpp"
 #include "bridge/BrainProcess.hpp"
 #include "bridge/Observation.hpp"
 #include "render/Window.hpp"
@@ -60,6 +61,11 @@ namespace aura::app {
 
         /// Dispatches a parsed action to its body-level executor.
         void executeAction(const bridge::Action &action);
+
+        /// Evaluates labeled alternatives while preserving the real physical state.
+        [[nodiscard]] std::string evaluateCounterfactuals(
+            const std::vector<bridge::CounterfactualCandidate> &candidates
+        );
 
         render::Window window_;
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 #include "agent/Agent.hpp"
@@ -13,6 +14,9 @@ namespace aura::simulation {
         std::string result;
         world::Position positionAfter;
         int energyAfter;
+        std::optional<int> pathLengthBefore;
+        std::optional<int> pathLengthAfter;
+        std::optional<world::CellType> outcome;
     };
 
     /// Executes one action against a temporary physical branch and restores state.

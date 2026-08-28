@@ -16,6 +16,8 @@ class DisagreementRecord:
     model_predicted_value: float
 
     rule_actual_reward: float | None = None
+    rule_counterfactual_reward: float | None = None
+    model_counterfactual_reward: float | None = None
 
     def rule_prediction_error(self) -> float | None:
         if self.rule_actual_reward is None:
@@ -41,6 +43,18 @@ class DisagreementRecord:
             - self.model_predicted_value
         )
 
+    def actual_model_advantage(self) -> float | None:
+        if (
+                self.rule_counterfactual_reward is None
+                or self.model_counterfactual_reward is None
+        ):
+            return None
+
+        return (
+            self.model_counterfactual_reward
+            - self.rule_counterfactual_reward
+        )
+
 
 @dataclass(frozen=True)
 class DisagreementStatistics:
@@ -49,6 +63,13 @@ class DisagreementStatistics:
     average_claimed_advantage: float | None
     rule_actual_exceeds_model_prediction: int
     model_prediction_exceeds_rule_actual: int
+    counterfactual_count: int = 0
+    model_actual_wins: int = 0
+    rule_actual_wins: int = 0
+    actual_ties: int = 0
+    average_actual_model_advantage: float | None = None
+    rule_counterfactual_prediction_mae: float | None = None
+    model_counterfactual_prediction_mae: float | None = None
 
 
 @dataclass
@@ -85,7 +106,23 @@ class DisagreementAnalysis:
             rule_actual_reward: float,
     ) -> DisagreementRecord:
         record.rule_actual_reward = rule_actual_reward
-        self.records.append(record)
+        if record not in self.records:
+            self.records.append(record)
+        return record
+
+    def complete_counterfactual(
+            self,
+            record: DisagreementRecord,
+            *,
+            rule_actual_reward: float,
+            model_actual_reward: float,
+    ) -> DisagreementRecord:
+        record.rule_counterfactual_reward = rule_actual_reward
+        record.model_counterfactual_reward = model_actual_reward
+
+        if record not in self.records:
+            self.records.append(record)
+
         return record
 
     def statistics(self) -> DisagreementStatistics:
@@ -95,25 +132,27 @@ class DisagreementAnalysis:
             if record.rule_actual_reward is not None
         ]
 
-        if not completed:
-            return DisagreementStatistics(
-                count=0,
-                rule_prediction_mae=None,
-                average_claimed_advantage=None,
-                rule_actual_exceeds_model_prediction=0,
-                model_prediction_exceeds_rule_actual=0,
-            )
+        counterfactual = [
+            record
+            for record in self.records
+            if record.actual_model_advantage() is not None
+        ]
+
+        counterfactual_count = len(counterfactual)
+
+        if not completed and not counterfactual:
+            return DisagreementStatistics(0, None, None, 0, 0)
 
         return DisagreementStatistics(
             count=len(completed),
-            rule_prediction_mae=sum(
+            rule_prediction_mae=(None if not completed else sum(
                 record.rule_prediction_error() or 0.0
                 for record in completed
-            ) / len(completed),
-            average_claimed_advantage=sum(
+            ) / len(completed)),
+            average_claimed_advantage=(None if not completed else sum(
                 record.model_claimed_advantage()
                 for record in completed
-            ) / len(completed),
+            ) / len(completed)),
             rule_actual_exceeds_model_prediction=sum(
                 1
                 for record in completed
@@ -123,6 +162,43 @@ class DisagreementAnalysis:
                 1
                 for record in completed
                 if (record.rule_actual_vs_model_prediction() or 0.0) < 0.0
+            ),
+            counterfactual_count=counterfactual_count,
+            model_actual_wins=sum(
+                1 for record in counterfactual
+                if (record.actual_model_advantage() or 0.0) > 0.0
+            ),
+            rule_actual_wins=sum(
+                1 for record in counterfactual
+                if (record.actual_model_advantage() or 0.0) < 0.0
+            ),
+            actual_ties=sum(
+                1 for record in counterfactual
+                if (record.actual_model_advantage() or 0.0) == 0.0
+            ),
+            average_actual_model_advantage=(
+                None if not counterfactual else sum(
+                    record.actual_model_advantage() or 0.0
+                    for record in counterfactual
+                ) / counterfactual_count
+            ),
+            rule_counterfactual_prediction_mae=(
+                None if not counterfactual else sum(
+                    abs(
+                        record.rule_predicted_value
+                        - (record.rule_counterfactual_reward or 0.0)
+                    )
+                    for record in counterfactual
+                ) / counterfactual_count
+            ),
+            model_counterfactual_prediction_mae=(
+                None if not counterfactual else sum(
+                    abs(
+                        record.model_predicted_value
+                        - (record.model_counterfactual_reward or 0.0)
+                    )
+                    for record in counterfactual
+                ) / counterfactual_count
             ),
         )
 

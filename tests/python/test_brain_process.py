@@ -6,6 +6,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import torch
+
+from brain.learning.features import FEATURE_NAMES
+from brain.learning.model import ValueModel
+from brain.learning.model_io import save_model
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -45,6 +51,48 @@ def observation(world_id: str, position: list[int]) -> dict:
     }
 
 
+def counterfactual_response(request: dict, position: list[int]) -> dict:
+    offsets = {
+        "north": (0, -1),
+        "east": (1, 0),
+        "south": (0, 1),
+        "west": (-1, 0),
+    }
+    results = []
+
+    for candidate in request["candidates"]:
+        decision = candidate["decision"]
+        position_after = list(position)
+        energy_after = 100
+        outcome = None
+
+        if decision["action"] == "move":
+            offset = offsets[decision["direction"]]
+            position_after = [
+                position[0] + offset[0],
+                position[1] + offset[1],
+            ]
+            energy_after = 99
+        elif decision["action"] == "investigate":
+            outcome = "Empty"
+
+        results.append({
+            "choice": candidate["choice"],
+            "succeeded": True,
+            "result": "completed",
+            "position_after": position_after,
+            "energy_after": energy_after,
+            "path_length_before": None,
+            "path_length_after": None,
+            "outcome": outcome,
+        })
+
+    return {
+        "type": "counterfactual_response",
+        "results": results,
+    }
+
+
 def run_brain(working_directory: Path, observations: list[dict], preview_path_length: int = 1) -> list[dict]:
     environment = os.environ.copy()
     environment["PYTHONPATH"] = str(PROJECT_ROOT)
@@ -79,9 +127,22 @@ def run_brain(working_directory: Path, observations: list[dict], preview_path_le
 
         response = json.loads(line)
 
-        if response.get("type") == "preview_request":
-            process.stdin.write(
-                json.dumps(preview_response(response, path_length=preview_path_length)) + "\n")
+        while response.get("type") in {
+            "preview_request",
+            "counterfactual_request",
+        }:
+            if response["type"] == "preview_request":
+                reply = preview_response(
+                    response,
+                    path_length=preview_path_length,
+                )
+            else:
+                reply = counterfactual_response(
+                    response,
+                    item["position"],
+                )
+
+            process.stdin.write(json.dumps(reply) + "\n")
             process.stdin.flush()
 
             line = process.stdout.readline()
@@ -114,6 +175,48 @@ def run_brain(working_directory: Path, observations: list[dict], preview_path_le
 
 
 class BrainProcessTests(unittest.TestCase):
+    def test_counterfactual_comparison_still_executes_rule_action(self):
+        world_id = "maze:counterfactual:9x9:b0:u1"
+        first = observation(world_id, [1, 1])
+        first["east"] = "Unknown"
+        first["south"] = "Empty"
+        first["visible_cells"].append({
+            "position": [1, 2],
+            "type": "Empty",
+        })
+        first["nearby_objects"] = [{
+            "type": "Unknown",
+            "position": [2, 1],
+            "reachable": True,
+            "path_length": 1,
+        }]
+
+        with tempfile.TemporaryDirectory() as directory:
+            working_directory = Path(directory)
+            model = ValueModel()
+
+            with torch.no_grad():
+                for parameter in model.parameters():
+                    parameter.zero_()
+
+                action_move = FEATURE_NAMES.index("action_move")
+                action_investigate = FEATURE_NAMES.index(
+                    "action_investigate"
+                )
+                model.network[0].weight[0, action_move] = 1.0
+                model.network[0].weight[0, action_investigate] = -1.0
+                model.network[2].weight[0, 0] = 1.0
+
+            save_model(
+                model,
+                working_directory / "data" / "models" / "value_model_2.pt",
+            )
+
+            responses = run_brain(working_directory, [first])
+
+        self.assertEqual(responses[0]["action"], "investigate")
+        self.assertEqual(responses[0]["target"], [2, 1])
+
     def test_memory_survives_brain_restart(self):
         world_id = "maze:release-restart:9x9:b1:u1"
 

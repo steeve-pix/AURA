@@ -17,6 +17,9 @@ namespace aura::simulation {
 
         bool succeeded = false;
         std::string result = "failed";
+        std::optional<int> pathLengthBefore;
+        std::optional<int> pathLengthAfter;
+        std::optional<world::CellType> outcome;
 
         switch (action.type) {
             case bridge::ActionType::Move:
@@ -39,6 +42,8 @@ namespace aura::simulation {
                     break;
                 }
 
+                pathLengthBefore = static_cast<int>(path.size());
+
                 succeeded = true;
 
                 if (!path.empty()) {
@@ -53,6 +58,15 @@ namespace aura::simulation {
                 }
 
                 result = succeeded ? "completed" : "failed";
+
+                if (succeeded) {
+                    const auto remainingPath = navigation::findPath(
+                            world,
+                            agent.position(),
+                            action.target
+                    );
+                    pathLengthAfter = static_cast<int>(remainingPath.size());
+                }
                 break;
             }
 
@@ -68,6 +82,7 @@ namespace aura::simulation {
 
                 if (succeeded) {
                     world.setCell(action.target, investigationOutcome);
+                    outcome = investigationOutcome;
                 }
 
                 result = succeeded ? "completed" : "failed";
@@ -84,7 +99,10 @@ namespace aura::simulation {
             succeeded,
             result,
             agent.position(),
-            agent.energy()
+            agent.energy(),
+            pathLengthBefore,
+            pathLengthAfter,
+            outcome
         };
 
         restoreSimulationSnapshot(world, agent, snapshot);

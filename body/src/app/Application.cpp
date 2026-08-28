@@ -15,6 +15,7 @@
 #include "bridge/ActionUtils.hpp"
 #include "bridge/BrainProcess.hpp"
 #include "bridge/BrainResponseParser.hpp"
+#include "bridge/Counterfactual.hpp"
 #include "bridge/NavigationPreview.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
@@ -23,6 +24,7 @@
 #include "render/Window.hpp"
 #include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
+#include "simulation/CounterfactualSimulation.hpp"
 #include "world/MazeGenerator.hpp"
 
 namespace aura::app {
@@ -202,11 +204,26 @@ namespace aura::app {
 
                     response = bridge::parseBrainResponse(responseJson);
 
-                    if (response.type != bridge::BrainResponseType::Action) {
-                        throw std::invalid_argument(
-                            "Expected an action after navigation preview"
-                        );
+                }
+
+                if (response.type == bridge::BrainResponseType::CounterfactualRequest) {
+                    responseJson = brain_.exchange(
+                        evaluateCounterfactuals(
+                            response.counterfactualCandidates
+                        )
+                    );
+
+                    if (responseJson.empty()) {
+                        return;
                     }
+
+                    response = bridge::parseBrainResponse(responseJson);
+                }
+
+                if (response.type != bridge::BrainResponseType::Action) {
+                    throw std::invalid_argument(
+                        "Expected an action after experimental requests"
+                    );
                 }
 
                 brainDebug_ = response.debug;
@@ -424,5 +441,31 @@ namespace aura::app {
                 executeIdle();
                 break;
         }
+    }
+
+    std::string Application::evaluateCounterfactuals(
+        const std::vector<bridge::CounterfactualCandidate> &candidates
+    ) {
+        std::vector<bridge::CounterfactualEvaluation> evaluations;
+        evaluations.reserve(candidates.size());
+
+        const auto investigationOutcome =
+            investigationOutcomes_.empty()
+                ? world::CellType::Empty
+                : investigationOutcomes_.back();
+
+        for (const auto &candidate: candidates) {
+            evaluations.push_back({
+                candidate.choice,
+                simulation::simulateAction(
+                    world_,
+                    agent_,
+                    candidate.action,
+                    investigationOutcome
+                )
+            });
+        }
+
+        return bridge::serializedCounterfactualResponse(evaluations);
     }
 }

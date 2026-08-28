@@ -73,6 +73,48 @@ class DisagreementAnalysisTests(unittest.TestCase):
         self.assertIn("MODEL CLAIMED ADVANTAGE", report)
         self.assertIn("Disagreements: 1", report)
 
+    def test_counterfactual_statistics_compare_both_actual_rewards(self):
+        analysis = DisagreementAnalysis()
+        model_win = analysis.begin(
+            step=12,
+            rule_goal="explore",
+            rule_action={"action": "move", "direction": "east"},
+            rule_predicted_value=0.10,
+            model_goal="explore",
+            model_action={"action": "move", "direction": "west"},
+            model_predicted_value=0.20,
+        )
+        rule_win = analysis.begin(
+            step=13,
+            rule_goal="explore",
+            rule_action={"action": "move", "direction": "north"},
+            rule_predicted_value=0.30,
+            model_goal="explore",
+            model_action={"action": "move", "direction": "south"},
+            model_predicted_value=0.40,
+        )
+
+        analysis.complete_counterfactual(
+            model_win,
+            rule_actual_reward=0.10,
+            model_actual_reward=0.20,
+        )
+        analysis.complete_counterfactual(
+            rule_win,
+            rule_actual_reward=0.30,
+            model_actual_reward=0.10,
+        )
+        statistics = analysis.statistics()
+
+        self.assertEqual(statistics.counterfactual_count, 2)
+        self.assertEqual(statistics.model_actual_wins, 1)
+        self.assertEqual(statistics.rule_actual_wins, 1)
+        self.assertEqual(statistics.actual_ties, 0)
+        self.assertAlmostEqual(
+            statistics.average_actual_model_advantage,
+            -0.05,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,6 +18,12 @@ from brain.experience import Experience
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.goals import goal_scores, propose_goal
 from brain.learning.disagreement_analysis import DisagreementAnalysis
+from brain.learning.counterfactual import (
+    CounterfactualSelection,
+    build_counterfactual_request,
+    counterfactual_results,
+    counterfactual_reward,
+)
 from brain.learning.candidates import (
     decision_key,
     rule_scored_candidate,
@@ -109,9 +115,10 @@ def score_and_report_value_candidates(
         value_reporter: LiveValueReporter,
         navigation_previews: dict | None = None,
         goal_target: tuple[int, int] | None = None,
-        disagreement_analysis: DisagreementAnalysis | None = None) -> None:
+        disagreement_analysis: DisagreementAnalysis | None = None,
+) -> CounterfactualSelection | None:
     if value_model is None or not candidates:
-        return
+        return None
 
     scored_candidates = score_candidates(
         value_model,
@@ -162,7 +169,7 @@ def score_and_report_value_candidates(
         memory.pending_value_prediction = rule_scored.predicted_reward
         memory.pending_candidate_comparison = None
         memory.pending_disagreement = None
-        return
+        return None
 
     model_scored = select_model_candidate(
         eligible_scored_candidates,
@@ -180,7 +187,7 @@ def score_and_report_value_candidates(
     if model_key == rule_key:
         memory.pending_candidate_comparison = None
         memory.pending_disagreement = None
-        return
+        return None
 
     value_reporter.report_disagreement(
         scored_candidates,
@@ -205,6 +212,11 @@ def score_and_report_value_candidates(
             model_predicted_value=model_scored.predicted_reward,
         )
 
+    return CounterfactualSelection(
+        rule=rule_scored,
+        model=model_scored,
+    )
+
 
 def main() -> None:
     memory_directory = Path("data")
@@ -222,6 +234,7 @@ def main() -> None:
     value_reporter = LiveValueReporter()
     disagreement_analysis = DisagreementAnalysis()
     pending_preview_cycle = None
+    pending_counterfactual_cycle = None
 
     for raw in sys.stdin:
         raw = raw.strip()
@@ -230,6 +243,63 @@ def main() -> None:
             continue
 
         observation: dict[str, Any] = json.loads(raw)
+
+        if observation.get("type") == "counterfactual_response":
+            if pending_counterfactual_cycle is None:
+                raise ValueError(
+                    "Received an unexpected counterfactual response."
+                )
+
+            results = counterfactual_results(observation)
+            selection = pending_counterfactual_cycle["selection"]
+            cached_observation = pending_counterfactual_cycle[
+                "observation"
+            ]
+            rule_reward = counterfactual_reward(
+                selection.rule,
+                results["rule"],
+                cached_observation,
+                memory,
+            )
+            model_reward = counterfactual_reward(
+                selection.model,
+                results["model"],
+                cached_observation,
+                memory,
+            )
+
+            record = memory.pending_disagreement
+
+            if record is None:
+                raise ValueError(
+                    "Counterfactual response has no pending disagreement."
+                )
+
+            disagreement_analysis.complete_counterfactual(
+                record,
+                rule_actual_reward=rule_reward,
+                model_actual_reward=model_reward,
+            )
+            value_reporter.report_counterfactual_outcome(
+                record,
+                disagreement_analysis.statistics(),
+            )
+
+            decision_proposal = pending_counterfactual_cycle[
+                "decision_proposal"
+            ]
+
+            if decision_proposal is not None:
+                commit_decision(memory, decision_proposal)
+
+            print(
+                json.dumps(
+                    pending_counterfactual_cycle["decision"]
+                ),
+                flush=True,
+            )
+            pending_counterfactual_cycle = None
+            continue
 
         if observation.get("type") == "preview_response":
             if pending_preview_cycle is None:
@@ -329,7 +399,7 @@ def main() -> None:
                 pending_preview_cycle = None
                 continue
 
-            score_and_report_value_candidates(
+            counterfactual_selection = score_and_report_value_candidates(
                 value_model=value_model,
                 candidates=pending_preview_cycle["candidates"],
                 observation=pending_preview_cycle["observation"],
@@ -341,6 +411,22 @@ def main() -> None:
                 goal_target=cached_goal_target,
                 disagreement_analysis=disagreement_analysis,
             )
+
+            if counterfactual_selection is not None:
+                request = build_counterfactual_request(
+                    counterfactual_selection
+                )
+                pending_counterfactual_cycle = {
+                    "selection": counterfactual_selection,
+                    "observation": cached_observation,
+                    "decision": pending_preview_cycle["decision"],
+                    "decision_proposal": pending_preview_cycle[
+                        "decision_proposal"
+                    ],
+                }
+                pending_preview_cycle = None
+                print(json.dumps(request), flush=True)
+                continue
 
             decision_proposal = pending_preview_cycle[
                 "decision_proposal"
@@ -362,6 +448,11 @@ def main() -> None:
 
         if pending_preview_cycle is not None:
             raise ValueError("Expected a preview response before a new observation.")
+
+        if pending_counterfactual_cycle is not None:
+            raise ValueError(
+                "Expected a counterfactual response before a new observation."
+            )
 
         world_id = observation["world_id"]
 
@@ -580,7 +671,7 @@ def main() -> None:
         )
 
         if preview_request is None:
-            score_and_report_value_candidates(
+            counterfactual_selection = score_and_report_value_candidates(
                 value_model=value_model,
                 candidates=candidates,
                 observation=observation,
@@ -600,6 +691,23 @@ def main() -> None:
                 ),
                 disagreement_analysis=disagreement_analysis,
             )
+
+            if counterfactual_selection is not None:
+                pending_counterfactual_cycle = {
+                    "selection": counterfactual_selection,
+                    "observation": observation,
+                    "decision": decision,
+                    "decision_proposal": decision_proposal,
+                }
+                print(
+                    json.dumps(
+                        build_counterfactual_request(
+                            counterfactual_selection
+                        )
+                    ),
+                    flush=True,
+                )
+                continue
 
             if decision_proposal is not None:
                 commit_decision(

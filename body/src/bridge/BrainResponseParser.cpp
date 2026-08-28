@@ -50,6 +50,34 @@ namespace aura::bridge {
             return response;
         }
 
+        if (json.value("type", std::string{}) == "counterfactual_request") {
+            response.type = BrainResponseType::CounterfactualRequest;
+            std::set<std::string> choices;
+
+            for (const auto &candidate: json.at("candidates")) {
+                const auto choice = candidate.at("choice").get<std::string>();
+
+                if (choice.empty() || !choices.insert(choice).second) {
+                    throw std::invalid_argument(
+                        "Counterfactual choices must be unique and non-empty"
+                    );
+                }
+
+                response.counterfactualCandidates.push_back({
+                    choice,
+                    parseAction(candidate.at("decision").dump())
+                });
+            }
+
+            if (response.counterfactualCandidates.size() != 2) {
+                throw std::invalid_argument(
+                    "Counterfactual requests require exactly two candidates"
+                );
+            }
+
+            return response;
+        }
+
         // Action parsing remains authoritative; debug fields are optional diagnostics.
         response.action = parseAction(text);
 
