@@ -4,7 +4,7 @@ from brain.decision import (
     choose_investigation_action,
     create_recharge_plan as create_selected_recharge_plan,
     decide,
-    replan_failed_recharge,
+    replan_failed_recharge, choose_exploration_action,
 )
 from brain.memory import Memory
 from brain.planning import (
@@ -780,6 +780,110 @@ class DecisionTests(unittest.TestCase):
 
         self.assertTrue(plan.has_failed())
         self.assertEqual(plan.failure_reason, "move_to_unreachable")
+
+    def test_exploration_creates_frontier_plan(self):
+        memory = Memory()
+        memory.step = 12
+
+        memory.remember_cell(
+            [1, 1],
+            "Empty",
+        )
+        memory.remember_cell(
+            [2, 1],
+            "Empty",
+        )
+
+        observation = {
+            "position": [1, 1],
+            "energy": 80,
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Wall",
+            "nearby_objects": [],
+        }
+
+        action = choose_exploration_action(
+            observation,
+            memory,
+        )
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [2, 1],
+            },
+        )
+        self.assertIsNotNone(memory.active_plan)
+        self.assertEqual(memory.active_plan.goal, "explore")
+        self.assertEqual(memory.active_plan.goal_target, (2, 1))
+        self.assertEqual(memory.active_plan.created_step, 12)
+
+    def test_exploration_plan_keeps_selected_frontier(self):
+        memory = Memory()
+
+        original_plan = Plan(
+            goal="explore",
+            goal_target=(5, 1),
+            steps=[
+                PlanStep(
+                    step_type="move_to",
+                    target=(5, 1),
+                ),
+            ],
+        )
+
+        memory.set_active_plan(original_plan)
+
+        memory.remember_cell([1, 1], "Empty")
+        memory.remember_cell([2, 1], "Empty")
+
+        action = choose_exploration_action(
+            {
+                "position": [1, 1],
+                "energy": 80,
+                "nearby_objects": [],
+            },
+            memory,
+        )
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move_to",
+                "target": [5, 1],
+            },
+        )
+        self.assertIs(memory.active_plan, original_plan)
+
+    def test_exploration_without_frontier_uses_local_move(self):
+        memory = Memory()
+
+        action = choose_exploration_action(
+            {
+                "position": [1, 1],
+                "energy": 80,
+                "north": "Wall",
+                "east": "Empty",
+                "south": "Wall",
+                "west": "Wall",
+                "nearby_objects": [],
+            },
+            memory,
+        )
+
+        self.assertEqual(
+            action,
+            {
+                "action": "move",
+                "direction": "east",
+            },
+        )
+        self.assertIsNone(
+            memory.active_plan
+        )
 
 
 if __name__ == "__main__":

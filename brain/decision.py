@@ -1,7 +1,8 @@
 """Choose AURA's next high-level intention from a body observation."""
 import random
 
-from brain.goals import investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal
+from brain.goals import investigation_goal_proposals, select_best_investigation_proposal, recharge_goal_proposal, \
+    exploration_goal_proposal
 from brain.memory import Memory
 from brain.planning import (
     Plan,
@@ -54,7 +55,7 @@ def choose_recharge_action(observation, memory):
         memory.set_active_plan(plan)
         return action_from_plan(plan)
 
-    return choose_exploration_action(observation, memory)
+    return choose_local_exploration_action(observation, memory)
 
 
 def choose_adjacent_unknown_action(observation, memory: Memory, *,
@@ -102,7 +103,7 @@ def decide(observation, goal, memory):
         return choose_recharge_action(observation, memory)
 
     if goal == "explore":
-        return choose_exploration_action(observation, memory)
+        return choose_local_exploration_action(observation, memory)
 
     if goal == "investigate":
         return choose_investigation_action(observation, memory)
@@ -131,7 +132,42 @@ def action_from_plan(plan: Plan) -> dict:
     return {"action": "idle"}
 
 
+def create_exploration_plan(observation, memory: Memory) -> Plan | None:
+    proposal = exploration_goal_proposal(observation, memory)
+
+    if proposal.target is None:
+        return None
+
+    return Plan(
+        goal="explore",
+        goal_target=proposal.target,
+        created_step=memory.step,
+        last_progress_step=memory.step,
+        steps=[
+            PlanStep(
+                step_type="move_to",
+                target=proposal.target,
+                requires_reachable_target=True
+            )
+        ]
+    )
+
+
 def choose_exploration_action(observation, memory: Memory):
+    if memory.active_plan is not None and memory.active_plan.goal == "explore":
+        return action_from_plan(memory.active_plan)
+
+    plan = create_exploration_plan(observation, memory)
+
+    if plan is not None:
+        memory.set_active_plan(plan)
+
+        return action_from_plan(plan)
+
+    return choose_local_exploration_action(observation, memory)
+
+
+def choose_local_exploration_action(observation, memory: Memory):
     """Choose a high-level action that serves the current goal."""
     aura_x, aura_y = observation["position"]
 
