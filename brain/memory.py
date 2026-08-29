@@ -1,21 +1,38 @@
-from typing import Optional, Sequence, Literal
 from dataclasses import dataclass
-from brain.world_memory import WorldMemory
-from brain.planning import Plan
+from typing import Optional, Sequence, Literal
+
 from brain.experience import (
     Experience,
     RESULT_COMPLETED,
     RESULT_FAILED,
     detect_outcome,
 )
+from brain.learning.disagreement_analysis import DisagreementRecord
+from brain.planning import Plan
 from brain.reward import calculate_reward
+from brain.world_memory import WorldMemory
+
+DIRECTION_OFFSETS = {
+    "north": (0, -1),
+    "east": (1, 0),
+    "south": (0, 1),
+    "west": (-1, 0),
+}
+FAILED_TARGET_COOLDOWN = 20
+
+
+@dataclass
+class FailedTargetRecord:
+    position: tuple[int, int]
+    failure_count: int
+    last_failed_step: int
 
 
 class Memory:
     def __init__(self) -> None:
         self.known_cells: dict[tuple[int, int], str] = {}
         self.visit_counts: dict[tuple[int, int], int] = {}
-        self.failed_targets: set[tuple[int, int]] = set()
+        self.failed_targets: dict[tuple[int, int], FailedTargetRecord] = {}
         self.active_goal: Optional[str] = None
         self.step = 0
         self.investigation_history: dict[tuple[int, int], str] = {}
@@ -24,6 +41,8 @@ class Memory:
         self.experiences: list[Experience] = []
         self.pending_experience: dict | None = None
         self.pending_value_prediction: float | None = None
+        self.pending_candidate_comparison: dict | None = None
+        self.pending_disagreement: DisagreementRecord | None = None
         self.plan_failure_count = 0
         self.replan_count = 0
         self.body_action_failure_count = 0
@@ -62,16 +81,39 @@ class Memory:
 
     def mark_target_failed(self, position: Sequence[int]) -> None:
         key = (position[0], position[1])
-        self.failed_targets.add(key)
+
+        existing = self.failed_targets.get(key)
+
+        if existing is None:
+            self.failed_targets[key] = FailedTargetRecord(position=key, failure_count=1, last_failed_step=self.step)
+            return
+
+        existing.failure_count += 1
+        existing.last_failed_step = self.step
 
     def record_failed_target(self, position: Sequence[int]) -> None:
         self.mark_target_failed(position)
 
     def failed_target_count(self, position: tuple[int, int]) -> int:
-        return 1 if position in self.failed_targets else 0
+        record = self.failed_targets.get(position)
+
+        if record is None:
+            return 0
+
+        return record.failure_count
 
     def is_failed_target(self, position: tuple[int, int]) -> bool:
-        return self.failed_target_count(position) >= 1
+        record = self.failed_targets.get(position)
+
+        if record is None:
+            return False
+
+        steps_since_failure = self.step - record.last_failed_step
+
+        return steps_since_failure < FAILED_TARGET_COOLDOWN
+
+    def active_failed_target_count(self) -> int:
+        return sum(1 for position in self.failed_targets if self.is_failed_target(position))
 
     def least_visited_position(self) -> Optional[tuple[int, int]]:
         walkable_positions = [
@@ -145,15 +187,8 @@ class Memory:
         if experience.kind == "action" and not experience.succeeded:
             self.body_action_failure_count += 1
 
-    def record_plan_event(
-            self,
-            *,
-            event: str,
-            goal: str,
-            target: tuple[int, int] | None,
-            observation: dict,
-            reward: float,
-    ) -> Experience:
+    def record_plan_event(self, *, event: str, goal: str, target: tuple[int, int] | None, observation: dict,
+                          reward: float) -> Experience:
         position = (observation["position"][0], observation["position"][1])
         energy = observation["energy"]
         experience = Experience(
@@ -187,26 +222,45 @@ class Memory:
         return {
             "plan_failures": self.plan_failure_count,
             "replans": self.replan_count,
-            "failed_targets": len(self.failed_targets),
+            "failed_targets": self.active_failed_target_count(),
             "body_action_failures": self.body_action_failure_count,
         }
 
-    def begin_experience(self, *, goal: str, action: dict, observation: dict) -> dict | None:
-        if action["action"] == "idle":
-            self.pending_experience = None
-            return None
+    def cancel_pending_experience(self) -> None:
+        self.pending_experience = None
 
+    def pre_action_context(self, *, action: dict, observation: dict) -> dict:
         target = action.get("target")
         target_position = (
             None if target is None else (target[0], target[1])
         )
-
+        current_position = tuple(observation["position"])
+        path_length_before = None
         next_step_was_visited = None
 
-        if action["action"] == "move_to" and target_position is not None:
+        if action.get("action") == "move":
+            offset = DIRECTION_OFFSETS.get(action.get("direction"))
+
+            if offset is not None:
+                next_position = (
+                    current_position[0] + offset[0],
+                    current_position[1] + offset[1],
+                )
+                next_step_was_visited = self.visit_count(next_position) > 0
+
+        if action.get("action") == "move_to" and target_position is not None:
             for visible_object in observation.get("nearby_objects", []):
                 if tuple(visible_object["position"]) != target_position:
                     continue
+
+                visible_path_length = visible_object.get("path_length")
+
+                if (
+                        visible_object.get("reachable", False)
+                        and visible_path_length is not None
+                        and visible_path_length >= 0
+                ):
+                    path_length_before = visible_path_length
 
                 next_step = visible_object.get("next_step")
 
@@ -217,7 +271,31 @@ class Memory:
 
                 break
 
-        current_position = tuple(observation["position"])
+            # A remembered target may be outside the range sensor. When AURA is
+            # continuing toward the same target, the previous body feedback
+            # contains the next BFS step computed after that movement.
+            last_action = observation.get("last_action")
+
+            if (
+                    next_step_was_visited is None
+                    and last_action is not None
+                    and last_action.get("type") == "move_to"
+                    and last_action.get("target") is not None
+                    and tuple(last_action["target"]) == target_position
+            ):
+                next_step = last_action.get("next_step_after")
+
+                if next_step is not None:
+                    next_step_position = (next_step[0], next_step[1])
+                    next_step_was_visited = (
+                            self.visit_count(next_step_position) > 0
+                    )
+
+                if path_length_before is None:
+                    path_length_before = last_action.get(
+                        "path_length_after"
+                    )
+
         memory_trust_before = None
 
         if (
@@ -231,21 +309,73 @@ class Memory:
                 target_position
             )
 
-        self.pending_experience = {
-            "step": self.step,
-            "goal": goal,
-            "action": action["action"],
+        return {
             "target": target_position,
             "position_before": current_position,
             "energy_before": observation["energy"],
-            "visited_before": set(self.visit_counts.keys()),
+            "reachable_before": None,
+            "path_length_before": path_length_before,
             "memory_trust_before": memory_trust_before,
             "next_step_was_visited": next_step_was_visited,
         }
 
+    def begin_experience(self, *, goal: str, action: dict, observation: dict) -> dict | None:
+        if action["action"] == "idle":
+            self.pending_experience = None
+            return None
+
+        context = self.pre_action_context(
+            action=action,
+            observation=observation,
+        )
+
+        self.pending_experience = {
+            "step": self.step,
+            "goal": goal,
+            "action": action["action"],
+            "visited_before": set(self.visit_counts.keys()),
+            **context,
+        }
+
         return self.pending_experience
 
-    def finish_pending_experience(self,observation: dict) -> Experience | None:
+    def apply_navigation_preview_to_pending(
+            self,
+            preview: dict,
+    ) -> None:
+        pending = self.pending_experience
+
+        if (
+                pending is None
+                or pending["action"] != "move_to"
+        ):
+            return
+
+        reachable = preview.get("reachable")
+
+        pending["reachable_before"] = reachable
+
+        if reachable is not True:
+            pending["path_length_before"] = None
+            pending["next_step_was_visited"] = None
+            return
+
+        pending["path_length_before"] = preview.get(
+            "path_length"
+        )
+
+        next_step = preview.get("next_step")
+
+        if next_step is None:
+            pending["next_step_was_visited"] = None
+            return
+
+        pending["next_step_was_visited"] = (
+            tuple(next_step)
+            in pending["visited_before"]
+        )
+
+    def finish_pending_experience(self, observation: dict) -> Experience | None:
         if self.pending_experience is None:
             return None
 
@@ -255,6 +385,16 @@ class Memory:
             return None
 
         pending = self.pending_experience
+
+        reachable_before = pending.get(
+            "reachable_before"
+        )
+
+        if (
+                pending["action"] == "move_to"
+                and reachable_before is None
+        ):
+            reachable_before = last_action.get("reachable_before")
 
         if last_action.get("type") != pending["action"]:
             return None
@@ -275,7 +415,21 @@ class Memory:
         visited_new_cell = (
                 position_after not in pending["visited_before"]
         )
-        path_length_before = last_action.get("path_length_before")
+        path_length_before = pending["path_length_before"]
+        next_step_was_visited = pending["next_step_was_visited"]
+
+        if path_length_before is None:
+            path_length_before = last_action.get("path_length_before")
+
+        if next_step_was_visited is None:
+            next_step_before = last_action.get("next_step_before")
+
+            if next_step_before is not None:
+                next_step_position = tuple(next_step_before)
+                next_step_was_visited = (
+                        next_step_position in pending["visited_before"]
+                )
+
         path_length_after = last_action.get("path_length_after")
         navigation_progress = (
             None
@@ -298,7 +452,8 @@ class Memory:
             result=result,
             path_length_before=path_length_before,
             memory_trust_before=pending["memory_trust_before"],
-            next_step_was_visited=pending["next_step_was_visited"],
+            next_step_was_visited=next_step_was_visited,
+            reachable_before=reachable_before,
             visited_new_cell=visited_new_cell,
             navigation_progress=navigation_progress,
             outcome=outcome,

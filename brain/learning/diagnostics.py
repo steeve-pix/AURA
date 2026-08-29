@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 import torch
 
-from brain import reward
 from brain.experience import Experience
 
 ACTION_NAMES = (
@@ -165,10 +164,8 @@ class CompletedMoveToDiagnostics:
         return self.energy_cost_sum / self.count
 
 
-def calculate_action_diagnostics(
-        action_experiences: list[Experience],
-        predictions: torch.Tensor,
-) -> dict[str, ActionDiagnostics]:
+def calculate_action_diagnostics(action_experiences: list[Experience], predictions: torch.Tensor) -> dict[
+    str, ActionDiagnostics]:
     if any(experience.kind != "action" for experience in action_experiences):
         raise ValueError("Value model diagnostics require action experiences.")
 
@@ -233,7 +230,37 @@ def calculate_action_result_rewards(experiences: list[Experience], *, action: st
             average_reward=sum(reward) / len(reward),
         ) for result, reward in reward_by_result.items()
     }
-def calculate_completed_move_to_diagnostics(experiences: list[Experience])->CompletedMoveToDiagnostics:
+
+
+def calculate_move_to_visit_result_rewards(experiences: list[Experience]) -> dict[
+    tuple[bool | None, str], ResultRewardDiagnostics]:
+    rewards_by_visit_and_result = defaultdict(list)
+
+    for experience in experiences:
+        if experience.kind != "action":
+            continue
+
+        if experience.action != "move_to":
+            continue
+
+        key = (
+            experience.next_step_was_visited,
+            experience.result,
+        )
+        rewards_by_visit_and_result[key].append(
+            experience.reward
+        )
+
+    return {
+        key: ResultRewardDiagnostics(
+            count=len(rewards),
+            average_reward=sum(rewards) / len(rewards),
+        )
+        for key, rewards in rewards_by_visit_and_result.items()
+    }
+
+
+def calculate_completed_move_to_diagnostics(experiences: list[Experience]) -> CompletedMoveToDiagnostics:
     diagnostics = CompletedMoveToDiagnostics()
 
     for experience in experiences:

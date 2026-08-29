@@ -1,7 +1,7 @@
-
 import torch
 
 from brain.learning.model import ValueModel
+
 
 def predict_value(model: ValueModel, feature_vector: list[float]) -> float:
     model.eval()

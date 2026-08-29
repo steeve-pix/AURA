@@ -3,6 +3,7 @@ import unittest
 import torch
 
 from brain.learning.dataset import to_tensors
+from brain.learning.features import FEATURE_NAMES
 from brain.learning.model import ValueModel
 from brain.learning.train import baseline_mse, train_model
 
@@ -10,7 +11,7 @@ from brain.learning.train import baseline_mse, train_model
 class LearningTrainTests(unittest.TestCase):
     def test_weighted_training_rejects_misaligned_weights(self):
         model = ValueModel()
-        x_train = torch.zeros((3, 12))
+        x_train = torch.zeros((3, len(FEATURE_NAMES)))
         y_train = torch.zeros((3, 1))
         weights = torch.ones((2, 1))
 
@@ -49,11 +50,11 @@ class LearningTrainTests(unittest.TestCase):
 
         model = ValueModel()
         x = [
-            [0.0] * 12,
-            [0.25] * 12,
-            [0.5] * 12,
-            [0.75] * 12,
-            [1.0] * 12,
+            [0.0] * len(FEATURE_NAMES),
+            [0.25] * len(FEATURE_NAMES),
+            [0.5] * len(FEATURE_NAMES),
+            [0.75] * len(FEATURE_NAMES),
+            [1.0] * len(FEATURE_NAMES),
         ]
         y = [0.09, 0.14, 0.19, 0.24, 0.29]
         x_train, y_train = to_tensors(x, y)

@@ -33,6 +33,7 @@ class Experience:
     path_length_before: int | None = None
     memory_trust_before: float | None = None
     next_step_was_visited: bool | None = None
+    reachable_before: bool | None = None
 
     visited_new_cell: bool = False
     navigation_progress: int | None = None

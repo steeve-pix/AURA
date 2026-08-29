@@ -194,6 +194,80 @@ class MemoryTests(unittest.TestCase):
         )
         self.assertEqual(memory.failure_debug()["failed_targets"], 1)
 
+    def test_failed_target_records_count_and_step(self):
+        memory = Memory()
+        memory.step = 12
+
+        memory.mark_target_failed((8, 3))
+        memory.mark_target_failed((8, 3))
+
+        record = memory.failed_targets[(8, 3)]
+
+        self.assertEqual(record.position, (8, 3))
+        self.assertEqual(record.failure_count, 2)
+        self.assertEqual(record.last_failed_step, 12)
+        self.assertEqual(memory.failed_target_count((8, 3)), 2)
+
+    def test_failed_target_is_blocked_during_cooldown(self):
+        memory = Memory()
+        memory.step = 10
+
+        memory.mark_target_failed((8, 3))
+
+        memory.step = 29
+
+        self.assertTrue(memory.is_failed_target((8, 3)))
+
+    def test_failed_target_becomes_available_after_cooldown(self):
+        memory = Memory()
+        memory.step = 10
+
+        memory.mark_target_failed((8, 3))
+
+        memory.step = 30
+
+        self.assertFalse(memory.is_failed_target((8, 3)))
+
+        # Its historical failure information remains.
+        self.assertEqual(memory.failed_target_count((8, 3)), 1)
+
+    def test_new_failure_restarts_target_cooldown(self):
+        memory = Memory()
+        memory.step = 10
+        memory.mark_target_failed((8, 3))
+
+        memory.step = 25
+        memory.mark_target_failed((8, 3))
+
+        memory.step = 30
+
+        self.assertTrue(memory.is_failed_target((8, 3)))
+
+        self.assertEqual(memory.failed_target_count((8, 3)), 2)
+
+    def test_failure_debug_excludes_expired_targets(self):
+        memory = Memory()
+        memory.step = 10
+
+        memory.mark_target_failed((8, 3))
+
+        self.assertEqual(
+            memory.failure_debug()["failed_targets"],
+            1,
+        )
+
+        memory.step = 30
+
+        self.assertEqual(
+            memory.failure_debug()["failed_targets"],
+            0,
+        )
+
+        # The historical record still exists.
+        self.assertEqual(
+            memory.failed_target_count((8, 3)),
+            1,
+        )
 
 if __name__ == "__main__":
     unittest.main()

@@ -23,6 +23,12 @@ namespace aura::bridge {
         std::optional<int> pathLengthBefore{};
         /// Remaining BFS route cost after a navigation action, when reachable.
         std::optional<int> pathLengthAfter{};
+        /// First BFS cell selected before executing a navigation action.
+        std::optional<world::Position> nextStepBefore{};
+        /// First BFS cell for continuing toward the same target next cycle.
+        std::optional<world::Position> nextStepAfter{};
+        /// Whether the MoveTo target had a valid BFS route before execution.
+        std::optional<bool> reachableBefore{};
     };
 
     /// Read-only world snapshot supplied to the Python brain for one decision cycle.

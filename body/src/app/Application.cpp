@@ -6,6 +6,7 @@
 #include <ostream>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <iomanip>
 #include <vector>
 #include <GLFW/glfw3.h>
@@ -14,6 +15,8 @@
 #include "bridge/ActionUtils.hpp"
 #include "bridge/BrainProcess.hpp"
 #include "bridge/BrainResponseParser.hpp"
+#include "bridge/Counterfactual.hpp"
+#include "bridge/NavigationPreview.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "navigation/Pathfinder.hpp"
@@ -21,6 +24,7 @@
 #include "render/Window.hpp"
 #include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
+#include "simulation/CounterfactualSimulation.hpp"
 #include "world/MazeGenerator.hpp"
 
 namespace aura::app {
@@ -118,7 +122,8 @@ namespace aura::app {
             }
 
             const std::string title =
-                    "AURA | Seed | " + std::to_string(mazeSeed_) + " | Goal: " + goalLabel + " (" + goalScore + ") | Explore: " +
+                    "AURA | Seed | " + std::to_string(mazeSeed_) + " | Goal: " + goalLabel + " (" + goalScore +
+                    ") | Explore: " +
                     exploreScore + " | Energy: " +
                     std::to_string(energy) + " | Plan: " + planLabel
                     + " | Failures P/R/T/B: "
@@ -131,19 +136,23 @@ namespace aura::app {
 
         // Rendering remains continuous while simulation and brain updates run at a
         // fixed cadence.
-        while (
-            !window_.shouldClose()
-            && (!maxSteps_.has_value() || completedSteps < *maxSteps_)
-        ) {
+        while (!window_.shouldClose() && (!maxSteps_.has_value() || completedSteps < *maxSteps_)) {
             Window::pollEvents();
 
             const double now = glfwGetTime();
 
             if (now - lastUpdateTime >= updateInterval) {
+                const bool exhaustedBeforeUpdate =
+                        agent_.energy() <= 0;
+
                 update();
                 ++completedSteps;
 
                 lastUpdateTime = now;
+
+                if (exhaustedBeforeUpdate) {
+                    break;
+                }
             }
 
             setWindowTitle(brainDebug_, agent_.energy());
@@ -170,15 +179,58 @@ namespace aura::app {
         // report the same outcome twice.
         lastAction_.reset();
 
-        const std::string actionJson =
+        std::string responseJson =
                 brain_.exchange(observationJson);
 
-        if (!actionJson.empty()) {
+        if (!responseJson.empty()) {
             try {
-                const auto response =
-                        bridge::parseBrainResponse(actionJson);
+                auto response =
+                        bridge::parseBrainResponse(responseJson);
+
+                if (response.type == bridge::BrainResponseType::PreviewRequest) {
+                    const auto previews = bridge::previewNavigation(
+                        world_,
+                        agent_.position(),
+                        response.previewCandidates
+                    );
+                    const auto previewJson =
+                            bridge::serializedNavigationPreviewResponse(previews);
+
+                    responseJson = brain_.exchange(previewJson);
+
+                    if (responseJson.empty()) {
+                        return;
+                    }
+
+                    response = bridge::parseBrainResponse(responseJson);
+
+                }
+
+                if (response.type == bridge::BrainResponseType::CounterfactualRequest) {
+                    responseJson = brain_.exchange(
+                        evaluateCounterfactuals(
+                            response.counterfactualCandidates
+                        )
+                    );
+
+                    if (responseJson.empty()) {
+                        return;
+                    }
+
+                    response = bridge::parseBrainResponse(responseJson);
+                }
+
+                if (response.type != bridge::BrainResponseType::Action) {
+                    throw std::invalid_argument(
+                        "Expected an action after experimental requests"
+                    );
+                }
 
                 brainDebug_ = response.debug;
+
+                if (agent_.energy() <= 0) {
+                    return;
+                }
 
                 scenario_->beforeAction(world_, agent_, response.action);
 
@@ -186,7 +238,7 @@ namespace aura::app {
 
                 scenario_->afterAction(world_, agent_, response.action);
             } catch (const std::exception &error) {
-                std::cerr << "Invalid JSON from brain: " << actionJson << '\n';
+                std::cerr << "Invalid JSON from brain: " << responseJson << '\n';
 
                 std::cerr << "Reason: " << error.what() << '\n';
             }
@@ -233,10 +285,10 @@ namespace aura::app {
                 );
 
         lastAction_ = {
-            bridge::ActionType::Move,
-            std::nullopt,
-            moved,
-            moved ? "completed" : "failed"
+            .type = bridge::ActionType::Move,
+            .target = std::nullopt,
+            .succeeded = moved,
+            .result = moved ? "completed" : "failed"
         };
     }
 
@@ -258,14 +310,22 @@ namespace aura::app {
                     ? 0
                     : static_cast<int>(pathBefore.size());
 
+        const std::optional<world::Position> nextStepBefore =
+                pathBefore.empty()
+                    ? std::nullopt
+                    : std::optional{pathBefore.front()};
+
         if (pathBefore.empty() && agent_.position() != action.target) {
             lastAction_ = {
-                action.type,
-                action.target,
-                false,
-                "unreachable",
-                std::nullopt,
-                std::nullopt
+                .type = action.type,
+                .target = action.target,
+                .succeeded = false,
+                .result = "unreachable",
+                .pathLengthBefore = std::nullopt,
+                .pathLengthAfter = std::nullopt,
+                .nextStepBefore = std::nullopt,
+                .nextStepAfter = std::nullopt,
+                .reachableBefore = false
             };
             return;
         }
@@ -310,13 +370,21 @@ namespace aura::app {
                     ? 0
                     : static_cast<int>(pathAfter.size());
 
+        const std::optional<world::Position> nextStepAfter =
+                pathAfter.empty()
+                    ? std::nullopt
+                    : std::optional{pathAfter.front()};
+
         lastAction_ = {
-            action.type,
-            action.target,
-            moved,
-            moved ? "completed" : "failed",
-            pathLengthBefore,
-            pathLengthAfter
+            .type = action.type,
+            .target = action.target,
+            .succeeded = moved,
+            .result = moved ? "completed" : "failed",
+            .pathLengthBefore = pathLengthBefore,
+            .pathLengthAfter = pathLengthAfter,
+            .nextStepBefore = nextStepBefore,
+            .nextStepAfter = nextStepAfter,
+            .reachableBefore = true
         };
     }
 
@@ -373,5 +441,31 @@ namespace aura::app {
                 executeIdle();
                 break;
         }
+    }
+
+    std::string Application::evaluateCounterfactuals(
+        const std::vector<bridge::CounterfactualCandidate> &candidates
+    ) {
+        std::vector<bridge::CounterfactualEvaluation> evaluations;
+        evaluations.reserve(candidates.size());
+
+        const auto investigationOutcome =
+            investigationOutcomes_.empty()
+                ? world::CellType::Empty
+                : investigationOutcomes_.back();
+
+        for (const auto &candidate: candidates) {
+            evaluations.push_back({
+                candidate.choice,
+                simulation::simulateAction(
+                    world_,
+                    agent_,
+                    candidate.action,
+                    investigationOutcome
+                )
+            });
+        }
+
+        return bridge::serializedCounterfactualResponse(evaluations);
     }
 }

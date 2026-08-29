@@ -1,17 +1,23 @@
 #include <algorithm>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 
 #include "agent/Agent.hpp"
 #include "bridge/Observation.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "bridge/BrainResponseParser.hpp"
+#include "bridge/Counterfactual.hpp"
+#include "bridge/NavigationPreview.hpp"
 #include "world/MazeGenerator.hpp"
 #include "world/World.hpp"
 #include "world/Position.hpp"
 #include "navigation/Pathfinder.hpp"
 #include "scenario/Scenario.hpp"
+#include "sensors/LocalSensor.hpp"
 #include "sensors/RangeSensor.hpp"
+#include "simulation/CounterfactualSimulation.hpp"
+#include "simulation/SimulationSnapshot.hpp"
 
 int main() {
     int failures = 0;
@@ -176,34 +182,209 @@ int main() {
         ++failures;
     }
 
+    aura::world::World counterfactualWorld{5, 5};
+    counterfactualWorld.addBoundaryWalls();
+    counterfactualWorld.setCell({2, 1}, aura::world::CellType::Unknown);
+
+    aura::agent::Agent counterfactualAgent{{1, 1}, 10};
+
+    const auto assertCounterfactualRollback =
+            [&counterfactualWorld, &counterfactualAgent, &failures](
+                    const aura::simulation::CounterfactualResult &result,
+                    aura::world::Position expectedPosition,
+                    int expectedEnergy,
+                    const char *actionName
+            ) {
+                if (!result.succeeded ||
+                    result.result != "completed" ||
+                    result.positionAfter != expectedPosition ||
+                    result.energyAfter != expectedEnergy) {
+                    std::cout << "FAIL: counterfactual " << actionName
+                              << " should report its hypothetical result\n";
+                    ++failures;
+                }
+
+                if (counterfactualAgent.position() != aura::world::Position{1, 1} ||
+                    counterfactualAgent.energy() != 10) {
+                    std::cout << "FAIL: counterfactual " << actionName
+                              << " should restore agent state\n";
+                    ++failures;
+                }
+            };
+
+    const auto moveResult = aura::simulation::simulateAction(
+            counterfactualWorld,
+            counterfactualAgent,
+            {
+                aura::bridge::ActionType::Move,
+                aura::bridge::Direction::East,
+                {}
+            }
+    );
+    assertCounterfactualRollback(moveResult, {2, 1}, 9, "move");
+
+    const auto moveToResult = aura::simulation::simulateAction(
+            counterfactualWorld,
+            counterfactualAgent,
+            {
+                aura::bridge::ActionType::MoveTo,
+                aura::bridge::Direction::North,
+                {3, 1}
+            }
+    );
+    assertCounterfactualRollback(moveToResult, {2, 1}, 9, "move_to");
+
+    const auto investigateResult = aura::simulation::simulateAction(
+            counterfactualWorld,
+            counterfactualAgent,
+            {
+                aura::bridge::ActionType::Investigate,
+                aura::bridge::Direction::North,
+                {2, 1}
+            },
+            aura::world::CellType::Battery
+    );
+    assertCounterfactualRollback(investigateResult, {1, 1}, 10, "investigate");
+
+    if (
+        moveToResult.pathLengthBefore != 2
+        || moveToResult.pathLengthAfter != 1
+        || investigateResult.outcome != aura::world::CellType::Battery
+    ) {
+        std::cout << "FAIL: counterfactual results should include reward inputs\n";
+        ++failures;
+    }
+
+    if (counterfactualWorld.cellAt({2, 1}) != aura::world::CellType::Unknown) {
+        std::cout << "FAIL: counterfactual investigate should restore world cells\n";
+        ++failures;
+    }
+
+    aura::world::World snapshotWorld{5, 5};
+    snapshotWorld.addBoundaryWalls();
+    snapshotWorld.setCell({2, 1}, aura::world::CellType::Battery);
+
+    aura::agent::Agent snapshotAgent{{1, 1}, 50};
+    aura::sensors::RangeSensor snapshotSensor{2};
+
+    const auto serializedSnapshotObservation =
+            [&snapshotWorld, &snapshotAgent, &snapshotSensor] {
+                const aura::bridge::Observation snapshotObservation{
+                    snapshotAgent.position(),
+                    snapshotAgent.energy(),
+                    aura::sensors::LocalSensor::observe(
+                        snapshotWorld,
+                        snapshotAgent
+                    ),
+                    snapshotSensor.observe(snapshotWorld, snapshotAgent),
+                    snapshotSensor.radius(),
+                    std::nullopt,
+                    "snapshot-test"
+                };
+
+                return aura::bridge::serializedObservation(
+                    snapshotObservation
+                );
+            };
+
+    const auto originalObservation =
+            serializedSnapshotObservation();
+    const auto snapshot =
+            aura::simulation::captureSimulationSnapshot(
+                snapshotWorld,
+                snapshotAgent
+            );
+
+    if (!snapshotAgent.moveBy({1, 0}, snapshotWorld)) {
+        std::cout << "FAIL: snapshot test movement should succeed\n";
+        ++failures;
+    }
+
+    snapshotWorld.setCell({3, 1}, aura::world::CellType::Unknown);
+
+    aura::simulation::restoreSimulationSnapshot(
+        snapshotWorld,
+        snapshotAgent,
+        snapshot
+    );
+
+    if (snapshotAgent.position() != aura::world::Position{1, 1} ||
+        snapshotAgent.energy() != 50) {
+        std::cout << "FAIL: snapshot restore should recover agent state\n";
+        ++failures;
+    }
+
+    if (snapshotWorld.cellAt({2, 1}) != aura::world::CellType::Battery ||
+        snapshotWorld.cellAt({3, 1}) != aura::world::CellType::Empty) {
+        std::cout << "FAIL: snapshot restore should recover world cells\n";
+        ++failures;
+    }
+
+    if (serializedSnapshotObservation() != originalObservation) {
+        std::cout << "FAIL: observation after restore should match original state\n";
+        ++failures;
+    }
+
     aura::world::World scenarioWorld{5, 5};
+
     scenarioWorld.addBoundaryWalls();
+
     aura::agent::Agent scenarioAgent{{1, 1}};
+
     aura::scenario::PeriodicMoveToBlock challenge{2};
-    const aura::bridge::Action moveToAction{
+
+    const aura::bridge::Action firstTarget{
         aura::bridge::ActionType::MoveTo,
         aura::bridge::Direction::North,
         {3, 3}
     };
 
-    challenge.beforeAction(scenarioWorld, scenarioAgent, moveToAction);
+    challenge.beforeAction(scenarioWorld, scenarioAgent, firstTarget);
 
-    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall) {
-        std::cout << "FAIL: challenge should leave the first move_to unchanged\n";
+    if (scenarioWorld.cellAt({2, 1}) == aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: first distinct target "
+                << "should not be obstructed\n";
         ++failures;
     }
 
-    challenge.beforeAction(scenarioWorld, scenarioAgent, moveToAction);
+    // Continuing the same plan must not count as
+    // another target attempt.
+    challenge.beforeAction(scenarioWorld, scenarioAgent, firstTarget);
 
-    if (scenarioWorld.cellAt({3, 3}) != aura::world::CellType::Wall) {
-        std::cout << "FAIL: challenge should block the configured move_to interval\n";
+    if (scenarioWorld.cellAt({2, 1}) == aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: repeated move_to ticks "
+                << "should not retrigger challenge\n";
         ++failures;
     }
 
-    challenge.afterAction(scenarioWorld, scenarioAgent, moveToAction);
+    const aura::bridge::Action secondTarget{aura::bridge::ActionType::MoveTo, aura::bridge::Direction::North, {3, 1}};
 
-    if (scenarioWorld.cellAt({3, 3}) == aura::world::CellType::Wall) {
-        std::cout << "FAIL: challenge should restore its temporary obstacle\n";
+    challenge.beforeAction(scenarioWorld, scenarioAgent, secondTarget);
+
+    // The first BFS step is obstructed.
+    if (scenarioWorld.cellAt({2, 1}) != aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: configured target attempt "
+                << "should obstruct its route\n";
+        ++failures;
+    }
+
+    // The final objective must remain valid.
+    if (scenarioWorld.cellAt({3, 1}) == aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: challenge should not turn "
+                << "the objective into a wall\n";
+        ++failures;
+    }
+
+    challenge.afterAction(scenarioWorld, scenarioAgent, secondTarget);
+
+    if (scenarioWorld.cellAt({2, 1}) == aura::world::CellType::Wall) {
+        std::cout
+                << "FAIL: challenge should restore "
+                << "its temporary route obstacle\n";
         ++failures;
     }
 
@@ -256,12 +437,15 @@ int main() {
         nearby,
         3,
         aura::bridge::LastAction{
-            aura::bridge::ActionType::MoveTo,
-            aura::world::Position{8, 3},
-            true,
-            "completed",
-            1,
-            0
+            .type = aura::bridge::ActionType::MoveTo,
+            .target = aura::world::Position{8, 3},
+            .succeeded = true,
+            .result = "completed",
+            .pathLengthBefore = 1,
+            .pathLengthAfter = 0,
+            .nextStepBefore = aura::world::Position{3, 2},
+            .nextStepAfter = aura::world::Position{4, 2},
+            .reachableBefore = true
         }
     };
 
@@ -275,10 +459,13 @@ int main() {
         serialized.find(R"("next_step":[3,2])") == std::string::npos ||
         serialized.find(R"("result":"completed")") == std::string::npos ||
         serialized.find(R"("path_length_before":1)") == std::string::npos ||
-        serialized.find(R"("path_length_after":0)") == std::string::npos) {
+        serialized.find(R"("path_length_after":0)") == std::string::npos ||
+        serialized.find(R"("next_step_before":[3,2])") == std::string::npos ||
+        serialized.find(R"("next_step_after":[4,2])") == std::string::npos ||
+        serialized.find(R"("reachable_before":true)") == std::string::npos) {
         std::cout << "FAIL: observation should include"
                 << " the visible object's next BFS step\n";
-        
+
         ++failures;
     }
 
@@ -315,6 +502,105 @@ int main() {
         response.debug.failedTargets != 4 ||
         response.debug.bodyActionFailures != 1) {
         std::cout << "FAIL: brain response should expose active plan debug state\n";
+        ++failures;
+    }
+
+    const auto previewRequest = aura::bridge::parseBrainResponse(R"({
+        "type":"preview_request",
+        "candidates":[
+            {"id":1,"action":"move_to","target":[5,2]},
+            {"id":2,"action":"move_to","target":[0,0]}
+        ]
+    })");
+
+    if (
+        previewRequest.type != aura::bridge::BrainResponseType::PreviewRequest
+        || previewRequest.previewCandidates.size() != 2
+        || previewRequest.previewCandidates[0].id != 1
+        || previewRequest.previewCandidates[0].target !=
+        aura::world::Position{5, 2}
+    ) {
+        std::cout << "FAIL: brain response should parse preview candidates\n";
+        ++failures;
+    }
+
+    const auto counterfactualRequest = aura::bridge::parseBrainResponse(R"({
+        "type":"counterfactual_request",
+        "candidates":[
+            {
+                "choice":"rule",
+                "decision":{"action":"move","direction":"east"}
+            },
+            {
+                "choice":"model",
+                "decision":{"action":"move_to","target":[5,2]}
+            }
+        ]
+    })");
+
+    if (
+        counterfactualRequest.type !=
+            aura::bridge::BrainResponseType::CounterfactualRequest
+        || counterfactualRequest.counterfactualCandidates.size() != 2
+        || counterfactualRequest.counterfactualCandidates[0].choice != "rule"
+        || counterfactualRequest.counterfactualCandidates[1].action.target !=
+            aura::world::Position{5, 2}
+    ) {
+        std::cout << "FAIL: body should parse counterfactual candidates\n";
+        ++failures;
+    }
+
+    const auto counterfactualJson =
+        aura::bridge::serializedCounterfactualResponse({
+            {
+                "rule",
+                moveResult
+            },
+            {
+                "model",
+                investigateResult
+            }
+        });
+
+    if (
+        counterfactualJson.find(R"("type":"counterfactual_response")") ==
+            std::string::npos
+        || counterfactualJson.find(R"("choice":"rule")") ==
+            std::string::npos
+        || counterfactualJson.find(R"("outcome":"Battery")") ==
+            std::string::npos
+    ) {
+        std::cout << "FAIL: body should serialize counterfactual outcomes\n";
+        ++failures;
+    }
+
+    aura::world::World previewWorld{7, 5};
+    previewWorld.addBoundaryWalls();
+
+    const auto previews = aura::bridge::previewNavigation(
+        previewWorld,
+        {1, 1},
+        previewRequest.previewCandidates
+    );
+    const auto previewJson =
+            aura::bridge::serializedNavigationPreviewResponse(previews);
+
+    if (
+        previews.size() != 2
+        || !previews[0].reachable
+        || previews[0].pathLength != 5
+        || previews[0].nextStep != aura::world::Position{2, 1}
+        || previews[1].reachable
+        || previews[1].pathLength.has_value()
+        || previews[1].nextStep.has_value()
+        || previewJson.find(R"("type":"preview_response")") ==
+        std::string::npos
+        || previewJson.find(R"("id":1)") == std::string::npos
+        || previewJson.find(R"("path_length":5)") == std::string::npos
+        || previewJson.find(R"("next_step":[2,1])") == std::string::npos
+        || previewJson.find(R"("reachable":false)") == std::string::npos
+    ) {
+        std::cout << "FAIL: navigation preview should preserve IDs and BFS truth\n";
         ++failures;
     }
 

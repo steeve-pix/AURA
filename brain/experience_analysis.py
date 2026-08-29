@@ -11,7 +11,7 @@ def load_experiences(path: Path) -> list[Experience]:
     if not path.exists():
         return experiences
 
-    with path.open("r",encoding="utf-8") as file:
+    with path.open("r", encoding="utf-8") as file:
         for line in file:
             line = line.strip()
 
@@ -40,6 +40,7 @@ def load_experiences(path: Path) -> list[Experience]:
                     path_length_before=data.get("path_length_before"),
                     memory_trust_before=data.get("memory_trust_before"),
                     next_step_was_visited=data.get("next_step_was_visited"),
+                    reachable_before=data.get("reachable_before"),
                     visited_new_cell=data.get(
                         "visited_new_cell",
                         data.get("discovered_new_cell", False),

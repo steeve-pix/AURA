@@ -212,3 +212,63 @@ The C++ body uses this only for visualization; it does not affect physical simul
   }
 }
 ```
+
+## Navigation Preview
+
+Before committing a `move_to`, the brain may request read-only BFS facts for one or more candidate targets. The body
+answers with reachability, path length, and the next physical step. Neither message advances the simulation.
+
+## Counterfactual Evaluation
+
+When the rule system and value model prefer different safe candidates, the brain may request an experimental
+evaluation before returning the real action:
+
+```json
+{
+  "type": "counterfactual_request",
+  "candidates": [
+    {
+      "choice": "rule",
+      "decision": {"action": "move", "direction": "east"}
+    },
+    {
+      "choice": "model",
+      "decision": {"action": "move_to", "target": [7, 3]}
+    }
+  ]
+}
+```
+
+The body simulates each candidate from the same physical state, captures its immediate result, and restores the world
+and agent after each branch. Its response includes the reward inputs used by Python:
+
+```json
+{
+  "type": "counterfactual_response",
+  "results": [
+    {
+      "choice": "rule",
+      "succeeded": true,
+      "result": "completed",
+      "position_after": [2, 1],
+      "energy_after": 39,
+      "path_length_before": null,
+      "path_length_after": null,
+      "outcome": null
+    },
+    {
+      "choice": "model",
+      "succeeded": true,
+      "result": "completed",
+      "position_after": [1, 2],
+      "energy_after": 39,
+      "path_length_before": 4,
+      "path_length_after": 3,
+      "outcome": null
+    }
+  ]
+}
+```
+
+Counterfactual results are diagnostic only. After receiving them, Python still sends and commits the rule-selected
+action for the real timeline.

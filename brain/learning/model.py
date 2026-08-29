@@ -1,12 +1,14 @@
 import torch
 from torch import nn
 
+from brain.learning.features import FEATURE_NAMES
+
 
 class ValueModel(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.network = nn.Sequential(
-            nn.Linear(13, 16),
+            nn.Linear(len(FEATURE_NAMES), 16),
             nn.ReLU(),
             nn.Linear(16, 1),
         )

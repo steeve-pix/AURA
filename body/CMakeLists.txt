@@ -2,12 +2,16 @@ add_library(aura_core
         src/agent/Agent.cpp
         src/bridge/ActionParser.cpp
         src/bridge/BrainResponseParser.cpp
+        src/bridge/Counterfactual.cpp
+        src/bridge/NavigationPreview.cpp
         src/bridge/ActionUtils.cpp
         src/bridge/ObservationSerializer.cpp
         src/navigation/Pathfinder.cpp
         src/render/TerminalRenderer.cpp
         src/sensors/LocalSensor.cpp
         src/sensors/RangeSensor.cpp
+        src/simulation/CounterfactualSimulation.cpp
+        src/simulation/SimulationSnapshot.cpp
         src/world/CellTypeUtils.cpp
         src/world/MazeGenerator.cpp
         src/world/World.cpp
