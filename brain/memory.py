@@ -1,3 +1,4 @@
+import copy
 from dataclasses import dataclass
 from typing import Optional, Sequence, Literal
 
@@ -371,8 +372,8 @@ class Memory:
             return
 
         pending["next_step_was_visited"] = (
-            tuple(next_step)
-            in pending["visited_before"]
+                tuple(next_step)
+                in pending["visited_before"]
         )
 
     def finish_pending_experience(self, observation: dict) -> Experience | None:
@@ -465,6 +466,9 @@ class Memory:
 
         self.pending_experience = None
         return experience
+
+    def clone_for_simulation(self):
+        return copy.deepcopy(self)
 
 
 MemoryStatus = Literal[

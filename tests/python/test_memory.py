@@ -1,3 +1,4 @@
+import copy
 import unittest
 
 from brain.memory import Memory
@@ -268,6 +269,17 @@ class MemoryTests(unittest.TestCase):
             memory.failed_target_count((8, 3)),
             1,
         )
+
+    def test_deepcopy_creates_independent_visit_counts(self):
+        memory = Memory()
+        memory.record_visit([5, 5])
+
+        cloned_memory = copy.deepcopy(memory)
+        cloned_memory.record_visit([5, 5])
+
+        self.assertEqual(memory.visit_count((5, 5)), 1)
+        self.assertEqual(cloned_memory.visit_count((5, 5)), 2)
+
 
 if __name__ == "__main__":
     unittest.main()
