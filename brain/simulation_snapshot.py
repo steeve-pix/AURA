@@ -1,7 +1,9 @@
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from brain.decision import decide
+from copy import deepcopy
+
+from brain.decision import commit_decision, decide, DecisionProposal
 from brain.goals import propose_goal
 from brain.learning.counterfactual import (
     build_single_counterfactual_request,
@@ -28,6 +30,7 @@ class HorizonResult:
 class ForcedBranchDecision:
     goal: str
     action: dict
+    proposal: DecisionProposal | None = None
 
 
 @dataclass
@@ -67,6 +70,7 @@ class PendingBranchStep:
     choice: str
     observation_before: dict
     action: dict
+    reward_goal: str | None = None
 
 
 @dataclass
@@ -152,14 +156,24 @@ def branch_horizon_complete(state: BranchHorizonState) -> bool:
 
 def create_comparison_branches(snapshot: BrainSimulationSnapshot, horizon: int, rule_action: dict,
                                model_action: dict, rule_goal: str = "rule",
-                               model_goal: str = "model") -> tuple[BranchHorizonState, BranchHorizonState]:
+                               model_goal: str = "model",
+                               rule_proposal: DecisionProposal | None = None,
+                               model_proposal: DecisionProposal | None = None) -> tuple[BranchHorizonState, BranchHorizonState]:
     rule_branch = create_branch(
         snapshot,
-        forced_first_decision=ForcedBranchDecision(goal=rule_goal, action=rule_action),
+        forced_first_decision=ForcedBranchDecision(
+            goal=rule_goal,
+            action=rule_action,
+            proposal=rule_proposal,
+        ),
     )
     model_branch = create_branch(
         snapshot,
-        forced_first_decision=ForcedBranchDecision(goal=model_goal, action=model_action),
+        forced_first_decision=ForcedBranchDecision(
+            goal=model_goal,
+            action=model_action,
+            proposal=model_proposal,
+        ),
     )
 
     return (
@@ -184,6 +198,8 @@ def create_horizon_comparison(
         model_action: dict,
         rule_goal: str = "rule",
         model_goal: str = "model",
+        rule_proposal: DecisionProposal | None = None,
+        model_proposal: DecisionProposal | None = None,
 ) -> HorizonComparison:
     rule_state, model_state = create_comparison_branches(
         snapshot=snapshot,
@@ -192,6 +208,8 @@ def create_horizon_comparison(
         model_action=model_action,
         rule_goal=rule_goal,
         model_goal=model_goal,
+        rule_proposal=rule_proposal,
+        model_proposal=model_proposal,
     )
     rule_state.initial_observation = initial_observation
     model_state.initial_observation = initial_observation
@@ -212,7 +230,13 @@ def consume_forced_first_decision(branch: SimulationBranch) -> ForcedBranchDecis
 
     branch.forced_first_decision_consumed = True
 
-    return branch.forced_first_decision
+    decision = branch.forced_first_decision
+    if decision is not None:
+        branch.memory.set_active_goal(decision.goal)
+        if decision.proposal is not None:
+            commit_decision(branch.memory, deepcopy(decision.proposal))
+
+    return decision
 
 
 def consume_forced_first_action(branch: SimulationBranch) -> dict | None:
@@ -316,12 +340,23 @@ def continue_branch_horizon(
 
 
 def begin_branch_step(branch: SimulationBranch, observation: dict, *, choice: str) -> tuple[PendingBranchStep, dict]:
+    forced_decision = (
+        branch.forced_first_decision
+        if not branch.forced_first_decision_consumed
+        else None
+    )
     action: dict = choose_branch_action(branch, observation)
+    reward_goal = (
+        forced_decision.goal
+        if forced_decision is not None
+        else branch.memory.active_goal
+    )
     pending_step = PendingBranchStep(
         branch=branch,
         choice=choice,
         observation_before=observation,
-        action=action
+        action=action,
+        reward_goal=reward_goal,
     )
 
     request = build_single_counterfactual_request(action, choice=choice)
@@ -357,6 +392,11 @@ def begin_next_branch_step(
     if observation is None:
         return next_horizon_request(state)
 
+    forced_decision = (
+        state.branch.forced_first_decision
+        if not state.branch.forced_first_decision_consumed
+        else None
+    )
     action = choose_branch_action(state.branch, observation)
     if action is None:
         stop_branch_horizon(state)
@@ -367,6 +407,11 @@ def begin_next_branch_step(
         choice=state.choice,
         observation_before=observation,
         action=action,
+        reward_goal=(
+            forced_decision.goal
+            if forced_decision is not None
+            else state.branch.memory.active_goal
+        ),
     )
     request = build_single_counterfactual_request(action, choice=state.choice)
     return pending_step, request
@@ -393,7 +438,7 @@ def complete_branch_step(pending_step: PendingBranchStep, response: dict) -> Com
             result,
             pending_step.observation_before,
             pending_step.branch.memory,
-            goal=pending_step.branch.memory.active_goal,
+            goal=pending_step.reward_goal,
         ),
     )
 

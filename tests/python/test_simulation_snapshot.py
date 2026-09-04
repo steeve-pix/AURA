@@ -3,6 +3,8 @@ from unittest.mock import patch
 
 from brain import simulation_snapshot
 from brain.memory import Memory
+from brain.decision import DecisionProposal
+from brain.planning import Plan, PlanStep
 from brain.simulation_snapshot import (
     HorizonResult,
     SimulationBranch,
@@ -24,6 +26,40 @@ def fake_step(branch: SimulationBranch) -> float:
 
 
 class BrainSimulationSnapshotTests(unittest.TestCase):
+    def test_forced_model_decision_commits_plan_only_to_model_branch(self):
+        real_memory = Memory()
+        model_plan = Plan(
+            goal="investigate",
+            goal_target=(3, 2),
+            steps=[PlanStep(step_type="investigate", target=(3, 2))],
+        )
+        model_action = {"action": "investigate", "target": [3, 2]}
+        comparison = simulation_snapshot.create_horizon_comparison(
+            snapshot=capture_brain_snapshot(real_memory),
+            initial_observation={},
+            horizon=2,
+            rule_goal="explore",
+            rule_action={"action": "move", "direction": "west"},
+            model_goal="investigate",
+            model_action=model_action,
+            model_proposal=DecisionProposal(
+                goal="investigate",
+                action=model_action,
+                plan=model_plan,
+            ),
+        )
+
+        chosen_action = choose_branch_action(
+            comparison.model_state.branch,
+            {},
+        )
+
+        self.assertEqual(chosen_action, model_action)
+        self.assertEqual(comparison.model_state.branch.memory.active_goal, "investigate")
+        self.assertEqual(comparison.model_state.branch.memory.active_plan, model_plan)
+        self.assertIsNone(comparison.rule_state.branch.memory.active_plan)
+        self.assertIsNone(real_memory.active_plan)
+
     def test_horizon_result_records_reward_and_completed_steps(self):
         result = HorizonResult(
             cumulative_reward=0.45,
@@ -1263,7 +1299,7 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         self.assertEqual(model_memory.step, 0)
         self.assertEqual(model_memory.visit_counts, {})
         self.assertEqual(model_memory.known_cells, {})
-        self.assertIsNone(model_memory.active_goal)
+        self.assertEqual(model_memory.active_goal, "model")
         self.assertIsNone(model_memory.active_plan)
 
 
@@ -1337,7 +1373,7 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         self.assertEqual(model_memory.step, 0)
         self.assertEqual(model_memory.visit_counts, {})
         self.assertEqual(model_memory.known_cells, {})
-        self.assertIsNone(model_memory.active_goal)
+        self.assertEqual(model_memory.active_goal, "model")
         self.assertIsNone(model_memory.active_plan)
 
         rule_pending = comparison.rule_state.pending_step
@@ -1511,6 +1547,72 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         self.assertIsNone(comparison.model_state.pending_step)
         self.assertEqual(comparison.rule_state.branch.memory.step, 0)
         self.assertEqual(comparison.model_state.branch.memory.step, 0)
+
+
+    def test_branch_step_reward_uses_forced_goal_then_active_goal(self):
+        branch = create_branch(
+            capture_brain_snapshot(Memory()),
+            forced_first_decision=simulation_snapshot.ForcedBranchDecision(
+                goal="explore",
+                action={"action": "move", "direction": "east"},
+            ),
+        )
+        branch.memory.active_goal = "recharge"
+        observation = {"position": [1, 1], "energy": 10}
+        response = {
+            "type": "counterfactual_response",
+            "results": [{
+                "choice": "rule",
+                "succeeded": True,
+                "result": "completed",
+                "position_after": [2, 1],
+                "energy_after": 9,
+                "observation_after": {"position": [2, 1], "energy": 9},
+            }],
+        }
+
+        with patch.object(
+            simulation_snapshot,
+            "counterfactual_action_reward",
+            return_value=0.0,
+        ) as reward:
+            first_pending, _ = begin_branch_step(
+                branch, observation, choice="rule",
+            )
+            first_completed = complete_branch_step(first_pending, response)
+
+            state = simulation_snapshot.BranchHorizonState(
+                branch=branch,
+                choice="rule",
+                step_limit=2,
+                completed_steps=[first_completed],
+            )
+            with patch.object(
+                simulation_snapshot,
+                "choose_rule_action_for_branch",
+                return_value={"action": "idle"},
+            ):
+                second_pending, _ = begin_next_branch_step(
+                    state,
+                    first_completed.observation_after,
+                )
+            complete_branch_step(second_pending, {
+                "type": "counterfactual_response",
+                "results": [{
+                    "choice": "rule",
+                    "succeeded": True,
+                    "result": "completed",
+                    "position_after": [2, 1],
+                    "energy_after": 9,
+                    "observation_after": {"position": [2, 1], "energy": 9},
+                }],
+            })
+
+        self.assertTrue(branch.forced_first_decision_consumed)
+        self.assertEqual(first_pending.reward_goal, "explore")
+        self.assertEqual(second_pending.reward_goal, "explore")
+        self.assertEqual(reward.call_args_list[0].kwargs["goal"], "explore")
+        self.assertEqual(reward.call_args_list[1].kwargs["goal"], "explore")
 
 
 if __name__ == "__main__":

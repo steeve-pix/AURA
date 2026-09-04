@@ -1,6 +1,7 @@
 import math
 from dataclasses import dataclass
 
+from brain.decision import DecisionProposal, create_investigation_plan
 from brain.learning.features import ValueInput, encode_value_input
 from brain.learning.inference import predict_value
 from brain.memory import Memory
@@ -10,6 +11,7 @@ from brain.memory import Memory
 class CandidateDecision:
     goal: str
     action: dict
+    proposal: DecisionProposal | None = None
 
 
 @dataclass(frozen=True)
@@ -62,6 +64,7 @@ def propose_decisions(
         *,
         rule_goal: str,
         rule_action: dict,
+        rule_proposal: DecisionProposal | None = None,
         recharge_urgent: bool,
         plan_is_committed: bool,
 ) -> list[CandidateDecision]:
@@ -69,6 +72,7 @@ def propose_decisions(
         CandidateDecision(
             goal=rule_goal,
             action=_copy_action(rule_action),
+            proposal=rule_proposal,
         )
     ]
 
@@ -116,14 +120,25 @@ def propose_decisions(
         ):
             continue
 
+        action = {
+            "action": "investigate",
+            "target": list(target),
+        }
+        plan = create_investigation_plan(
+            observation,
+            memory,
+            target,
+        )
         _append_unique(
             candidates,
             CandidateDecision(
                 goal="investigate",
-                action={
-                    "action": "investigate",
-                    "target": list(target),
-                },
+                action=action,
+                proposal=DecisionProposal(
+                    goal="investigate",
+                    action=action,
+                    plan=plan,
+                ),
             ),
         )
 
@@ -136,6 +151,7 @@ def candidate_decisions(
         *,
         rule_goal: str,
         rule_action: dict,
+        rule_proposal: DecisionProposal | None = None,
         recharge_urgent: bool,
         plan_is_committed: bool,
 ) -> list[CandidateDecision]:
@@ -144,6 +160,7 @@ def candidate_decisions(
         memory,
         rule_goal=rule_goal,
         rule_action=rule_action,
+        rule_proposal=rule_proposal,
         recharge_urgent=recharge_urgent,
         plan_is_committed=plan_is_committed,
     )

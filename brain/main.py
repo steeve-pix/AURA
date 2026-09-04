@@ -233,8 +233,10 @@ def begin_counterfactual_horizon_cycle(*, selection: CounterfactualSelection, ob
         horizon=COUNTERFACTUAL_HORIZON_STEPS,
         rule_goal=selection.rule.candidate.goal,
         rule_action=selection.rule.candidate.action,
+        rule_proposal=selection.rule.candidate.proposal,
         model_goal=selection.model.candidate.goal,
         model_action=selection.model.candidate.action,
+        model_proposal=selection.model.candidate.proposal,
     )
     requests = begin_horizon_comparison(comparison)
     if requests.rule is None or requests.model is None:
@@ -598,6 +600,7 @@ def main() -> None:
                 memory,
                 rule_goal=goal,
                 rule_action=decision,
+                rule_proposal=decision_proposal,
                 recharge_urgent=recharge_urgent_now,
                 plan_is_committed=plan_is_committed,
             )
