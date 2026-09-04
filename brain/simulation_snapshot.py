@@ -68,6 +68,25 @@ def branch_horizon_complete(state: BranchHorizonState) -> bool:
     return state.stopped_early or len(state.completed_steps) >= state.step_limit
 
 
+def create_comparison_branches(snapshot: BrainSimulationSnapshot, horizon: int, rule_action: dict,
+                               model_action: dict) -> tuple[BranchHorizonState, BranchHorizonState]:
+    rule_branch = create_branch(snapshot, forced_first_action=rule_action)
+    model_branch = create_branch(snapshot, forced_first_action=model_action)
+
+    return (
+        BranchHorizonState(
+            branch=rule_branch,
+            choice="rule",
+            step_limit=horizon,
+        ),
+        BranchHorizonState(
+            branch=model_branch,
+            choice="model",
+            step_limit=horizon,
+        ),
+    )
+
+
 def branch_horizon_result(state: BranchHorizonState) -> HorizonResult:
     return HorizonResult(
         cumulative_reward=sum(step.reward for step in state.completed_steps),
@@ -155,7 +174,7 @@ def continue_branch_horizon(
 
 
 def begin_branch_step(branch: SimulationBranch, observation: dict, *, choice: str) -> tuple[PendingBranchStep, dict]:
-    action = choose_branch_action(branch, observation)
+    action: dict = choose_branch_action(branch, observation)
     pending_step = PendingBranchStep(
         branch=branch,
         choice=choice,

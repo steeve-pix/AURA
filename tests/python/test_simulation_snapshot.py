@@ -709,5 +709,87 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         self.assertEqual([step.reward for step in state.completed_steps], [0.14, 0.19])
 
 
+    def test_create_comparison_branches_preserves_actions_and_isolates_memory(self):
+        memory = Memory()
+        battery_position = (3, 1)
+        memory.remember_battery(battery_position)
+        snapshot = capture_brain_snapshot(memory)
+
+        rule_state, model_state = simulation_snapshot.create_comparison_branches(
+            snapshot=snapshot,
+            horizon=5,
+            rule_action={"type": "move", "direction": "east"},
+            model_action={"type": "move", "direction": "west"},
+        )
+
+        self.assertEqual(rule_state.step_limit, 5)
+        self.assertEqual(model_state.step_limit, 5)
+        self.assertEqual(rule_state.branch.forced_first_action["direction"], "east")
+        self.assertEqual(model_state.branch.forced_first_action["direction"], "west")
+        self.assertIsNot(rule_state.branch.memory, model_state.branch.memory)
+        self.assertIsNot(rule_state.branch.memory, snapshot.memory)
+        self.assertIsNot(model_state.branch.memory, snapshot.memory)
+
+        rule_state.branch.memory.record_visit([2, 1])
+        rule_state.branch.memory.forget_battery(battery_position)
+
+        self.assertEqual(rule_state.branch.memory.visit_count((2, 1)), 1)
+        self.assertNotIn(battery_position, rule_state.branch.memory.batteries())
+        self.assertEqual(model_state.branch.memory.visit_count((2, 1)), 0)
+        self.assertIn(battery_position, model_state.branch.memory.batteries())
+        self.assertEqual(snapshot.memory.visit_count((2, 1)), 0)
+        self.assertIn(battery_position, snapshot.memory.batteries())
+        self.assertEqual(memory.visit_count((2, 1)), 0)
+        self.assertIn(battery_position, memory.batteries())
+
+
+    def test_comparison_branches_start_only_their_forced_first_steps(self):
+        snapshot = capture_brain_snapshot(Memory())
+        rule_action = {"action": "move", "direction": "east"}
+        model_action = {"action": "move", "direction": "west"}
+        rule_state, model_state = simulation_snapshot.create_comparison_branches(
+            snapshot=snapshot,
+            horizon=5,
+            rule_action=rule_action,
+            model_action=model_action,
+        )
+        observation = {
+            "world_id": "simulation-test",
+            "position": [1, 1],
+            "energy": 80,
+            "sensor_radius": 1,
+            "visible_cells": [{"position": [1, 1], "type": "Empty"}],
+            "nearby_objects": [],
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Empty",
+        }
+
+        rule_pending, rule_request = begin_branch_step(
+            rule_state.branch, observation, choice=rule_state.choice,
+        )
+        rule_state.pending_step = rule_pending
+        model_pending, model_request = begin_branch_step(
+            model_state.branch, observation, choice=model_state.choice,
+        )
+        model_state.pending_step = model_pending
+
+        self.assertEqual(rule_pending.action["direction"], "east")
+        self.assertEqual(model_pending.action["direction"], "west")
+        self.assertIs(rule_state.pending_step, rule_pending)
+        self.assertIs(model_state.pending_step, model_pending)
+        self.assertEqual(rule_request["candidates"], [
+            {"choice": "rule", "decision": rule_action},
+        ])
+        self.assertEqual(model_request["candidates"], [
+            {"choice": "model", "decision": model_action},
+        ])
+        self.assertTrue(rule_state.branch.forced_first_action_consumed)
+        self.assertTrue(model_state.branch.forced_first_action_consumed)
+        self.assertEqual(len(rule_state.completed_steps), 0)
+        self.assertEqual(len(model_state.completed_steps), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
