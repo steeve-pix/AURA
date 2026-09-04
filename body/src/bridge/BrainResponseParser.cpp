@@ -69,9 +69,9 @@ namespace aura::bridge {
                 });
             }
 
-            if (response.counterfactualCandidates.size() != 2) {
+            if (response.counterfactualCandidates.size() > 2 || response.counterfactualCandidates.empty()) {
                 throw std::invalid_argument(
-                    "Counterfactual requests require exactly two candidates"
+                    "Counterfactual requests require one or two candidates"
                 );
             }
 

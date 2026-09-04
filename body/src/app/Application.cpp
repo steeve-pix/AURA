@@ -18,6 +18,7 @@
 #include "bridge/Counterfactual.hpp"
 #include "bridge/NavigationPreview.hpp"
 #include "bridge/Observation.hpp"
+#include "bridge/ObservationBuilder.hpp"
 #include "bridge/ObservationSerializer.hpp"
 #include "navigation/Pathfinder.hpp"
 #include "render/GridRenderer.hpp"
@@ -203,13 +204,14 @@ namespace aura::app {
                     }
 
                     response = bridge::parseBrainResponse(responseJson);
-
                 }
 
-                if (response.type == bridge::BrainResponseType::CounterfactualRequest) {
+                bridge::CounterfactualBranchStore branchStore;
+
+                while (response.type == bridge::BrainResponseType::CounterfactualRequest) {
                     responseJson = brain_.exchange(
                         evaluateCounterfactuals(
-                            response.counterfactualCandidates
+                            response.counterfactualCandidates, observation.worldId, branchStore
                         )
                     );
 
@@ -410,20 +412,14 @@ namespace aura::app {
                 + ":ib" + std::to_string(UNKNOWN_BATTERY_PERCENT)
                 + ":bd" + std::to_string(INITIAL_BATTERY_MAXIMUM_DISTANCE)
                 + ":s" + scenario_->id();
-        const auto local =
-                sensors::LocalSensor::observe(world_, agent_);
 
-        const auto nearby =
-                rangeSensor_.observe(world_, agent_);
-        return {
-            .position = agent_.position(),
-            .energy = agent_.energy(),
-            .surroundings = local,
-            .nearby = nearby,
-            .sensor_radius = rangeSensor_.radius(),
-            .lastAction = lastAction_,
-            .worldId = worldId,
-        };
+        return bridge::buildObservation(
+            world_,
+            agent_,
+            rangeSensor_,
+            lastAction_,
+            worldId
+        );
     }
 
     void Application::executeAction(const bridge::Action &action) {
@@ -444,26 +440,30 @@ namespace aura::app {
     }
 
     std::string Application::evaluateCounterfactuals(
-        const std::vector<bridge::CounterfactualCandidate> &candidates
+        const std::vector<bridge::CounterfactualCandidate> &candidates, const std::string &worldId, bridge::
+        CounterfactualBranchStore &branchStore
     ) {
         std::vector<bridge::CounterfactualEvaluation> evaluations;
         evaluations.reserve(candidates.size());
 
         const auto investigationOutcome =
-            investigationOutcomes_.empty()
-                ? world::CellType::Empty
-                : investigationOutcomes_.back();
+                investigationOutcomes_.empty()
+                    ? world::CellType::Empty
+                    : investigationOutcomes_.back();
 
         for (const auto &candidate: candidates) {
-            evaluations.push_back({
-                candidate.choice,
-                simulation::simulateAction(
-                    world_,
-                    agent_,
+            auto &branch =
+                    branchStore.branchFor(candidate.choice, world_, agent_);
+            evaluations.push_back(
+                bridge::evaluateBranchAction(
+                    candidate.choice,
+                    branch,
                     candidate.action,
+                    rangeSensor_,
+                    worldId,
                     investigationOutcome
                 )
-            });
+            );
         }
 
         return bridge::serializedCounterfactualResponse(evaluations);

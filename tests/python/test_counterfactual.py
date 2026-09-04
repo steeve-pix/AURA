@@ -5,7 +5,7 @@ from brain.learning.counterfactual import (
     CounterfactualSelection,
     build_counterfactual_request,
     counterfactual_results,
-    counterfactual_reward,
+    counterfactual_reward, build_single_counterfactual_request, single_counterfactual_result,
 )
 from brain.learning.features import ValueInput
 from brain.memory import Memory
@@ -88,6 +88,76 @@ class CounterfactualTests(unittest.TestCase):
                 "type": "counterfactual_response",
                 "results": [{"choice": "rule"}],
             })
+
+    def test_single_request_contains_one_labeled_action(self):
+        action = {
+            "action": "move",
+            "direction": "east",
+        }
+
+        request = build_single_counterfactual_request(action, choice="rule")
+
+        self.assertEqual(request["type"], "counterfactual_request")
+        self.assertEqual(
+            request["candidates"],
+            [
+                {
+                    "choice": "rule",
+                    "decision": action,
+                },
+            ],
+        )
+
+    def test_single_request_preserves_complete_action(self):
+        action = {
+            "action": "move_to",
+            "target": [4, 1],
+
+        }
+        request = build_single_counterfactual_request(action, choice="rule")
+
+        self.assertEqual(
+            request["candidates"][0]["decision"],
+            action,
+        )
+
+    def test_single_result_returns_matching_labeled_result(self):
+        expected = {
+            "choice": "rule",
+            "succeeded": True,
+            "result": "completed",
+            "position_after": [2, 1],
+            "energy_after": 9,
+            "observation_after": {
+                "world_id": "simulation-test",
+                "position": [2, 1],
+                "energy": 9,
+            }
+        }
+
+        result = single_counterfactual_result(
+            {
+                "type": "counterfactual_response",
+                "results": [expected],
+            },
+            choice="rule",
+        )
+
+        self.assertEqual(result, expected)
+
+    def test_single_result_rejects_wrong_choice(self):
+        with self.assertRaises(ValueError):
+            single_counterfactual_result(
+                {
+                    "type": "counterfactual_response",
+                    "results": [
+                        {
+                            "choice": "model",
+                        },
+                    ],
+                },
+                choice="rule",
+            )
 
 
 if __name__ == "__main__":

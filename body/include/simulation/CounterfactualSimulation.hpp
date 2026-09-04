@@ -19,11 +19,24 @@ namespace aura::simulation {
         std::optional<world::CellType> outcome;
     };
 
+    struct PhysicalSimulationBranch {
+        world::World world;
+        agent::Agent agent;
+    };
+
+    [[nodiscard]] PhysicalSimulationBranch createPhysicalSimulationBranch(
+        const world::World &world, const agent::Agent &agent);
+
+    [[nodiscard]] CounterfactualResult simulateBranchAction(PhysicalSimulationBranch &branch,
+                                                            const bridge::Action &action,
+                                                            world::CellType investigationOutcome =
+                                                                    world::CellType::Empty);
+
     /// Executes one action against a temporary physical branch and restores state.
     [[nodiscard]] CounterfactualResult simulateAction(
-            world::World &world,
-            agent::Agent &agent,
-            const bridge::Action &action,
-            world::CellType investigationOutcome = world::CellType::Empty
+        world::World &world,
+        agent::Agent &agent,
+        const bridge::Action &action,
+        world::CellType investigationOutcome = world::CellType::Empty
     );
 }

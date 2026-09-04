@@ -12,14 +12,14 @@ namespace aura::simulation {
 
     /// Captures independent copies of the body's current physical state.
     [[nodiscard]] SimulationSnapshot captureSimulationSnapshot(
-            const world::World &world,
-            const agent::Agent &agent
+        const world::World &world,
+        const agent::Agent &agent
     );
 
     /// Replaces the body's current physical state with a previously captured state.
     void restoreSimulationSnapshot(
-            world::World &world,
-            agent::Agent &agent,
-            const SimulationSnapshot &snapshot
+        world::World &world,
+        agent::Agent &agent,
+        const SimulationSnapshot &snapshot
     );
 }
