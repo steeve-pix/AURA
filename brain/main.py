@@ -17,13 +17,6 @@ from brain.decision import (
 from brain.experience import Experience
 from brain.experience_store import append_experience, experience_path_for_world
 from brain.goals import goal_scores, propose_goal
-from brain.learning.disagreement_analysis import DisagreementAnalysis
-from brain.learning.counterfactual import (
-    CounterfactualSelection,
-    build_counterfactual_request,
-    counterfactual_results,
-    counterfactual_reward,
-)
 from brain.learning.candidates import (
     decision_key,
     rule_scored_candidate,
@@ -31,6 +24,8 @@ from brain.learning.candidates import (
     select_model_candidate, CandidateDecision, format_decision_proposals,
     propose_decisions,
 )
+from brain.learning.counterfactual import CounterfactualSelection
+from brain.learning.disagreement_analysis import DisagreementAnalysis
 from brain.learning.model_io import load_model
 from brain.learning.reporting import LiveValueReporter
 from brain.memory_store import load_memory, memory_path_for_world, save_memory
@@ -42,6 +37,16 @@ from brain.navigation_safety import navigation_decision_is_energy_safe
 from brain.perception import update_memory_from_observation
 from brain.plan_supervisor import supervise_goal
 from brain.planning import plan_debug, update_plan_from_observation
+from brain.simulation_snapshot import (
+    begin_horizon_comparison,
+    capture_brain_snapshot,
+    create_horizon_comparison,
+    handle_model_horizon_response,
+    handle_rule_horizon_response,
+    horizon_comparison_result,
+)
+
+COUNTERFACTUAL_HORIZON_STEPS = 2
 
 PLAN_FAILED_REWARD = -0.40
 REPLAN_REWARD = 0.05
@@ -219,6 +224,32 @@ def score_and_report_value_candidates(
     )
 
 
+def begin_counterfactual_horizon_cycle(*, selection: CounterfactualSelection, observation: dict, decision: dict,
+                                       decision_proposal, memory) -> tuple[dict, dict]:
+    snapshot = capture_brain_snapshot(memory)
+    comparison = create_horizon_comparison(
+        snapshot=snapshot,
+        initial_observation=observation,
+        horizon=COUNTERFACTUAL_HORIZON_STEPS,
+        rule_goal=selection.rule.candidate.goal,
+        rule_action=selection.rule.candidate.action,
+        model_goal=selection.model.candidate.goal,
+        model_action=selection.model.candidate.action,
+    )
+    requests = begin_horizon_comparison(comparison)
+    if requests.rule is None or requests.model is None:
+        raise ValueError("Counterfactual comparison requires both initial requests.")
+
+    cycle = {
+        "comparison": comparison,
+        "active_choice": "rule",
+        "model_request": requests.model,
+        "decision": decision,
+        "decision_proposal": decision_proposal,
+    }
+    return cycle, requests.rule
+
+
 def main() -> None:
     memory_directory = Path("data")
 
@@ -251,23 +282,29 @@ def main() -> None:
                     "Received an unexpected counterfactual response."
                 )
 
-            results = counterfactual_results(observation)
-            selection = pending_counterfactual_cycle["selection"]
-            cached_observation = pending_counterfactual_cycle[
-                "observation"
-            ]
-            rule_reward = counterfactual_reward(
-                selection.rule,
-                results["rule"],
-                cached_observation,
-                memory,
-            )
-            model_reward = counterfactual_reward(
-                selection.model,
-                results["model"],
-                cached_observation,
-                memory,
-            )
+            comparison = pending_counterfactual_cycle["comparison"]
+            active_choice = pending_counterfactual_cycle["active_choice"]
+
+            if active_choice == "rule":
+                next_request = handle_rule_horizon_response(comparison, observation)
+                if next_request is not None:
+                    print(json.dumps(next_request), flush=True)
+                    continue
+
+                pending_counterfactual_cycle["active_choice"] = "model"
+                print(json.dumps(pending_counterfactual_cycle["model_request"]), flush=True)
+                continue
+            elif active_choice == "model":
+                next_request = handle_model_horizon_response(comparison, observation)
+                if next_request is not None:
+                    print(json.dumps(next_request), flush=True)
+                    continue
+            else:
+                raise ValueError(f"Unknown counterfactual active choice: {active_choice!r}")
+
+            comparison_result = horizon_comparison_result(comparison)
+            rule_reward = comparison_result.rule.cumulative_reward
+            model_reward = comparison_result.model.cumulative_reward
 
             record = memory.pending_disagreement
 
@@ -414,17 +451,13 @@ def main() -> None:
             )
 
             if counterfactual_selection is not None:
-                request = build_counterfactual_request(
-                    counterfactual_selection
+                pending_counterfactual_cycle, request = begin_counterfactual_horizon_cycle(
+                    selection=counterfactual_selection,
+                    observation=cached_observation,
+                    decision=pending_preview_cycle["decision"],
+                    decision_proposal=pending_preview_cycle["decision_proposal"],
+                    memory=memory,
                 )
-                pending_counterfactual_cycle = {
-                    "selection": counterfactual_selection,
-                    "observation": cached_observation,
-                    "decision": pending_preview_cycle["decision"],
-                    "decision_proposal": pending_preview_cycle[
-                        "decision_proposal"
-                    ],
-                }
                 pending_preview_cycle = None
                 print(json.dumps(request), flush=True)
                 continue
@@ -640,20 +673,14 @@ def main() -> None:
             )
 
             if counterfactual_selection is not None:
-                pending_counterfactual_cycle = {
-                    "selection": counterfactual_selection,
-                    "observation": observation,
-                    "decision": decision,
-                    "decision_proposal": decision_proposal,
-                }
-                print(
-                    json.dumps(
-                        build_counterfactual_request(
-                            counterfactual_selection
-                        )
-                    ),
-                    flush=True,
+                pending_counterfactual_cycle, request = begin_counterfactual_horizon_cycle(
+                    selection=counterfactual_selection,
+                    observation=observation,
+                    decision=decision,
+                    decision_proposal=decision_proposal,
+                    memory=memory,
                 )
+                print(json.dumps(request), flush=True)
                 continue
 
             if decision_proposal is not None:

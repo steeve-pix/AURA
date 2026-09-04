@@ -1125,15 +1125,14 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
             "south": "Wall",
             "west": "Empty",
         }
-        rule_action = {"action": "move", "direction": "east"}
-        model_action = {"action": "move", "direction": "west"}
-
         comparison = simulation_snapshot.create_horizon_comparison(
             snapshot=snapshot,
             initial_observation=observation,
             horizon=5,
-            rule_action=rule_action,
-            model_action=model_action,
+            rule_goal="investigate",
+            rule_action={"action": "move_to", "target": [11, 9]},
+            model_goal="explore",
+            model_action={"action": "move", "direction": "east"},
         )
 
         self.assertEqual(comparison.rule_state.step_limit, 5)
@@ -1144,8 +1143,16 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
             comparison.model_state.initial_observation,
         )
         self.assertIsNot(comparison.rule_state.branch.memory, comparison.model_state.branch.memory)
-        self.assertEqual(comparison.rule_state.branch.forced_first_action, rule_action)
-        self.assertEqual(comparison.model_state.branch.forced_first_action, model_action)
+        self.assertEqual(comparison.rule_state.branch.forced_first_decision.goal, "investigate")
+        self.assertEqual(
+            comparison.rule_state.branch.forced_first_decision.action,
+            {"action": "move_to", "target": [11, 9]},
+        )
+        self.assertEqual(comparison.model_state.branch.forced_first_decision.goal, "explore")
+        self.assertEqual(
+            comparison.model_state.branch.forced_first_decision.action,
+            {"action": "move", "direction": "east"},
+        )
 
 
     def test_begin_horizon_comparison_starts_both_forced_actions(self):
@@ -1176,12 +1183,12 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
 
         self.assertIsNotNone(requests.rule)
         self.assertIsNotNone(requests.model)
-        self.assertEqual(requests.rule.choice, "rule")
-        self.assertEqual(requests.model.choice, "model")
-        self.assertIs(requests.rule.branch, comparison.rule_state.branch)
-        self.assertIs(requests.model.branch, comparison.model_state.branch)
-        self.assertEqual(requests.rule.action, rule_action)
-        self.assertEqual(requests.model.action, model_action)
+        self.assertEqual(comparison.rule_state.pending_step.choice, "rule")
+        self.assertEqual(comparison.model_state.pending_step.choice, "model")
+        self.assertIs(comparison.rule_state.pending_step.branch, comparison.rule_state.branch)
+        self.assertIs(comparison.model_state.pending_step.branch, comparison.model_state.branch)
+        self.assertEqual(comparison.rule_state.pending_step.action, rule_action)
+        self.assertEqual(comparison.model_state.pending_step.action, model_action)
         self.assertEqual(len(comparison.rule_state.completed_steps), 0)
         self.assertEqual(len(comparison.model_state.completed_steps), 0)
 
@@ -1207,9 +1214,10 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
             model_action={"action": "move", "direction": "west"},
         )
         requests = simulation_snapshot.begin_horizon_comparison(comparison)
+        original_rule_pending = comparison.rule_state.pending_step
         model_pending = comparison.model_state.pending_step
         model_memory = comparison.model_state.branch.memory
-        self.assertIs(model_pending, requests.model)
+        self.assertIsNotNone(model_pending)
         self.assertTrue(comparison.model_state.branch.forced_first_action_consumed)
 
         rule_observation = {
@@ -1234,13 +1242,13 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         }
 
         rule_next = simulation_snapshot.handle_rule_horizon_response(
-            comparison, requests.rule, fake_rule_response,
+            comparison, fake_rule_response,
         )
 
         self.assertEqual(len(comparison.rule_state.completed_steps), 1)
         self.assertIsNotNone(rule_next)
         self.assertIsNotNone(comparison.rule_state.pending_step)
-        self.assertIsNot(comparison.rule_state.pending_step, requests.rule)
+        self.assertIsNot(comparison.rule_state.pending_step, original_rule_pending)
         self.assertIs(comparison.rule_state.pending_step.observation_before, rule_observation)
         self.assertEqual(comparison.rule_state.branch.memory.step, 1)
 
@@ -1280,9 +1288,10 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
             model_action={"action": "move", "direction": "west"},
         )
         requests = simulation_snapshot.begin_horizon_comparison(comparison)
+        original_rule_pending = comparison.rule_state.pending_step
         model_pending = comparison.model_state.pending_step
         model_memory = comparison.model_state.branch.memory
-        self.assertIs(model_pending, requests.model)
+        self.assertIsNotNone(model_pending)
         self.assertTrue(comparison.model_state.branch.forced_first_action_consumed)
 
         rule_observation = {
@@ -1307,13 +1316,13 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         }
 
         rule_next = simulation_snapshot.handle_rule_horizon_response(
-            comparison, requests.rule, fake_rule_response,
+            comparison, fake_rule_response,
         )
 
         self.assertEqual(len(comparison.rule_state.completed_steps), 1)
         self.assertIsNotNone(rule_next)
         self.assertIsNotNone(comparison.rule_state.pending_step)
-        self.assertIsNot(comparison.rule_state.pending_step, requests.rule)
+        self.assertIsNot(comparison.rule_state.pending_step, original_rule_pending)
         self.assertIs(comparison.rule_state.pending_step.observation_before, rule_observation)
         self.assertEqual(comparison.rule_state.branch.memory.step, 1)
 
@@ -1356,7 +1365,7 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         }
 
         model_next = simulation_snapshot.handle_model_horizon_response(
-            comparison, requests.model, fake_model_response,
+            comparison, fake_model_response,
         )
 
         self.assertEqual(len(comparison.rule_state.completed_steps), 1)
@@ -1383,6 +1392,125 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         self.assertEqual(model_memory.step, 1)
         self.assertEqual(model_memory.visit_counts, {(4, 5): 1})
         self.assertEqual(model_memory.known_cells, {(4, 5): "Empty"})
+
+
+    def test_begin_horizon_comparison_returns_bridge_requests(self):
+        snapshot = capture_brain_snapshot(Memory())
+        observation = {
+            "world_id": "simulation-test",
+            "position": [5, 5],
+            "energy": 100,
+            "sensor_radius": 1,
+            "visible_cells": [{"position": [5, 5], "type": "Empty"}],
+            "nearby_objects": [],
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Empty",
+        }
+        rule_action = {"action": "move", "direction": "east"}
+        model_action = {"action": "move", "direction": "west"}
+        comparison = simulation_snapshot.create_horizon_comparison(
+            snapshot=snapshot,
+            initial_observation=observation,
+            horizon=5,
+            rule_action=rule_action,
+            model_action=model_action,
+        )
+
+        requests = simulation_snapshot.begin_horizon_comparison(comparison)
+
+        self.assertEqual(requests.rule, {
+            "type": "counterfactual_request",
+            "candidates": [{"choice": "rule", "decision": rule_action}],
+        })
+        self.assertEqual(requests.model, {
+            "type": "counterfactual_request",
+            "candidates": [{"choice": "model", "decision": model_action}],
+        })
+        self.assertIsNotNone(comparison.rule_state.pending_step)
+        self.assertIsNotNone(comparison.model_state.pending_step)
+
+
+    def test_horizon_comparison_is_incomplete_until_both_branches_finish(self):
+        comparison = simulation_snapshot.create_horizon_comparison(
+            snapshot=capture_brain_snapshot(Memory()),
+            initial_observation={},
+            horizon=1,
+            rule_action={"action": "move", "direction": "east"},
+            model_action={"action": "move", "direction": "west"},
+        )
+        self.assertFalse(simulation_snapshot.horizon_comparison_complete(comparison))
+        with self.assertRaises(ValueError):
+            simulation_snapshot.horizon_comparison_result(comparison)
+
+        for state in (comparison.rule_state, comparison.model_state):
+            state.completed_steps.append(simulation_snapshot.CompletedBranchStep(
+                branch=state.branch,
+                choice=state.choice,
+                observation_before={},
+                action=state.branch.forced_first_action,
+                result={},
+                observation_after={},
+                reward=0.19,
+            ))
+            if state is comparison.rule_state:
+                self.assertFalse(simulation_snapshot.horizon_comparison_complete(comparison))
+                with self.assertRaises(ValueError):
+                    simulation_snapshot.horizon_comparison_result(comparison)
+
+        self.assertTrue(simulation_snapshot.horizon_comparison_complete(comparison))
+
+        # A finished MODEL branch alone must not allow a result either.
+        comparison.rule_state.completed_steps.clear()
+        self.assertFalse(simulation_snapshot.horizon_comparison_complete(comparison))
+        with self.assertRaises(ValueError):
+            simulation_snapshot.horizon_comparison_result(comparison)
+
+    def test_horizon_comparison_result_returns_both_reward_totals(self):
+        comparison = simulation_snapshot.create_horizon_comparison(
+            snapshot=capture_brain_snapshot(Memory()),
+            initial_observation={},
+            horizon=3,
+            rule_action={"action": "move", "direction": "east"},
+            model_action={"action": "move", "direction": "west"},
+        )
+        for state, rewards in (
+            (comparison.rule_state, [0.14, 0.19, -0.25]),
+            (comparison.model_state, [0.19, 0.09]),
+        ):
+            state.completed_steps.extend(
+                simulation_snapshot.CompletedBranchStep(
+                    branch=state.branch,
+                    choice=state.choice,
+                    observation_before={},
+                    action={"action": "idle"},
+                    result={},
+                    observation_after={},
+                    reward=reward,
+                )
+                for reward in rewards
+            )
+        simulation_snapshot.stop_branch_horizon(comparison.model_state)
+        rule_steps = tuple(comparison.rule_state.completed_steps)
+        model_steps = tuple(comparison.model_state.completed_steps)
+
+        result = simulation_snapshot.horizon_comparison_result(comparison)
+
+        self.assertEqual(result.rule.steps_completed, 3)
+        self.assertEqual(result.model.steps_completed, 2)
+        self.assertAlmostEqual(result.rule.cumulative_reward, 0.08)
+        self.assertAlmostEqual(result.model.cumulative_reward, 0.28)
+        self.assertEqual(tuple(comparison.rule_state.completed_steps), rule_steps)
+        self.assertEqual(tuple(comparison.model_state.completed_steps), model_steps)
+        self.assertEqual([step.reward for step in rule_steps], [0.14, 0.19, -0.25])
+        self.assertEqual([step.reward for step in model_steps], [0.19, 0.09])
+        self.assertFalse(comparison.rule_state.stopped_early)
+        self.assertTrue(comparison.model_state.stopped_early)
+        self.assertIsNone(comparison.rule_state.pending_step)
+        self.assertIsNone(comparison.model_state.pending_step)
+        self.assertEqual(comparison.rule_state.branch.memory.step, 0)
+        self.assertEqual(comparison.model_state.branch.memory.step, 0)
 
 
 if __name__ == "__main__":

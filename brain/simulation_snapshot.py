@@ -24,11 +24,30 @@ class HorizonResult:
     steps_completed: int
 
 
+@dataclass(frozen=True)
+class ForcedBranchDecision:
+    goal: str
+    action: dict
+
+
 @dataclass
 class SimulationBranch:
     memory: Memory
-    forced_first_action: dict | None = None
-    forced_first_action_consumed: bool = False
+    forced_first_decision: ForcedBranchDecision | None = None
+    forced_first_decision_consumed: bool = False
+
+    @property
+    def forced_first_action(self) -> dict | None:
+        """Compatibility view while horizon code migrates to forced decisions."""
+        if self.forced_first_decision is None:
+            return None
+
+        return self.forced_first_decision.action
+
+    @property
+    def forced_first_action_consumed(self) -> bool:
+        """Compatibility view while horizon code migrates to forced decisions."""
+        return self.forced_first_decision_consumed
 
 
 @dataclass
@@ -69,41 +88,57 @@ class HorizonComparison:
 
 @dataclass
 class HorizonComparisonRequests:
-    rule: PendingBranchStep | None
-    model: PendingBranchStep | None
+    rule: dict | None
+    model: dict | None
+
+
+@dataclass(frozen=True)
+class HorizonComparisonResult:
+    rule: HorizonResult
+    model: HorizonResult
+
+
+def horizon_comparison_complete(comparison: HorizonComparison) -> bool:
+    return (
+            branch_horizon_complete(comparison.rule_state)
+            and branch_horizon_complete(comparison.model_state)
+    )
+
+
+def horizon_comparison_result(comparison: HorizonComparison) -> HorizonComparisonResult:
+    if not horizon_comparison_complete(comparison):
+        raise ValueError("Both branch horizons must be complete before obtaining comparison results.")
+
+    return HorizonComparisonResult(
+        rule=branch_horizon_result(comparison.rule_state),
+        model=branch_horizon_result(comparison.model_state),
+    )
 
 
 def begin_horizon_comparison(comparison: HorizonComparison) -> HorizonComparisonRequests:
     rule_next = next_horizon_request(comparison.rule_state)
     model_next = next_horizon_request(comparison.model_state)
 
-    rule_pending = None if rule_next is None else rule_next[0]
-    model_pending = None if model_next is None else model_next[0]
+    rule_request = None if rule_next is None else rule_next[1]
+    model_request = None if model_next is None else model_next[1]
 
     return HorizonComparisonRequests(
-        rule=rule_pending,
-        model=model_pending,
+        rule=rule_request,
+        model=model_request,
     )
+
 
 def handle_rule_horizon_response(
         comparison: HorizonComparison,
-        pending: PendingBranchStep,
         response: dict,
 ) -> dict | None:
-    if pending is not comparison.rule_state.pending_step:
-        raise ValueError("Response does not match the pending RULE horizon step.")
-
     return handle_horizon_response(comparison.rule_state, response)
 
 
 def handle_model_horizon_response(
         comparison: HorizonComparison,
-        pending: PendingBranchStep,
         response: dict,
 ) -> dict | None:
-    if pending is not comparison.model_state.pending_step:
-        raise ValueError("Response does not match the pending MODEL horizon step.")
-
     return handle_horizon_response(comparison.model_state, response)
 
 
@@ -116,9 +151,16 @@ def branch_horizon_complete(state: BranchHorizonState) -> bool:
 
 
 def create_comparison_branches(snapshot: BrainSimulationSnapshot, horizon: int, rule_action: dict,
-                               model_action: dict) -> tuple[BranchHorizonState, BranchHorizonState]:
-    rule_branch = create_branch(snapshot, forced_first_action=rule_action)
-    model_branch = create_branch(snapshot, forced_first_action=model_action)
+                               model_action: dict, rule_goal: str = "rule",
+                               model_goal: str = "model") -> tuple[BranchHorizonState, BranchHorizonState]:
+    rule_branch = create_branch(
+        snapshot,
+        forced_first_decision=ForcedBranchDecision(goal=rule_goal, action=rule_action),
+    )
+    model_branch = create_branch(
+        snapshot,
+        forced_first_decision=ForcedBranchDecision(goal=model_goal, action=model_action),
+    )
 
     return (
         BranchHorizonState(
@@ -140,12 +182,16 @@ def create_horizon_comparison(
         horizon: int,
         rule_action: dict,
         model_action: dict,
+        rule_goal: str = "rule",
+        model_goal: str = "model",
 ) -> HorizonComparison:
     rule_state, model_state = create_comparison_branches(
         snapshot=snapshot,
         horizon=horizon,
         rule_action=rule_action,
         model_action=model_action,
+        rule_goal=rule_goal,
+        model_goal=model_goal,
     )
     rule_state.initial_observation = initial_observation
     model_state.initial_observation = initial_observation
@@ -160,13 +206,20 @@ def branch_horizon_result(state: BranchHorizonState) -> HorizonResult:
     )
 
 
-def consume_forced_first_action(branch: SimulationBranch) -> dict | None:
-    if branch.forced_first_action_consumed:
+def consume_forced_first_decision(branch: SimulationBranch) -> ForcedBranchDecision | None:
+    if branch.forced_first_decision_consumed:
         return None
 
-    branch.forced_first_action_consumed = True
+    branch.forced_first_decision_consumed = True
 
-    return branch.forced_first_action
+    return branch.forced_first_decision
+
+
+def consume_forced_first_action(branch: SimulationBranch) -> dict | None:
+    """Return only the action for callers not yet using the forced goal."""
+    decision = consume_forced_first_decision(branch)
+
+    return None if decision is None else decision.action
 
 
 def choose_rule_action_for_branch(branch: SimulationBranch, observation: dict) -> dict | None:
@@ -186,10 +239,24 @@ def choose_branch_action(branch: SimulationBranch, observation: dict) -> dict | 
     return choose_rule_action_for_branch(branch, observation)
 
 
-def create_branch(snapshot: BrainSimulationSnapshot, forced_first_action: dict | None = None) -> SimulationBranch:
+def create_branch(
+        snapshot: BrainSimulationSnapshot,
+        forced_first_action: dict | None = None,
+        *,
+        forced_first_decision: ForcedBranchDecision | None = None,
+) -> SimulationBranch:
+    if forced_first_action is not None and forced_first_decision is not None:
+        raise ValueError("Provide either a forced first action or decision, not both.")
+
+    if forced_first_action is not None:
+        forced_first_decision = ForcedBranchDecision(
+            goal="unknown",
+            action=forced_first_action,
+        )
+
     return SimulationBranch(
         memory=restore_brain_snapshot(snapshot),
-        forced_first_action=forced_first_action
+        forced_first_decision=forced_first_decision,
     )
 
 
