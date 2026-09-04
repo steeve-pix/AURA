@@ -61,6 +61,52 @@ class BranchHorizonState:
     initial_observation: dict | None = None
 
 
+@dataclass
+class HorizonComparison:
+    rule_state: BranchHorizonState
+    model_state: BranchHorizonState
+
+
+@dataclass
+class HorizonComparisonRequests:
+    rule: PendingBranchStep | None
+    model: PendingBranchStep | None
+
+
+def begin_horizon_comparison(comparison: HorizonComparison) -> HorizonComparisonRequests:
+    rule_next = next_horizon_request(comparison.rule_state)
+    model_next = next_horizon_request(comparison.model_state)
+
+    rule_pending = None if rule_next is None else rule_next[0]
+    model_pending = None if model_next is None else model_next[0]
+
+    return HorizonComparisonRequests(
+        rule=rule_pending,
+        model=model_pending,
+    )
+
+def handle_rule_horizon_response(
+        comparison: HorizonComparison,
+        pending: PendingBranchStep,
+        response: dict,
+) -> dict | None:
+    if pending is not comparison.rule_state.pending_step:
+        raise ValueError("Response does not match the pending RULE horizon step.")
+
+    return handle_horizon_response(comparison.rule_state, response)
+
+
+def handle_model_horizon_response(
+        comparison: HorizonComparison,
+        pending: PendingBranchStep,
+        response: dict,
+) -> dict | None:
+    if pending is not comparison.model_state.pending_step:
+        raise ValueError("Response does not match the pending MODEL horizon step.")
+
+    return handle_horizon_response(comparison.model_state, response)
+
+
 def stop_branch_horizon(state: BranchHorizonState) -> None:
     state.stopped_early = True
 
@@ -86,6 +132,25 @@ def create_comparison_branches(snapshot: BrainSimulationSnapshot, horizon: int, 
             step_limit=horizon,
         ),
     )
+
+
+def create_horizon_comparison(
+        snapshot: BrainSimulationSnapshot,
+        initial_observation: dict,
+        horizon: int,
+        rule_action: dict,
+        model_action: dict,
+) -> HorizonComparison:
+    rule_state, model_state = create_comparison_branches(
+        snapshot=snapshot,
+        horizon=horizon,
+        rule_action=rule_action,
+        model_action=model_action,
+    )
+    rule_state.initial_observation = initial_observation
+    model_state.initial_observation = initial_observation
+
+    return HorizonComparison(rule_state=rule_state, model_state=model_state)
 
 
 def branch_horizon_result(state: BranchHorizonState) -> HorizonResult:
@@ -238,6 +303,7 @@ def begin_next_branch_step(
     )
     request = build_single_counterfactual_request(action, choice=state.choice)
     return pending_step, request
+
 
 def complete_branch_step(pending_step: PendingBranchStep, response: dict) -> CompletedBranchStep:
     result = single_counterfactual_result(response, choice=pending_step.choice)

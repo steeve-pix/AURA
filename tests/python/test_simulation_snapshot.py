@@ -1111,5 +1111,279 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         self.assertAlmostEqual(result.cumulative_reward, sum(expected_rewards))
 
 
+    def test_create_horizon_comparison_initializes_independent_branches(self):
+        snapshot = capture_brain_snapshot(Memory())
+        observation = {
+            "world_id": "simulation-test",
+            "position": [5, 5],
+            "energy": 100,
+            "sensor_radius": 1,
+            "visible_cells": [{"position": [5, 5], "type": "Empty"}],
+            "nearby_objects": [],
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Empty",
+        }
+        rule_action = {"action": "move", "direction": "east"}
+        model_action = {"action": "move", "direction": "west"}
+
+        comparison = simulation_snapshot.create_horizon_comparison(
+            snapshot=snapshot,
+            initial_observation=observation,
+            horizon=5,
+            rule_action=rule_action,
+            model_action=model_action,
+        )
+
+        self.assertEqual(comparison.rule_state.step_limit, 5)
+        self.assertEqual(comparison.model_state.step_limit, 5)
+        self.assertEqual(comparison.rule_state.initial_observation, observation)
+        self.assertEqual(
+            comparison.rule_state.initial_observation,
+            comparison.model_state.initial_observation,
+        )
+        self.assertIsNot(comparison.rule_state.branch.memory, comparison.model_state.branch.memory)
+        self.assertEqual(comparison.rule_state.branch.forced_first_action, rule_action)
+        self.assertEqual(comparison.model_state.branch.forced_first_action, model_action)
+
+
+    def test_begin_horizon_comparison_starts_both_forced_actions(self):
+        snapshot = capture_brain_snapshot(Memory())
+        observation = {
+            "world_id": "simulation-test",
+            "position": [5, 5],
+            "energy": 100,
+            "sensor_radius": 1,
+            "visible_cells": [{"position": [5, 5], "type": "Empty"}],
+            "nearby_objects": [],
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Empty",
+        }
+        rule_action = {"action": "move", "direction": "east"}
+        model_action = {"action": "move", "direction": "west"}
+        comparison = simulation_snapshot.create_horizon_comparison(
+            snapshot=snapshot,
+            initial_observation=observation,
+            horizon=5,
+            rule_action=rule_action,
+            model_action=model_action,
+        )
+
+        requests = simulation_snapshot.begin_horizon_comparison(comparison)
+
+        self.assertIsNotNone(requests.rule)
+        self.assertIsNotNone(requests.model)
+        self.assertEqual(requests.rule.choice, "rule")
+        self.assertEqual(requests.model.choice, "model")
+        self.assertIs(requests.rule.branch, comparison.rule_state.branch)
+        self.assertIs(requests.model.branch, comparison.model_state.branch)
+        self.assertEqual(requests.rule.action, rule_action)
+        self.assertEqual(requests.model.action, model_action)
+        self.assertEqual(len(comparison.rule_state.completed_steps), 0)
+        self.assertEqual(len(comparison.model_state.completed_steps), 0)
+
+
+    def test_rule_horizon_response_leaves_model_step_outstanding(self):
+        observation = {
+            "world_id": "simulation-test",
+            "position": [5, 5],
+            "energy": 100,
+            "sensor_radius": 1,
+            "visible_cells": [{"position": [5, 5], "type": "Empty"}],
+            "nearby_objects": [],
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Empty",
+        }
+        comparison = simulation_snapshot.create_horizon_comparison(
+            snapshot=capture_brain_snapshot(Memory()),
+            initial_observation=observation,
+            horizon=5,
+            rule_action={"action": "move", "direction": "east"},
+            model_action={"action": "move", "direction": "west"},
+        )
+        requests = simulation_snapshot.begin_horizon_comparison(comparison)
+        model_pending = comparison.model_state.pending_step
+        model_memory = comparison.model_state.branch.memory
+        self.assertIs(model_pending, requests.model)
+        self.assertTrue(comparison.model_state.branch.forced_first_action_consumed)
+
+        rule_observation = {
+            **observation,
+            "position": [6, 5],
+            "energy": 99,
+            "visible_cells": [{"position": [6, 5], "type": "Empty"}],
+            "east": "Wall",
+            "west": "Wall",
+            "last_action": {"type": "move", "succeeded": True},
+        }
+        fake_rule_response = {
+            "type": "counterfactual_response",
+            "results": [{
+                "choice": "rule",
+                "result": "completed",
+                "succeeded": True,
+                "position_after": [6, 5],
+                "energy_after": 99,
+                "observation_after": rule_observation,
+            }],
+        }
+
+        rule_next = simulation_snapshot.handle_rule_horizon_response(
+            comparison, requests.rule, fake_rule_response,
+        )
+
+        self.assertEqual(len(comparison.rule_state.completed_steps), 1)
+        self.assertIsNotNone(rule_next)
+        self.assertIsNotNone(comparison.rule_state.pending_step)
+        self.assertIsNot(comparison.rule_state.pending_step, requests.rule)
+        self.assertIs(comparison.rule_state.pending_step.observation_before, rule_observation)
+        self.assertEqual(comparison.rule_state.branch.memory.step, 1)
+
+        self.assertEqual(len(comparison.model_state.completed_steps), 0)
+        self.assertIs(comparison.model_state.pending_step, model_pending)
+        self.assertIs(model_pending.observation_before, observation)
+        self.assertEqual(model_pending.action, {"action": "move", "direction": "west"})
+        self.assertEqual(model_pending.choice, "model")
+        self.assertTrue(comparison.model_state.branch.forced_first_action_consumed)
+        self.assertFalse(comparison.model_state.stopped_early)
+        self.assertIs(comparison.model_state.branch.memory, model_memory)
+        self.assertEqual(model_memory.step, 0)
+        self.assertEqual(model_memory.visit_counts, {})
+        self.assertEqual(model_memory.known_cells, {})
+        self.assertIsNone(model_memory.active_goal)
+        self.assertIsNone(model_memory.active_plan)
+
+
+    def test_model_horizon_response_preserves_already_advanced_rule_branch(self):
+        observation = {
+            "world_id": "simulation-test",
+            "position": [5, 5],
+            "energy": 100,
+            "sensor_radius": 1,
+            "visible_cells": [{"position": [5, 5], "type": "Empty"}],
+            "nearby_objects": [],
+            "north": "Wall",
+            "east": "Empty",
+            "south": "Wall",
+            "west": "Empty",
+        }
+        comparison = simulation_snapshot.create_horizon_comparison(
+            snapshot=capture_brain_snapshot(Memory()),
+            initial_observation=observation,
+            horizon=5,
+            rule_action={"action": "move", "direction": "east"},
+            model_action={"action": "move", "direction": "west"},
+        )
+        requests = simulation_snapshot.begin_horizon_comparison(comparison)
+        model_pending = comparison.model_state.pending_step
+        model_memory = comparison.model_state.branch.memory
+        self.assertIs(model_pending, requests.model)
+        self.assertTrue(comparison.model_state.branch.forced_first_action_consumed)
+
+        rule_observation = {
+            **observation,
+            "position": [6, 5],
+            "energy": 99,
+            "visible_cells": [{"position": [6, 5], "type": "Empty"}],
+            "east": "Wall",
+            "west": "Wall",
+            "last_action": {"type": "move", "succeeded": True},
+        }
+        fake_rule_response = {
+            "type": "counterfactual_response",
+            "results": [{
+                "choice": "rule",
+                "result": "completed",
+                "succeeded": True,
+                "position_after": [6, 5],
+                "energy_after": 99,
+                "observation_after": rule_observation,
+            }],
+        }
+
+        rule_next = simulation_snapshot.handle_rule_horizon_response(
+            comparison, requests.rule, fake_rule_response,
+        )
+
+        self.assertEqual(len(comparison.rule_state.completed_steps), 1)
+        self.assertIsNotNone(rule_next)
+        self.assertIsNotNone(comparison.rule_state.pending_step)
+        self.assertIsNot(comparison.rule_state.pending_step, requests.rule)
+        self.assertIs(comparison.rule_state.pending_step.observation_before, rule_observation)
+        self.assertEqual(comparison.rule_state.branch.memory.step, 1)
+
+        self.assertEqual(len(comparison.model_state.completed_steps), 0)
+        self.assertIs(comparison.model_state.pending_step, model_pending)
+        self.assertIs(model_pending.observation_before, observation)
+        self.assertEqual(model_pending.action, {"action": "move", "direction": "west"})
+        self.assertEqual(model_pending.choice, "model")
+        self.assertTrue(comparison.model_state.branch.forced_first_action_consumed)
+        self.assertFalse(comparison.model_state.stopped_early)
+        self.assertIs(comparison.model_state.branch.memory, model_memory)
+        self.assertEqual(model_memory.step, 0)
+        self.assertEqual(model_memory.visit_counts, {})
+        self.assertEqual(model_memory.known_cells, {})
+        self.assertIsNone(model_memory.active_goal)
+        self.assertIsNone(model_memory.active_plan)
+
+        rule_pending = comparison.rule_state.pending_step
+        rule_completed = comparison.rule_state.completed_steps[0]
+        rule_memory = comparison.rule_state.branch.memory
+        rule_visits = dict(rule_memory.visit_counts)
+        rule_cells = dict(rule_memory.known_cells)
+        rule_goal = rule_memory.active_goal
+        rule_plan = rule_memory.active_plan
+        model_observation = {
+            **rule_observation,
+            "position": [4, 5],
+            "visible_cells": [{"position": [4, 5], "type": "Empty"}],
+        }
+        fake_model_response = {
+            "type": "counterfactual_response",
+            "results": [{
+                "choice": "model",
+                "result": "completed",
+                "succeeded": True,
+                "position_after": [4, 5],
+                "energy_after": 99,
+                "observation_after": model_observation,
+            }],
+        }
+
+        model_next = simulation_snapshot.handle_model_horizon_response(
+            comparison, requests.model, fake_model_response,
+        )
+
+        self.assertEqual(len(comparison.rule_state.completed_steps), 1)
+        self.assertEqual(len(comparison.model_state.completed_steps), 1)
+        self.assertIsNotNone(model_next)
+        self.assertIsNotNone(comparison.model_state.pending_step)
+        self.assertIsNot(comparison.model_state.pending_step, model_pending)
+        self.assertIs(comparison.model_state.pending_step.observation_before, model_observation)
+        model_completed = comparison.model_state.completed_steps[0]
+        self.assertEqual(rule_completed.action, {"action": "move", "direction": "east"})
+        self.assertEqual(model_completed.action, {"action": "move", "direction": "west"})
+        self.assertEqual(rule_completed.observation_after, rule_observation)
+        self.assertEqual(model_completed.observation_after, model_observation)
+        self.assertNotEqual(rule_completed.observation_after, model_completed.observation_after)
+
+        self.assertIs(comparison.rule_state.pending_step, rule_pending)
+        self.assertIs(comparison.rule_state.completed_steps[0], rule_completed)
+        self.assertIs(comparison.rule_state.branch.memory, rule_memory)
+        self.assertEqual(rule_memory.step, 1)
+        self.assertEqual(rule_memory.visit_counts, rule_visits)
+        self.assertEqual(rule_memory.known_cells, rule_cells)
+        self.assertEqual(rule_memory.active_goal, rule_goal)
+        self.assertIs(rule_memory.active_plan, rule_plan)
+        self.assertEqual(model_memory.step, 1)
+        self.assertEqual(model_memory.visit_counts, {(4, 5): 1})
+        self.assertEqual(model_memory.known_cells, {(4, 5): "Empty"})
+
+
 if __name__ == "__main__":
     unittest.main()
