@@ -58,6 +58,7 @@ class BranchHorizonState:
     pending_step: PendingBranchStep | None = None
     completed_steps: list[CompletedBranchStep] = field(default_factory=list)
     stopped_early: bool = False
+    initial_observation: dict | None = None
 
 
 def stop_branch_horizon(state: BranchHorizonState) -> None:
@@ -143,9 +144,18 @@ def begin_branch_horizon(
         choice=choice,
         step_limit=step_limit,
         pending_step=pending_step,
+        initial_observation=observation,
     )
 
     return state, request
+
+
+def handle_horizon_response(
+        state: BranchHorizonState,
+        response: dict,
+) -> dict | None:
+    """Complete the pending step and return the next protocol request, if any."""
+    return continue_branch_horizon(state, response)
 
 
 def continue_branch_horizon(
@@ -163,7 +173,7 @@ def continue_branch_horizon(
     )
     state.completed_steps.append(completed_step)
 
-    next_step = begin_next_branch_step(state)
+    next_step = next_horizon_request(state)
     if next_step is None:
         state.pending_step = None
         return None
@@ -187,25 +197,47 @@ def begin_branch_step(branch: SimulationBranch, observation: dict, *, choice: st
     return pending_step, request
 
 
-def begin_next_branch_step(state: BranchHorizonState) -> tuple[PendingBranchStep, dict] | None:
+def next_horizon_request(state: BranchHorizonState) -> tuple[PendingBranchStep, dict] | None:
     if branch_horizon_complete(state):
         return None
 
-    completed_step = state.completed_steps[-1]
-    action = choose_branch_action(completed_step.branch, completed_step.observation_after)
+    observation = (
+        state.completed_steps[-1].observation_after
+        if state.completed_steps
+        else state.initial_observation
+    )
+    if observation is None:
+        raise ValueError("Branch horizon requires an initial observation.")
+
+    next_step = begin_next_branch_step(state, observation)
+    if next_step is not None:
+        state.pending_step = next_step[0]
+    return next_step
+
+
+def begin_next_branch_step(
+        state: BranchHorizonState,
+        observation: dict | None = None,
+) -> tuple[PendingBranchStep, dict] | None:
+    if branch_horizon_complete(state):
+        return None
+
+    if observation is None:
+        return next_horizon_request(state)
+
+    action = choose_branch_action(state.branch, observation)
     if action is None:
         stop_branch_horizon(state)
         return None
 
     pending_step = PendingBranchStep(
-        branch=completed_step.branch,
-        choice=completed_step.choice,
-        observation_before=completed_step.observation_after,
+        branch=state.branch,
+        choice=state.choice,
+        observation_before=observation,
         action=action,
     )
-    request = build_single_counterfactual_request(action, choice=completed_step.choice)
+    request = build_single_counterfactual_request(action, choice=state.choice)
     return pending_step, request
-
 
 def complete_branch_step(pending_step: PendingBranchStep, response: dict) -> CompletedBranchStep:
     result = single_counterfactual_result(response, choice=pending_step.choice)

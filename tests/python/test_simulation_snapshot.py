@@ -978,5 +978,138 @@ class BrainSimulationSnapshotTests(unittest.TestCase):
         self.assertIsNot(rule_state.branch.memory, model_state.branch.memory)
 
 
+    def test_next_horizon_request_uses_initial_then_latest_observation(self):
+        observation = {
+            "world_id": "simulation-test",
+            "position": [5, 5],
+            "energy": 100,
+            "sensor_radius": 1,
+            "visible_cells": [{"position": [5, 5], "type": "Empty"}],
+            "nearby_objects": [],
+            "north": "Wall",
+            "east": "Wall",
+            "south": "Wall",
+            "west": "Wall",
+        }
+        state = simulation_snapshot.BranchHorizonState(
+            branch=create_branch(capture_brain_snapshot(Memory())),
+            choice="rule",
+            step_limit=3,
+            initial_observation=observation,
+        )
+
+        for completed_count in range(3):
+            next_step = simulation_snapshot.next_horizon_request(state)
+            self.assertIsNotNone(next_step)
+            pending, request = next_step
+            self.assertIs(state.pending_step, pending)
+            self.assertIs(pending.observation_before, observation)
+            self.assertEqual(len(state.completed_steps), completed_count)
+            self.assertEqual(request["candidates"][0]["decision"], pending.action)
+
+            observation_after = {
+                **observation,
+                "energy": observation["energy"] - 1,
+                "last_action": {"type": "idle", "succeeded": True},
+            }
+            completed = complete_branch_step(pending, {
+                "type": "counterfactual_response",
+                "results": [{
+                    "choice": "rule",
+                    "result": "completed",
+                    "succeeded": True,
+                    "position_after": [5, 5],
+                    "energy_after": observation_after["energy"],
+                    "observation_after": observation_after,
+                }],
+            })
+            state.completed_steps.append(completed)
+            state.pending_step = None
+            observation = observation_after
+
+        self.assertEqual(len(state.completed_steps), 3)
+        self.assertIsNone(simulation_snapshot.next_horizon_request(state))
+        self.assertIsNone(state.pending_step)
+
+
+    def test_handle_horizon_response_advances_one_branch_until_complete(self):
+        initial_observation = {
+            "world_id": "simulation-test",
+            "position": [5, 5],
+            "energy": 100,
+            "sensor_radius": 1,
+            "visible_cells": [{"position": [5, 5], "type": "Empty"}],
+            "nearby_objects": [],
+            "north": "Wall",
+            "east": "Wall",
+            "south": "Wall",
+            "west": "Wall",
+        }
+        state = simulation_snapshot.BranchHorizonState(
+            branch=create_branch(
+                capture_brain_snapshot(Memory()),
+                forced_first_action={"action": "move", "direction": "east"},
+            ),
+            choice="rule",
+            step_limit=3,
+            initial_observation=initial_observation,
+        )
+        pending, request = simulation_snapshot.next_horizon_request(state)
+        self.assertIs(state.pending_step, pending)
+        self.assertEqual(request, {
+            "type": "counterfactual_request",
+            "candidates": [{
+                "choice": "rule",
+                "decision": {"action": "move", "direction": "east"},
+            }],
+        })
+
+        expected_rewards = [0.19, 0.09, 0.08]
+        for step_number, energy_after in enumerate([99, 98, 96], start=1):
+            observation_after = {
+                **initial_observation,
+                "position": [6, 5],
+                "energy": energy_after,
+                "visible_cells": [{"position": [6, 5], "type": "Empty"}],
+                "last_action": {
+                    "type": "move" if step_number == 1 else "idle",
+                    "succeeded": True,
+                },
+            }
+            response = {
+                "type": "counterfactual_response",
+                "results": [{
+                    "choice": "rule",
+                    "result": "completed",
+                    "succeeded": True,
+                    "position_after": [6, 5],
+                    "energy_after": energy_after,
+                    "observation_after": observation_after,
+                }],
+            }
+
+            request = simulation_snapshot.handle_horizon_response(state, response)
+
+            self.assertEqual(len(state.completed_steps), step_number)
+            self.assertEqual(state.completed_steps[-1].reward, expected_rewards[step_number - 1])
+            self.assertEqual(state.branch.memory.step, step_number)
+            if step_number < 3:
+                self.assertEqual(request, {
+                    "type": "counterfactual_request",
+                    "candidates": [{"choice": "rule", "decision": {"action": "idle"}}],
+                })
+                self.assertIsNotNone(state.pending_step)
+                self.assertIs(state.pending_step.observation_before, observation_after)
+                self.assertFalse(simulation_snapshot.branch_horizon_complete(state))
+            else:
+                self.assertIsNone(request)
+                self.assertIsNone(state.pending_step)
+                self.assertTrue(simulation_snapshot.branch_horizon_complete(state))
+
+        result = simulation_snapshot.branch_horizon_result(state)
+        self.assertEqual(result.steps_completed, 3)
+        self.assertAlmostEqual(result.cumulative_reward, sum(expected_rewards))
+
+
 if __name__ == "__main__":
     unittest.main()
