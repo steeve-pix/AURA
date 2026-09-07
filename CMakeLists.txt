@@ -14,9 +14,17 @@ FetchContent_MakeAvailable(glfw)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(OpenGL REQUIRED)
+
 add_executable(
         aura
         src/main.cpp
 )
 
-target_link_libraries(aura PRIVATE glfw)
+target_link_libraries(aura
+        PRIVATE
+        glfw
+        OpenGL::GL
+)
+
+target_compile_definitions(aura PRIVATE GL_SILENCE_DEPRECATION)
