@@ -9,6 +9,7 @@
 #include "bridge/BrainResponseParser.hpp"
 #include "bridge/Counterfactual.hpp"
 #include "bridge/NavigationPreview.hpp"
+#include "bridge/ObservationBuilder.hpp"
 #include "world/MazeGenerator.hpp"
 #include "world/World.hpp"
 #include "world/Position.hpp"
@@ -190,59 +191,59 @@ int main() {
 
     const auto assertCounterfactualRollback =
             [&counterfactualWorld, &counterfactualAgent, &failures](
-                    const aura::simulation::CounterfactualResult &result,
-                    aura::world::Position expectedPosition,
-                    int expectedEnergy,
-                    const char *actionName
-            ) {
-                if (!result.succeeded ||
-                    result.result != "completed" ||
-                    result.positionAfter != expectedPosition ||
-                    result.energyAfter != expectedEnergy) {
-                    std::cout << "FAIL: counterfactual " << actionName
-                              << " should report its hypothetical result\n";
-                    ++failures;
-                }
+        const aura::simulation::CounterfactualResult &result,
+        aura::world::Position expectedPosition,
+        int expectedEnergy,
+        const char *actionName
+    ) {
+        if (!result.succeeded ||
+            result.result != "completed" ||
+            result.positionAfter != expectedPosition ||
+            result.energyAfter != expectedEnergy) {
+            std::cout << "FAIL: counterfactual " << actionName
+                    << " should report its hypothetical result\n";
+            ++failures;
+        }
 
-                if (counterfactualAgent.position() != aura::world::Position{1, 1} ||
-                    counterfactualAgent.energy() != 10) {
-                    std::cout << "FAIL: counterfactual " << actionName
-                              << " should restore agent state\n";
-                    ++failures;
-                }
-            };
+        if (counterfactualAgent.position() != aura::world::Position{1, 1} ||
+            counterfactualAgent.energy() != 10) {
+            std::cout << "FAIL: counterfactual " << actionName
+                    << " should restore agent state\n";
+            ++failures;
+        }
+    };
 
     const auto moveResult = aura::simulation::simulateAction(
-            counterfactualWorld,
-            counterfactualAgent,
-            {
-                aura::bridge::ActionType::Move,
-                aura::bridge::Direction::East,
-                {}
-            }
+        counterfactualWorld,
+        counterfactualAgent,
+        {
+            aura::bridge::ActionType::Move,
+            aura::bridge::Direction::East,
+            {}
+        }
     );
     assertCounterfactualRollback(moveResult, {2, 1}, 9, "move");
 
     const auto moveToResult = aura::simulation::simulateAction(
-            counterfactualWorld,
-            counterfactualAgent,
-            {
-                aura::bridge::ActionType::MoveTo,
-                aura::bridge::Direction::North,
-                {3, 1}
-            }
+        counterfactualWorld,
+        counterfactualAgent,
+        {
+            aura::bridge::ActionType::MoveTo,
+            aura::bridge::Direction::North,
+            {3, 1}
+        }
     );
     assertCounterfactualRollback(moveToResult, {2, 1}, 9, "move_to");
 
     const auto investigateResult = aura::simulation::simulateAction(
-            counterfactualWorld,
-            counterfactualAgent,
-            {
-                aura::bridge::ActionType::Investigate,
-                aura::bridge::Direction::North,
-                {2, 1}
-            },
-            aura::world::CellType::Battery
+        counterfactualWorld,
+        counterfactualAgent,
+        {
+            aura::bridge::ActionType::Investigate,
+            aura::bridge::Direction::North,
+            {2, 1}
+        },
+        aura::world::CellType::Battery
     );
     assertCounterfactualRollback(investigateResult, {1, 1}, 10, "investigate");
 
@@ -269,23 +270,23 @@ int main() {
 
     const auto serializedSnapshotObservation =
             [&snapshotWorld, &snapshotAgent, &snapshotSensor] {
-                const aura::bridge::Observation snapshotObservation{
-                    snapshotAgent.position(),
-                    snapshotAgent.energy(),
-                    aura::sensors::LocalSensor::observe(
-                        snapshotWorld,
-                        snapshotAgent
-                    ),
-                    snapshotSensor.observe(snapshotWorld, snapshotAgent),
-                    snapshotSensor.radius(),
-                    std::nullopt,
-                    "snapshot-test"
-                };
+        const aura::bridge::Observation snapshotObservation{
+            snapshotAgent.position(),
+            snapshotAgent.energy(),
+            aura::sensors::LocalSensor::observe(
+                snapshotWorld,
+                snapshotAgent
+            ),
+            snapshotSensor.observe(snapshotWorld, snapshotAgent),
+            snapshotSensor.radius(),
+            std::nullopt,
+            "snapshot-test"
+        };
 
-                return aura::bridge::serializedObservation(
-                    snapshotObservation
-                );
-            };
+        return aura::bridge::serializedObservation(
+            snapshotObservation
+        );
+    };
 
     const auto originalObservation =
             serializedSnapshotObservation();
@@ -540,37 +541,179 @@ int main() {
 
     if (
         counterfactualRequest.type !=
-            aura::bridge::BrainResponseType::CounterfactualRequest
+        aura::bridge::BrainResponseType::CounterfactualRequest
         || counterfactualRequest.counterfactualCandidates.size() != 2
         || counterfactualRequest.counterfactualCandidates[0].choice != "rule"
         || counterfactualRequest.counterfactualCandidates[1].action.target !=
-            aura::world::Position{5, 2}
+        aura::world::Position{5, 2}
     ) {
         std::cout << "FAIL: body should parse counterfactual candidates\n";
         ++failures;
     }
 
     const auto counterfactualJson =
-        aura::bridge::serializedCounterfactualResponse({
-            {
-                "rule",
-                moveResult
-            },
-            {
-                "model",
-                investigateResult
-            }
-        });
+            aura::bridge::serializedCounterfactualResponse({
+                {
+                    "rule",
+                    moveResult
+                },
+                {
+                    "model",
+                    investigateResult
+                }
+            });
 
     if (
         counterfactualJson.find(R"("type":"counterfactual_response")") ==
-            std::string::npos
+        std::string::npos
         || counterfactualJson.find(R"("choice":"rule")") ==
-            std::string::npos
+        std::string::npos
         || counterfactualJson.find(R"("outcome":"Battery")") ==
-            std::string::npos
+        std::string::npos
     ) {
         std::cout << "FAIL: body should serialize counterfactual outcomes\n";
+        ++failures;
+    }
+    const auto counterfactualRequest2 = aura::bridge::parseBrainResponse(R"({
+        "type":"counterfactual_request",
+        "candidates":[
+            {
+                "choice":"rule",
+                "decision": {"action":"move","direction":"east"}
+            }
+        ]
+    })");
+
+    if (
+        counterfactualRequest2.type != aura::bridge::BrainResponseType::CounterfactualRequest ||
+        counterfactualRequest2.counterfactualCandidates.size() != 1 ||
+        counterfactualRequest2.counterfactualCandidates[0].choice != "rule" ||
+        counterfactualRequest2.counterfactualCandidates[0].action.type != aura::bridge::ActionType::Move ||
+        counterfactualRequest2.counterfactualCandidates[0].action.direction != aura::bridge::Direction::East
+    ) {
+        std::cout << "FAIL: body should parse one counterfactual candidate\n";
+        ++failures;
+    }
+
+    aura::world::World failedMoveWorld{5, 5};
+    failedMoveWorld.addBoundaryWalls();
+    failedMoveWorld.setCell({2, 1}, aura::world::CellType::Unknown);
+
+    aura::agent::Agent exhaustedAgent{{1, 1}, 0};
+
+    auto failedMoveBranch = aura::simulation::createPhysicalSimulationBranch(failedMoveWorld, exhaustedAgent);
+
+    const aura::bridge::Action failedMoveTo{aura::bridge::ActionType::MoveTo, aura::bridge::Direction::North, {2, 1}};
+
+    const auto failedMoveResult =
+            aura::simulation::simulateBranchAction(failedMoveBranch, failedMoveTo, aura::world::CellType::Battery);
+
+    if (failedMoveResult.succeeded || failedMoveResult.result != "failed" || failedMoveResult.outcome.has_value() ||
+        failedMoveBranch.agent.position() != aura::world::Position{1, 1} || failedMoveBranch.world.cellAt({2, 1}) !=
+        aura::world::CellType::Unknown) {
+        std::cout << "FAIL: failed move_to should not fall through to investigate\n";
+        ++failures;
+    }
+
+    aura::world::World observedWorld{5, 5};
+    observedWorld.addBoundaryWalls();
+    observedWorld.setCell({3, 1}, aura::world::CellType::Battery);
+
+    aura::agent::Agent observedAgent{{2, 1}, 9};
+    aura::sensors::RangeSensor observedSensor{2};
+
+    const auto builtObservation =
+            aura::bridge::buildObservation(observedWorld, observedAgent, observedSensor, std::nullopt,
+                                           "simulation-test");
+
+    if (builtObservation.position != aura::world::Position{2, 1} ||
+        builtObservation.energy != 9
+        || builtObservation.surroundings.east != aura::world::CellType::Battery
+        || builtObservation.nearby.objects.size() != 1
+        || builtObservation.sensor_radius != 2
+        || builtObservation.lastAction.has_value()
+        || builtObservation.worldId != "simulation-test") {
+        std::cout << "FAIL: observation builder should observe supplied physical sate\n";
+        ++failures;
+    }
+
+    const auto responseWithObservation =
+            aura::bridge::serializedCounterfactualResponse({
+                {
+                    .choice = "rule",
+                    .result = moveResult,
+                    .observationAfter = builtObservation
+                }
+            });
+
+    aura::world::World evaluationWorld{5, 5};
+    evaluationWorld.addBoundaryWalls();
+
+    aura::agent::Agent evaluationAgent{{1, 1}, 10};
+    aura::sensors::RangeSensor evaluationSensor{2};
+
+    auto evaluationBranch =
+            aura::simulation::createPhysicalSimulationBranch(evaluationWorld, evaluationAgent);
+
+    const aura::bridge::Action evaluationAction{aura::bridge::ActionType::Move, aura::bridge::Direction::East};
+
+    const auto evaluation =
+            aura::bridge::evaluateBranchAction("rule", evaluationBranch, evaluationAction, evaluationSensor,
+                                               "simulation-test");
+
+    if (evaluation.choice != "rule"
+        || evaluation.result.positionAfter != aura::world::Position{2, 1} ||
+        !evaluation.observationAfter.has_value() || evaluation.observationAfter->position != aura::world::Position{2, 1}
+        || evaluation.observationAfter->energy != 9 || !evaluation.observationAfter->lastAction.has_value() ||
+        evaluation.observationAfter->lastAction->type != aura::bridge::ActionType::Move || !evaluation.observationAfter
+        ->lastAction->succeeded || evaluationAgent.position() != aura::world::Position{1, 1}) {
+        std::cout << "FAIL: branch evaluation should return its next observation\n";
+        ++failures;
+    }
+
+    if (responseWithObservation.find(R"("observation_after":)") == std::string::npos || responseWithObservation.
+        find(R"(world_id":"simulation-test")") == std::string::npos || responseWithObservation.find(R"("energy":9)") ==
+        std::string::npos) {
+        std::cout << "FAIL: counterfactual response should include branch observation\n";
+        ++failures;
+    }
+
+    aura::world::World realWorld{5, 5};
+    realWorld.addBoundaryWalls();
+
+    aura::agent::Agent realAgent{{1, 1}, 10};
+
+    auto physicalBranch =
+            aura::simulation::createPhysicalSimulationBranch(realWorld, realAgent);
+
+    const bool branchMoved = physicalBranch.agent.moveBy({1, 0}, physicalBranch.world);
+
+    if (!branchMoved || physicalBranch.agent.position() != aura::world::Position{2, 1} || realAgent.position() !=
+        aura::world::Position{1, 1}) {
+        std::cout << "FAIL: physical simulation branch should advance independently\n";
+        ++failures;
+    }
+
+    auto sequentialBranch = aura::simulation::createPhysicalSimulationBranch(realWorld, realAgent);
+
+    const aura::bridge::Action moveEast{
+        aura::bridge::ActionType::Move, aura::bridge::Direction::East
+    };
+
+    const auto firstBranchResult =
+            aura::simulation::simulateBranchAction(sequentialBranch, moveEast);
+
+    const auto secondBranchResult =
+            aura::simulation::simulateBranchAction(sequentialBranch, moveEast);
+
+    if (firstBranchResult.positionAfter != aura::world::Position{2, 1}
+        || firstBranchResult.energyAfter != 9
+        || secondBranchResult.positionAfter != aura::world::Position{3, 1}
+        || secondBranchResult.energyAfter != 8
+        || sequentialBranch.agent.position() != aura::world::Position{3, 1}
+        || realAgent.position() != aura::world::Position{1, 1}
+        || realAgent.energy() != 10) {
+        std::cout << "FAIL: physical branch should preserve consecutive action results\n";
         ++failures;
     }
 
@@ -601,6 +744,24 @@ int main() {
         || previewJson.find(R"("reachable":false)") == std::string::npos
     ) {
         std::cout << "FAIL: navigation preview should preserve IDs and BFS truth\n";
+        ++failures;
+    }
+
+
+    aura::bridge::CounterfactualBranchStore branchStore;
+
+    auto &storedRuleBranch = branchStore.branchFor("rule", realWorld, realAgent);
+
+    const bool storedRuleMoved =
+            storedRuleBranch.agent.moveBy({1, 0}, storedRuleBranch.world);
+
+    auto &sameRuleBranch = branchStore.branchFor("rule", realWorld, realAgent);
+
+    auto &storedModelBranch = branchStore.branchFor("model", realWorld, realAgent);
+
+    if (!storedRuleMoved || sameRuleBranch.agent.position() != aura::world::Position{2, 1} || storedModelBranch.agent.
+        position() != aura::world::Position{1, 1} || realAgent.position() != aura::world::Position{1, 1}) {
+        std::cout << "FAIL: branch store should preserve isolated choice timelines\n";
         ++failures;
     }
 

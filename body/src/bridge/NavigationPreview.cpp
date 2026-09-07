@@ -49,9 +49,11 @@ namespace aura::bridge {
             nlohmann::json previewJson = {
                 {"id", preview.id},
                 {"reachable", preview.reachable},
-                {"path_length", preview.pathLength.has_value()
-                    ? nlohmann::json(preview.pathLength.value())
-                    : nlohmann::json{nullptr}},
+                {
+                    "path_length", preview.pathLength.has_value()
+                                       ? nlohmann::json(preview.pathLength.value())
+                                       : nlohmann::json{nullptr}
+                },
                 {"next_step", nullptr}
             };
 

@@ -4,16 +4,16 @@
 
 #include "bridge/ActionUtils.hpp"
 #include "navigation/Pathfinder.hpp"
-#include "simulation/SimulationSnapshot.hpp"
 
 namespace aura::simulation {
-    CounterfactualResult simulateAction(
-            world::World &world,
-            agent::Agent &agent,
-            const bridge::Action &action,
-            world::CellType investigationOutcome
-    ) {
-        const auto snapshot = captureSimulationSnapshot(world, agent);
+    PhysicalSimulationBranch createPhysicalSimulationBranch(const world::World &world, const agent::Agent &agent) {
+        return PhysicalSimulationBranch{world, agent};
+    }
+
+    CounterfactualResult simulateBranchAction(PhysicalSimulationBranch &branch, const bridge::Action &action,
+                                              world::CellType investigationOutcome) {
+        auto &world = branch.world;
+        auto &agent = branch.agent;
 
         bool succeeded = false;
         std::string result = "failed";
@@ -23,19 +23,11 @@ namespace aura::simulation {
 
         switch (action.type) {
             case bridge::ActionType::Move:
-                succeeded = agent.moveBy(
-                        bridge::directionOffset(action.direction),
-                        world
-                );
+                succeeded = agent.moveBy(bridge::directionOffset(action.direction), world);
                 result = succeeded ? "completed" : "failed";
                 break;
-
             case bridge::ActionType::MoveTo: {
-                const auto path = navigation::findPath(
-                        world,
-                        agent.position(),
-                        action.target
-                );
+                const auto path = navigation::findPath(world, agent.position(), action.target);
 
                 if (path.empty() && agent.position() != action.target) {
                     result = "unreachable";
@@ -43,28 +35,21 @@ namespace aura::simulation {
                 }
 
                 pathLengthBefore = static_cast<int>(path.size());
-
                 succeeded = true;
 
                 if (!path.empty()) {
                     const auto nextStep = path.front();
-                    succeeded = agent.moveBy(
-                            {
-                                nextStep.x - agent.position().x,
-                                nextStep.y - agent.position().y
-                            },
-                            world
-                    );
+                    succeeded = agent.moveBy({
+                                                 nextStep.x - agent.position().x,
+                                                 nextStep.y - agent.position().y
+                                             }, world);
                 }
 
                 result = succeeded ? "completed" : "failed";
 
                 if (succeeded) {
-                    const auto remainingPath = navigation::findPath(
-                            world,
-                            agent.position(),
-                            action.target
-                    );
+                    const auto remainingPath = navigation::findPath(world, agent.position(),
+                                                                    action.target);
                     pathLengthAfter = static_cast<int>(remainingPath.size());
                 }
                 break;
@@ -76,9 +61,8 @@ namespace aura::simulation {
                         std::abs(action.target.x - position.x) +
                         std::abs(action.target.y - position.y);
 
-                succeeded = world.isInside(action.target) &&
-                            distance == 1 &&
-                            world.cellAt(action.target) == world::CellType::Unknown;
+                succeeded = world.isInside(action.target) && distance == 1 && world.cellAt(action.target)
+                            == world::CellType::Unknown;
 
                 if (succeeded) {
                     world.setCell(action.target, investigationOutcome);
@@ -94,8 +78,7 @@ namespace aura::simulation {
                 result = "completed";
                 break;
         }
-
-        const CounterfactualResult counterfactual{
+        return CounterfactualResult{
             succeeded,
             result,
             agent.position(),
@@ -104,9 +87,16 @@ namespace aura::simulation {
             pathLengthAfter,
             outcome
         };
+    }
 
-        restoreSimulationSnapshot(world, agent, snapshot);
+    CounterfactualResult simulateAction(
+        world::World &world,
+        agent::Agent &agent,
+        const bridge::Action &action,
+        world::CellType investigationOutcome
+    ) {
+        auto branch = createPhysicalSimulationBranch(world, agent);
 
-        return counterfactual;
+        return simulateBranchAction(branch, action, investigationOutcome);
     }
 }

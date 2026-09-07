@@ -6,6 +6,7 @@ add_library(aura_core
         src/bridge/NavigationPreview.cpp
         src/bridge/ActionUtils.cpp
         src/bridge/ObservationSerializer.cpp
+        src/bridge/ObservationBuilder.cpp
         src/navigation/Pathfinder.cpp
         src/render/TerminalRenderer.cpp
         src/sensors/LocalSensor.cpp

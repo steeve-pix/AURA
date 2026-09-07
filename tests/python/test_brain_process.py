@@ -51,7 +51,11 @@ def observation(world_id: str, position: list[int]) -> dict:
     }
 
 
-def counterfactual_response(request: dict, position: list[int]) -> dict:
+def counterfactual_response(
+        request: dict,
+        observation_before: dict,
+        branch_observations: dict[str, dict],
+) -> dict:
     offsets = {
         "north": (0, -1),
         "east": (1, 0),
@@ -61,9 +65,12 @@ def counterfactual_response(request: dict, position: list[int]) -> dict:
     results = []
 
     for candidate in request["candidates"]:
+        choice = candidate["choice"]
+        current_observation = branch_observations.get(choice, observation_before)
+        position = current_observation["position"]
         decision = candidate["decision"]
         position_after = list(position)
-        energy_after = 100
+        energy_after = current_observation["energy"]
         outcome = None
 
         if decision["action"] == "move":
@@ -72,12 +79,24 @@ def counterfactual_response(request: dict, position: list[int]) -> dict:
                 position[0] + offset[0],
                 position[1] + offset[1],
             ]
-            energy_after = 99
+            energy_after -= 1
         elif decision["action"] == "investigate":
             outcome = "Empty"
 
+        last_action = dict(decision)
+        last_action["type"] = last_action.pop("action")
+        last_action["succeeded"] = True
+
+        observation_after = {
+            **current_observation,
+            "position": position_after,
+            "energy": energy_after,
+            "last_action": last_action,
+        }
+        branch_observations[choice] = observation_after
+
         results.append({
-            "choice": candidate["choice"],
+            "choice": choice,
             "succeeded": True,
             "result": "completed",
             "position_after": position_after,
@@ -85,6 +104,7 @@ def counterfactual_response(request: dict, position: list[int]) -> dict:
             "path_length_before": None,
             "path_length_after": None,
             "outcome": outcome,
+            "observation_after": observation_after,
         })
 
     return {
@@ -93,7 +113,12 @@ def counterfactual_response(request: dict, position: list[int]) -> dict:
     }
 
 
-def run_brain(working_directory: Path, observations: list[dict], preview_path_length: int = 1) -> list[dict]:
+def run_brain(
+        working_directory: Path,
+        observations: list[dict],
+        preview_path_length: int = 1,
+        bridge_requests: list[dict] | None = None,
+) -> list[dict]:
     environment = os.environ.copy()
     environment["PYTHONPATH"] = str(PROJECT_ROOT)
 
@@ -115,6 +140,7 @@ def run_brain(working_directory: Path, observations: list[dict], preview_path_le
     responses = []
 
     for item in observations:
+        counterfactual_branch_observations: dict[str, dict] = {}
         process.stdin.write(json.dumps(item) + "\n")
         process.stdin.flush()
 
@@ -131,6 +157,9 @@ def run_brain(working_directory: Path, observations: list[dict], preview_path_le
             "preview_request",
             "counterfactual_request",
         }:
+            if bridge_requests is not None:
+                bridge_requests.append(response)
+
             if response["type"] == "preview_request":
                 reply = preview_response(
                     response,
@@ -139,7 +168,8 @@ def run_brain(working_directory: Path, observations: list[dict], preview_path_le
             else:
                 reply = counterfactual_response(
                     response,
-                    item["position"],
+                    item,
+                    counterfactual_branch_observations,
                 )
 
             process.stdin.write(json.dumps(reply) + "\n")
@@ -212,10 +242,29 @@ class BrainProcessTests(unittest.TestCase):
                 working_directory / "data" / "models" / "value_model_2.pt",
             )
 
-            responses = run_brain(working_directory, [first])
+            bridge_requests = []
+            responses = run_brain(
+                working_directory,
+                [first],
+                bridge_requests=bridge_requests,
+            )
 
         self.assertEqual(responses[0]["action"], "investigate")
         self.assertEqual(responses[0]["target"], [2, 1])
+
+        counterfactual_requests = [
+            request
+            for request in bridge_requests
+            if request["type"] == "counterfactual_request"
+        ]
+        self.assertEqual(len(counterfactual_requests), 4)
+        self.assertEqual(
+            [request["candidates"][0]["choice"] for request in counterfactual_requests],
+            ["rule", "rule", "model", "model"],
+        )
+        self.assertTrue(
+            all(len(request["candidates"]) == 1 for request in counterfactual_requests)
+        )
 
     def test_memory_survives_brain_restart(self):
         world_id = "maze:release-restart:9x9:b1:u1"

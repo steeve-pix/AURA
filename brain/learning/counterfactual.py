@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from brain.experience import Experience
 from brain.learning.candidates import ScoredCandidate
+from brain.learning.features import ValueInput
 from brain.reward import calculate_reward
 
 
@@ -52,10 +53,29 @@ def counterfactual_reward(
         observation: dict,
         memory,
 ) -> float:
-    action = scored.candidate.action
+    return counterfactual_action_reward(
+        scored.candidate.action,
+        result,
+        observation,
+        memory,
+        goal=scored.candidate.goal,
+        value_input=scored.value_input,
+    )
+
+
+def counterfactual_action_reward(
+        action: dict,
+        result: dict,
+        observation: dict,
+        memory,
+        *,
+        goal: str | None = None,
+        value_input: ValueInput | None = None,
+) -> float:
+    """Score a simulated action against memory before its observation is applied."""
     target = action.get("target")
-    position_before = tuple(observation["position"])
-    position_after = tuple(result["position_after"])
+    position_before = (observation["position"][0], observation["position"][1])
+    position_after = (result["position_after"][0], result["position_after"][1])
     path_length_before = result.get("path_length_before")
     path_length_after = result.get("path_length_after")
 
@@ -65,14 +85,13 @@ def counterfactual_reward(
         else path_length_before - path_length_after
     )
 
-    value_input = scored.value_input
     experience = Experience(
         kind="action",
         event=action["action"],
         step=memory.step,
-        goal=scored.candidate.goal,
+        goal=goal,
         action=action["action"],
-        target=None if target is None else tuple(target),
+        target=None if target is None else (target[0], target[1]),
         position_before=position_before,
         position_after=position_after,
         energy_before=observation["energy"],
@@ -97,3 +116,30 @@ def counterfactual_reward(
     )
 
     return calculate_reward(experience)
+
+
+def build_single_counterfactual_request(action: dict, *, choice: str) -> dict:
+    return {
+        "type": "counterfactual_request",
+        "candidates": [
+            {
+                "choice": choice,
+                "decision": dict(action),
+            }
+        ]
+    }
+
+
+def single_counterfactual_result(response: dict, *, choice: str) -> dict:
+    if response.get("type") != "counterfactual_response":
+        raise ValueError("Expected a counterfactual response.")
+
+    results = response.get("results", [])
+    if len(results) != 1:
+        raise ValueError(f"Expected exactly one item in 'results', found {len(results)}.")
+
+    result_item = results[0]
+    if result_item.get("choice") != choice:
+        raise ValueError(f"Result choice '{result_item.get('choice')}' does not match requested choice '{choice}'.")
+
+    return result_item

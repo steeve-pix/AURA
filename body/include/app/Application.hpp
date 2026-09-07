@@ -17,6 +17,7 @@
 #include <optional>
 #include <string>
 
+#include "bridge/Counterfactual.hpp"
 #include "scenario/Scenario.hpp"
 
 namespace aura::app {
@@ -64,7 +65,8 @@ namespace aura::app {
 
         /// Evaluates labeled alternatives while preserving the real physical state.
         [[nodiscard]] std::string evaluateCounterfactuals(
-            const std::vector<bridge::CounterfactualCandidate> &candidates
+            const std::vector<bridge::CounterfactualCandidate> &candidates, const std::string &worldId, bridge::
+            CounterfactualBranchStore &branchStore
         );
 
         render::Window window_;
