@@ -2,6 +2,10 @@
 
 #include <cmath>
 
+#include "aura/physics/Body2D.hpp"
+#include "aura/physics/Body2D.hpp"
+#include "aura/physics/Body2D.hpp"
+
 namespace aura::math {
     struct Vec2 {
         float x{0.0f}, y{0.0f};
@@ -10,7 +14,19 @@ namespace aura::math {
             x += rhs.x;
             y += rhs.y;
             return *this;
-        };
+        }
+
+        constexpr Vec2 operator/=(float scalar) noexcept {
+            x /= scalar;
+            y /= scalar;
+            return *this;
+        }
+
+        constexpr Vec2 operator/(float scalar) const {
+            Vec2 result = *this;
+            result /= scalar;
+            return result;
+        }
 
         constexpr Vec2 &operator-=(const Vec2 &rhs) noexcept {
             x -= rhs.x;

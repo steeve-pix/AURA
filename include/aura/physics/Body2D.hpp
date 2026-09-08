@@ -8,6 +8,9 @@ namespace aura::physics {
         math::Vec2 velocity{};
         math::Vec2 acceleration{};
 
+        math::Vec2 force{};
+
         math::Vec2 size{1.0, 1.0f};
+        float mass{1.0f};
     };
 }
