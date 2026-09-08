@@ -5,13 +5,20 @@
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
 
+float worldToScreenY(float worldY) {
+    const float scale = 0.1f;
+    const float verticalOffset = -0.6f;
+
+    return worldY * scale + verticalOffset;
+}
+
 static void drawBody(const aura::physics::Body2D &body) {
     constexpr float scale = 0.1f;
 
     const float x =
             body.position.x * scale;
     const float y =
-            body.position.y * scale;
+            worldToScreenY(body.position.y);
 
     constexpr float halfSize = 0.05f;
 
@@ -43,8 +50,7 @@ static void drawBody(const aura::physics::Body2D &body) {
 }
 
 void drawFloor(const aura::physics::World2D &world) {
-    constexpr float scale = 0.1f;
-    const float top = world.floorHeight * scale;
+    const float top = worldToScreenY(world.floorHeight);
 
     glBegin(GL_QUADS);
 
