@@ -47,7 +47,7 @@ namespace aura::math {
         }
 
         [[nodiscard]] float length() const noexcept {
-            return std::sqrt(x * x + y * y);
+            return std::sqrt(lengthSquared());
         }
 
         [[nodiscard]] Vec2 normalized() const noexcept {
@@ -58,6 +58,14 @@ namespace aura::math {
             }
 
             return {x / magnitude, y / magnitude};
+        }
+
+        [[nodiscard]] float dot(const Vec2 &other) const noexcept {
+            return x * other.x + y * other.y;
+        }
+
+        [[nodiscard]] float lengthSquared() const noexcept {
+            return x * x + y * y;
         }
     };
 }

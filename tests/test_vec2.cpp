@@ -68,4 +68,19 @@ int main() {
 
     assert(normalized_zero_direction.x == 0.0f);
     assert(normalized_zero_direction.y == 0.0f);
+
+    aura::math::Vec2 right_direction{1.0f, 0.0f};
+
+    aura::math::Vec2 left_direction{-1.0f, 0.0f};
+
+    aura::math::Vec2 up_direction{0.0f, 1.0f};
+
+    assert(right_direction.dot(right_direction) == 1.0f);
+    assert(right_direction.dot(left_direction) == -1.0f);
+    assert(right_direction.dot(up_direction) == 0.0f);
+
+    aura::math::Vec2 displacement{3.0f, 4.0f};
+
+    assert(displacement.lengthSquared() == 25.0f);
+    assert(displacement.length() == 5.0f);
 }
