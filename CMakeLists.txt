@@ -46,4 +46,13 @@ target_include_directories(
         test_vec2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+add_executable(
+    test_body2d
+    tests/test_body2d.cpp
+)
 
+target_include_directories(
+    test_body2d
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
