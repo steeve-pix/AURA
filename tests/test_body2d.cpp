@@ -5,6 +5,7 @@
 #include <aura/physics/BodyGeometry.hpp>
 #include <aura/physics/Collision.hpp>
 #include <aura/physics/Motion.hpp>
+#include <aura/physics/Physics.hpp>
 #include <aura/physics/World2D.hpp>
 
 namespace {
@@ -63,6 +64,21 @@ namespace {
         assert(!aura::physics::intersectsFloor(body, world));
     }
 
+    void test_step_body_lands_falling_body_on_floor() {
+        const aura::physics::World2D world{};
+        aura::physics::Body2D body{
+            .position = {0.0f, 0.6f},
+            .velocity = {0.0f, -2.0f},
+            .size = {1.0f, 1.0f}
+        };
+
+        aura::physics::stepBody(body, world, 0.1f);
+
+        assert(aura::math::nearlyEqual(body.position.y, 0.5f));
+        assert(aura::math::nearlyEqual(body.velocity.y, 0.0f));
+        assert(!aura::physics::intersectsFloor(body, world));
+    }
+
     void test_update_position_uses_velocity() {
         aura::physics::Body2D body = initialBody;
 
@@ -109,6 +125,7 @@ int main() {
     test_body_stores_initial_size();
     test_bottom_is_half_height_below_center();
     test_floor_collision_corrects_position_and_stops_falling();
+    test_step_body_lands_falling_body_on_floor();
     test_update_position_uses_velocity();
     test_update_velocity_uses_acceleration();
     test_integrate_moves_with_updated_velocity();

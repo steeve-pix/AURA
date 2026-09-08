@@ -99,15 +99,15 @@ namespace {
             .velocity = {0.0f, 0.0f}
         };
 
-        aura::physics::stepBody(body, world, 1.0f);
+        aura::physics::stepBody(body, world, 0.5f);
 
         assert(aura::math::nearlyEqual(body.acceleration.x, 0.0f));
         assert(aura::math::nearlyEqual(body.acceleration.y, -9.81f));
         assert(aura::math::nearlyEqual(body.velocity.x, 0.0f));
-        assert(aura::math::nearlyEqual(body.velocity.y, -9.81f));
+        assert(aura::math::nearlyEqual(body.velocity.y, -4.905f));
         assert(aura::math::nearlyEqual(body.position.x, 0.0f));
-        // Position uses the updated velocity: 10.0 + (-9.81 * 1.0).
-        assert(aura::math::nearlyEqual(body.position.y, 0.19f));
+        // Position uses the updated velocity: 10.0 + (-4.905 * 0.5).
+        assert(aura::math::nearlyEqual(body.position.y, 7.5475f));
     }
 }
 

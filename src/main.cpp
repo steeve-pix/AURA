@@ -42,8 +42,9 @@ static void drawBody(const aura::physics::Body2D &body) {
     glColor3f(1.0f, 1.0f, 1.0f);
 }
 
-void drawFloor() {
-    const float top = -0.6f;
+void drawFloor(const aura::physics::World2D &world) {
+    constexpr float scale = 0.1f;
+    const float top = world.floorHeight * scale;
 
     glBegin(GL_QUADS);
 
@@ -98,7 +99,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // ...
-        drawFloor();
+        drawFloor(world);
         drawBody(body);
 
         glfwSwapBuffers(window);
