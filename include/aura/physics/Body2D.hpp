@@ -7,5 +7,7 @@ namespace aura::physics {
         math::Vec2 position{};
         math::Vec2 velocity{};
         math::Vec2 acceleration{};
+
+        math::Vec2 size{1.0, 1.0f};
     };
 }

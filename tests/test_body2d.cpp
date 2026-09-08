@@ -2,6 +2,7 @@
 
 #include <aura/math/Math.hpp>
 #include <aura/physics/Body2D.hpp>
+#include <aura/physics/BodyGeometry.hpp>
 #include <aura/physics/Motion.hpp>
 
 namespace {
@@ -20,6 +21,28 @@ namespace {
         assert(body.velocity.y == -1.0f);
         assert(body.acceleration.x == 0.0f);
         assert(body.acceleration.y == -9.81f);
+    }
+
+    void test_body_stores_initial_size() {
+        const aura::physics::Body2D body{
+            .position = {2.0f, 5.0f},
+            .velocity = {0.0f, 0.0f},
+            .acceleration = {0.0f, 0.0f},
+            .size = {2.0f, 4.0f}
+        };
+
+        assert(body.size.x == 2.0f);
+        assert(body.size.y == 4.0f);
+    }
+
+    void test_bottom_is_half_height_below_center() {
+        const aura::physics::Body2D body{
+            .position = {2.0f, 5.0f},
+            .size = {2.0f, 4.0f}
+        };
+
+        // Center height 5 minus half the height 4 gives bottom height 3.
+        assert(aura::math::nearlyEqual(aura::physics::bottom(body), 3.0f));
     }
 
     void test_update_position_uses_velocity() {
@@ -65,6 +88,8 @@ namespace {
 
 int main() {
     test_body_stores_initial_state();
+    test_body_stores_initial_size();
+    test_bottom_is_half_height_below_center();
     test_update_position_uses_velocity();
     test_update_velocity_uses_acceleration();
     test_integrate_moves_with_updated_velocity();

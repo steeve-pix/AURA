@@ -15,6 +15,8 @@ static void drawBody(const aura::physics::Body2D &body) {
 
     constexpr float halfSize = 0.05f;
 
+    glColor3f(1.0f, 0.0f, 0.0f);
+
     glBegin(GL_QUADS);
 
     glVertex2f(
@@ -35,6 +37,20 @@ static void drawBody(const aura::physics::Body2D &body) {
         x - halfSize,
         y + halfSize
     );
+
+    glEnd();
+    glColor3f(1.0f, 1.0f, 1.0f);
+}
+
+void drawFloor() {
+    const float top = -0.6f;
+
+    glBegin(GL_QUADS);
+
+    glVertex2f(-1.0f, -1.0f);
+    glVertex2f(1.0f, -1.0f);
+    glVertex2f(1.0f, top);
+    glVertex2f(-1.0f, top);
 
     glEnd();
 }
@@ -82,6 +98,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // ...
+        drawFloor();
         drawBody(body);
 
         glfwSwapBuffers(window);
