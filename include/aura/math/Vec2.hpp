@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 namespace aura::math {
     struct Vec2 {
         float x{0.0f}, y{0.0f};
@@ -42,6 +44,20 @@ namespace aura::math {
 
         friend constexpr Vec2 operator*(float scalar, const Vec2 &vec) noexcept {
             return vec * scalar;
+        }
+
+        [[nodiscard]] float length() const noexcept {
+            return std::sqrt(x * x + y * y);
+        }
+
+        [[nodiscard]] Vec2 normalized() const noexcept {
+            const float magnitude = length();
+
+            if (magnitude == 0.0f) {
+                return {};
+            }
+
+            return {x / magnitude, y / magnitude};
         }
     };
 }
