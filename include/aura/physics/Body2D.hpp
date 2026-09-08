@@ -6,5 +6,6 @@ namespace aura::physics {
     struct Body2D {
         math::Vec2 position{};
         math::Vec2 velocity{};
+        math::Vec2 acceleration{};
     };
 }
