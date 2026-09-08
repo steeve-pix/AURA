@@ -1,4 +1,43 @@
 #include <GLFW/glfw3.h>
+#include <iostream>
+
+#include "aura/physics/Body2D.hpp"
+#include "aura/physics/Physics.hpp"
+#include "aura/physics/World2D.hpp"
+
+static void drawBody(const aura::physics::Body2D &body) {
+    constexpr float scale = 0.1f;
+
+    const float x =
+            body.position.x * scale;
+    const float y =
+            body.position.y * scale;
+
+    constexpr float halfSize = 0.05f;
+
+    glBegin(GL_QUADS);
+
+    glVertex2f(
+        x - halfSize,
+        y - halfSize
+    );
+
+    glVertex2f(
+        x + halfSize,
+        y - halfSize
+    );
+    glVertex2f(
+        x + halfSize,
+        y + halfSize
+    );
+
+    glVertex2f(
+        x - halfSize,
+        y + halfSize
+    );
+
+    glEnd();
+}
 
 int main() {
     if (!glfwInit())
@@ -13,10 +52,37 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
+    aura::physics::World2D world{};
+
+    aura::physics::Body2D body{
+        .position = {0.0f, 10.0f},
+        .velocity = {0.0f, 0.0f},
+    };
+
+    double previousTime = glfwGetTime();
+    constexpr int stepsBetweenPrints = 60;
+    int stepsSinceLastPrint = 0;
+
     while (!glfwWindowShouldClose(window)) {
+        double currentTime = glfwGetTime();
+        auto dt = static_cast<float>(currentTime - previousTime);
+        previousTime = currentTime;
+
+        aura::physics::stepBody(body, world, dt);
+
+
+        ++stepsSinceLastPrint;
+        if (stepsSinceLastPrint >= stepsBetweenPrints) {
+            std::cout << "y: " << body.position.y << '\n';
+            stepsSinceLastPrint = 0;
+        }
+
         glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
 
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // ...
+        drawBody(body);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
