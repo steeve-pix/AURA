@@ -20,29 +20,34 @@ static void drawBody(const aura::physics::Body2D &body) {
     const float y =
             worldToScreenY(body.position.y);
 
-    constexpr float halfSize = 0.05f;
+    const float halfWidth =
+            body.size.x * scale * 0.5f;
+
+    const float halfHeight =
+            body.size.y * scale * 0.5f;
 
     glColor3f(1.0f, 0.0f, 0.0f);
 
     glBegin(GL_QUADS);
 
     glVertex2f(
-        x - halfSize,
-        y - halfSize
+        x - halfWidth,
+        y - halfHeight
     );
 
     glVertex2f(
-        x + halfSize,
-        y - halfSize
-    );
-    glVertex2f(
-        x + halfSize,
-        y + halfSize
+        x + halfWidth,
+        y - halfHeight
     );
 
     glVertex2f(
-        x - halfSize,
-        y + halfSize
+        x + halfWidth,
+        y + halfHeight
+    );
+
+    glVertex2f(
+        x - halfWidth,
+        y + halfHeight
     );
 
     glEnd();
