@@ -47,12 +47,19 @@ target_include_directories(
 )
 
 add_executable(
-    test_body2d
-    tests/test_body2d.cpp
+        test_body2d
+        tests/test_body2d.cpp
 )
 
 target_include_directories(
-    test_body2d
-    PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+        test_body2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+add_executable(
+        test_world2d
+        tests/test_world2d.cpp
+)
+
+target_include_directories(
+        test_world2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
