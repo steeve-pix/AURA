@@ -109,6 +109,43 @@ namespace {
         assert(aura::math::nearlyEqual(heavy.acceleration.y, -9.81f));
     }
 
+    void test_applied_force_and_gravity_combine_into_acceleration() {
+        aura::physics::Body2D body{
+            .mass = 1.0f
+        };
+
+        aura::physics::applyForce(body, {5.0f, 0.0f});
+        aura::physics::applyGravity(body, {0.0f, -10.0f});
+        aura::physics::updateAccelerationFromForce(body);
+
+        assert(aura::math::nearlyEqual(body.acceleration.x, 5.0f));
+        assert(aura::math::nearlyEqual(body.acceleration.y, -10.0f));
+    }
+
+    void test_horizontal_drag_opposes_rightward_motion() {
+        aura::physics::Body2D body{
+            .velocity = {4.0f, 0.0f},
+            .mass = 1.0f
+        };
+
+        aura::physics::applyHorizontalDrag(body, 2.0f);
+
+        assert(aura::math::nearlyEqual(body.force.x, -8.0f));
+        assert(aura::math::nearlyEqual(body.force.y, 0.0f));
+    }
+
+    void test_horizontal_drag_opposes_leftward_motion() {
+        aura::physics::Body2D left{
+            .velocity = {-4.0f, 0.0f},
+            .mass = 1.0f
+        };
+
+        aura::physics::applyHorizontalDrag(left, 2.0f);
+
+        assert(aura::math::nearlyEqual(left.force.x, 8.0f));
+        assert(aura::math::nearlyEqual(left.force.y, 0.0f));
+    }
+
     void test_bottom_is_half_height_below_center() {
         const aura::physics::Body2D body{
             .position = {2.0f, 5.0f},
@@ -200,6 +237,9 @@ int main() {
     test_acceleration_equals_force_divided_by_mass();
     test_clear_forces_resets_both_components();
     test_gravity_produces_same_acceleration_for_different_masses();
+    test_applied_force_and_gravity_combine_into_acceleration();
+    test_horizontal_drag_opposes_rightward_motion();
+    test_horizontal_drag_opposes_leftward_motion();
     test_bottom_is_half_height_below_center();
     test_floor_collision_corrects_position_and_stops_falling();
     test_step_body_lands_falling_body_on_floor();

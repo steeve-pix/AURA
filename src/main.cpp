@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#include "aura/math/Math.hpp"
 #include "aura/physics/Body2D.hpp"
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
@@ -90,18 +91,30 @@ int main() {
     double previousTime = glfwGetTime();
     constexpr int stepsBetweenPrints = 60;
     int stepsSinceLastPrint = 0;
+    float pushTimeRemaining = 0.5f;
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
         auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
 
+        if (aura::math::nearlyEqual(aura::physics::bottom(body), world.floorHeight)) {
+            aura::physics::applyHorizontalDrag(body, 1.5f);
+        }
+        if (pushTimeRemaining > 0.0f) {
+            aura::physics::applyForce(body, {2.0f, 0.0f});
+            pushTimeRemaining -= dt;
+        }
         aura::physics::stepBody(body, world, dt);
 
 
+        // ... Output
         ++stepsSinceLastPrint;
         if (stepsSinceLastPrint >= stepsBetweenPrints) {
             std::cout << "y: " << body.position.y << '\n';
+            std::cout << "x: " << body.position.x << '\n';
+            std::cout << '\n';
+
             stepsSinceLastPrint = 0;
         }
 
