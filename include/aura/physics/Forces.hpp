@@ -13,4 +13,8 @@ namespace aura::physics {
     inline void clearForces(Body2D &body) noexcept {
         body.force = {};
     }
+
+    inline void applyGravity(Body2D &body, const math::Vec2 &gravity) noexcept {
+        applyForce(body, gravity * body.mass);
+    }
 }

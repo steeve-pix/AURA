@@ -90,6 +90,25 @@ namespace {
         assert(aura::math::nearlyEqual(body.force.y, 0.0f));
     }
 
+    void test_gravity_produces_same_acceleration_for_different_masses() {
+        const aura::physics::World2D world{};
+        aura::physics::Body2D light{
+            .mass = 1.0f
+        };
+        aura::physics::Body2D heavy{
+            .mass = 10.0f
+        };
+
+        aura::physics::applyGravity(light, world.gravity);
+        aura::physics::applyGravity(heavy, world.gravity);
+
+        aura::physics::updateAccelerationFromForce(light);
+        aura::physics::updateAccelerationFromForce(heavy);
+
+        assert(aura::math::nearlyEqual(light.acceleration.y, -9.81f));
+        assert(aura::math::nearlyEqual(heavy.acceleration.y, -9.81f));
+    }
+
     void test_bottom_is_half_height_below_center() {
         const aura::physics::Body2D body{
             .position = {2.0f, 5.0f},
@@ -180,6 +199,7 @@ int main() {
     test_apply_force_accumulates_with_existing_force();
     test_acceleration_equals_force_divided_by_mass();
     test_clear_forces_resets_both_components();
+    test_gravity_produces_same_acceleration_for_different_masses();
     test_bottom_is_half_height_below_center();
     test_floor_collision_corrects_position_and_stops_falling();
     test_step_body_lands_falling_body_on_floor();
