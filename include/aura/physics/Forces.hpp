@@ -17,7 +17,12 @@ namespace aura::physics {
     inline void applyGravity(Body2D &body, const math::Vec2 &gravity) noexcept {
         applyForce(body, gravity * body.mass);
     }
-    inline void applyHorizontalDrag(Body2D& body,float dragCoefficient) noexcept {
-        applyForce(body,{-body.velocity.x * dragCoefficient, 0.0});
+
+    inline void applyHorizontalDrag(Body2D &body, float dragCoefficient) noexcept {
+        applyForce(body, {-body.velocity.x * dragCoefficient, 0.0});
+    }
+
+    inline void updateAngle(Body2D &body, float dt) noexcept {
+        body.angle += body.angularVelocity * dt;
     }
 }

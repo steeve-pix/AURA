@@ -56,6 +56,27 @@ namespace {
         assert(body.force.y == -2.0f);
     }
 
+    void test_body_stores_initial_angle_and_angular_velocity() {
+        const aura::physics::Body2D body{
+            .angle = 0.5f,
+            .angularVelocity = 2.0f
+        };
+
+        assert(body.angle == 0.5f);
+        assert(body.angularVelocity == 2.0f);
+    }
+
+    void test_update_angle_uses_angular_velocity() {
+        aura::physics::Body2D body{
+            .angle = 0.5f,
+            .angularVelocity = 2.0f
+        };
+
+        aura::physics::updateAngle(body, 0.25f);
+
+        assert(aura::math::nearlyEqual(body.angle, 1.0f));
+    }
+
     void test_apply_force_accumulates_with_existing_force() {
         aura::physics::Body2D body{
             .force = {2.0f, -5.0f}
@@ -233,6 +254,8 @@ int main() {
     test_body_stores_initial_size();
     test_body_stores_initial_mass();
     test_body_stores_initial_force();
+    test_body_stores_initial_angle_and_angular_velocity();
+    test_update_angle_uses_angular_velocity();
     test_apply_force_accumulates_with_existing_force();
     test_acceleration_equals_force_divided_by_mass();
     test_clear_forces_resets_both_components();

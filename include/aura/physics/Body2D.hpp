@@ -12,5 +12,8 @@ namespace aura::physics {
 
         math::Vec2 size{1.0, 1.0f};
         float mass{1.0f};
+
+        float angle = 0.0f;
+        float angularVelocity = 0.0f;
     };
 }
