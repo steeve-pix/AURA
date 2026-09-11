@@ -25,6 +25,10 @@ namespace aura::physics {
             body.velocity.y = 0.0f;
     }
 
+    inline void stopAngularVelocity(Body2D &body) noexcept {
+        body.angularVelocity = 0.0f;
+    }
+
     inline void resolveFloorCollision(Body2D &body, const World2D &world) noexcept {
         if (!intersectsFloor(body, world)) {
             return;
@@ -32,5 +36,6 @@ namespace aura::physics {
 
         correctFloorPenetration(body, world);
         stopDownwardVelocity(body);
+        stopAngularVelocity(body);
     }
 }

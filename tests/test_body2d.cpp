@@ -257,6 +257,21 @@ namespace {
             aura::physics::bottom(body), world.floorHeight));
     }
 
+    void test_floor_collision_stops_angular_velocity() {
+        aura::physics::Body2D body{
+            .position = {0.0f, 0.2f},
+            .velocity = {0.0f, -2.0f},
+            .size = {1.0f, 1.0f},
+            .angle = 0.5f,
+            .angularVelocity = 3.0f
+        };
+        const aura::physics::World2D world{};
+
+        aura::physics::resolveFloorCollision(body, world);
+
+        assert(aura::math::nearlyEqual(body.angularVelocity, 0.0f));
+    }
+
     void test_floor_collision_corrects_position_and_stops_falling() {
         const aura::physics::World2D world{};
         aura::physics::Body2D body{
@@ -348,6 +363,7 @@ int main() {
     test_corners_translate_to_world_coordinates_without_rotation();
     test_corners_rotate_before_translating_to_world_coordinates();
     test_floor_collision_corrects_position_and_stops_falling();
+    test_floor_collision_stops_angular_velocity();
     test_floor_penetration_correction_lifts_rotated_body_to_floor();
     test_step_body_lands_falling_body_on_floor();
     test_update_position_uses_velocity();
