@@ -1,9 +1,20 @@
 #include <cassert>
 
 #include <aura/math/Math.hpp>
+#include <aura/math/Rotation.hpp>
 #include <aura/math/Vec2.hpp>
 
 namespace {
+    void test_rotation_turns_right_vector_up() {
+        const float halfPi = 3.1415926535f * 0.5f;
+        const aura::math::Vec2 right{1.0f, 0.0f};
+
+        const auto rotated = aura::math::rotate(right, halfPi);
+
+        assert(aura::math::nearlyEqual(rotated.x, 0.0f));
+        assert(aura::math::nearlyEqual(rotated.y, 1.0f));
+    }
+
     void test_nearly_equal_accepts_close_values() {
         assert(aura::math::nearlyEqual(0.1f + 0.2f, 0.3f));
     }
@@ -121,6 +132,7 @@ namespace {
 }
 
 int main() {
+    test_rotation_turns_right_vector_up();
     test_nearly_equal_accepts_close_values();
     test_nearly_equal_rejects_different_values();
     test_vector_stores_initial_components();

@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "aura/math/Math.hpp"
+#include "aura/math/Rotation.hpp"
 #include "aura/physics/Body2D.hpp"
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
@@ -12,16 +13,6 @@ float worldToScreenY(float worldY) {
     const float verticalOffset = -0.6f;
 
     return worldY * scale + verticalOffset;
-}
-
-aura::math::Vec2 rotatePoint(const aura::math::Vec2 &point, float angle) {
-    const float c = std::cos(angle);
-    const float s = std::sin(angle);
-
-    return {
-        point.x * c - point.y * s,
-        point.x * s + point.y * c
-    };
 }
 
 static void drawBody(const aura::physics::Body2D &body) {
@@ -50,7 +41,7 @@ static void drawBody(const aura::physics::Body2D &body) {
     glBegin(GL_QUADS);
 
     for (const auto &corner: localCorners) {
-        const auto rotated = rotatePoint(corner, body.angle);
+        const auto rotated = aura::math::rotate(corner, body.angle);
         const float vertexX = x + rotated.x;
         const float vertexY = y + rotated.y;
 
