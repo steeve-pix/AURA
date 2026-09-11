@@ -177,6 +177,49 @@ namespace {
         assert(aura::math::nearlyEqual(aura::physics::bottom(body), 3.0f));
     }
 
+    void test_corners_translate_to_world_coordinates_without_rotation() {
+        const aura::physics::Body2D body{
+            .position = {10.0f, 5.0f},
+            .size = {4.0f, 2.0f},
+            .angle = 0.0f
+        };
+
+        const auto bodyCorners = aura::physics::corners(body);
+
+        // Bottom-left.
+        assert(aura::math::nearlyEqual(bodyCorners[0].x, 8.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[0].y, 4.0f));
+        // Bottom-right.
+        assert(aura::math::nearlyEqual(bodyCorners[1].x, 12.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[1].y, 4.0f));
+        // Top-right.
+        assert(aura::math::nearlyEqual(bodyCorners[2].x, 12.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[2].y, 6.0f));
+        // Top-left.
+        assert(aura::math::nearlyEqual(bodyCorners[3].x, 8.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[3].y, 6.0f));
+    }
+
+    void test_corners_rotate_before_translating_to_world_coordinates() {
+        const aura::physics::Body2D body{
+            .position = {10.0f, 5.0f},
+            .size = {4.0f, 2.0f},
+            .angle = 3.1415926535f * 0.5f
+        };
+
+        const auto bodyCorners = aura::physics::corners(body);
+
+        // Local corners rotate 90 degrees around the center, then translate.
+        assert(aura::math::nearlyEqual(bodyCorners[0].x, 11.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[0].y, 3.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[1].x, 11.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[1].y, 7.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[2].x, 9.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[2].y, 7.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[3].x, 9.0f));
+        assert(aura::math::nearlyEqual(bodyCorners[3].y, 3.0f));
+    }
+
     void test_floor_collision_corrects_position_and_stops_falling() {
         const aura::physics::World2D world{};
         aura::physics::Body2D body{
@@ -264,6 +307,8 @@ int main() {
     test_horizontal_drag_opposes_rightward_motion();
     test_horizontal_drag_opposes_leftward_motion();
     test_bottom_is_half_height_below_center();
+    test_corners_translate_to_world_coordinates_without_rotation();
+    test_corners_rotate_before_translating_to_world_coordinates();
     test_floor_collision_corrects_position_and_stops_falling();
     test_step_body_lands_falling_body_on_floor();
     test_update_position_uses_velocity();
