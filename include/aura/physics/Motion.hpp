@@ -10,6 +10,11 @@ namespace aura::physics {
         body.velocity += body.acceleration * dt;
     }
 
+
+    inline void updateAngle(Body2D &body, float dt) noexcept {
+        body.angle += body.angularVelocity * dt;
+    }
+
     inline void integrate(Body2D &body, float dt) noexcept {
         updateVelocity(body, dt);
         updatePosition(body, dt);

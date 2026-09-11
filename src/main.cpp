@@ -1,4 +1,5 @@
 #include <GLFW/glfw3.h>
+#include <cmath>
 #include <iostream>
 
 #include "aura/math/Math.hpp"
@@ -11,6 +12,16 @@ float worldToScreenY(float worldY) {
     const float verticalOffset = -0.6f;
 
     return worldY * scale + verticalOffset;
+}
+
+aura::math::Vec2 rotatePoint(const aura::math::Vec2 &point, float angle) {
+    const float c = std::cos(angle);
+    const float s = std::sin(angle);
+
+    return {
+        point.x * c - point.y * s,
+        point.x * s + point.y * c
+    };
 }
 
 static void drawBody(const aura::physics::Body2D &body) {
@@ -27,29 +38,24 @@ static void drawBody(const aura::physics::Body2D &body) {
     const float halfHeight =
             body.size.y * scale * 0.5f;
 
+    const aura::math::Vec2 localCorners[] = {
+        {-halfWidth, -halfHeight},
+        {halfWidth, -halfHeight},
+        {halfWidth, halfHeight},
+        {-halfWidth, halfHeight}
+    };
+
     glColor3f(1.0f, 0.0f, 0.0f);
 
     glBegin(GL_QUADS);
 
-    glVertex2f(
-        x - halfWidth,
-        y - halfHeight
-    );
+    for (const auto &corner: localCorners) {
+        const auto rotated = rotatePoint(corner, body.angle);
+        const float vertexX = x + rotated.x;
+        const float vertexY = y + rotated.y;
 
-    glVertex2f(
-        x + halfWidth,
-        y - halfHeight
-    );
-
-    glVertex2f(
-        x + halfWidth,
-        y + halfHeight
-    );
-
-    glVertex2f(
-        x - halfWidth,
-        y + halfHeight
-    );
+        glVertex2f(vertexX, vertexY);
+    }
 
     glEnd();
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -86,6 +92,7 @@ int main() {
     aura::physics::Body2D body{
         .position = {0.0f, 10.0f},
         .velocity = {0.0f, 0.0f},
+        .angularVelocity = 1.0f
     };
 
     double previousTime = glfwGetTime();
