@@ -1,5 +1,4 @@
 #include <GLFW/glfw3.h>
-#include <cmath>
 #include <iostream>
 
 #include "aura/math/Math.hpp"
@@ -7,6 +6,8 @@
 #include "aura/physics/Body2D.hpp"
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
+
+float g_aspectRatioModifier = 1.0f;
 
 float worldToScreenY(float worldY) {
     const float scale = 0.1f;
@@ -19,7 +20,7 @@ static void drawBody(const aura::physics::Body2D &body) {
     constexpr float scale = 0.1f;
 
     const float x =
-            body.position.x * scale;
+            body.position.x * scale * g_aspectRatioModifier;
     const float y =
             worldToScreenY(body.position.y);
 
@@ -42,7 +43,7 @@ static void drawBody(const aura::physics::Body2D &body) {
 
     for (const auto &corner: localCorners) {
         const auto rotated = aura::math::rotate(corner, body.angle);
-        const float vertexX = x + rotated.x;
+        const float vertexX = x + rotated.x * g_aspectRatioModifier;
         const float vertexY = y + rotated.y;
 
         glVertex2f(vertexX, vertexY);
@@ -57,10 +58,13 @@ void drawFloor(const aura::physics::World2D &world) {
 
     glBegin(GL_QUADS);
 
-    glVertex2f(-1.0f, -1.0f);
-    glVertex2f(1.0f, -1.0f);
-    glVertex2f(1.0f, top);
-    glVertex2f(-1.0f, top);
+    float leftBound = -1.0f / g_aspectRatioModifier;
+    float rightBound = 1.0f / g_aspectRatioModifier;
+
+    glVertex2f(leftBound, -1.0f);
+    glVertex2f(rightBound, -1.0f);
+    glVertex2f(rightBound, top);
+    glVertex2f(leftBound, top);
 
     glEnd();
 }
@@ -115,6 +119,15 @@ int main() {
 
             stepsSinceLastPrint = 0;
         }
+
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+
+        if (height == 0) height = 1;
+
+        glViewport(0, 0, width, height);
+
+        g_aspectRatioModifier = static_cast<float>(height) / static_cast<float>(width);
 
         glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
 
