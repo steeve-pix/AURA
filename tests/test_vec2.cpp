@@ -1,4 +1,5 @@
 #include <cassert>
+#include <numbers>
 
 #include <aura/math/Math.hpp>
 #include <aura/math/Rotation.hpp>
@@ -6,7 +7,9 @@
 
 namespace {
     void test_rotation_turns_right_vector_up() {
-        const float halfPi = 3.1415926535f * 0.5f;
+        float pi = std::numbers::pi;
+
+        const float halfPi = pi * 0.5f;
         const aura::math::Vec2 right{1.0f, 0.0f};
 
         const auto rotated = aura::math::rotate(right, halfPi);

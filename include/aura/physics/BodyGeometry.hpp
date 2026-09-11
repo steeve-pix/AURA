@@ -4,10 +4,6 @@
 #include <array>
 
 namespace aura::physics {
-    inline float bottom(const Body2D &body) noexcept {
-        return body.position.y - body.size.y * 0.5f;
-    }
-
     inline std::array<math::Vec2, 4> corners(const Body2D &body) noexcept {
         const float halfWidth = body.size.x * 0.5f;
         const float halfHeight = body.size.y * 0.5f;
@@ -28,5 +24,17 @@ namespace aura::physics {
         };
 
         return worldCorners;
+    }
+
+    inline float bottom(const Body2D &body) noexcept {
+        const auto bodyCorners = corners(body);
+
+        float lowest = bodyCorners[0].y;
+
+        for (std::size_t i = 1; i < bodyCorners.size(); ++i)
+            if (bodyCorners[i].y < lowest)
+                lowest = bodyCorners[i].y;
+
+        return lowest;
     }
 }

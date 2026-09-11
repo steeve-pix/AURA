@@ -1,4 +1,5 @@
 #include <cassert>
+#include <numbers>
 
 #include <aura/math/Math.hpp>
 #include <aura/physics/Body2D.hpp>
@@ -10,6 +11,8 @@
 #include <aura/physics/World2D.hpp>
 
 namespace {
+    float pi = std::numbers::pi;
+
     aura::physics::Body2D initialBody = {
         .position = {2.0f, 5.0f},
         .velocity = {3.0f, -1.0f},
@@ -177,6 +180,23 @@ namespace {
         assert(aura::math::nearlyEqual(aura::physics::bottom(body), 3.0f));
     }
 
+    void test_bottom_accounts_for_rotation() {
+        aura::physics::Body2D body{
+            .position = {10.0f, 5.0f},
+            .size = {4.0f, 2.0f},
+            .angle = 0.0f
+        };
+
+        // Without rotation, the vertical half-extent is half the height: 1.
+        assert(aura::math::nearlyEqual(aura::physics::bottom(body), 4.0f));
+
+
+        body.angle = pi * 0.5f;
+
+        // At 90 degrees, the vertical half-extent is half the width: 2.
+        assert(aura::math::nearlyEqual(aura::physics::bottom(body), 3.0f));
+    }
+
     void test_corners_translate_to_world_coordinates_without_rotation() {
         const aura::physics::Body2D body{
             .position = {10.0f, 5.0f},
@@ -204,7 +224,7 @@ namespace {
         const aura::physics::Body2D body{
             .position = {10.0f, 5.0f},
             .size = {4.0f, 2.0f},
-            .angle = 3.1415926535f * 0.5f
+            .angle = pi * 0.5f
         };
 
         const auto bodyCorners = aura::physics::corners(body);
@@ -218,6 +238,23 @@ namespace {
         assert(aura::math::nearlyEqual(bodyCorners[2].y, 7.0f));
         assert(aura::math::nearlyEqual(bodyCorners[3].x, 9.0f));
         assert(aura::math::nearlyEqual(bodyCorners[3].y, 3.0f));
+    }
+
+    void test_floor_penetration_correction_lifts_rotated_body_to_floor() {
+        const aura::physics::World2D world{};
+        aura::physics::Body2D body{
+            .position = {0.0f, 1.5f},
+            .size = {4.0f, 2.0f},
+            .angle = pi * 0.5f
+        };
+
+        assert(aura::math::nearlyEqual(aura::physics::bottom(body), -0.5f));
+
+        aura::physics::correctFloorPenetration(body, world);
+
+        assert(aura::math::nearlyEqual(body.position.y, 2.0f));
+        assert(aura::math::nearlyEqual(
+            aura::physics::bottom(body), world.floorHeight));
     }
 
     void test_floor_collision_corrects_position_and_stops_falling() {
@@ -307,9 +344,11 @@ int main() {
     test_horizontal_drag_opposes_rightward_motion();
     test_horizontal_drag_opposes_leftward_motion();
     test_bottom_is_half_height_below_center();
+    test_bottom_accounts_for_rotation();
     test_corners_translate_to_world_coordinates_without_rotation();
     test_corners_rotate_before_translating_to_world_coordinates();
     test_floor_collision_corrects_position_and_stops_falling();
+    test_floor_penetration_correction_lifts_rotated_body_to_floor();
     test_step_body_lands_falling_body_on_floor();
     test_update_position_uses_velocity();
     test_update_velocity_uses_acceleration();

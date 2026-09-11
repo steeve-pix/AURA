@@ -9,12 +9,15 @@ namespace aura::physics {
     }
 
     inline void correctFloorPenetration(Body2D &body, const World2D &world) noexcept {
-        if (!intersectsFloor(body, world)) {
+        const float penetration =
+                world.floorHeight - bottom(body);
+
+        if (penetration <= 0.0f) {
             return;
         }
 
-        body.position.y =
-                world.floorHeight + body.size.y * 0.5f;
+        body.position.y +=
+                penetration;
     }
 
     inline void stopDownwardVelocity(Body2D &body) noexcept {
