@@ -1,5 +1,6 @@
 #pragma once
 #include "Body2D.hpp"
+#include "Torque.hpp"
 
 namespace aura::physics {
     inline void applyForce(Body2D &body, const math::Vec2 &force) {
@@ -20,5 +21,18 @@ namespace aura::physics {
 
     inline void applyHorizontalDrag(Body2D &body, float dragCoefficient) noexcept {
         applyForce(body, {-body.velocity.x * dragCoefficient, 0.0});
+    }
+
+    inline void applyForceAtPoint(Body2D &body, const math::Vec2 &force, const math::Vec2 &worldPoint) noexcept {
+        applyForce(body, force);
+
+        const math::Vec2 offset =
+                worldPoint - body.position;
+
+        const float generatedTorque =
+                offset.x * force.y
+                - offset.y * force.x;
+
+        applyTorque(body, generatedTorque);
     }
 }

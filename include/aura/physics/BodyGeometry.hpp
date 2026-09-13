@@ -8,7 +8,7 @@ namespace aura::physics {
         const float halfWidth = body.size.x * 0.5f;
         const float halfHeight = body.size.y * 0.5f;
 
-        const std::array<math::Vec2, 4> localCorners{
+        const std::array localCorners{
             math::Vec2{-halfWidth, -halfHeight},
             math::Vec2{halfWidth, -halfHeight},
             math::Vec2{halfWidth, halfHeight},

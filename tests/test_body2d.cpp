@@ -124,6 +124,28 @@ namespace {
         assert(aura::math::nearlyEqual(body.force.y, -4.0f));
     }
 
+    void test_force_above_center_generates_clockwise_torque() {
+        aura::physics::Body2D body{
+            .position = {0.0f, 0.0f}
+        };
+
+        aura::physics::applyForceAtPoint(body, {10.0f, 0.0f}, {0.0f, 1.0f});
+
+        assert(aura::math::nearlyEqual(body.force.x, 10.0f));
+        assert(aura::math::nearlyEqual(body.force.y, 0.0f));
+        assert(aura::math::nearlyEqual(body.torque, -10.0f));
+    }
+
+    void test_force_through_center_generates_no_torque() {
+        aura::physics::Body2D centered{};
+
+        aura::physics::applyForceAtPoint(centered, {10.0f, 0.0f}, {0.0f, 0.0f});
+
+        assert(aura::math::nearlyEqual(centered.force.x, 10.0f));
+        assert(aura::math::nearlyEqual(centered.force.y, 0.0f));
+        assert(aura::math::nearlyEqual(centered.torque, 0.0f));
+    }
+
     void test_acceleration_equals_force_divided_by_mass() {
         aura::physics::Body2D body{
             .force = {10.0f, -20.0f},
@@ -427,6 +449,8 @@ int main() {
     test_body_stores_initial_angular_acceleration_and_torque();
     test_update_angle_uses_angular_velocity();
     test_apply_force_accumulates_with_existing_force();
+    test_force_above_center_generates_clockwise_torque();
+    test_force_through_center_generates_no_torque();
     test_acceleration_equals_force_divided_by_mass();
     test_angular_acceleration_equals_torque_divided_by_inertia();
     test_apply_torque_accumulates();

@@ -7,11 +7,11 @@
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
 
-float g_aspectRatioModifier = 1.0f;
+static float g_aspectRatioModifier = 1.0f;
 
-float worldToScreenY(float worldY) {
-    const float scale = 0.1f;
-    const float verticalOffset = -0.6f;
+static float worldToScreenY(float worldY) {
+    constexpr float scale = 0.1f;
+    constexpr float verticalOffset = -0.6f;
 
     return worldY * scale + verticalOffset;
 }
@@ -87,13 +87,14 @@ int main() {
     aura::physics::Body2D body{
         .position = {0.0f, 10.0f},
         .velocity = {0.0f, 0.0f},
-        .angularVelocity = 1.0f
+        .angularVelocity = 0.0f
     };
 
     double previousTime = glfwGetTime();
-    constexpr int stepsBetweenPrints = 60;
+    constexpr int stepsBetweenPrints = 30;
     int stepsSinceLastPrint = 0;
     float pushTimeRemaining = 0.5f;
+    float torqueTimeRemaining = 0.5f;
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
@@ -107,6 +108,12 @@ int main() {
             aura::physics::applyForce(body, {2.0f, 0.0f});
             pushTimeRemaining -= dt;
         }
+
+        if (torqueTimeRemaining > 0.0f) {
+            aura::physics::applyTorque(body, 5.0f);
+            torqueTimeRemaining -= dt;
+        }
+
         aura::physics::stepBody(body, world, dt);
 
 
@@ -115,8 +122,10 @@ int main() {
         if (stepsSinceLastPrint >= stepsBetweenPrints) {
             std::cout << "y: " << body.position.y << '\n';
             std::cout << "x: " << body.position.x << '\n';
-            std::cout << "h speed: " << body.velocity.x << '\n';
-            std::cout << "v speed: " << body.velocity.y << '\n';
+            std::cout << "x speed: " << body.velocity.x << '\n';
+            std::cout << "y speed: " << body.velocity.y << '\n';
+            std::cout << "angular velocity: " << body.angularVelocity << '\n';
+            std::cout << "torque: " << body.torque << '\n';
             std::cout << '\n';
 
             stepsSinceLastPrint = 0;
