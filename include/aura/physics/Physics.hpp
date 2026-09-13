@@ -3,6 +3,7 @@
 #include "Collision.hpp"
 #include "Forces.hpp"
 #include "Motion.hpp"
+#include "Torque.hpp"
 #include "World2D.hpp"
 
 namespace aura::physics {
@@ -10,11 +11,13 @@ namespace aura::physics {
         applyGravity(body, world.gravity);
 
         updateAccelerationFromForce(body);
+        updateAngularAccelerationFromTorque(body);
 
         integrate(body, dt);
 
         resolveFloorCollision(body, world);
 
         clearForces(body);
+        clearTorque(body);
     };
 }

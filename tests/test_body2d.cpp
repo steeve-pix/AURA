@@ -6,8 +6,10 @@
 #include <aura/physics/BodyGeometry.hpp>
 #include <aura/physics/Collision.hpp>
 #include <aura/physics/Forces.hpp>
+#include <aura/physics/Inertia.hpp>
 #include <aura/physics/Motion.hpp>
 #include <aura/physics/Physics.hpp>
+#include <aura/physics/Torque.hpp>
 #include <aura/physics/World2D.hpp>
 
 namespace {
@@ -50,6 +52,25 @@ namespace {
         assert(body.mass == 2.0f);
     }
 
+    void test_body_stores_initial_moment_of_inertia() {
+        const aura::physics::Body2D body{
+            .momentOfInertia = 2.5f
+        };
+
+        assert(body.momentOfInertia == 2.5f);
+    }
+
+    void test_rectangle_moment_of_inertia_uses_mass_and_size() {
+        const aura::physics::Body2D body{
+            .size = {2.0f, 4.0f},
+            .mass = 6.0f
+        };
+
+        const float inertia = aura::physics::rectangleMomentOfInertia(body);
+
+        assert(aura::math::nearlyEqual(inertia, 10.0f));
+    }
+
     void test_body_stores_initial_force() {
         const aura::physics::Body2D body{
             .force = {3.0f, -2.0f}
@@ -67,6 +88,18 @@ namespace {
 
         assert(body.angle == 0.5f);
         assert(body.angularVelocity == 2.0f);
+    }
+
+    void test_body_stores_initial_angular_acceleration_and_torque() {
+        const aura::physics::Body2D body{
+            .angle = 0.5f,
+            .angularVelocity = 2.0f,
+            .angularAcceleration = 3.0f,
+            .torque = 4.0f
+        };
+
+        assert(body.angularAcceleration == 3.0f);
+        assert(body.torque == 4.0f);
     }
 
     void test_update_angle_uses_angular_velocity() {
@@ -101,6 +134,27 @@ namespace {
 
         assert(aura::math::nearlyEqual(body.acceleration.x, 5.0f));
         assert(aura::math::nearlyEqual(body.acceleration.y, -10.0f));
+    }
+
+    void test_apply_torque_accumulates() {
+        aura::physics::Body2D body{};
+
+        aura::physics::applyTorque(body, 2.0f);
+        aura::physics::applyTorque(body, 3.0f);
+
+        assert(body.torque == 5.0f);
+    }
+
+    void test_angular_acceleration_equals_torque_divided_by_inertia() {
+        aura::physics::Body2D body{
+            .angularAcceleration = 0.0f,
+            .torque = 20.0f,
+            .momentOfInertia = 10.0f
+        };
+
+        aura::physics::updateAngularAccelerationFromTorque(body);
+
+        assert(aura::math::nearlyEqual(body.angularAcceleration, 2.0f));
     }
 
     void test_clear_forces_resets_both_components() {
@@ -303,6 +357,24 @@ namespace {
         assert(!aura::physics::intersectsFloor(body, world));
     }
 
+    void test_step_body_integrates_rotation_and_clears_torque() {
+        // Keep the floor below the body so contact cannot stop its rotation.
+        const aura::physics::World2D world{
+            .floorHeight = -100.0f
+        };
+        aura::physics::Body2D body{
+            .mass = 1.0f,
+            .torque = 20.0f,
+            .momentOfInertia = 10.0f
+        };
+
+        aura::physics::stepBody(body, world, 0.5f);
+
+        assert(aura::math::nearlyEqual(body.angularVelocity, 1.0f));
+        assert(aura::math::nearlyEqual(body.angle, 0.5f));
+        assert(aura::math::nearlyEqual(body.torque, 0.0f));
+    }
+
     void test_update_position_uses_velocity() {
         aura::physics::Body2D body = initialBody;
 
@@ -348,11 +420,16 @@ int main() {
     test_body_stores_initial_state();
     test_body_stores_initial_size();
     test_body_stores_initial_mass();
+    test_body_stores_initial_moment_of_inertia();
+    test_rectangle_moment_of_inertia_uses_mass_and_size();
     test_body_stores_initial_force();
     test_body_stores_initial_angle_and_angular_velocity();
+    test_body_stores_initial_angular_acceleration_and_torque();
     test_update_angle_uses_angular_velocity();
     test_apply_force_accumulates_with_existing_force();
     test_acceleration_equals_force_divided_by_mass();
+    test_angular_acceleration_equals_torque_divided_by_inertia();
+    test_apply_torque_accumulates();
     test_clear_forces_resets_both_components();
     test_gravity_produces_same_acceleration_for_different_masses();
     test_applied_force_and_gravity_combine_into_acceleration();
@@ -366,6 +443,7 @@ int main() {
     test_floor_collision_stops_angular_velocity();
     test_floor_penetration_correction_lifts_rotated_body_to_floor();
     test_step_body_lands_falling_body_on_floor();
+    test_step_body_integrates_rotation_and_clears_torque();
     test_update_position_uses_velocity();
     test_update_velocity_uses_acceleration();
     test_integrate_moves_with_updated_velocity();

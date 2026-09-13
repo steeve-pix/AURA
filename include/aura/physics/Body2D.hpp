@@ -15,5 +15,9 @@ namespace aura::physics {
 
         float angle = 0.0f;
         float angularVelocity = 0.0f;
+
+        float angularAcceleration = 0.0f;
+        float torque = 0.0f;
+        float momentOfInertia = 1.0f;
     };
 }

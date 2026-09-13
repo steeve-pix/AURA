@@ -115,6 +115,8 @@ int main() {
         if (stepsSinceLastPrint >= stepsBetweenPrints) {
             std::cout << "y: " << body.position.y << '\n';
             std::cout << "x: " << body.position.x << '\n';
+            std::cout << "h speed: " << body.velocity.x << '\n';
+            std::cout << "v speed: " << body.velocity.y << '\n';
             std::cout << '\n';
 
             stepsSinceLastPrint = 0;
