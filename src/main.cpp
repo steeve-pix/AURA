@@ -94,7 +94,6 @@ int main() {
     constexpr int stepsBetweenPrints = 30;
     int stepsSinceLastPrint = 0;
     float pushTimeRemaining = 0.5f;
-    float torqueTimeRemaining = 0.5f;
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
@@ -105,13 +104,12 @@ int main() {
             aura::physics::applyHorizontalDrag(body, 1.5f);
         }
         if (pushTimeRemaining > 0.0f) {
-            aura::physics::applyForce(body, {2.0f, 0.0f});
-            pushTimeRemaining -= dt;
-        }
+            const aura::math::Vec2 pushPoint{
+                body.position.x, body.position.y + body.size.y * 0.5f
+            };
 
-        if (torqueTimeRemaining > 0.0f) {
-            aura::physics::applyTorque(body, 5.0f);
-            torqueTimeRemaining -= dt;
+            aura::physics::applyForceAtPoint(body, {5.0f, 0.0f}, pushPoint);
+            pushTimeRemaining -= dt;
         }
 
         aura::physics::stepBody(body, world, dt);
