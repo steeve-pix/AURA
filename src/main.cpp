@@ -70,6 +70,35 @@ void drawFloor(const aura::physics::World2D &world) {
     glEnd();
 }
 
+void drawPoint(const aura::math::Vec2 &worldPoint, float size = 0.02f) {
+    const float x =
+            worldPoint.x * 0.1f * g_aspectRatioModifier;
+
+    const float y =
+            worldToScreenY(worldPoint.y);
+
+    glBegin(GL_QUADS);
+
+    glVertex2f(x - size, y - size);
+    glVertex2f(x + size, y - size);
+    glVertex2f(x + size, y + size);
+    glVertex2f(x - size, y + size);
+
+    glEnd();
+}
+
+void drawJoint(const aura::physics::Body2D &bodyA, const aura::physics::Body2D &bodyB,
+               const aura::physics::Joint2D &joint) {
+    const auto anchorA =
+            aura::physics::worldAnchorA(bodyA, joint);
+
+    const auto anchorB =
+            aura::physics::worldAnchorB(bodyB, joint);
+
+    drawPoint(anchorA);
+    drawPoint(anchorB);
+}
+
 int main() {
     if (!glfwInit())
         return 1;
@@ -94,9 +123,10 @@ int main() {
 
     aura::physics::Body2D bodyB{
         .position = {-5.0f, 3.0f},
-        .velocity = {0.0f, 0.0f},
+        .velocity = {2.0f, 0.0f},
         .size = {0.5f, 2.0f},
-        .mass = 1.0f
+        .mass = 1.0f,
+        .angle = 0.5f
     };
 
     aura::physics::Joint2D joint{
@@ -117,6 +147,11 @@ int main() {
         aura::physics::stepBody(bodyB, world, dt);
 
         aura::physics::solveJoint(bodyA, bodyB, joint);
+
+        if (aura::physics::bottom(bodyA) >= 0 && aura::physics::bottom(bodyB) >= 0) {
+            aura::physics::applyHorizontalDrag(bodyA, 2.5);
+            aura::physics::applyHorizontalDrag(bodyB, 2.5);
+        }
 
         // ... Output
         ++stepsSinceLastPrint;
@@ -160,6 +195,7 @@ int main() {
         drawFloor(world);
         drawBody(bodyA);
         drawBody(bodyB);
+        drawJoint(bodyA, bodyB, joint);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -169,6 +205,4 @@ int main() {
     glfwTerminate();
 
     return 0;
-
-
 }
