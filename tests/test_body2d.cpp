@@ -8,6 +8,7 @@
 #include <aura/physics/Forces.hpp>
 #include <aura/physics/Inertia.hpp>
 #include <aura/physics/Joint2D.hpp>
+#include <aura/physics/JointConstraint.hpp>
 #include <aura/physics/JointGeometry.hpp>
 #include <aura/physics/Motion.hpp>
 #include <aura/physics/Physics.hpp>
@@ -77,6 +78,59 @@ namespace {
 
         assert(aura::math::nearlyEqual(displacedError.x, 1.0f));
         assert(aura::math::nearlyEqual(displacedError.y, 1.0f));
+    }
+
+    void test_joint_position_correction_aligns_separated_anchors() {
+        aura::physics::Body2D bodyA{
+            .position = {0.0f, 3.0f}
+        };
+
+        aura::physics::Body2D bodyB{
+            .position = {2.0f, 1.0f}
+        };
+
+        const aura::physics::Joint2D joint{
+            .localAnchorA = {0.0f, -1.0f},
+            .localAnchorB = {0.0f, 1.0f}
+        };
+
+        aura::physics::correctJointPosition(bodyA, bodyB, joint);
+
+        const auto error = aura::physics::jointError(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(error.x, 0.0f));
+        assert(aura::math::nearlyEqual(error.y, 0.0f));
+    }
+
+    void test_joint_position_correction_moves_light_body_more() {
+        aura::physics::Body2D light{
+            .position = {0.0f, 3.0f},
+            .mass = 1.0f
+        };
+
+        aura::physics::Body2D heavy{
+            .position = {2.0f, 1.0f},
+            .mass = 9.0f
+        };
+
+        const aura::physics::Joint2D joint{
+            .localAnchorA = {0.0f, -1.0f},
+            .localAnchorB = {0.0f, 1.0f}
+        };
+
+        const float lightStartX = light.position.x;
+        const float heavyStartX = heavy.position.x;
+
+        aura::physics::correctJointPosition(light, heavy, joint);
+
+        const float lightMoved = light.position.x - lightStartX;
+        const float heavyMoved = heavyStartX - heavy.position.x;
+
+        assert(lightMoved > heavyMoved);
+
+        const auto error = aura::physics::jointError(light, heavy, joint);
+        assert(aura::math::nearlyEqual(error.x, 0.0f));
+        assert(aura::math::nearlyEqual(error.y, 0.0f));
     }
 
     aura::physics::Body2D initialBody = {
@@ -560,6 +614,8 @@ int main() {
     test_joint_stores_opposing_local_anchors();
     test_joint_world_anchors_meet_at_same_point();
     test_joint_error_is_zero_when_anchors_are_aligned();
+    test_joint_position_correction_aligns_separated_anchors();
+    test_joint_position_correction_moves_light_body_more();
     test_body_stores_initial_state();
     test_body_stores_initial_size();
     test_body_stores_initial_mass();

@@ -4,6 +4,7 @@
 #include "aura/math/Math.hpp"
 #include "aura/math/Rotation.hpp"
 #include "aura/physics/Body2D.hpp"
+#include "aura/physics/Inertia.hpp"
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
 
