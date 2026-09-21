@@ -39,6 +39,13 @@ namespace aura::physics {
     }
 
     inline math::Vec2 localToWorldPoint(const Body2D &body, const math::Vec2 &localPoint) noexcept {
-        return body.position +math::rotate(localPoint, body.angle);
+        return body.position + math::rotate(localPoint, body.angle);
+    }
+
+    inline math::Vec2 worldToLocalPoint(const Body2D &body, const math::Vec2 &worldPoint) noexcept {
+        const math::Vec2 offset =
+                worldPoint - body.position;
+
+        return math::rotate(worldPoint, -body.angle);
     }
 }
