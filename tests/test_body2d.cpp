@@ -273,6 +273,33 @@ namespace {
         assert(aura::math::nearlyEqual(aura::physics::bottom(body), 3.0f));
     }
 
+    void test_local_point_translates_to_world_without_rotation() {
+        const aura::physics::Body2D body{
+            .position = {10.0f, 5.0f},
+            .angle = 0.0f
+        };
+
+        const auto worldPoint =
+                aura::physics::localToWorldPoint(body, {0.0f, 2.0f});
+
+        assert(aura::math::nearlyEqual(worldPoint.x, 10.0f));
+        assert(aura::math::nearlyEqual(worldPoint.y, 7.0f));
+    }
+
+    void test_local_point_rotates_before_translating_to_world() {
+        const aura::physics::Body2D body{
+            .position = {10.0f, 5.0f},
+            .angle = pi * 0.5f
+        };
+
+        const auto worldPoint =
+                aura::physics::localToWorldPoint(body, {0.0f, 2.0f});
+
+        // A 90-degree rotation turns (0, 2) into (-2, 0).
+        assert(aura::math::nearlyEqual(worldPoint.x, 8.0f));
+        assert(aura::math::nearlyEqual(worldPoint.y, 5.0f));
+    }
+
     void test_corners_translate_to_world_coordinates_without_rotation() {
         const aura::physics::Body2D body{
             .position = {10.0f, 5.0f},
@@ -461,6 +488,8 @@ int main() {
     test_horizontal_drag_opposes_leftward_motion();
     test_bottom_is_half_height_below_center();
     test_bottom_accounts_for_rotation();
+    test_local_point_translates_to_world_without_rotation();
+    test_local_point_rotates_before_translating_to_world();
     test_corners_translate_to_world_coordinates_without_rotation();
     test_corners_rotate_before_translating_to_world_coordinates();
     test_floor_collision_corrects_position_and_stops_falling();

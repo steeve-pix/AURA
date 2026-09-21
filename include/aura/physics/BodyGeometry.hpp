@@ -37,4 +37,8 @@ namespace aura::physics {
 
         return lowest;
     }
+
+    inline math::Vec2 localToWorldPoint(const Body2D &body, const math::Vec2 &localPoint) noexcept {
+        return body.position +math::rotate(localPoint, body.angle);
+    }
 }
