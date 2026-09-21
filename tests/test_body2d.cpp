@@ -7,6 +7,7 @@
 #include <aura/physics/Collision.hpp>
 #include <aura/physics/Forces.hpp>
 #include <aura/physics/Inertia.hpp>
+#include <aura/physics/Impulses.hpp>
 #include <aura/physics/Joint2D.hpp>
 #include <aura/physics/JointConstraint.hpp>
 #include <aura/physics/JointGeometry.hpp>
@@ -241,6 +242,22 @@ namespace {
 
         assert(aura::math::nearlyEqual(velocity.x, -2.0f));
         assert(aura::math::nearlyEqual(velocity.y, 0.0f));
+    }
+
+    void test_impulse_at_point_changes_linear_and_angular_velocity() {
+        aura::physics::Body2D body{
+            .position = {0.0f, 0.0f},
+            .mass = 2.0f,
+            .momentOfInertia = 4.0f
+        };
+
+        aura::physics::applyImpulseAtPoint(
+                body,
+                {4.0f, 0.0f},
+                {0.0f, 1.0f});
+
+        assert(aura::math::nearlyEqual(body.velocity.x, 2.0f));
+        assert(aura::math::nearlyEqual(body.angularVelocity, -1.0f));
     }
 
     void test_solve_joint_corrects_position_and_velocity() {
@@ -761,6 +778,7 @@ int main() {
     test_joint_relative_velocity_includes_anchor_rotation();
     test_joint_velocity_correction_reduces_anchor_relative_velocity();
     test_velocity_at_world_point_includes_rotational_velocity();
+    test_impulse_at_point_changes_linear_and_angular_velocity();
     test_solve_joint_corrects_position_and_velocity();
     test_body_stores_initial_state();
     test_body_stores_initial_size();
