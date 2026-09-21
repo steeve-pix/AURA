@@ -133,6 +133,74 @@ namespace {
         assert(aura::math::nearlyEqual(error.y, 0.0f));
     }
 
+    void test_joint_relative_velocity_is_body_b_velocity_minus_body_a_velocity() {
+        const aura::physics::Body2D bodyA{
+            .velocity = {1.0f, 2.0f}
+        };
+
+        const aura::physics::Body2D bodyB{
+            .velocity = {4.0f, -1.0f}
+        };
+
+        const auto relativeVelocity =
+                aura::physics::jointRelativeVelocity(bodyA, bodyB);
+
+        assert(aura::math::nearlyEqual(relativeVelocity.x, 3.0f));
+        assert(aura::math::nearlyEqual(relativeVelocity.y, -3.0f));
+    }
+
+    void test_joint_velocity_correction_equalizes_equal_masses() {
+        aura::physics::Body2D bodyA{
+            .velocity = {1.0f, 0.0f},
+            .mass = 1.0f
+        };
+
+        aura::physics::Body2D bodyB{
+            .velocity = {3.0f, 0.0f},
+            .mass = 1.0f
+        };
+
+        aura::physics::correctJointVelocity(bodyA, bodyB);
+
+        assert(aura::math::nearlyEqual(bodyA.velocity.x, 2.0f));
+        assert(aura::math::nearlyEqual(bodyB.velocity.x, 2.0f));
+
+        const auto relativeVelocity =
+                aura::physics::jointRelativeVelocity(bodyA, bodyB);
+        assert(aura::math::nearlyEqual(relativeVelocity.x, 0.0f));
+        assert(aura::math::nearlyEqual(relativeVelocity.y, 0.0f));
+    }
+
+    void test_solve_joint_corrects_position_and_velocity() {
+        aura::physics::Body2D bodyA{
+            .position = {0.0f, 3.0f},
+            .velocity = {1.0f, 0.0f},
+            .mass = 1.0f
+        };
+
+        aura::physics::Body2D bodyB{
+            .position = {2.0f, 1.0f},
+            .velocity = {3.0f, 0.0f},
+            .mass = 1.0f
+        };
+
+        const aura::physics::Joint2D joint{
+            .localAnchorA = {0.0f, -1.0f},
+            .localAnchorB = {0.0f, 1.0f}
+        };
+
+        aura::physics::solveJoint(bodyA, bodyB, joint);
+
+        const auto error = aura::physics::jointError(bodyA, bodyB, joint);
+        assert(aura::math::nearlyEqual(error.x, 0.0f));
+        assert(aura::math::nearlyEqual(error.y, 0.0f));
+
+        const auto relativeVelocity =
+                aura::physics::jointRelativeVelocity(bodyA, bodyB);
+        assert(aura::math::nearlyEqual(relativeVelocity.x, 0.0f));
+        assert(aura::math::nearlyEqual(relativeVelocity.y, 0.0f));
+    }
+
     aura::physics::Body2D initialBody = {
         .position = {2.0f, 5.0f},
         .velocity = {3.0f, -1.0f},
@@ -616,6 +684,9 @@ int main() {
     test_joint_error_is_zero_when_anchors_are_aligned();
     test_joint_position_correction_aligns_separated_anchors();
     test_joint_position_correction_moves_light_body_more();
+    test_joint_relative_velocity_is_body_b_velocity_minus_body_a_velocity();
+    test_joint_velocity_correction_equalizes_equal_masses();
+    test_solve_joint_corrects_position_and_velocity();
     test_body_stores_initial_state();
     test_body_stores_initial_size();
     test_body_stores_initial_mass();

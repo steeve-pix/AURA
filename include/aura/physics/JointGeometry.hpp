@@ -16,4 +16,8 @@ namespace aura::physics {
     inline math::Vec2 jointError(const Body2D &bodyA, const Body2D &bodyB, const Joint2D &joint) noexcept {
         return worldAnchorB(bodyB, joint) - worldAnchorA(bodyA, joint);
     }
+
+    inline math::Vec2 jointRelativeVelocity(const Body2D &bodyA, const Body2D &bodyB) noexcept {
+        return bodyB.velocity - bodyA.velocity;
+    }
 }
