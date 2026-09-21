@@ -1,10 +1,10 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-#include "aura/math/Math.hpp"
 #include "aura/math/Rotation.hpp"
 #include "aura/physics/Body2D.hpp"
-#include "aura/physics/Inertia.hpp"
+#include "aura/physics/Joint2D.hpp"
+#include "aura/physics/JointConstraint.hpp"
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
 
@@ -38,7 +38,7 @@ static void drawBody(const aura::physics::Body2D &body) {
         {-halfWidth, halfHeight}
     };
 
-    glColor3f(1.0f, 0.0f, 0.0f);
+    glColor3f(0.8f, 0.8f, 0.8f);
 
     glBegin(GL_QUADS);
 
@@ -85,50 +85,59 @@ int main() {
 
     aura::physics::World2D world{};
 
-    aura::physics::Body2D body{
-        .position = {0.0f, 10.0f},
+    aura::physics::Body2D bodyA{
+        .position = {-5.0f, 5.0f},
         .velocity = {0.0f, 0.0f},
-        .angularVelocity = 0.0f
+        .size = {0.6f, 2.0f},
+        .mass = 2.0f
+    };
+
+    aura::physics::Body2D bodyB{
+        .position = {-5.0f, 3.0f},
+        .velocity = {0.0f, 0.0f},
+        .size = {0.5f, 2.0f},
+        .mass = 1.0f
+    };
+
+    aura::physics::Joint2D joint{
+        .localAnchorA = {0.0f, -1.0f},
+        .localAnchorB = {0.0f, 1.0f}
     };
 
     double previousTime = glfwGetTime();
     constexpr int stepsBetweenPrints = 60;
     int stepsSinceLastPrint = 0;
-    float pushTimeRemaining = 0.5f;
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
         auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
 
-        if (aura::math::nearlyEqual(aura::physics::bottom(body), world.floorHeight)) {
-            aura::physics::applyHorizontalDrag(body, 1.5f);
-        }
-        if (pushTimeRemaining > 0.0f) {
-            const aura::math::Vec2 localPushPoint{
-                0.0f, body.size.y * 0.5f
-            };
+        aura::physics::stepBody(bodyA, world, dt);
+        aura::physics::stepBody(bodyB, world, dt);
 
-            const aura::math::Vec2 worldPushPoint{
-                aura::physics::localToWorldPoint(body, localPushPoint)
-            };
-
-            aura::physics::applyForceAtPoint(body, {5.0f, 0.0f}, worldPushPoint);
-            pushTimeRemaining -= dt;
-        }
-
-        aura::physics::stepBody(body, world, dt);
-
+        aura::physics::solveJoint(bodyA, bodyB, joint);
 
         // ... Output
         ++stepsSinceLastPrint;
         if (stepsSinceLastPrint >= stepsBetweenPrints) {
-            std::cout << "y: " << body.position.y << '\n';
-            std::cout << "x: " << body.position.x << '\n';
-            std::cout << "x speed: " << body.velocity.x << '\n';
-            std::cout << "y speed: " << body.velocity.y << '\n';
-            std::cout << "angular velocity: " << body.angularVelocity << '\n';
-            std::cout << "torque: " << body.torque << '\n';
+            std::cout << "Body A y: " << bodyA.position.y << '\n';
+            std::cout << "Body B y: " << bodyB.position.y << '\n';
+            std::cout << '\n';
+            std::cout << "Body A x: " << bodyA.position.x << '\n';
+            std::cout << "Body B x: " << bodyB.position.x << '\n';
+            std::cout << '\n';
+            std::cout << "Body A x speed: " << bodyA.velocity.x << '\n';
+            std::cout << "Body b x speed: " << bodyB.velocity.x << '\n';
+            std::cout << '\n';
+            std::cout << "Body A y speed: " << bodyA.velocity.y << '\n';
+            std::cout << "Body B y speed: " << bodyB.velocity.y << '\n';
+            std::cout << '\n';
+            std::cout << "Body A angular velocity: " << bodyA.angularVelocity << '\n';
+            std::cout << "Body B angular velocity: " << bodyB.angularVelocity << '\n';
+            std::cout << '\n';
+            std::cout << "Body A torque: " << bodyA.torque << '\n';
+            std::cout << "Body B torque: " << bodyB.torque << '\n';
             std::cout << '\n';
 
             stepsSinceLastPrint = 0;
@@ -149,7 +158,8 @@ int main() {
 
         // ...
         drawFloor(world);
-        drawBody(body);
+        drawBody(bodyA);
+        drawBody(bodyB);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -161,5 +171,4 @@ int main() {
     return 0;
 
 
-    return 0;
 }
