@@ -14,4 +14,22 @@ namespace aura::math {
     inline float cross(const Vec2 &a, const Vec2 &b) noexcept {
         return a.x * b.y - a.y * b.x;
     }
+
+    inline float normalizeAngle(float angle) noexcept {
+        constexpr float pi =
+                std::numbers::pi_v<float>;
+
+        constexpr float twoPi =
+                2.0f * pi;
+
+        while (angle > pi) {
+            angle -= twoPi;
+        }
+
+        while (angle < -pi) {
+            angle += twoPi;
+        }
+
+        return angle;
+    }
 }

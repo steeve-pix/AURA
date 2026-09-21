@@ -2,6 +2,7 @@
 #include "Body2D.hpp"
 #include "BodyGeometry.hpp"
 #include "Joint2D.hpp"
+#include "aura/math/Math.hpp"
 #include "aura/math/Vec2.hpp"
 
 namespace aura::physics {
@@ -31,5 +32,9 @@ namespace aura::physics {
                 velocityAtWorldPoint(bodyB, anchorB);
 
         return velocityB - velocityA;
+    }
+
+    inline float relativeJointAngle(const Body2D &bodyA, const Body2D &bodyB) noexcept {
+        return math::normalizeAngle(bodyB.angle - bodyA.angle);
     }
 }

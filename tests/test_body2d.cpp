@@ -29,6 +29,54 @@ namespace {
         assert(joint.localAnchorB.y == 1.0f);
     }
 
+    void test_joint_stores_custom_angle_limits() {
+        const aura::physics::Joint2D joint{
+            .minAngle = -0.5f,
+            .maxAngle = 0.75f
+        };
+
+        assert(aura::math::nearlyEqual(joint.minAngle, -0.5f));
+        assert(aura::math::nearlyEqual(joint.maxAngle, 0.75f));
+    }
+
+    void test_relative_joint_angle_is_body_b_angle_minus_body_a_angle() {
+        aura::physics::Body2D bodyA{
+            .angle = 0.2f
+        };
+
+        aura::physics::Body2D bodyB{
+            .angle = 0.7f
+        };
+
+        assert(aura::math::nearlyEqual(
+                aura::physics::relativeJointAngle(bodyA, bodyB),
+                0.5f));
+
+        bodyA.angle = 1.0f;
+        bodyB.angle = 1.5f;
+
+        assert(aura::math::nearlyEqual(
+                aura::physics::relativeJointAngle(bodyA, bodyB),
+                0.5f));
+    }
+
+    void test_relative_joint_angle_wraps_across_pi_boundary() {
+        constexpr float pi = 3.1415926535f;
+
+        const aura::physics::Body2D bodyA{
+            .angle = pi - 0.01f
+        };
+
+        const aura::physics::Body2D bodyB{
+            .angle = -pi + 0.01f
+        };
+
+        const float relative =
+                aura::physics::relativeJointAngle(bodyA, bodyB);
+
+        assert(aura::math::nearlyEqual(relative, 0.02f, 0.001f));
+    }
+
     void test_joint_world_anchors_meet_at_same_point() {
         const aura::physics::Body2D bodyA{
             .position = {0.0f, 3.0f}
@@ -769,6 +817,9 @@ namespace {
 
 int main() {
     test_joint_stores_opposing_local_anchors();
+    test_joint_stores_custom_angle_limits();
+    test_relative_joint_angle_is_body_b_angle_minus_body_a_angle();
+    test_relative_joint_angle_wraps_across_pi_boundary();
     test_joint_world_anchors_meet_at_same_point();
     test_joint_error_is_zero_when_anchors_are_aligned();
     test_joint_position_correction_aligns_separated_anchors();
