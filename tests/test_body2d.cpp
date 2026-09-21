@@ -7,6 +7,8 @@
 #include <aura/physics/Collision.hpp>
 #include <aura/physics/Forces.hpp>
 #include <aura/physics/Inertia.hpp>
+#include <aura/physics/Joint2D.hpp>
+#include <aura/physics/JointGeometry.hpp>
 #include <aura/physics/Motion.hpp>
 #include <aura/physics/Physics.hpp>
 #include <aura/physics/Torque.hpp>
@@ -14,6 +16,68 @@
 
 namespace {
     float pi = std::numbers::pi;
+
+    void test_joint_stores_opposing_local_anchors() {
+        const aura::physics::Joint2D joint{
+            .localAnchorA = {0.0f, -1.0f},
+            .localAnchorB = {0.0f, 1.0f}
+        };
+
+        assert(joint.localAnchorA.y == -1.0f);
+        assert(joint.localAnchorB.y == 1.0f);
+    }
+
+    void test_joint_world_anchors_meet_at_same_point() {
+        const aura::physics::Body2D bodyA{
+            .position = {0.0f, 3.0f}
+        };
+
+        const aura::physics::Body2D bodyB{
+            .position = {0.0f, 1.0f}
+        };
+
+        const aura::physics::Joint2D joint{
+            .localAnchorA = {0.0f, -1.0f},
+            .localAnchorB = {0.0f, 1.0f}
+        };
+
+        const auto anchorA = aura::physics::worldAnchorA(bodyA, joint);
+        const auto anchorB = aura::physics::worldAnchorB(bodyB, joint);
+
+        assert(aura::math::nearlyEqual(anchorA.x, 0.0f));
+        assert(aura::math::nearlyEqual(anchorA.y, 2.0f));
+        assert(aura::math::nearlyEqual(anchorB.x, 0.0f));
+        assert(aura::math::nearlyEqual(anchorB.y, 2.0f));
+    }
+
+    void test_joint_error_is_zero_when_anchors_are_aligned() {
+        const aura::physics::Body2D bodyA{
+            .position = {0.0f, 3.0f}
+        };
+
+        aura::physics::Body2D bodyB{
+            .position = {0.0f, 1.0f}
+        };
+
+        const aura::physics::Joint2D joint{
+            .localAnchorA = {0.0f, -1.0f},
+            .localAnchorB = {0.0f, 1.0f}
+        };
+
+        const auto alignedError =
+                aura::physics::jointError(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(alignedError.x, 0.0f));
+        assert(aura::math::nearlyEqual(alignedError.y, 0.0f));
+
+        bodyB.position = {1.0f, 2.0f};
+
+        const auto displacedError =
+                aura::physics::jointError(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(displacedError.x, 1.0f));
+        assert(aura::math::nearlyEqual(displacedError.y, 1.0f));
+    }
 
     aura::physics::Body2D initialBody = {
         .position = {2.0f, 5.0f},
@@ -493,6 +557,9 @@ namespace {
 }
 
 int main() {
+    test_joint_stores_opposing_local_anchors();
+    test_joint_world_anchors_meet_at_same_point();
+    test_joint_error_is_zero_when_anchors_are_aligned();
     test_body_stores_initial_state();
     test_body_stores_initial_size();
     test_body_stores_initial_mass();

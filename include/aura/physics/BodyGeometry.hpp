@@ -46,6 +46,6 @@ namespace aura::physics {
         const math::Vec2 offset =
                 worldPoint - body.position;
 
-        return math::rotate(worldPoint, -body.angle);
+        return math::rotate(offset, -body.angle);
     }
 }
