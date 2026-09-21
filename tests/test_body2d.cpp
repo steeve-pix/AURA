@@ -142,8 +142,10 @@ namespace {
             .velocity = {4.0f, -1.0f}
         };
 
+        const aura::physics::Joint2D joint{};
+
         const auto relativeVelocity =
-                aura::physics::jointRelativeVelocity(bodyA, bodyB);
+                aura::physics::jointRelativeVelocity(bodyA, bodyB, joint);
 
         assert(aura::math::nearlyEqual(relativeVelocity.x, 3.0f));
         assert(aura::math::nearlyEqual(relativeVelocity.y, -3.0f));
@@ -160,15 +162,85 @@ namespace {
             .mass = 1.0f
         };
 
-        aura::physics::correctJointVelocity(bodyA, bodyB);
+        const aura::physics::Joint2D joint{};
+
+        aura::physics::correctJointVelocity(bodyA, bodyB, joint);
 
         assert(aura::math::nearlyEqual(bodyA.velocity.x, 2.0f));
         assert(aura::math::nearlyEqual(bodyB.velocity.x, 2.0f));
 
         const auto relativeVelocity =
-                aura::physics::jointRelativeVelocity(bodyA, bodyB);
+                aura::physics::jointRelativeVelocity(bodyA, bodyB, joint);
         assert(aura::math::nearlyEqual(relativeVelocity.x, 0.0f));
         assert(aura::math::nearlyEqual(relativeVelocity.y, 0.0f));
+    }
+
+    void test_joint_relative_velocity_includes_anchor_rotation() {
+        const aura::physics::Body2D bodyA{
+            .position = {0.0f, 0.0f},
+            .velocity = {0.0f, 0.0f},
+            .angularVelocity = 2.0f
+        };
+
+        const aura::physics::Body2D bodyB{
+            .position = {0.0f, 2.0f},
+            .velocity = {0.0f, 0.0f}
+        };
+
+        const aura::physics::Joint2D joint{
+            .localAnchorA = {0.0f, 1.0f},
+            .localAnchorB = {0.0f, -1.0f}
+        };
+
+        const auto relativeVelocity =
+                aura::physics::jointRelativeVelocity(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(relativeVelocity.x, 2.0f));
+        assert(aura::math::nearlyEqual(relativeVelocity.y, 0.0f));
+    }
+
+    void test_joint_velocity_correction_reduces_anchor_relative_velocity() {
+        aura::physics::Body2D bodyA{
+            .position = {0.0f, 0.0f},
+            .velocity = {0.0f, 0.0f},
+            .angularVelocity = 2.0f
+        };
+
+        aura::physics::Body2D bodyB{
+            .position = {0.0f, 2.0f},
+            .velocity = {0.0f, 0.0f}
+        };
+
+        const aura::physics::Joint2D joint{
+            .localAnchorA = {0.0f, 1.0f},
+            .localAnchorB = {0.0f, -1.0f}
+        };
+
+        const auto relativeVelocity =
+                aura::physics::jointRelativeVelocity(bodyA, bodyB, joint);
+        const float before = relativeVelocity.length();
+
+        aura::physics::correctJointVelocity(bodyA, bodyB, joint);
+
+        const auto corrected =
+                aura::physics::jointRelativeVelocity(bodyA, bodyB, joint);
+        const float after = corrected.length();
+
+        assert(after < before);
+    }
+
+    void test_velocity_at_world_point_includes_rotational_velocity() {
+        const aura::physics::Body2D body{
+            .position = {0.0f, 0.0f},
+            .velocity = {0.0f, 0.0f},
+            .angularVelocity = 2.0f
+        };
+
+        const auto velocity =
+                aura::physics::velocityAtWorldPoint(body, {0.0f, 1.0f});
+
+        assert(aura::math::nearlyEqual(velocity.x, -2.0f));
+        assert(aura::math::nearlyEqual(velocity.y, 0.0f));
     }
 
     void test_solve_joint_corrects_position_and_velocity() {
@@ -196,7 +268,7 @@ namespace {
         assert(aura::math::nearlyEqual(error.y, 0.0f));
 
         const auto relativeVelocity =
-                aura::physics::jointRelativeVelocity(bodyA, bodyB);
+                aura::physics::jointRelativeVelocity(bodyA, bodyB, joint);
         assert(aura::math::nearlyEqual(relativeVelocity.x, 0.0f));
         assert(aura::math::nearlyEqual(relativeVelocity.y, 0.0f));
     }
@@ -686,6 +758,9 @@ int main() {
     test_joint_position_correction_moves_light_body_more();
     test_joint_relative_velocity_is_body_b_velocity_minus_body_a_velocity();
     test_joint_velocity_correction_equalizes_equal_masses();
+    test_joint_relative_velocity_includes_anchor_rotation();
+    test_joint_velocity_correction_reduces_anchor_relative_velocity();
+    test_velocity_at_world_point_includes_rotational_velocity();
     test_solve_joint_corrects_position_and_velocity();
     test_body_stores_initial_state();
     test_body_stores_initial_size();

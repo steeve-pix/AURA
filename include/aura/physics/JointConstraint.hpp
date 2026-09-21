@@ -30,9 +30,9 @@ namespace aura::physics {
                 error * weightB;
     }
 
-    inline void correctJointVelocity(Body2D &bodyA, Body2D &bodyB) noexcept {
+    inline void correctJointVelocity(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
         const math::Vec2 relativeVelocity =
-                jointRelativeVelocity(bodyA, bodyB);
+                jointRelativeVelocity(bodyA, bodyB, joint);
 
         const float inverseMassA =
                 1.0f / bodyA.mass;
@@ -58,6 +58,6 @@ namespace aura::physics {
 
     inline void solveJoint(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
         correctJointPosition(bodyA, bodyB, joint);
-        correctJointVelocity(bodyA, bodyB);
+        correctJointVelocity(bodyA, bodyB, joint);
     }
 }

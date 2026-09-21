@@ -48,4 +48,16 @@ namespace aura::physics {
 
         return math::rotate(offset, -body.angle);
     }
+
+    inline math::Vec2 velocityAtWorldPoint(const Body2D &body, const math::Vec2 &worldPoint) noexcept {
+        const math::Vec2 offset =
+                worldPoint - body.position;
+
+        const math::Vec2 rotationalVelocity{
+            -body.angularVelocity * offset.y,
+            body.angularVelocity * offset.x
+        };
+
+        return body.velocity + rotationalVelocity;
+    }
 }
