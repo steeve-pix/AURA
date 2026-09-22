@@ -118,7 +118,8 @@ int main() {
         .position = {-5.0f, 5.0f},
         .velocity = {0.0f, 0.0f},
         .size = {0.6f, 2.0f},
-        .mass = 2.0f
+        .mass = 2.0f,
+        .angle = 0.0f,
     };
 
     aura::physics::Body2D bodyB{
@@ -126,7 +127,7 @@ int main() {
         .velocity = {2.0f, 0.0f},
         .size = {0.5f, 2.0f},
         .mass = 1.0f,
-        .angle = 1.0f,
+        .angle = -0.3f,
         .angularVelocity = 1.0f
     };
 
@@ -135,6 +136,8 @@ int main() {
         .localAnchorB = {0.0f, 1.0f},
         .minAngle = -0.6f,
         .maxAngle = 0.6f,
+        .targetAngle = 0.4f,
+        .motorStiffness = 10.0f,
     };
 
     double previousTime = glfwGetTime();
@@ -145,6 +148,8 @@ int main() {
         double currentTime = glfwGetTime();
         auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
+
+        aura::physics::applyJointMotor(bodyA, bodyB, joint);
 
         aura::physics::stepBody(bodyA, world, dt);
         aura::physics::stepBody(bodyB, world, dt);
