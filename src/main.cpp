@@ -170,6 +170,24 @@ int main() {
                     .size = {0.45f, 1.6f},
                     .mass = 1.5f
                 }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftFoot,
+                .name = "left_foot",
+                .body = {
+                    .position = {-5.15f, 0.45f},
+                    .size = {1.0f, 0.35f},
+                    .mass = 0.8f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightFoot,
+                .name = "right_foot",
+                .body = {
+                    .position = {-4.55f, 0.45f},
+                    .size = {1.0f, 0.35f},
+                    .mass = 0.8f
+                }
             }
         },
         .joints = {
@@ -234,6 +252,34 @@ int main() {
                 .maxAngle = 1.6f,
 
                 .targetAngle = 0.2f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::LeftShin,
+                .partB = aura::body::BodyPartType::LeftFoot,
+
+                .localAnchorA = {0.0f, -0.8f},
+                .localAnchorB = {-0.25f, 0.0f},
+
+                .minAngle = -0.5f,
+                .maxAngle = 0.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::RightShin,
+                .partB = aura::body::BodyPartType::RightFoot,
+
+                .localAnchorA = {0.0f, -0.8f},
+                .localAnchorB = {-0.25f, 0.0f},
+
+                .minAngle = -0.5f,
+                .maxAngle = 0.5f,
+
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             }
