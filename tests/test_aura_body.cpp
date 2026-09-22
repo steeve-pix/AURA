@@ -132,6 +132,30 @@ int main()
     assert(fallingTorso->body.velocity.y < 0.0f);
     assert(fallingHead->body.velocity.y < 0.0f);
 
+    aura::body::AuraBody feetBody{
+        .parts = {
+            {
+                .type = aura::body::BodyPartType::LeftFoot,
+                .name = "left foot",
+                .body = {
+                    .position = {-0.5f, 0.175f},
+                    .size = {1.0f, 0.35f}
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightFoot,
+                .name = "right foot",
+                .body = {
+                    .position = {0.5f, 1.0f},
+                    .size = {1.0f, 0.35f}
+                }
+            }
+        }
+    };
+
+    assert(aura::body::isLeftFootGrounded(feetBody, world));
+    assert(!aura::body::isRightFootGrounded(feetBody, world));
+
     aura::body::AuraBody skeleton{
         .parts = {
             {.type = aura::body::BodyPartType::Torso, .name = "torso"},

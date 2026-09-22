@@ -19,6 +19,20 @@ namespace {
         assert(aura::math::nearlyEqual(world.gravity.y, -9.81f));
     }
 
+    void test_is_grounded_detects_floor_contact() {
+        const aura::physics::World2D world{};
+        aura::physics::Body2D foot{
+            .position = {0.0f, 0.175f},
+            .size = {1.0f, 0.35f}
+        };
+
+        assert(aura::physics::isGrounded(foot, world));
+
+        foot.position.y = 1.0f;
+
+        assert(!aura::physics::isGrounded(foot, world));
+    }
+
     void test_body_above_floor_does_not_intersect() {
         const aura::physics::World2D world{};
         const aura::physics::Body2D above{
@@ -114,6 +128,7 @@ namespace {
 int main() {
     test_world_starts_with_floor_at_zero();
     test_world_starts_with_default_gravity();
+    test_is_grounded_detects_floor_contact();
     test_body_above_floor_does_not_intersect();
     test_body_penetrating_floor_intersects();
     test_floor_correction_places_body_on_floor();

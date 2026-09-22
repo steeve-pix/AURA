@@ -3,6 +3,9 @@
 #include "aura/math/Rotation.hpp"
 #include <array>
 
+#include "World2D.hpp"
+#include "aura/math/Math.hpp"
+
 namespace aura::physics {
     inline std::array<math::Vec2, 4> corners(const Body2D &body) noexcept {
         const float halfWidth = body.size.x * 0.5f;
@@ -59,5 +62,9 @@ namespace aura::physics {
         };
 
         return body.velocity + rotationalVelocity;
+    }
+
+    inline bool isGrounded(const Body2D &body, const World2D &world) noexcept {
+        return math::nearlyEqual(bottom(body), world.floorHeight, 0.001f);
     }
 }

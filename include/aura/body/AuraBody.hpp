@@ -66,4 +66,26 @@ namespace aura::body {
             physics::stepBody(part.body, world, dt);
         }
     }
+
+    inline bool isLeftFootGrounded(AuraBody &aura, const physics::World2D &world) noexcept {
+        BodyPart *foot =
+                findPart(aura, BodyPartType::LeftFoot);
+
+        if (foot == nullptr) {
+            return false;
+        }
+
+        return physics::isGrounded(foot->body, world);
+    }
+
+    inline bool isRightFootGrounded(AuraBody &aura, const physics::World2D &world) noexcept {
+        BodyPart *foot =
+                findPart(aura, BodyPartType::RightFoot);
+
+        if (foot == nullptr) {
+            return false;
+        }
+
+        return physics::isGrounded(foot->body, world);
+    }
 }
