@@ -136,12 +136,17 @@ int main()
         .parts = {
             {.type = aura::body::BodyPartType::Torso, .name = "torso"},
             {.type = aura::body::BodyPartType::Head, .name = "head"},
-            {.type = aura::body::BodyPartType::LeftThigh, .name = "left thigh"}
+            {.type = aura::body::BodyPartType::LeftThigh, .name = "left thigh"},
+            {.type = aura::body::BodyPartType::LeftShin, .name = "left shin"}
         },
         .joints = {
             {
                 .partA = aura::body::BodyPartType::Torso,
                 .partB = aura::body::BodyPartType::LeftThigh
+            },
+            {
+                .partA = aura::body::BodyPartType::LeftThigh,
+                .partB = aura::body::BodyPartType::LeftShin
             }
         }
     };
@@ -155,8 +160,13 @@ int main()
     assert(aura::body::findPart(
                    skeleton,
                    aura::body::BodyPartType::LeftThigh) != nullptr);
+    assert(aura::body::findPart(
+                   skeleton,
+                   aura::body::BodyPartType::LeftShin) != nullptr);
     assert(skeleton.joints[0].partA == aura::body::BodyPartType::Torso);
     assert(skeleton.joints[0].partB == aura::body::BodyPartType::LeftThigh);
+    assert(skeleton.joints[1].partA == aura::body::BodyPartType::LeftThigh);
+    assert(skeleton.joints[1].partB == aura::body::BodyPartType::LeftShin);
 
     return 0;
 }

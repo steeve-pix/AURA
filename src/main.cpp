@@ -143,6 +143,15 @@ int main() {
                     .size = {0.55f, 1.8f},
                     .mass = 2.0f
                 }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftShin,
+                .name = "left_shin",
+                .body = {
+                    .position = {-5.3f, 1.5f},
+                    .size = {0.45f, 1.6f},
+                    .mass = 1.5f
+                }
             }
         },
         .joints = {
@@ -167,6 +176,20 @@ int main() {
                 .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f,
+            },
+            {
+                .partA = aura::body::BodyPartType::LeftThigh,
+                .partB = aura::body::BodyPartType::LeftShin,
+
+                .localAnchorA = {0.0f, -0.9f},
+                .localAnchorB = {0.0f, 0.8f},
+
+                .minAngle = -0.1f,
+                .maxAngle = 1.6f,
+
+                .targetAngle = 0.2f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
             }
         }
     };

@@ -10,5 +10,7 @@ namespace aura::body {
         Shin,
         LeftThigh,
         RightThigh,
+        LeftShin,
+        RightShin,
     };
 }
