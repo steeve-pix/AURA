@@ -10,5 +10,8 @@ namespace aura::physics {
 
         float minAngle = -1.0f * std::numbers::pi_v<float>;
         float maxAngle = std::numbers::pi_v<float>;
+
+        float targetAngle = 0.0f;
+        float motorStiffness = 10.0f;
     };
 }

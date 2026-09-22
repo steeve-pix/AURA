@@ -51,4 +51,8 @@ namespace aura::physics {
 
         return 0.0f;
     }
+
+    inline float jointMotorError(const Body2D &bodyA, const Body2D &bodyB, const Joint2D &joint) {
+        return math::normalizeAngle(joint.targetAngle - relativeJointAngle(bodyA, bodyB));
+    }
 }

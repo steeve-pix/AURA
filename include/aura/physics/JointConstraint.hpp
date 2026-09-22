@@ -3,6 +3,7 @@
 #include "Impulses.hpp"
 #include "Joint2D.hpp"
 #include "JointGeometry.hpp"
+#include "Torque.hpp"
 #include "aura/math/Math.hpp"
 
 namespace aura::physics {
@@ -117,13 +118,6 @@ namespace aura::physics {
                 error * weightB;
     }
 
-    inline void solveJoint(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
-        correctJointPosition(bodyA, bodyB, joint);
-        correctJointVelocity(bodyA, bodyB, joint);
-        correctJointAngle(bodyA, bodyB, joint);
-        correctJointVelocity(bodyA, bodyB, joint);
-    }
-
     inline float relativeJointAngularVelocity(const Body2D &bodyA, const Body2D &bodyB) noexcept {
         return bodyB.angularVelocity - bodyA.angularVelocity;
     }
@@ -136,10 +130,12 @@ namespace aura::physics {
                 relativeJointAngularVelocity(bodyA, bodyB);
 
         const bool pushingPastMax =
-                angle >= joint.maxAngle && relativeAngularVelocity > 0.0f;
+                (angle >= joint.maxAngle || math::nearlyEqual(angle, joint.maxAngle))
+                && relativeAngularVelocity > 0.0f;
 
         const bool pushingPastMin =
-                angle <= joint.minAngle && relativeAngularVelocity < 0.0f;
+                (angle <= joint.minAngle || math::nearlyEqual(angle, joint.minAngle))
+                && relativeAngularVelocity < 0.0f;
 
         if (!pushingPastMax && !pushingPastMin)
             return;
@@ -164,5 +160,24 @@ namespace aura::physics {
 
         bodyB.angularVelocity -=
                 relativeAngularVelocity * weightB;
+    }
+
+    inline void solveJoint(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        correctJointPosition(bodyA, bodyB, joint);
+        correctJointVelocity(bodyA, bodyB, joint);
+        correctJointAngle(bodyA, bodyB, joint);
+        correctJointAngularVelocity(bodyA, bodyB, joint);
+    }
+
+    inline float jointMotorTorque(const Body2D &bodyA, const Body2D &bodyB, const Joint2D &joint) noexcept {
+        return jointMotorError(bodyA, bodyB, joint) * joint.motorStiffness;
+    }
+
+    inline void applyJointMotor(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        const float torque =
+                jointMotorTorque(bodyA, bodyB, joint);
+
+        applyTorque(bodyA, -torque);
+        applyTorque(bodyB, torque);
     }
 }
