@@ -77,6 +77,139 @@ namespace {
         assert(aura::math::nearlyEqual(relative, 0.02f, 0.001f));
     }
 
+    void test_joint_angle_error_reports_only_limit_violations() {
+        const aura::physics::Body2D bodyA{
+            .angle = 0.0f
+        };
+
+        aura::physics::Body2D bodyB{
+            .angle = 0.2f
+        };
+
+        const aura::physics::Joint2D joint{
+            .minAngle = -0.5f,
+            .maxAngle = 0.5f
+        };
+
+        assert(aura::math::nearlyEqual(
+                aura::physics::jointAngleError(bodyA, bodyB, joint),
+                0.0f));
+
+        bodyB.angle = 0.8f;
+        assert(aura::math::nearlyEqual(
+                aura::physics::jointAngleError(bodyA, bodyB, joint),
+                0.3f));
+
+        bodyB.angle = -0.9f;
+        assert(aura::math::nearlyEqual(
+                aura::physics::jointAngleError(bodyA, bodyB, joint),
+                -0.4f));
+    }
+
+    void test_joint_angle_correction_clamps_equal_inertias_to_limits() {
+        aura::physics::Body2D bodyA{
+            .momentOfInertia = 1.0f
+        };
+
+        aura::physics::Body2D bodyB{
+            .angle = 0.8f,
+            .momentOfInertia = 1.0f
+        };
+
+        const aura::physics::Joint2D joint{
+            .minAngle = -0.5f,
+            .maxAngle = 0.5f
+        };
+
+        aura::physics::correctJointAngle(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(
+                aura::physics::relativeJointAngle(bodyA, bodyB),
+                0.5f));
+
+        bodyA.angle = 0.0f;
+        bodyB.angle = -0.9f;
+
+        aura::physics::correctJointAngle(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(
+                aura::physics::relativeJointAngle(bodyA, bodyB),
+                -0.5f));
+    }
+
+    void test_relative_joint_angular_velocity_is_body_b_minus_body_a() {
+        const aura::physics::Body2D bodyA{
+            .angularVelocity = 1.0f
+        };
+
+        const aura::physics::Body2D bodyB{
+            .angularVelocity = 4.0f
+        };
+
+        const float relative =
+                aura::physics::relativeJointAngularVelocity(bodyA, bodyB);
+
+        assert(aura::math::nearlyEqual(relative, 3.0f));
+    }
+
+    void test_joint_angular_velocity_correction_blocks_motion_outside_limits() {
+        aura::physics::Body2D bodyA{
+            .momentOfInertia = 1.0f
+        };
+
+        aura::physics::Body2D bodyB{
+            .angle = 0.5f,
+            .angularVelocity = 2.0f,
+            .momentOfInertia = 1.0f
+        };
+
+        const aura::physics::Joint2D joint{
+            .minAngle = -0.5f,
+            .maxAngle = 0.5f
+        };
+
+        aura::physics::correctJointAngularVelocity(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(
+                aura::physics::relativeJointAngularVelocity(bodyA, bodyB),
+                0.0f));
+
+        bodyA.angularVelocity = 0.0f;
+        bodyB.angularVelocity = -2.0f;
+
+        aura::physics::correctJointAngularVelocity(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(
+                aura::physics::relativeJointAngularVelocity(bodyA, bodyB),
+                -2.0f));
+    }
+
+    void test_solve_joint_corrects_angle_and_angular_velocity_limits() {
+        aura::physics::Body2D bodyA{
+            .momentOfInertia = 1.0f
+        };
+
+        aura::physics::Body2D bodyB{
+            .angle = 0.8f,
+            .angularVelocity = 2.0f,
+            .momentOfInertia = 1.0f
+        };
+
+        const aura::physics::Joint2D joint{
+            .minAngle = -0.5f,
+            .maxAngle = 0.5f
+        };
+
+        aura::physics::solveJoint(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(
+                aura::physics::relativeJointAngle(bodyA, bodyB),
+                0.5f));
+        assert(aura::math::nearlyEqual(
+                aura::physics::relativeJointAngularVelocity(bodyA, bodyB),
+                0.0f));
+    }
+
     void test_joint_world_anchors_meet_at_same_point() {
         const aura::physics::Body2D bodyA{
             .position = {0.0f, 3.0f}
@@ -820,6 +953,11 @@ int main() {
     test_joint_stores_custom_angle_limits();
     test_relative_joint_angle_is_body_b_angle_minus_body_a_angle();
     test_relative_joint_angle_wraps_across_pi_boundary();
+    test_joint_angle_error_reports_only_limit_violations();
+    test_joint_angle_correction_clamps_equal_inertias_to_limits();
+    test_relative_joint_angular_velocity_is_body_b_minus_body_a();
+    test_joint_angular_velocity_correction_blocks_motion_outside_limits();
+    test_solve_joint_corrects_angle_and_angular_velocity_limits();
     test_joint_world_anchors_meet_at_same_point();
     test_joint_error_is_zero_when_anchors_are_aligned();
     test_joint_position_correction_aligns_separated_anchors();

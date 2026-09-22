@@ -37,4 +37,18 @@ namespace aura::physics {
     inline float relativeJointAngle(const Body2D &bodyA, const Body2D &bodyB) noexcept {
         return math::normalizeAngle(bodyB.angle - bodyA.angle);
     }
+
+    inline float jointAngleError(const Body2D &bodyA, const Body2D &bodyB, const Joint2D &joint) {
+        const float angle =
+                relativeJointAngle(bodyA, bodyB);
+
+        if (angle < joint.minAngle)
+            return angle - joint.minAngle;
+
+
+        if (angle > joint.maxAngle)
+            return angle - joint.maxAngle;
+
+        return 0.0f;
+    }
 }

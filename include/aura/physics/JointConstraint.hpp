@@ -88,8 +88,81 @@ namespace aura::physics {
         applyImpulseAtPoint(bodyB, impulse, anchorB);
     }
 
+    inline void correctJointAngle(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        const float error =
+                jointAngleError(bodyA, bodyB, joint);
+
+        if (error == 0.0f)
+            return;
+
+        const float inverseInertiaA =
+                1.0f / bodyA.momentOfInertia;
+
+        const float inverseInertiaB =
+                1.0f / bodyB.momentOfInertia;
+
+        const float totalInverseInertia =
+                inverseInertiaA + inverseInertiaB;
+
+        const float weightA =
+                inverseInertiaA / totalInverseInertia;
+
+        const float weightB =
+                inverseInertiaB / totalInverseInertia;
+
+        bodyA.angle +=
+                error * weightA;
+
+        bodyB.angle -=
+                error * weightB;
+    }
+
     inline void solveJoint(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
         correctJointPosition(bodyA, bodyB, joint);
         correctJointVelocity(bodyA, bodyB, joint);
+        correctJointAngle(bodyA, bodyB, joint);
+        correctJointVelocity(bodyA, bodyB, joint);
+    }
+
+    inline float relativeJointAngularVelocity(const Body2D &bodyA, const Body2D &bodyB) noexcept {
+        return bodyB.angularVelocity - bodyA.angularVelocity;
+    }
+
+    inline void correctJointAngularVelocity(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        const float angle =
+                relativeJointAngle(bodyA, bodyB);
+
+        const float relativeAngularVelocity =
+                relativeJointAngularVelocity(bodyA, bodyB);
+
+        const bool pushingPastMax =
+                angle >= joint.maxAngle && relativeAngularVelocity > 0.0f;
+
+        const bool pushingPastMin =
+                angle <= joint.minAngle && relativeAngularVelocity < 0.0f;
+
+        if (!pushingPastMax && !pushingPastMin)
+            return;
+
+        const float inverseInertiaA =
+                1.0f / bodyA.momentOfInertia;
+
+        const float inverseInertiaB =
+                1.0f / bodyB.momentOfInertia;
+
+        const float totalInverseInertia =
+                inverseInertiaA + inverseInertiaB;
+
+        const float weightA =
+                inverseInertiaA / totalInverseInertia;
+
+        const float weightB =
+                inverseInertiaB / totalInverseInertia;
+
+        bodyA.angularVelocity +=
+                relativeAngularVelocity * weightA;
+
+        bodyB.angularVelocity -=
+                relativeAngularVelocity * weightB;
     }
 }
