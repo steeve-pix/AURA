@@ -64,5 +64,26 @@ int main()
             aura::body::BodyPartType::UpperArm);
     assert(arm == nullptr);
 
+    bool solved = aura::body::solveJoint(aura, aura.joints[0]);
+    assert(solved);
+
+    aura::physics::Joint2D badJoint{
+        .partA = aura::body::BodyPartType::Torso,
+        .partB = aura::body::BodyPartType::Forearm
+    };
+
+    bool solvedBad = aura::body::solveJoint(aura, badJoint);
+    assert(!solvedBad);
+
+    aura::body::solveAllJoints(aura);
+
+    const auto error = aura::physics::jointError(
+            torso->body,
+            head->body,
+            aura.joints[0]);
+
+    assert(aura::math::nearlyEqual(error.x, 0.0f));
+    assert(aura::math::nearlyEqual(error.y, 0.0f));
+
     return 0;
 }
