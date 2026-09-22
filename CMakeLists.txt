@@ -73,3 +73,12 @@ add_executable(
 target_include_directories(
         test_body_part PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+add_executable(
+        test_aura_body
+        tests/test_aura_body.cpp
+)
+
+target_include_directories(
+        test_aura_body PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
