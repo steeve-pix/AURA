@@ -126,12 +126,15 @@ int main() {
         .velocity = {2.0f, 0.0f},
         .size = {0.5f, 2.0f},
         .mass = 1.0f,
-        .angle = 0.5f
+        .angle = 1.0f,
+        .angularVelocity = 1.0f
     };
 
     aura::physics::Joint2D joint{
         .localAnchorA = {0.0f, -1.0f},
-        .localAnchorB = {0.0f, 1.0f}
+        .localAnchorB = {0.0f, 1.0f},
+        .minAngle = -0.6f,
+        .maxAngle = 0.6f,
     };
 
     double previousTime = glfwGetTime();
@@ -174,6 +177,7 @@ int main() {
             std::cout << "Body A torque: " << bodyA.torque << '\n';
             std::cout << "Body B torque: " << bodyB.torque << '\n';
             std::cout << '\n';
+            std::cout << "relative angle: " << aura::physics::relativeJointAngle(bodyA, bodyB) << '\n';
 
             stepsSinceLastPrint = 0;
         }
