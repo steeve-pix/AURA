@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#include "aura/body/AuraBody.hpp"
 #include "aura/math/Rotation.hpp"
 #include "aura/physics/Body2D.hpp"
 #include "aura/physics/Joint2D.hpp"
@@ -114,30 +115,40 @@ int main() {
 
     aura::physics::World2D world{};
 
-    aura::physics::Body2D bodyA{
-        .position = {-5.0f, 5.0f},
-        .velocity = {0.0f, 0.0f},
-        .size = {0.6f, 2.0f},
-        .mass = 2.0f,
-        .angle = 0.0f,
-    };
-
-    aura::physics::Body2D bodyB{
-        .position = {-5.0f, 3.0f},
-        .velocity = {2.0f, 0.0f},
-        .size = {0.5f, 2.0f},
-        .mass = 1.0f,
-        .angle = -0.3f,
-        .angularVelocity = 1.0f
-    };
-
-    aura::physics::Joint2D joint{
-        .localAnchorA = {0.0f, -1.0f},
-        .localAnchorB = {0.0f, 1.0f},
-        .minAngle = -0.6f,
-        .maxAngle = 0.6f,
-        .targetAngle = 0.4f,
-        .motorStiffness = 10.0f,
+    aura::body::AuraBody auraBody{
+        .parts = {
+            {
+                .type = aura::body::BodyPartType::Torso,
+                .name = "torso",
+                .body = {
+                    .position = {-5.0f, 5.0f},
+                    .size = {1.0f, 2.5f},
+                    .mass = 4.0f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::Head,
+                .name = "head",
+                .body = {
+                    .position = {-5.0f, 6.7f},
+                    .size = {0.8f, 0.8f},
+                    .mass = 1.0f
+                }
+            }
+        },
+        .joints = {
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::Head,
+                .localAnchorA = {0.0f, 1.25f},
+                .localAnchorB = {0.0f, -0.4f},
+                .minAngle = -0.3f,
+                .maxAngle = 0.3f,
+                .targetAngle = 0.0f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f,
+            }
+        }
     };
 
     double previousTime = glfwGetTime();
@@ -149,43 +160,12 @@ int main() {
         auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
 
-        aura::physics::applyJointMotor(bodyA, bodyB, joint);
+        aura::body::applyAllJointMotors(auraBody);
 
-        aura::physics::stepBody(bodyA, world, dt);
-        aura::physics::stepBody(bodyB, world, dt);
+        aura::body::stepAllBodyParts(auraBody, world, dt);
 
-        aura::physics::solveJoint(bodyA, bodyB, joint);
 
-        if (aura::physics::bottom(bodyA) >= 0 && aura::physics::bottom(bodyB) >= 0) {
-            aura::physics::applyHorizontalDrag(bodyA, 2.5);
-            aura::physics::applyHorizontalDrag(bodyB, 2.5);
-        }
-
-        // ... Output
-        ++stepsSinceLastPrint;
-        if (stepsSinceLastPrint >= stepsBetweenPrints) {
-            std::cout << "Body A y: " << bodyA.position.y << '\n';
-            std::cout << "Body B y: " << bodyB.position.y << '\n';
-            std::cout << '\n';
-            std::cout << "Body A x: " << bodyA.position.x << '\n';
-            std::cout << "Body B x: " << bodyB.position.x << '\n';
-            std::cout << '\n';
-            std::cout << "Body A x speed: " << bodyA.velocity.x << '\n';
-            std::cout << "Body b x speed: " << bodyB.velocity.x << '\n';
-            std::cout << '\n';
-            std::cout << "Body A y speed: " << bodyA.velocity.y << '\n';
-            std::cout << "Body B y speed: " << bodyB.velocity.y << '\n';
-            std::cout << '\n';
-            std::cout << "Body A angular velocity: " << bodyA.angularVelocity << '\n';
-            std::cout << "Body B angular velocity: " << bodyB.angularVelocity << '\n';
-            std::cout << '\n';
-            std::cout << "Body A torque: " << bodyA.torque << '\n';
-            std::cout << "Body B torque: " << bodyB.torque << '\n';
-            std::cout << '\n';
-            std::cout << "relative angle: " << aura::physics::relativeJointAngle(bodyA, bodyB) << '\n';
-
-            stepsSinceLastPrint = 0;
-        }
+        aura::body::solveAllJoints(auraBody);
 
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
@@ -202,9 +182,21 @@ int main() {
 
         // ...
         drawFloor(world);
-        drawBody(bodyA);
-        drawBody(bodyB);
-        drawJoint(bodyA, bodyB, joint);
+
+        for (const auto &part: auraBody.parts) {
+            drawBody(part.body);
+        }
+
+        const auto &neck =
+                auraBody.joints[0];
+
+        auto *torso =
+                aura::body::findPart(auraBody, aura::body::BodyPartType::Torso);
+
+        auto *head =
+                aura::body::findPart(auraBody, aura::body::BodyPartType::Head);
+
+        drawJoint(torso->body, head->body, neck);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
