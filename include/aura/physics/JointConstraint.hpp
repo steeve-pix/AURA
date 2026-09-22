@@ -170,7 +170,13 @@ namespace aura::physics {
     }
 
     inline float jointMotorTorque(const Body2D &bodyA, const Body2D &bodyB, const Joint2D &joint) noexcept {
-        return jointMotorError(bodyA, bodyB, joint) * joint.motorStiffness;
+        const float error =
+                jointMotorError(bodyA, bodyB, joint);
+
+        const float relativeAngularVelocity =
+                relativeJointAngularVelocity(bodyA, bodyB);
+
+        return error * joint.motorStiffness - relativeAngularVelocity * joint.motorDamping;
     }
 
     inline void applyJointMotor(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {

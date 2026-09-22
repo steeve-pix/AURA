@@ -168,6 +168,29 @@ namespace {
         assert(aura::math::nearlyEqual(mutableBodyB.torque, 4.0f));
     }
 
+    void test_joint_motor_torque_includes_angular_damping() {
+        const aura::physics::Body2D bodyA{
+            .angle = 0.0f,
+            .angularVelocity = 0.0f
+        };
+
+        const aura::physics::Body2D bodyB{
+            .angle = 0.0f,
+            .angularVelocity = 2.0f
+        };
+
+        const aura::physics::Joint2D joint{
+            .targetAngle = 0.0f,
+            .motorStiffness = 10.0f,
+            .motorDamping = 3.0f
+        };
+
+        const float torque =
+                aura::physics::jointMotorTorque(bodyA, bodyB, joint);
+
+        assert(aura::math::nearlyEqual(torque, -6.0f));
+    }
+
     void test_joint_angle_correction_clamps_equal_inertias_to_limits() {
         aura::physics::Body2D bodyA{
             .momentOfInertia = 1.0f
@@ -1019,6 +1042,7 @@ int main() {
     test_joint_motor_error_measures_target_minus_relative_angle();
     test_joint_motor_torque_scales_motor_error_by_stiffness();
     test_joint_motor_applies_equal_and_opposite_torques();
+    test_joint_motor_torque_includes_angular_damping();
     test_joint_angle_correction_clamps_equal_inertias_to_limits();
     test_relative_joint_angular_velocity_is_body_b_minus_body_a();
     test_joint_angular_velocity_correction_blocks_motion_outside_limits();

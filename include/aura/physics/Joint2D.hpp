@@ -13,5 +13,6 @@ namespace aura::physics {
 
         float targetAngle = 0.0f;
         float motorStiffness = 10.0f;
+        float motorDamping = 2.0f;
     };
 }
