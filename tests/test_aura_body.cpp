@@ -132,5 +132,31 @@ int main()
     assert(fallingTorso->body.velocity.y < 0.0f);
     assert(fallingHead->body.velocity.y < 0.0f);
 
+    aura::body::AuraBody skeleton{
+        .parts = {
+            {.type = aura::body::BodyPartType::Torso, .name = "torso"},
+            {.type = aura::body::BodyPartType::Head, .name = "head"},
+            {.type = aura::body::BodyPartType::LeftThigh, .name = "left thigh"}
+        },
+        .joints = {
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::LeftThigh
+            }
+        }
+    };
+
+    assert(aura::body::findPart(
+                   skeleton,
+                   aura::body::BodyPartType::Torso) != nullptr);
+    assert(aura::body::findPart(
+                   skeleton,
+                   aura::body::BodyPartType::Head) != nullptr);
+    assert(aura::body::findPart(
+                   skeleton,
+                   aura::body::BodyPartType::LeftThigh) != nullptr);
+    assert(skeleton.joints[0].partA == aura::body::BodyPartType::Torso);
+    assert(skeleton.joints[0].partB == aura::body::BodyPartType::LeftThigh);
+
     return 0;
 }

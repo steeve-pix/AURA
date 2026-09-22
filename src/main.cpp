@@ -134,6 +134,15 @@ int main() {
                     .size = {0.8f, 0.8f},
                     .mass = 1.0f
                 }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftThigh,
+                .name = "left_thigh",
+                .body = {
+                    .position = {-5.3f, 3.2f},
+                    .size = {0.55f, 1.8f},
+                    .mass = 2.0f
+                }
             }
         },
         .joints = {
@@ -144,6 +153,17 @@ int main() {
                 .localAnchorB = {0.0f, -0.4f},
                 .minAngle = -0.3f,
                 .maxAngle = 0.3f,
+                .targetAngle = 0.0f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f,
+            },
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::LeftThigh,
+                .localAnchorA = {-0.3f, -1.25f},
+                .localAnchorB = {0.0f, 0.9f},
+                .minAngle = -0.8f,
+                .maxAngle = 0.8f,
                 .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f,

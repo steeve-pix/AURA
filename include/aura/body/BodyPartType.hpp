@@ -7,6 +7,8 @@ namespace aura::body {
         UpperArm,
         Forearm,
         Thigh,
-        Shin
+        Shin,
+        LeftThigh,
+        RightThigh,
     };
 }
