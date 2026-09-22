@@ -1,10 +1,14 @@
 #pragma once
 #include <numbers>
 
+#include "aura/body/BodyPartType.hpp"
 #include "aura/math/Vec2.hpp"
 
 namespace aura::physics {
     struct Joint2D {
+        body::BodyPartType partA{};
+        body::BodyPartType partB{};
+
         math::Vec2 localAnchorA{};
         math::Vec2 localAnchorB{};
 
