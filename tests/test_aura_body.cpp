@@ -156,6 +156,113 @@ int main()
     assert(aura::body::isLeftFootGrounded(feetBody, world));
     assert(!aura::body::isRightFootGrounded(feetBody, world));
 
+    aura::body::AuraBody weightedBody{
+        .parts = {
+            {
+                .type = aura::body::BodyPartType::Torso,
+                .name = "light",
+                .body = {
+                    .position = {0.0f, 0.0f},
+                    .mass = 1.0f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::Head,
+                .name = "heavy",
+                .body = {
+                    .position = {10.0f, 0.0f},
+                    .mass = 3.0f
+                }
+            }
+        }
+    };
+
+    const auto com = aura::body::centerOfMass(weightedBody);
+    assert(aura::math::nearlyEqual(com.x, 7.5f));
+    assert(aura::math::nearlyEqual(com.y, 0.0f));
+
+    aura::body::AuraBody supportBody{
+        .parts = {
+            {
+                .type = aura::body::BodyPartType::LeftFoot,
+                .name = "left foot",
+                .body = {
+                    .position = {-1.0f, 0.5f},
+                    .size = {2.0f, 1.0f}
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightFoot,
+                .name = "right foot",
+                .body = {
+                    .position = {1.0f, 0.5f},
+                    .size = {2.0f, 1.0f}
+                }
+            }
+        }
+    };
+
+    const auto bothFeetSupport =
+            aura::body::supportInterval(supportBody, world);
+    assert(bothFeetSupport.valid);
+    assert(aura::math::nearlyEqual(bothFeetSupport.minX, -2.0f));
+    assert(aura::math::nearlyEqual(bothFeetSupport.maxX, 2.0f));
+
+    supportBody.parts[1].body.position.y = 1.0f;
+
+    const auto oneFootSupport =
+            aura::body::supportInterval(supportBody, world);
+    assert(oneFootSupport.valid);
+    assert(aura::math::nearlyEqual(oneFootSupport.minX, -2.0f));
+    assert(aura::math::nearlyEqual(oneFootSupport.maxX, 0.0f));
+
+    aura::body::AuraBody balanceBody{
+        .parts = {
+            {
+                .type = aura::body::BodyPartType::Torso,
+                .name = "torso",
+                .body = {
+                    .position = {0.0f, 2.0f},
+                    .size = {1.0f, 2.0f},
+                    .mass = 10.0f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftFoot,
+                .name = "left foot",
+                .body = {
+                    .position = {-1.0f, 0.5f},
+                    .size = {1.0f, 1.0f},
+                    .mass = 1.0f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightFoot,
+                .name = "right foot",
+                .body = {
+                    .position = {1.0f, 0.5f},
+                    .size = {1.0f, 1.0f},
+                    .mass = 1.0f
+                }
+            }
+        }
+    };
+
+    const auto balanceSupport =
+            aura::body::supportInterval(balanceBody, world);
+    const auto balanceCom = aura::body::centerOfMass(balanceBody);
+
+    assert(balanceCom.x >= balanceSupport.minX &&
+           balanceCom.x <= balanceSupport.maxX);
+    assert(aura::body::isBalanced(balanceBody, world));
+
+    auto *balanceTorso = aura::body::findPart(
+            balanceBody,
+            aura::body::BodyPartType::Torso);
+    balanceTorso->body.position.x = 10.0f;
+
+    assert(!aura::body::isBalanced(balanceBody, world));
+
     aura::body::AuraBody skeleton{
         .parts = {
             {.type = aura::body::BodyPartType::Torso, .name = "torso"},

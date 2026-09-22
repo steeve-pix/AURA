@@ -67,4 +67,12 @@ namespace aura::physics {
     inline bool isGrounded(const Body2D &body, const World2D &world) noexcept {
         return math::nearlyEqual(bottom(body), world.floorHeight, 0.001f);
     }
+
+    inline float left(const Body2D &body) noexcept {
+        return body.position.x - body.size.x * 0.5f;
+    }
+
+    inline float right(const Body2D &body) noexcept {
+        return body.position.x + body.size.x * 0.5f;
+    }
 }
