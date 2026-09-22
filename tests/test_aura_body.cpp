@@ -75,6 +75,17 @@ int main()
     bool solvedBad = aura::body::solveJoint(aura, badJoint);
     assert(!solvedBad);
 
+    aura.joints[0].targetAngle = 0.3f;
+    aura.joints[0].motorStiffness = 10.0f;
+    aura.joints[0].motorDamping = 0.0f;
+
+    aura::body::applyAllJointMotors(aura);
+
+    assert(aura::math::nearlyEqual(
+            torso->body.torque,
+            -head->body.torque));
+    assert(torso->body.torque != 0.0f || head->body.torque != 0.0f);
+
     aura::body::solveAllJoints(aura);
 
     const auto error = aura::physics::jointError(
@@ -84,6 +95,42 @@ int main()
 
     assert(aura::math::nearlyEqual(error.x, 0.0f));
     assert(aura::math::nearlyEqual(error.y, 0.0f));
+
+    aura::body::AuraBody fallingAura{
+        .parts = {
+            {
+                .type = aura::body::BodyPartType::Torso,
+                .name = "torso",
+                .body = {
+                    .position = {0.0f, 4.0f},
+                    .velocity = {0.0f, 0.0f},
+                    .size = {1.0f, 1.0f}
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::Head,
+                .name = "head",
+                .body = {
+                    .position = {0.0f, 6.0f},
+                    .velocity = {0.0f, 0.0f},
+                    .size = {1.0f, 1.0f}
+                }
+            }
+        }
+    };
+
+    const aura::physics::World2D world{};
+    aura::body::stepAllBodyParts(fallingAura, world, 0.1f);
+
+    auto *fallingTorso = aura::body::findPart(
+            fallingAura,
+            aura::body::BodyPartType::Torso);
+    auto *fallingHead = aura::body::findPart(
+            fallingAura,
+            aura::body::BodyPartType::Head);
+
+    assert(fallingTorso->body.velocity.y < 0.0f);
+    assert(fallingHead->body.velocity.y < 0.0f);
 
     return 0;
 }

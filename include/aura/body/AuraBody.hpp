@@ -4,6 +4,8 @@
 #include "BodyPart.hpp"
 #include "aura/physics/Joint2D.hpp"
 #include "aura/physics/JointConstraint.hpp"
+#include "aura/physics/Physics.hpp"
+#include "aura/physics/World2D.hpp"
 
 namespace aura::body {
     struct AuraBody {
@@ -40,6 +42,28 @@ namespace aura::body {
     inline void solveAllJoints(AuraBody &aura) noexcept {
         for (physics::Joint2D &joint: aura.joints) {
             solveJoint(aura, joint);
+        }
+    }
+
+    inline void applyAllJointMotors(AuraBody &aura) noexcept {
+        for (physics::Joint2D &joint: aura.joints) {
+            BodyPart *partA =
+                    findPart(aura, joint.partA);
+
+            BodyPart *partB =
+                    findPart(aura, joint.partB);
+
+            if (partA == nullptr || partB == nullptr) {
+                continue;
+            }
+
+            physics::applyJointMotor(partA->body, partB->body, joint);
+        }
+    }
+
+    inline void stepAllBodyParts(AuraBody &aura, const physics::World2D &world, float dt) noexcept {
+        for (BodyPart &part: aura.parts) {
+            physics::stepBody(part.body, world, dt);
         }
     }
 }
