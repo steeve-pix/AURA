@@ -64,3 +64,12 @@ add_executable(
 target_include_directories(
         test_world2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+add_executable(
+        test_body_part
+        tests/test_body_part.cpp
+)
+
+target_include_directories(
+        test_body_part PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
