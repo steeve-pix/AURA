@@ -152,6 +152,24 @@ int main() {
                     .size = {0.45f, 1.6f},
                     .mass = 1.5f
                 }
+            },
+            {
+                .type = aura::body::BodyPartType::RightThigh,
+                .name = "right_thigh",
+                .body = {
+                    .position = {-4.7f, 3.2f},
+                    .size = {0.55f, 1.8f},
+                    .mass = 2.0f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightShin,
+                .name = "right_shin",
+                .body = {
+                    .position = {-4.7f, 1.5f},
+                    .size = {0.45f, 1.6f},
+                    .mass = 1.5f
+                }
             }
         },
         .joints = {
@@ -180,6 +198,34 @@ int main() {
             {
                 .partA = aura::body::BodyPartType::LeftThigh,
                 .partB = aura::body::BodyPartType::LeftShin,
+
+                .localAnchorA = {0.0f, -0.9f},
+                .localAnchorB = {0.0f, 0.8f},
+
+                .minAngle = -0.1f,
+                .maxAngle = 1.6f,
+
+                .targetAngle = 0.2f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::RightThigh,
+
+                .localAnchorA = {0.3f, -1.25f},
+                .localAnchorB = {0.0f, 0.9f},
+
+                .minAngle = -0.8f,
+                .maxAngle = 0.8f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::RightThigh,
+                .partB = aura::body::BodyPartType::RightShin,
 
                 .localAnchorA = {0.0f, -0.9f},
                 .localAnchorB = {0.0f, 0.8f},
