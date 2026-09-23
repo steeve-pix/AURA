@@ -531,10 +531,17 @@ int main() {
         // ...
         drawFloor(world);
 
+
         for (const auto &part: auraBody.parts) {
+            const aura::math::Vec2 localFront{part.body.size.x * 0.5f, 0.0f};
+            const aura::math::Vec2 worldFront =
+                    aura::physics::localToWorldPoint(part.body, localFront);
+
             switch (part.shape) {
                 case aura::body::BodyPartShape::Circle:
                     drawCircle(part.body);
+
+                    drawPoint(worldFront, 0.015f);
                     break;
 
                 case aura::body::BodyPartShape::Rectangle:
