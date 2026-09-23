@@ -184,10 +184,11 @@ int main() {
         .parts = {
             {
                 .type = aura::body::BodyPartType::Torso,
+                .shape = aura::body::BodyPartShape::Capsule,
                 .name = "torso",
                 .body = {
                     .position = {-5.0f, 5.0f},
-                    .size = {1.0f, 2.5f},
+                    .size = {1.4f, 2.4f},
                     .mass = 4.0f
                 }
             },
