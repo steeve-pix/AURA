@@ -16,5 +16,7 @@ namespace aura::body {
         RightFoot,
         LeftUpperArm,
         RightUpperArm,
+        LeftForearm,
+        RightForearm,
     };
 }
