@@ -101,31 +101,65 @@ void drawJoint(const aura::physics::Body2D &bodyA, const aura::physics::Body2D &
 }
 
 void drawCircle(const aura::physics::Body2D &body, int segments = 32) {
-    const float scale = 0.1f * g_aspectRatioModifier;
-
-    const float centerX =
-            body.position.x * scale;
-
-    const float centerY =
-            worldToScreenY(body.position.y);
-
-    const float radius =
-            body.size.x * scale * 0.5f;
+    const float scale = 0.1f;
+    const float x = body.position.x * scale * g_aspectRatioModifier;
+    const float y = worldToScreenY(body.position.y);
+    const float radius = body.size.x * scale * 0.5f;
 
     glBegin(GL_TRIANGLE_FAN);
-
-    glVertex2f(centerX, centerY);
+    glVertex2f(x, y);
 
     for (int i = 0; i <= segments; ++i) {
-        const float angle =
-                2.0f * std::numbers::pi * static_cast<float>(i) / static_cast<float>(segments);
+        const float angle = 2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(segments);
 
-        const float x =
-                centerX + radius * std::cos(angle);
-        const float y =
-                centerY + radius * std::sin(angle);
+        // Local point inside the circle
+        aura::math::Vec2 localPoint{std::cos(angle) * radius, std::sin(angle) * radius};
 
-        glVertex2f(x, y);
+        // Apply body rotation
+        localPoint = aura::math::rotate(localPoint, body.angle);
+
+        // Apply aspect ratio correction ONLY to the X dimension in screen space
+        glVertex2f(x + localPoint.x * g_aspectRatioModifier, y + localPoint.y);
+    }
+
+    glEnd();
+}
+
+void drawCapsule(const aura::physics::Body2D &body, int segments = 16) {
+    const float scale = 0.1f;
+    const float centerX = body.position.x * scale * g_aspectRatioModifier;
+    const float centerY = worldToScreenY(body.position.y);
+
+    const float halfWidth = body.size.x * scale * 0.5f;
+    const float halfHeight = body.size.y * scale * 0.5f;
+    const float radius = halfWidth;
+    const float straightHalfHeight = std::max(0.0f, halfHeight - radius);
+
+    const aura::math::Vec2 topCenter{0.0f, straightHalfHeight};
+    const aura::math::Vec2 bottomCenter{0.0f, -straightHalfHeight};
+
+    glBegin(GL_POLYGON);
+
+    // Top cap arc (angles from 0 to PI)
+    for (int i = 0; i <= segments; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(segments);
+        const float angle = t * std::numbers::pi_v<float>;
+
+        aura::math::Vec2 localPoint{std::cos(angle) * radius, topCenter.y + std::sin(angle) * radius};
+        localPoint = aura::math::rotate(localPoint, body.angle);
+
+        glVertex2f(centerX + localPoint.x * g_aspectRatioModifier, centerY + localPoint.y);
+    }
+
+    // Bottom cap arc (angles from PI to 2*PI)
+    for (int i = 0; i <= segments; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(segments);
+        const float angle = std::numbers::pi_v<float> + t * std::numbers::pi_v<float>;
+
+        aura::math::Vec2 localPoint{std::cos(angle) * radius, bottomCenter.y + std::sin(angle) * radius};
+        localPoint = aura::math::rotate(localPoint, body.angle);
+
+        glVertex2f(centerX + localPoint.x * g_aspectRatioModifier, centerY + localPoint.y);
     }
 
     glEnd();
@@ -358,7 +392,7 @@ int main() {
 
                 case aura::body::BodyPartShape::Rectangle:
                 case aura::body::BodyPartShape::Capsule:
-                    drawBody(part.body);
+                    drawCapsule(part.body);
                     break;
             }
         }
