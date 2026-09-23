@@ -521,10 +521,9 @@ int main() {
                     aura::body::supportInterval(auraBody, world);
 
             if (support.valid) {
-                const float balanceErrorX =
-                        aura::body::balanceErrorX(auraBody, world);
-
-                std::cout << "balanceErrorX: " << balanceErrorX << '\n';
+                std::cout << "balanceErrorX: " << aura::body::balanceErrorX(auraBody, world) << '\n';
+                std::cout << "normalizedBalanceErrorX: " << aura::body::normalizedBalanceErrorX(auraBody, world) <<
+                        '\n';
             }
 
             stepsSinceLastPrint = 0;

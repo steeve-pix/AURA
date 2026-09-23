@@ -258,10 +258,30 @@ int main()
     assert(aura::math::nearlyEqual(
             aura::body::balanceErrorX(balanceBody, world),
             0.0f));
+    assert(aura::math::nearlyEqual(
+            aura::body::normalizedBalanceErrorX(balanceBody, world),
+            0.0f));
 
     auto *balanceTorso = aura::body::findPart(
             balanceBody,
             aura::body::BodyPartType::Torso);
+
+    // The feet define a support interval from -1.5 to 1.5.
+    // Moving the torso to 1.8 puts the weighted COM at the right edge.
+    balanceTorso->body.position.x = 1.8f;
+    const auto rightEdgeCom = aura::body::centerOfMass(balanceBody);
+    assert(aura::math::nearlyEqual(rightEdgeCom.x, balanceSupport.maxX));
+    assert(aura::math::nearlyEqual(
+            aura::body::normalizedBalanceErrorX(balanceBody, world),
+            1.0f));
+
+    balanceTorso->body.position.x = -1.8f;
+    const auto leftEdgeCom = aura::body::centerOfMass(balanceBody);
+    assert(aura::math::nearlyEqual(leftEdgeCom.x, balanceSupport.minX));
+    assert(aura::math::nearlyEqual(
+            aura::body::normalizedBalanceErrorX(balanceBody, world),
+            -1.0f));
+
     balanceTorso->body.position.x = 10.0f;
 
     assert(!aura::body::isBalanced(balanceBody, world));

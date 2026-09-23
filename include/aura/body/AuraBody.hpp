@@ -169,6 +169,24 @@ namespace aura::body {
         return com.x - supportCenterX;
     }
 
+    inline float normalizedBalanceErrorX(AuraBody &aura, const physics::World2D &world) noexcept {
+        const SupportInterval support =
+                supportInterval(aura, world);
+
+        if (!support.valid) {
+            return 0.0f;
+        }
+
+        const float halfWidth =
+                (support.maxX - support.minX) * 0.5f;
+
+        if (halfWidth <= 0.0f) {
+            return 0.0f;
+        }
+
+        return balanceErrorX(aura, world) / halfWidth;
+    }
+
     inline bool isBalanced(AuraBody &aura, const physics::World2D &world) noexcept {
         const SupportInterval support =
                 supportInterval(aura, world);
