@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "aura/body/AuraBody.hpp"
+#include "aura/body/BalanceController.hpp"
 #include "aura/math/Rotation.hpp"
 #include "aura/physics/Body2D.hpp"
 #include "aura/physics/Joint2D.hpp"
@@ -242,7 +243,7 @@ int main() {
                 .type = aura::body::BodyPartType::LeftFoot,
                 .name = "left_foot",
                 .body = {
-                    .position = {-5.15f, 0.45f},
+                    .position = {-5.15f, 0.175f},
                     .size = {1.0f, 0.35f},
                     .mass = 0.8f
                 }
@@ -251,7 +252,7 @@ int main() {
                 .type = aura::body::BodyPartType::RightFoot,
                 .name = "right_foot",
                 .body = {
-                    .position = {-4.55f, 0.45f},
+                    .position = {-4.55f, 0.175f},
                     .size = {1.0f, 0.35f},
                     .mass = 0.8f
                 }
@@ -497,6 +498,38 @@ int main() {
         }
     };
 
+    auto *leftFoot =
+            aura::body::findPart(
+                auraBody,
+                aura::body::BodyPartType::LeftFoot
+            );
+
+    auto *rightFoot =
+            aura::body::findPart(
+                auraBody,
+                aura::body::BodyPartType::RightFoot
+            );
+
+    if (leftFoot != nullptr && rightFoot != nullptr) {
+        std::cout
+                << "LEFT  y=" << leftFoot->body.position.y
+                << " sizeY=" << leftFoot->body.size.y
+                << " angle=" << leftFoot->body.angle
+                << " bottom=" << aura::physics::bottom(leftFoot->body)
+                << '\n';
+
+        std::cout
+                << "RIGHT y=" << rightFoot->body.position.y
+                << " sizeY=" << rightFoot->body.size.y
+                << " angle=" << rightFoot->body.angle
+                << " bottom=" << aura::physics::bottom(rightFoot->body)
+                << '\n';
+
+        std::cout
+                << "FLOOR=" << world.floorHeight
+                << '\n';
+    }
+
     double previousTime = glfwGetTime();
     constexpr int stepsBetweenPrints = 60;
     int stepsSinceLastPrint = 0;
@@ -508,23 +541,42 @@ int main() {
         auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
 
+        aura::body::applyBalanceController(auraBody, world, 0.3f);
         aura::body::applyAllJointMotors(auraBody);
 
         aura::body::stepAllBodyParts(auraBody, world, dt);
 
-
         aura::body::solveAllJoints(auraBody);
+        aura::body::resolveAllFloorCollisions(auraBody, world);
 
         ++stepsSinceLastPrint;
         if (stepsSinceLastPrint >= stepsBetweenPrints) {
-            const auto support =
-                    aura::body::supportInterval(auraBody, world);
+            const bool leftGrounded =
+                    aura::body::isLeftFootGrounded(
+                        auraBody,
+                        world
+                    );
 
-            if (support.valid) {
-                std::cout << "balanceErrorX: " << aura::body::balanceErrorX(auraBody, world) << '\n';
-                std::cout << "normalizedBalanceErrorX: " << aura::body::normalizedBalanceErrorX(auraBody, world) <<
-                        '\n';
-            }
+            const bool rightGrounded =
+                    aura::body::isRightFootGrounded(
+                        auraBody,
+                        world
+                    );
+
+            const auto support =
+                    aura::body::supportInterval(
+                        auraBody,
+                        world
+                    );
+
+            const float balanceError =
+                    aura::body::normalizedBalanceErrorX(
+                        auraBody,
+                        world
+                    );
+
+            std::cout << "left: " << leftGrounded << " | right: " << rightGrounded << " | support: " << support.valid <<
+                    " | balance error: " << balanceError << '\n';
 
             stepsSinceLastPrint = 0;
         }

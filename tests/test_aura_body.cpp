@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include <aura/body/AuraBody.hpp>
+#include <aura/body/BalanceController.hpp>
 #include <aura/math/Math.hpp>
 
 int main()
@@ -245,6 +246,16 @@ int main()
                     .mass = 1.0f
                 }
             }
+        },
+        .joints = {
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::LeftThigh
+            },
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::RightThigh
+            }
         }
     };
 
@@ -288,6 +299,10 @@ int main()
     assert(aura::math::nearlyEqual(
             aura::body::balanceErrorX(balanceBody, world),
             8.333333f));
+
+    aura::body::applyBalanceController(balanceBody, world, 0.3f);
+    assert(balanceBody.joints[0].targetAngle < 0.0f);
+    assert(balanceBody.joints[1].targetAngle < 0.0f);
 
     aura::body::AuraBody skeleton{
         .parts = {

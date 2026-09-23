@@ -201,4 +201,10 @@ namespace aura::body {
         return com.x >= support.minX &&
                com.x <= support.maxX;
     }
+
+    inline void resolveAllFloorCollisions(AuraBody &aura, const physics::World2D &world) noexcept {
+        for (BodyPart &part: aura.parts) {
+            physics::resolveFloorCollision(part.body, world);
+        }
+    }
 }
