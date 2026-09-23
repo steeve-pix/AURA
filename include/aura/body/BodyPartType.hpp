@@ -14,5 +14,11 @@ namespace aura::body {
         RightShin,
         LeftFoot,
         RightFoot,
+        LeftUpperArm,
+        RightUpperArm,
+        LeftForearm,
+        RightForearm,
+        LeftHand,
+        RightHand,
     };
 }

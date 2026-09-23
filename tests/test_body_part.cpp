@@ -19,5 +19,13 @@ int main()
     assert(torso.body.position.x == 1.0f);
     assert(torso.body.mass == 3.0f);
 
+    aura::body::BodyPart head{
+        .type = aura::body::BodyPartType::Head,
+        .shape = aura::body::BodyPartShape::Circle,
+        .name = "head"
+    };
+
+    assert(head.shape == aura::body::BodyPartShape::Circle);
+
     return 0;
 }

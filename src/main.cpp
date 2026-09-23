@@ -100,6 +100,71 @@ void drawJoint(const aura::physics::Body2D &bodyA, const aura::physics::Body2D &
     drawPoint(anchorB);
 }
 
+void drawCircle(const aura::physics::Body2D &body, int segments = 32) {
+    const float scale = 0.1f;
+    const float x = body.position.x * scale * g_aspectRatioModifier;
+    const float y = worldToScreenY(body.position.y);
+    const float radius = body.size.x * scale * 0.5f;
+
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(x, y);
+
+    for (int i = 0; i <= segments; ++i) {
+        const float angle = 2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(segments);
+
+        // Local point inside the circle
+        aura::math::Vec2 localPoint{std::cos(angle) * radius, std::sin(angle) * radius};
+
+        // Apply body rotation
+        localPoint = aura::math::rotate(localPoint, body.angle);
+
+        // Apply aspect ratio correction ONLY to the X dimension in screen space
+        glVertex2f(x + localPoint.x * g_aspectRatioModifier, y + localPoint.y);
+    }
+
+    glEnd();
+}
+
+void drawCapsule(const aura::physics::Body2D &body, int segments = 16) {
+    const float scale = 0.1f;
+    const float centerX = body.position.x * scale * g_aspectRatioModifier;
+    const float centerY = worldToScreenY(body.position.y);
+
+    const float halfWidth = body.size.x * scale * 0.5f;
+    const float halfHeight = body.size.y * scale * 0.5f;
+    const float radius = halfWidth;
+    const float straightHalfHeight = std::max(0.0f, halfHeight - radius);
+
+    const aura::math::Vec2 topCenter{0.0f, straightHalfHeight};
+    const aura::math::Vec2 bottomCenter{0.0f, -straightHalfHeight};
+
+    glBegin(GL_POLYGON);
+
+    // Top cap arc (angles from 0 to PI)
+    for (int i = 0; i <= segments; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(segments);
+        const float angle = t * std::numbers::pi_v<float>;
+
+        aura::math::Vec2 localPoint{std::cos(angle) * radius, topCenter.y + std::sin(angle) * radius};
+        localPoint = aura::math::rotate(localPoint, body.angle);
+
+        glVertex2f(centerX + localPoint.x * g_aspectRatioModifier, centerY + localPoint.y);
+    }
+
+    // Bottom cap arc (angles from PI to 2*PI)
+    for (int i = 0; i <= segments; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(segments);
+        const float angle = std::numbers::pi_v<float> + t * std::numbers::pi_v<float>;
+
+        aura::math::Vec2 localPoint{std::cos(angle) * radius, bottomCenter.y + std::sin(angle) * radius};
+        localPoint = aura::math::rotate(localPoint, body.angle);
+
+        glVertex2f(centerX + localPoint.x * g_aspectRatioModifier, centerY + localPoint.y);
+    }
+
+    glEnd();
+}
+
 int main() {
     if (!glfwInit())
         return 1;
@@ -119,15 +184,17 @@ int main() {
         .parts = {
             {
                 .type = aura::body::BodyPartType::Torso,
+                .shape = aura::body::BodyPartShape::Capsule,
                 .name = "torso",
                 .body = {
                     .position = {-5.0f, 5.0f},
-                    .size = {1.0f, 2.5f},
+                    .size = {1.4f, 2.4f},
                     .mass = 4.0f
                 }
             },
             {
                 .type = aura::body::BodyPartType::Head,
+                .shape = aura::body::BodyPartShape::Circle,
                 .name = "head",
                 .body = {
                     .position = {-5.0f, 6.7f},
@@ -187,6 +254,66 @@ int main() {
                     .position = {-4.55f, 0.45f},
                     .size = {1.0f, 0.35f},
                     .mass = 0.8f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftUpperArm,
+                .shape = aura::body::BodyPartShape::Capsule,
+                .name = "left_upper_arm",
+                .body = {
+                    .position = {-5.9f, 5.0f},
+                    .size = {0.45f, 1.6f},
+                    .mass = 1.2f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightUpperArm,
+                .shape = aura::body::BodyPartShape::Capsule,
+                .name = "right_upper_arm",
+                .body = {
+                    .position = {-4.1f, 5.0f},
+                    .size = {0.45f, 1.6f},
+                    .mass = 1.2f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftForearm,
+                .shape = aura::body::BodyPartShape::Capsule,
+                .name = "left_forearm",
+                .body = {
+                    .position = {-5.9f, 3.6f},
+                    .size = {0.4f, 1.5f},
+                    .mass = 1.0f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightForearm,
+                .shape = aura::body::BodyPartShape::Capsule,
+                .name = "right_forearm",
+                .body = {
+                    .position = {-4.1f, 3.6f},
+                    .size = {0.4f, 1.5f},
+                    .mass = 1.0f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftHand,
+                .shape = aura::body::BodyPartShape::Circle,
+                .name = "left_hand",
+                .body = {
+                    .position = {-5.9f, 2.65f},
+                    .size = {0.42f, 0.42f},
+                    .mass = 0.4f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightHand,
+                .shape = aura::body::BodyPartShape::Circle,
+                .name = "right_hand",
+                .body = {
+                    .position = {-4.1f, 2.65f},
+                    .size = {0.42f, 0.42f},
+                    .mass = 0.4f
                 }
             }
         },
@@ -282,6 +409,90 @@ int main() {
                 .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::LeftUpperArm,
+
+                .localAnchorA = {-0.7f, 0.8f},
+                .localAnchorB = {0.0f, 0.8f},
+
+                .minAngle = -1.5f,
+                .maxAngle = 1.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::RightUpperArm,
+
+                .localAnchorA = {0.7f, 0.8f},
+                .localAnchorB = {0.0f, 0.8f},
+
+                .minAngle = -1.5f,
+                .maxAngle = 1.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::LeftUpperArm,
+                .partB = aura::body::BodyPartType::LeftForearm,
+
+                .localAnchorA = {0.0f, -0.8f},
+                .localAnchorB = {0.0f, 0.75f},
+
+                .minAngle = -0.1f,
+                .maxAngle = 2.2f,
+
+                .targetAngle = 0.2f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::RightUpperArm,
+                .partB = aura::body::BodyPartType::RightForearm,
+
+                .localAnchorA = {0.0f, -0.8f},
+                .localAnchorB = {0.0f, 0.75f},
+
+                .minAngle = -2.2f,
+                .maxAngle = 0.1f,
+
+                .targetAngle = -0.2f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::LeftForearm,
+                .partB = aura::body::BodyPartType::LeftHand,
+
+                .localAnchorA = {0.0f, -0.7f},
+                .localAnchorB = {0.0f, 0.0f},
+
+                .minAngle = -0.5f,
+                .maxAngle = 0.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 8.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::RightForearm,
+                .partB = aura::body::BodyPartType::RightHand,
+
+                .localAnchorA = {0.0f, -0.7f},
+                .localAnchorB = {0.0f, 0.0f},
+
+                .minAngle = -0.5f,
+                .maxAngle = 0.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 8.0f,
+                .motorDamping = 2.0f
             }
         }
     };
@@ -289,6 +500,8 @@ int main() {
     double previousTime = glfwGetTime();
     constexpr int stepsBetweenPrints = 60;
     int stepsSinceLastPrint = 0;
+
+    constexpr bool SHOW_JOINT_DEBUG = false;
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
@@ -318,8 +531,24 @@ int main() {
         // ...
         drawFloor(world);
 
+
         for (const auto &part: auraBody.parts) {
-            drawBody(part.body);
+            const aura::math::Vec2 localFront{part.body.size.x * 0.5f, 0.0f};
+            const aura::math::Vec2 worldFront =
+                    aura::physics::localToWorldPoint(part.body, localFront);
+
+            switch (part.shape) {
+                case aura::body::BodyPartShape::Circle:
+                    drawCircle(part.body);
+
+                    drawPoint(worldFront, 0.015f);
+                    break;
+
+                case aura::body::BodyPartShape::Rectangle:
+                case aura::body::BodyPartShape::Capsule:
+                    drawCapsule(part.body);
+                    break;
+            }
         }
 
         const auto &neck =
@@ -331,7 +560,9 @@ int main() {
         auto *head =
                 aura::body::findPart(auraBody, aura::body::BodyPartType::Head);
 
-        drawJoint(torso->body, head->body, neck);
+        if (SHOW_JOINT_DEBUG) {
+            drawJoint(torso->body, head->body, neck);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
