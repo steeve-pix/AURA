@@ -1,4 +1,5 @@
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <iostream>
 
 #include "aura/body/AuraBody.hpp"
@@ -498,35 +499,133 @@ int main() {
         }
     };
 
-    auto *leftFoot =
-            aura::body::findPart(
-                auraBody,
-                aura::body::BodyPartType::LeftFoot
-            );
+    auto *leftFoot = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftFoot);
+    auto *rightFoot = aura::body::findPart(auraBody, aura::body::BodyPartType::RightFoot);
+    auto *leftShin = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftShin);
+    auto *rightShin = aura::body::findPart(auraBody, aura::body::BodyPartType::RightShin);
+    auto *leftThigh = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftThigh);
+    auto *rightThigh = aura::body::findPart(auraBody, aura::body::BodyPartType::RightThigh);
+    auto *torso = aura::body::findPart(auraBody, aura::body::BodyPartType::Torso);
 
-    auto *rightFoot =
-            aura::body::findPart(
-                auraBody,
-                aura::body::BodyPartType::RightFoot
-            );
+    const auto leftAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::LeftShin &&
+               joint.partB == aura::body::BodyPartType::LeftFoot;
+    });
+    const auto rightAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::RightShin &&
+               joint.partB == aura::body::BodyPartType::RightFoot;
+    });
+    const auto leftKnee = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::LeftThigh &&
+               joint.partB == aura::body::BodyPartType::LeftShin;
+    });
+    const auto rightKnee = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::RightThigh &&
+               joint.partB == aura::body::BodyPartType::RightShin;
+    });
+    const auto leftHip = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::Torso &&
+               joint.partB == aura::body::BodyPartType::LeftThigh;
+    });
+    const auto rightHip = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::Torso &&
+               joint.partB == aura::body::BodyPartType::RightThigh;
+    });
+
+    if (leftFoot != nullptr && rightFoot != nullptr &&
+        leftShin != nullptr && rightShin != nullptr &&
+        leftAnkle != auraBody.joints.end() && rightAnkle != auraBody.joints.end()) {
+        leftFoot->body.position.y = 0.175f;
+        rightFoot->body.position.y = 0.175f;
+
+        const auto leftAnkleWorld =
+                aura::physics::worldAnchorB(leftFoot->body, *leftAnkle);
+        leftShin->body.position = leftAnkleWorld - leftAnkle->localAnchorA;
+
+        const auto rightAnkleWorld =
+                aura::physics::worldAnchorB(rightFoot->body, *rightAnkle);
+        rightShin->body.position = rightAnkleWorld - rightAnkle->localAnchorA;
+    }
+
+    if (leftShin != nullptr && rightShin != nullptr &&
+        leftThigh != nullptr && rightThigh != nullptr &&
+        leftKnee != auraBody.joints.end() && rightKnee != auraBody.joints.end()) {
+        const auto leftKneeWorld =
+                aura::physics::worldAnchorB(leftShin->body, *leftKnee);
+        leftThigh->body.position = leftKneeWorld - leftKnee->localAnchorA;
+
+        const auto rightKneeWorld =
+                aura::physics::worldAnchorB(rightShin->body, *rightKnee);
+        rightThigh->body.position = rightKneeWorld - rightKnee->localAnchorA;
+    }
+
+    if (torso != nullptr && leftThigh != nullptr && rightThigh != nullptr &&
+        leftHip != auraBody.joints.end() && rightHip != auraBody.joints.end()) {
+        const auto leftHipWorld =
+                aura::physics::worldAnchorB(leftThigh->body, *leftHip);
+        const auto leftTorsoPosition =
+                leftHipWorld - aura::math::rotate(leftHip->localAnchorA, torso->body.angle);
+
+        const auto rightHipWorld =
+                aura::physics::worldAnchorB(rightThigh->body, *rightHip);
+        const auto rightTorsoPosition =
+                rightHipWorld - aura::math::rotate(rightHip->localAnchorA, torso->body.angle);
+
+        std::cout << "left torso candidate: ("
+                << leftTorsoPosition.x << ", "
+                << leftTorsoPosition.y << ")\n"
+                << "right torso candidate: ("
+                << rightTorsoPosition.x << ", "
+                << rightTorsoPosition.y << ")\n";
+
+        torso->body.position = (leftTorsoPosition + rightTorsoPosition) * 0.5f;
+    }
+
+    for (const auto &joint: auraBody.joints) {
+        const bool isKnee =
+                (joint.partA == aura::body::BodyPartType::LeftThigh &&
+                 joint.partB == aura::body::BodyPartType::LeftShin) ||
+                (joint.partA == aura::body::BodyPartType::RightThigh &&
+                 joint.partB == aura::body::BodyPartType::RightShin);
+        const bool isHip =
+                (joint.partA == aura::body::BodyPartType::Torso &&
+                 joint.partB == aura::body::BodyPartType::LeftThigh) ||
+                (joint.partA == aura::body::BodyPartType::Torso &&
+                 joint.partB == aura::body::BodyPartType::RightThigh);
+        const bool isAnkle =
+                (joint.partA == aura::body::BodyPartType::LeftShin &&
+                 joint.partB == aura::body::BodyPartType::LeftFoot) ||
+                (joint.partA == aura::body::BodyPartType::RightShin &&
+                 joint.partB == aura::body::BodyPartType::RightFoot);
+
+        if (!isHip && !isKnee && !isAnkle) {
+            continue;
+        }
+
+        auto *partA =
+                aura::body::findPart(auraBody, joint.partA);
+
+        auto *partB =
+                aura::body::findPart(auraBody, joint.partB);
+
+        if (partA == nullptr || partB == nullptr) {
+            continue;
+        }
+
+        const auto error =
+                aura::physics::jointError(partA->body, partB->body, joint);
+
+        std::cout << partA->name << " -> " << partB->name << " | joint error: (" << error.x << ", " << error.y << ")" <<
+                " | length: " << error.length() << '\n';
+    }
 
     if (leftFoot != nullptr && rightFoot != nullptr) {
         std::cout
-                << "LEFT  y=" << leftFoot->body.position.y
-                << " sizeY=" << leftFoot->body.size.y
-                << " angle=" << leftFoot->body.angle
-                << " bottom=" << aura::physics::bottom(leftFoot->body)
+                << "LEFT bottom=" << aura::physics::bottom(leftFoot->body)
                 << '\n';
 
         std::cout
-                << "RIGHT y=" << rightFoot->body.position.y
-                << " sizeY=" << rightFoot->body.size.y
-                << " angle=" << rightFoot->body.angle
-                << " bottom=" << aura::physics::bottom(rightFoot->body)
-                << '\n';
-
-        std::cout
-                << "FLOOR=" << world.floorHeight
+                << "RIGHT bottom=" << aura::physics::bottom(rightFoot->body)
                 << '\n';
     }
 
@@ -541,13 +640,17 @@ int main() {
         auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
 
-        aura::body::applyBalanceController(auraBody, world, 0.3f);
-        aura::body::applyAllJointMotors(auraBody);
+        // for (auto &parts: auraBody.parts)
+        //     if (aura::math::nearlyEqual(aura::physics::bottom(parts.body), world.floorHeight))
+        //         aura::physics::applyHorizontalDrag(parts.body, 100.0f);
+
+
+        // aura::body::applyBalanceController(auraBody, world, 0.3f);
+        // aura::body::applyAllJointMotors(auraBody);
 
         aura::body::stepAllBodyParts(auraBody, world, dt);
 
-        aura::body::solveAllJoints(auraBody);
-        aura::body::resolveAllFloorCollisions(auraBody, world);
+        aura::body::solveBodyConstraints(auraBody, world, 8);
 
         ++stepsSinceLastPrint;
         if (stepsSinceLastPrint >= stepsBetweenPrints) {
@@ -563,6 +666,8 @@ int main() {
                         world
                     );
 
+            const auto com = aura::body::centerOfMass(auraBody);
+
             const auto support =
                     aura::body::supportInterval(
                         auraBody,
@@ -575,7 +680,8 @@ int main() {
                         world
                     );
 
-            std::cout << "left: " << leftGrounded << " | right: " << rightGrounded << " | support: " << support.valid <<
+            std::cout << "left: " << leftGrounded << " | right: " << rightGrounded << " | COM x: " << com.x <<
+                    " | support: " << support.valid <<
                     " | balance error: " << balanceError << '\n';
 
             stepsSinceLastPrint = 0;

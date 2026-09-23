@@ -207,4 +207,13 @@ namespace aura::body {
             physics::resolveFloorCollision(part.body, world);
         }
     }
+
+
+    inline void solveBodyConstraints(AuraBody &aura, const physics::World2D &world, int iterations = 8) noexcept {
+        for (int interation = 0; interation < iterations; ++interation) {
+            solveAllJoints(aura);
+
+            resolveAllFloorCollisions(aura, world);
+        }
+    }
 }

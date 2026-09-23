@@ -87,7 +87,7 @@ int main()
             -head->body.torque));
     assert(torso->body.torque != 0.0f || head->body.torque != 0.0f);
 
-    aura::body::solveAllJoints(aura);
+    aura::body::solveAllJoints(aura, TODO);
 
     const auto error = aura::physics::jointError(
             torso->body,
