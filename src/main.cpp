@@ -295,6 +295,26 @@ int main() {
                     .size = {0.4f, 1.5f},
                     .mass = 1.0f
                 }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftHand,
+                .shape = aura::body::BodyPartShape::Circle,
+                .name = "left_hand",
+                .body = {
+                    .position = {-5.9f, 2.65f},
+                    .size = {0.42f, 0.42f},
+                    .mass = 0.4f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightHand,
+                .shape = aura::body::BodyPartShape::Circle,
+                .name = "right_hand",
+                .body = {
+                    .position = {-4.1f, 2.65f},
+                    .size = {0.42f, 0.42f},
+                    .mass = 0.4f
+                }
             }
         },
         .joints = {
@@ -444,6 +464,34 @@ int main() {
 
                 .targetAngle = -0.2f,
                 .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::LeftForearm,
+                .partB = aura::body::BodyPartType::LeftHand,
+
+                .localAnchorA = {0.0f, -0.7f},
+                .localAnchorB = {0.0f, 0.0f},
+
+                .minAngle = -0.5f,
+                .maxAngle = 0.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 8.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::RightForearm,
+                .partB = aura::body::BodyPartType::RightHand,
+
+                .localAnchorA = {0.0f, -0.7f},
+                .localAnchorB = {0.0f, 0.0f},
+
+                .minAngle = -0.5f,
+                .maxAngle = 0.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 8.0f,
                 .motorDamping = 2.0f
             }
         }
