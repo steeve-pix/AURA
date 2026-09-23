@@ -515,6 +515,21 @@ int main() {
 
         aura::body::solveAllJoints(auraBody);
 
+        ++stepsSinceLastPrint;
+        if (stepsSinceLastPrint >= stepsBetweenPrints) {
+            const auto support =
+                    aura::body::supportInterval(auraBody, world);
+
+            if (support.valid) {
+                const float balanceErrorX =
+                        aura::body::balanceErrorX(auraBody, world);
+
+                std::cout << "balanceErrorX: " << balanceErrorX << '\n';
+            }
+
+            stepsSinceLastPrint = 0;
+        }
+
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
 
@@ -541,7 +556,9 @@ int main() {
                 case aura::body::BodyPartShape::Circle:
                     drawCircle(part.body);
 
-                    drawPoint(worldFront, 0.015f);
+                    if (part.type == aura::body::BodyPartType::Head) {
+                        drawPoint(worldFront, 0.015f);
+                    }
                     break;
 
                 case aura::body::BodyPartShape::Rectangle:

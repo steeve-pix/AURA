@@ -255,6 +255,9 @@ int main()
     assert(balanceCom.x >= balanceSupport.minX &&
            balanceCom.x <= balanceSupport.maxX);
     assert(aura::body::isBalanced(balanceBody, world));
+    assert(aura::math::nearlyEqual(
+            aura::body::balanceErrorX(balanceBody, world),
+            0.0f));
 
     auto *balanceTorso = aura::body::findPart(
             balanceBody,
@@ -262,6 +265,9 @@ int main()
     balanceTorso->body.position.x = 10.0f;
 
     assert(!aura::body::isBalanced(balanceBody, world));
+    assert(aura::math::nearlyEqual(
+            aura::body::balanceErrorX(balanceBody, world),
+            8.333333f));
 
     aura::body::AuraBody skeleton{
         .parts = {
