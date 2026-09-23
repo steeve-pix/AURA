@@ -1,0 +1,189 @@
+#pragma once
+#include "Body2D.hpp"
+#include "Impulses.hpp"
+#include "Joint2D.hpp"
+#include "JointGeometry.hpp"
+#include "Torque.hpp"
+#include "aura/math/Math.hpp"
+
+namespace aura::physics {
+    inline void correctJointPosition(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        const math::Vec2 error =
+                jointError(bodyA, bodyB, joint);
+
+        const float inverseMassA =
+                1.0f / bodyA.mass;
+
+        const float inverseMassB =
+                1.0f / bodyB.mass;
+
+        const float totalInverseMass =
+                inverseMassA + inverseMassB;
+
+        const float weightA =
+                inverseMassA / totalInverseMass;
+
+        const float weightB =
+                inverseMassB / totalInverseMass;
+
+        bodyA.position +=
+                error * weightA;
+
+        bodyB.position -=
+                error * weightB;
+    }
+
+    inline void correctJointVelocity(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        const math::Vec2 anchorA =
+                worldAnchorA(bodyA, joint);
+
+        const math::Vec2 anchorB =
+                worldAnchorB(bodyB, joint);
+
+        const math::Vec2 relativeVelocity =
+                jointRelativeVelocity(bodyA, bodyB, joint);
+
+        if (relativeVelocity.lengthSquared() == 0.0f) {
+            return;
+        }
+
+        const math::Vec2 direction =
+                relativeVelocity.normalized();
+
+        const math::Vec2 offsetA =
+                anchorA - bodyA.position;
+
+        const math::Vec2 offsetB =
+                anchorB - bodyB.position;
+
+        const float inverseMassA =
+                1.0f / bodyA.mass;
+
+        const float inverseMassB =
+                1.0f / bodyB.mass;
+
+        const float rotationalA =
+                math::cross(offsetA, direction);
+
+        const float rotationalB =
+                math::cross(offsetB, direction);
+
+        // This simplified solver does not model the full rotational effective
+        // mass. Relax the impulse when anchor rotation contributes to avoid
+        // overshooting the constraint.
+        const float effectiveInverseMass =
+                inverseMassA + inverseMassB +
+                (rotationalA * rotationalA) / bodyA.momentOfInertia
+                + (rotationalB * rotationalB) / bodyB.momentOfInertia;
+
+        const float relativeSpeed =
+                relativeVelocity.dot(direction);
+
+        const float impulseMagnitude =
+                -relativeSpeed / effectiveInverseMass;
+
+        const math::Vec2 impulse =
+                direction * impulseMagnitude;
+
+        applyImpulseAtPoint(bodyA, impulse * -1.0f, anchorA);
+        applyImpulseAtPoint(bodyB, impulse, anchorB);
+    }
+
+    inline void correctJointAngle(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        const float error =
+                jointAngleError(bodyA, bodyB, joint);
+
+        if (error == 0.0f)
+            return;
+
+        const float inverseInertiaA =
+                1.0f / bodyA.momentOfInertia;
+
+        const float inverseInertiaB =
+                1.0f / bodyB.momentOfInertia;
+
+        const float totalInverseInertia =
+                inverseInertiaA + inverseInertiaB;
+
+        const float weightA =
+                inverseInertiaA / totalInverseInertia;
+
+        const float weightB =
+                inverseInertiaB / totalInverseInertia;
+
+        bodyA.angle +=
+                error * weightA;
+
+        bodyB.angle -=
+                error * weightB;
+    }
+
+    inline float relativeJointAngularVelocity(const Body2D &bodyA, const Body2D &bodyB) noexcept {
+        return bodyB.angularVelocity - bodyA.angularVelocity;
+    }
+
+    inline void correctJointAngularVelocity(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        const float angle =
+                relativeJointAngle(bodyA, bodyB);
+
+        const float relativeAngularVelocity =
+                relativeJointAngularVelocity(bodyA, bodyB);
+
+        const bool pushingPastMax =
+                (angle >= joint.maxAngle || math::nearlyEqual(angle, joint.maxAngle))
+                && relativeAngularVelocity > 0.0f;
+
+        const bool pushingPastMin =
+                (angle <= joint.minAngle || math::nearlyEqual(angle, joint.minAngle))
+                && relativeAngularVelocity < 0.0f;
+
+        if (!pushingPastMax && !pushingPastMin)
+            return;
+
+        const float inverseInertiaA =
+                1.0f / bodyA.momentOfInertia;
+
+        const float inverseInertiaB =
+                1.0f / bodyB.momentOfInertia;
+
+        const float totalInverseInertia =
+                inverseInertiaA + inverseInertiaB;
+
+        const float weightA =
+                inverseInertiaA / totalInverseInertia;
+
+        const float weightB =
+                inverseInertiaB / totalInverseInertia;
+
+        bodyA.angularVelocity +=
+                relativeAngularVelocity * weightA;
+
+        bodyB.angularVelocity -=
+                relativeAngularVelocity * weightB;
+    }
+
+    inline void solveJoint(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        correctJointPosition(bodyA, bodyB, joint);
+        correctJointVelocity(bodyA, bodyB, joint);
+        correctJointAngle(bodyA, bodyB, joint);
+        correctJointAngularVelocity(bodyA, bodyB, joint);
+    }
+
+    inline float jointMotorTorque(const Body2D &bodyA, const Body2D &bodyB, const Joint2D &joint) noexcept {
+        const float error =
+                jointMotorError(bodyA, bodyB, joint);
+
+        const float relativeAngularVelocity =
+                relativeJointAngularVelocity(bodyA, bodyB);
+
+        return error * joint.motorStiffness - relativeAngularVelocity * joint.motorDamping;
+    }
+
+    inline void applyJointMotor(Body2D &bodyA, Body2D &bodyB, const Joint2D &joint) noexcept {
+        const float torque =
+                jointMotorTorque(bodyA, bodyB, joint);
+
+        applyTorque(bodyA, -torque);
+        applyTorque(bodyB, torque);
+    }
+}
