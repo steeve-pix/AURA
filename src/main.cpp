@@ -453,6 +453,8 @@ int main() {
     constexpr int stepsBetweenPrints = 60;
     int stepsSinceLastPrint = 0;
 
+    constexpr bool SHOW_JOINT_DEBUG = false;
+
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
         auto dt = static_cast<float>(currentTime - previousTime);
@@ -503,7 +505,9 @@ int main() {
         auto *head =
                 aura::body::findPart(auraBody, aura::body::BodyPartType::Head);
 
-        drawJoint(torso->body, head->body, neck);
+        if (SHOW_JOINT_DEBUG) {
+            drawJoint(torso->body, head->body, neck);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
