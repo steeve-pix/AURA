@@ -255,6 +255,26 @@ int main() {
                     .size = {1.0f, 0.35f},
                     .mass = 0.8f
                 }
+            },
+            {
+                .type = aura::body::BodyPartType::LeftUpperArm,
+                .shape = aura::body::BodyPartShape::Capsule,
+                .name = "left_upper_arm",
+                .body = {
+                    .position = {-5.9f, 5.0f},
+                    .size = {0.45f, 1.6f},
+                    .mass = 1.2f
+                }
+            },
+            {
+                .type = aura::body::BodyPartType::RightUpperArm,
+                .shape = aura::body::BodyPartShape::Capsule,
+                .name = "right_upper_arm",
+                .body = {
+                    .position = {-4.1f, 5.0f},
+                    .size = {0.45f, 1.6f},
+                    .mass = 1.2f
+                }
             }
         },
         .joints = {
@@ -345,6 +365,34 @@ int main() {
 
                 .minAngle = -0.5f,
                 .maxAngle = 0.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::LeftUpperArm,
+
+                .localAnchorA = {-0.7f, 0.8f},
+                .localAnchorB = {0.0f, 0.8f},
+
+                .minAngle = -1.5f,
+                .maxAngle = 1.5f,
+
+                .targetAngle = 0.0f,
+                .motorStiffness = 10.0f,
+                .motorDamping = 2.0f
+            },
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::RightUpperArm,
+
+                .localAnchorA = {0.7f, 0.8f},
+                .localAnchorB = {0.0f, 0.8f},
+
+                .minAngle = -1.5f,
+                .maxAngle = 1.5f,
 
                 .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
