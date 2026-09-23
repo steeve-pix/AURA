@@ -100,6 +100,37 @@ void drawJoint(const aura::physics::Body2D &bodyA, const aura::physics::Body2D &
     drawPoint(anchorB);
 }
 
+void drawCircle(const aura::physics::Body2D &body, int segments = 32) {
+    const float scale = 0.1f * g_aspectRatioModifier;
+
+    const float centerX =
+            body.position.x * scale;
+
+    const float centerY =
+            worldToScreenY(body.position.y);
+
+    const float radius =
+            body.size.x * scale * 0.5f;
+
+    glBegin(GL_TRIANGLE_FAN);
+
+    glVertex2f(centerX, centerY);
+
+    for (int i = 0; i <= segments; ++i) {
+        const float angle =
+                2.0f * std::numbers::pi * static_cast<float>(i) / static_cast<float>(segments);
+
+        const float x =
+                centerX + radius * std::cos(angle);
+        const float y =
+                centerY + radius * std::sin(angle);
+
+        glVertex2f(x, y);
+    }
+
+    glEnd();
+}
+
 int main() {
     if (!glfwInit())
         return 1;
@@ -128,6 +159,7 @@ int main() {
             },
             {
                 .type = aura::body::BodyPartType::Head,
+                .shape = aura::body::BodyPartShape::Circle,
                 .name = "head",
                 .body = {
                     .position = {-5.0f, 6.7f},
@@ -319,7 +351,16 @@ int main() {
         drawFloor(world);
 
         for (const auto &part: auraBody.parts) {
-            drawBody(part.body);
+            switch (part.shape) {
+                case aura::body::BodyPartShape::Circle:
+                    drawCircle(part.body);
+                    break;
+
+                case aura::body::BodyPartShape::Rectangle:
+                case aura::body::BodyPartShape::Capsule:
+                    drawBody(part.body);
+                    break;
+            }
         }
 
         const auto &neck =
