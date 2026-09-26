@@ -1,4 +1,6 @@
 #pragma once
+#include <iomanip>
+#include <iostream>
 #include <vector>
 #include <algorithm>
 
@@ -41,7 +43,63 @@ namespace aura::body {
             return false;
         }
 
-        physics::solveJoint(partA->body, partB->body, joint);
+        static int velocitySolveCalls = 0;
+        static bool foundIncrease = false;
+        static bool printedHeader = false;
+        static bool printedNoIncrease = false;
+
+        const int jointCount = std::max(1, static_cast<int>(aura.joints.size()));
+        const int callsPerFrame = jointCount * 8;
+        const int frame = velocitySolveCalls / callsPerFrame + 1;
+        const int iteration = (velocitySolveCalls / jointCount) % 8 + 1;
+        ++velocitySolveCalls;
+
+        if (frame <= 5) {
+            const auto kineticEnergy = [](const physics::Body2D &body) noexcept {
+                const float linear =
+                        0.5f * body.mass * body.velocity.lengthSquared();
+                const float angular =
+                        0.5f * body.momentOfInertia * body.angularVelocity * body.angularVelocity;
+                return linear + angular;
+            };
+
+            physics::correctJointPosition(partA->body, partB->body, joint);
+
+            const float beforeEnergy =
+                    kineticEnergy(partA->body) + kineticEnergy(partB->body);
+            physics::correctJointVelocity(partA->body, partB->body, joint);
+            const float afterEnergy =
+                    kineticEnergy(partA->body) + kineticEnergy(partB->body);
+            const float delta = afterEnergy - beforeEnergy;
+
+            if (delta > 0.000001f) {
+                if (!printedHeader) {
+                    std::cout << "Joint velocity corrections that increase pair KE (frames 1-5)\n"
+                              << std::left << std::setw(9) << "frame"
+                              << std::setw(12) << "iteration"
+                              << std::setw(34) << "joint"
+                              << std::right << std::setw(16) << "delta KE" << '\n';
+                    printedHeader = true;
+                }
+
+                std::cout << std::setprecision(9)
+                          << std::left << std::setw(9) << frame
+                          << std::setw(12) << iteration
+                          << std::setw(34) << (partA->name + " -> " + partB->name)
+                          << std::right << std::setw(16) << delta << '\n';
+                foundIncrease = true;
+            }
+
+            physics::correctJointAngle(partA->body, partB->body, joint);
+            physics::correctJointAngularVelocity(partA->body, partB->body, joint);
+        } else {
+            if (!foundIncrease && !printedNoIncrease) {
+                std::cout << "No joint KE increase above 1e-6 in frames 1-5\n";
+                printedNoIncrease = true;
+            }
+
+            physics::solveJoint(partA->body, partB->body, joint);
+        }
 
         return true;
     }
@@ -50,6 +108,7 @@ namespace aura::body {
         for (physics::Joint2D &joint: aura.joints) {
             solveJoint(aura, joint);
         }
+
     }
 
     inline void applyAllJointMotors(AuraBody &aura) noexcept {
@@ -210,10 +269,21 @@ namespace aura::body {
 
 
     inline void solveBodyConstraints(AuraBody &aura, const physics::World2D &world, int iterations = 8) noexcept {
+        BodyPart *leftFoot = findPart(aura, BodyPartType::LeftFoot);
+        BodyPart *rightFoot = findPart(aura, BodyPartType::RightFoot);
+
         for (int interation = 0; interation < iterations; ++interation) {
             solveAllJoints(aura);
 
             resolveAllFloorCollisions(aura, world);
+
+            if (leftFoot != nullptr) {
+                physics::applyFloorFriction(leftFoot->body, world);
+            }
+
+            if (rightFoot != nullptr) {
+                physics::applyFloorFriction(rightFoot->body, world);
+            }
         }
     }
 }
