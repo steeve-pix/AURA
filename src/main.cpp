@@ -358,7 +358,7 @@ int main() {
                 .minAngle = -0.1f,
                 .maxAngle = 1.6f,
 
-                .targetAngle = 0.2f,
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             },
@@ -386,7 +386,7 @@ int main() {
                 .minAngle = -0.1f,
                 .maxAngle = 1.6f,
 
-                .targetAngle = 0.2f,
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             },
@@ -456,7 +456,7 @@ int main() {
                 .minAngle = -0.1f,
                 .maxAngle = 2.2f,
 
-                .targetAngle = 0.2f,
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             },
@@ -470,7 +470,7 @@ int main() {
                 .minAngle = -2.2f,
                 .maxAngle = 0.1f,
 
-                .targetAngle = -0.2f,
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             },
@@ -664,6 +664,26 @@ int main() {
                 rightWristWorld - aura::math::rotate(rightWrist->localAnchorB, rightHand->body.angle);
     }
 
+    std::cout << "Startup joint motor errors (radians)\n";
+    for (const auto &joint: auraBody.joints) {
+        const auto *partA = aura::body::findPart(auraBody, joint.partA);
+        const auto *partB = aura::body::findPart(auraBody, joint.partB);
+        if (partA == nullptr || partB == nullptr) {
+            continue;
+        }
+
+        const float relativeAngle =
+                aura::physics::relativeJointAngle(partA->body, partB->body);
+        const float motorError =
+                aura::physics::jointMotorError(partA->body, partB->body, joint);
+
+        std::cout << std::fixed << std::setprecision(6)
+                  << partA->name << " -> " << partB->name
+                  << " relative=" << relativeAngle
+                  << " target=" << joint.targetAngle
+                  << " error=" << motorError << '\n';
+    }
+
     double previousTime = glfwGetTime();
     int diagnosticFrame = 0;
 
@@ -674,35 +694,32 @@ int main() {
         auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
 
-        // Turned off for the purpose of experimentation
-        /*
-        aura::body::applyBalanceController(auraBody, world, 0.3f);
+        // Keep the balance controller off while testing neutral joint motors.
         aura::body::applyAllJointMotors(auraBody);
-        */
 
         aura::body::stepAllBodyParts(auraBody, world, dt);
 
         aura::body::solveBodyConstraints(auraBody, world, 8);
 
-        if ((diagnosticFrame == 9 || diagnosticFrame == 29 || diagnosticFrame == 49) &&
+        if ((diagnosticFrame == 9 || diagnosticFrame == 19 || diagnosticFrame == 29 ||
+             diagnosticFrame == 39 || diagnosticFrame == 49) &&
             leftFoot != nullptr && rightFoot != nullptr) {
-            const auto leftContactPoint = aura::physics::lowestPoint(leftFoot->body);
-            const auto rightContactPoint = aura::physics::lowestPoint(rightFoot->body);
-            const auto leftContactVelocity = aura::physics::velocityAtWorldPoint(
-                leftFoot->body, leftContactPoint);
-            const auto rightContactVelocity = aura::physics::velocityAtWorldPoint(
-                rightFoot->body, rightContactPoint);
+            const auto support = aura::body::supportInterval(auraBody, world);
+            const float supportCenter = support.valid
+                ? (support.minX + support.maxX) * 0.5f
+                : 0.0f;
+            const auto com = aura::body::centerOfMass(auraBody);
+            const float torsoAngleDegrees = torso->body.angle * 180.0f / std::numbers::pi_v<float>;
 
             std::cout << std::fixed << std::setprecision(6)
-                    << "frame " << diagnosticFrame + 1
-                    << " | LEFT grounded=" << aura::physics::isGrounded(leftFoot->body, world)
-                    << " point=(" << leftContactPoint.x << ", " << leftContactPoint.y << ")"
-                    << " contact vx=" << leftContactVelocity.x
-                    << " vy=" << leftContactVelocity.y
-                    << " | RIGHT grounded=" << aura::physics::isGrounded(rightFoot->body, world)
-                    << " point=(" << rightContactPoint.x << ", " << rightContactPoint.y << ")"
-                    << " contact vx=" << rightContactVelocity.x
-                    << " vy=" << rightContactVelocity.y << '\n';
+                      << "frame " << diagnosticFrame + 1
+                      << " | left grounded=" << aura::physics::isGrounded(leftFoot->body, world)
+                      << " right grounded=" << aura::physics::isGrounded(rightFoot->body, world)
+                      << " COM x=" << com.x
+                      << " support center=" << supportCenter
+                      << " normalized balance error="
+                      << aura::body::normalizedBalanceErrorX(auraBody, world)
+                      << " torso angle=" << torsoAngleDegrees << " deg\n";
         }
         ++diagnosticFrame;
 
