@@ -14,7 +14,7 @@ namespace aura::body {
                 normalizedBalanceErrorX(aura, world);
 
         const float correction =
-                -error * gain;
+                error * gain;
 
         for (physics::Joint2D &joint: aura.joints) {
             const bool isLeftHip =
