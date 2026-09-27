@@ -686,6 +686,7 @@ int main() {
 
     double previousTime = glfwGetTime();
     int diagnosticFrame = 0;
+    aura::body::FootContactState footContactState{};
 
     constexpr bool SHOW_JOINT_DEBUG = false;
 
@@ -694,12 +695,14 @@ int main() {
         auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
 
-        aura::body::applyBalanceController(auraBody, world, 0.1f);
+        aura::body::updateFootContactState(auraBody, world, footContactState);
+        aura::body::applyBalanceController(auraBody, world, footContactState, 0.1f);
         aura::body::applyAllJointMotors(auraBody);
 
         aura::body::stepAllBodyParts(auraBody, world, dt);
 
         aura::body::solveBodyConstraints(auraBody, world, 8);
+        aura::body::updateFootContactState(auraBody, world, footContactState);
 
         if ((diagnosticFrame == 9 || diagnosticFrame == 19 || diagnosticFrame == 29 ||
              diagnosticFrame == 39 || diagnosticFrame == 49) &&

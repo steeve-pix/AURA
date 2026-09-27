@@ -16,6 +16,11 @@ namespace aura::body {
         std::vector<physics::Joint2D> joints;
     };
 
+    struct FootContactState {
+        bool leftGrounded = false;
+        bool rightGrounded = false;
+    };
+
     struct SupportInterval {
         float minX = 0.0f;
         float maxX = 0.0f;
@@ -30,6 +35,22 @@ namespace aura::body {
         }
 
         return nullptr;
+    }
+
+    inline bool updateGrounded(bool wasGrounded, float bodyBottom, float floorHeight) noexcept {
+        const float distance = bodyBottom - floorHeight;
+        return wasGrounded ? distance <= 0.003f : distance <= 0.001f;
+    }
+
+    inline void updateFootContactState(AuraBody &aura, const physics::World2D &world,
+                                       FootContactState &contactState) noexcept {
+        BodyPart *leftFoot = findPart(aura, BodyPartType::LeftFoot);
+        BodyPart *rightFoot = findPart(aura, BodyPartType::RightFoot);
+
+        contactState.leftGrounded = leftFoot != nullptr && updateGrounded(
+                contactState.leftGrounded, physics::bottom(leftFoot->body), world.floorHeight);
+        contactState.rightGrounded = rightFoot != nullptr && updateGrounded(
+                contactState.rightGrounded, physics::bottom(rightFoot->body), world.floorHeight);
     }
 
     inline bool solveJoint(AuraBody &aura, physics::Joint2D &joint) noexcept {
@@ -172,7 +193,8 @@ namespace aura::body {
         return weightedPosition * (1.0f / totalMass);
     }
 
-    inline SupportInterval supportInterval(AuraBody &aura, const physics::World2D &world) noexcept {
+    inline SupportInterval supportInterval(AuraBody &aura, const physics::World2D &world,
+                                           bool leftGrounded, bool rightGrounded) noexcept {
         BodyPart *leftFoot =
                 findPart(aura, BodyPartType::LeftFoot);
 
@@ -181,7 +203,7 @@ namespace aura::body {
 
         SupportInterval support{};
 
-        if (leftFoot != nullptr && physics::isGrounded(leftFoot->body, world)) {
+        if (leftFoot != nullptr && leftGrounded) {
             support.minX =
                     physics::left(leftFoot->body);
 
@@ -191,7 +213,7 @@ namespace aura::body {
             support.valid = true;
         }
 
-        if (rightFoot != nullptr && physics::isGrounded(rightFoot->body, world)) {
+        if (rightFoot != nullptr && rightGrounded) {
             const float rightFootLeft =
                     physics::left(rightFoot->body);
 
@@ -209,6 +231,19 @@ namespace aura::body {
         }
 
         return support;
+    }
+
+    inline SupportInterval supportInterval(AuraBody &aura, const physics::World2D &world) noexcept {
+        BodyPart *leftFoot = findPart(aura, BodyPartType::LeftFoot);
+        BodyPart *rightFoot = findPart(aura, BodyPartType::RightFoot);
+        return supportInterval(aura, world,
+                leftFoot != nullptr && physics::isGrounded(leftFoot->body, world),
+                rightFoot != nullptr && physics::isGrounded(rightFoot->body, world));
+    }
+
+    inline SupportInterval supportInterval(AuraBody &aura, const physics::World2D &world,
+                                           const FootContactState &contactState) noexcept {
+        return supportInterval(aura, world, contactState.leftGrounded, contactState.rightGrounded);
     }
 
     inline float balanceErrorX(AuraBody &aura, const physics::World2D &world) noexcept {
@@ -244,6 +279,22 @@ namespace aura::body {
         }
 
         return balanceErrorX(aura, world) / halfWidth;
+    }
+
+    inline float normalizedBalanceErrorX(AuraBody &aura, const physics::World2D &world,
+                                         const FootContactState &contactState) noexcept {
+        const SupportInterval support = supportInterval(aura, world, contactState);
+        if (!support.valid) {
+            return 0.0f;
+        }
+
+        const float halfWidth = (support.maxX - support.minX) * 0.5f;
+        if (halfWidth <= 0.0f) {
+            return 0.0f;
+        }
+
+        const float supportCenterX = (support.minX + support.maxX) * 0.5f;
+        return (centerOfMass(aura).x - supportCenterX) / halfWidth;
     }
 
     inline bool isBalanced(AuraBody &aura, const physics::World2D &world) noexcept {

@@ -2,7 +2,8 @@
 #include "AuraBody.hpp"
 
 namespace aura::body {
-    inline void applyBalanceController(AuraBody &aura, const physics::World2D &world, float gain) {
+    inline void applyBalanceController(AuraBody &aura, const physics::World2D &world,
+                                       const FootContactState &contactState, float gain) {
         const auto setHipTargetsToNeutral = [&aura]() {
             for (physics::Joint2D &joint: aura.joints) {
                 const bool isHip =
@@ -15,12 +16,12 @@ namespace aura::body {
             }
         };
 
-        if (!isLeftFootGrounded(aura, world) || !isRightFootGrounded(aura, world)) {
+        if (!contactState.leftGrounded || !contactState.rightGrounded) {
             setHipTargetsToNeutral();
             return;
         }
         const SupportInterval support =
-                supportInterval(aura, world);
+                supportInterval(aura, world, contactState);
 
         if (!support.valid) {
             setHipTargetsToNeutral();
@@ -28,7 +29,7 @@ namespace aura::body {
         }
 
         const float error =
-                normalizedBalanceErrorX(aura, world);
+                normalizedBalanceErrorX(aura, world, contactState);
 
         const float correction =
                 error * gain;
