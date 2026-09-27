@@ -684,43 +684,48 @@ int main() {
                   << " error=" << motorError << '\n';
     }
 
+    constexpr float FIXED_DT = 1.0f / 120.0f;
     double previousTime = glfwGetTime();
-    int diagnosticFrame = 0;
+    double accumulator = 0.0;
+    int diagnosticStep = 0;
     aura::body::FootContactState footContactState{};
 
     constexpr bool SHOW_JOINT_DEBUG = false;
 
     while (!glfwWindowShouldClose(window)) {
-        double currentTime = glfwGetTime();
-        auto dt = static_cast<float>(currentTime - previousTime);
+        const double currentTime = glfwGetTime();
+        accumulator += currentTime - previousTime;
         previousTime = currentTime;
 
-        aura::body::updateFootContactState(auraBody, world, footContactState);
-        aura::body::applyBalanceController(auraBody, world, footContactState, 0.1f);
-        aura::body::applyAllJointMotors(auraBody);
+        while (accumulator >= FIXED_DT) {
+            const int step = diagnosticStep + 1;
+            aura::body::updateFootContactState(auraBody, world, footContactState);
+            aura::body::applyBalanceController(auraBody, world, footContactState, 0.1f);
+            aura::body::applyAllJointMotors(auraBody);
 
-        aura::body::stepAllBodyParts(auraBody, world, dt);
+            aura::body::stepAllBodyParts(auraBody, world, FIXED_DT);
+            aura::body::solveBodyConstraints(auraBody, world, 8);
+            aura::body::updateFootContactState(auraBody, world, footContactState);
 
-        aura::body::solveBodyConstraints(auraBody, world, 8);
-        aura::body::updateFootContactState(auraBody, world, footContactState);
+            if ((step == 10 || step == 20 || step == 30 ||
+                 step == 40 || step == 50) &&
+                leftFoot != nullptr && rightFoot != nullptr) {
+                const float torsoAngleDegrees = torso->body.angle * 180.0f / std::numbers::pi_v<float>;
 
-        if ((diagnosticFrame == 9 || diagnosticFrame == 19 || diagnosticFrame == 29 ||
-             diagnosticFrame == 39 || diagnosticFrame == 49) &&
-            leftFoot != nullptr && rightFoot != nullptr) {
-            const float torsoAngleDegrees = torso->body.angle * 180.0f / std::numbers::pi_v<float>;
-
-            std::cout << std::fixed << std::setprecision(6)
-                      << "frame " << diagnosticFrame + 1
-                      << " | normalized balance error="
-                      << aura::body::normalizedBalanceErrorX(auraBody, world)
-                      << " left hip target=" << leftHip->targetAngle
-                      << " right hip target=" << rightHip->targetAngle
-                      << " torso angle=" << torsoAngleDegrees << " deg"
-                      << " | left grounded=" << aura::physics::isGrounded(leftFoot->body, world)
-                      << " right grounded=" << aura::physics::isGrounded(rightFoot->body, world)
-                      << '\n';
+                std::cout << std::fixed << std::setprecision(6)
+                          << "step " << step
+                          << " | normalized balance error="
+                          << aura::body::normalizedBalanceErrorX(auraBody, world)
+                          << " left hip target=" << leftHip->targetAngle
+                          << " right hip target=" << rightHip->targetAngle
+                          << " torso angle=" << torsoAngleDegrees << " deg"
+                          << " | left grounded=" << aura::physics::isGrounded(leftFoot->body, world)
+                          << " right grounded=" << aura::physics::isGrounded(rightFoot->body, world)
+                          << '\n';
+            }
+            ++diagnosticStep;
+            accumulator -= FIXED_DT;
         }
-        ++diagnosticFrame;
 
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
