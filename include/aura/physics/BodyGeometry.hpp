@@ -75,4 +75,17 @@ namespace aura::physics {
     inline float right(const Body2D &body) noexcept {
         return body.position.x + body.size.x * 0.5f;
     }
+
+    inline math::Vec2 lowestPoint(const Body2D &body) noexcept {
+        const auto bodyCorners = corners(body);
+
+        math::Vec2 lowest = bodyCorners[0];
+
+        for (const auto &corner: bodyCorners) {
+            if (corner.y < lowest.y)
+                lowest = corner;
+        }
+
+        return lowest;
+    }
 }

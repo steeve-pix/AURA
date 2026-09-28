@@ -1,7 +1,9 @@
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <iostream>
 
 #include "aura/body/AuraBody.hpp"
+#include "aura/body/BalanceController.hpp"
 #include "aura/math/Rotation.hpp"
 #include "aura/physics/Body2D.hpp"
 #include "aura/physics/Joint2D.hpp"
@@ -18,7 +20,52 @@ static float worldToScreenY(float worldY) {
     return worldY * scale + verticalOffset;
 }
 
-static void drawBody(const aura::physics::Body2D &body) {
+static void drawFloor(const aura::physics::World2D &world) {
+    const float top = worldToScreenY(world.floorHeight);
+
+    glBegin(GL_QUADS);
+
+    float leftBound = -1.0f / g_aspectRatioModifier;
+    float rightBound = 1.0f / g_aspectRatioModifier;
+
+    glVertex2f(leftBound, -1.0f);
+    glVertex2f(rightBound, -1.0f);
+    glVertex2f(rightBound, top);
+    glVertex2f(leftBound, top);
+
+    glEnd();
+}
+
+static void drawPoint(const aura::math::Vec2 &worldPoint, float size = 0.02f) {
+    const float x =
+            worldPoint.x * 0.1f * g_aspectRatioModifier;
+
+    const float y =
+            worldToScreenY(worldPoint.y);
+
+    glBegin(GL_QUADS);
+
+    glVertex2f(x - size, y - size);
+    glVertex2f(x + size, y - size);
+    glVertex2f(x + size, y + size);
+    glVertex2f(x - size, y + size);
+
+    glEnd();
+}
+
+static void drawJoint(const aura::physics::Body2D &bodyA, const aura::physics::Body2D &bodyB,
+                      const aura::physics::Joint2D &joint) {
+    const auto anchorA =
+            aura::physics::worldAnchorA(bodyA, joint);
+
+    const auto anchorB =
+            aura::physics::worldAnchorB(bodyB, joint);
+
+    drawPoint(anchorA);
+    drawPoint(anchorB);
+}
+
+static void drawRectangle(const aura::physics::Body2D &body) {
     constexpr float scale = 0.1f;
 
     const float x =
@@ -39,7 +86,7 @@ static void drawBody(const aura::physics::Body2D &body) {
         {-halfWidth, halfHeight}
     };
 
-    glColor3f(0.8f, 0.8f, 0.8f);
+    glColor3f(1.0f, 1.0f, 1.0f);
 
     glBegin(GL_QUADS);
 
@@ -55,52 +102,7 @@ static void drawBody(const aura::physics::Body2D &body) {
     glColor3f(1.0f, 1.0f, 1.0f);
 }
 
-void drawFloor(const aura::physics::World2D &world) {
-    const float top = worldToScreenY(world.floorHeight);
-
-    glBegin(GL_QUADS);
-
-    float leftBound = -1.0f / g_aspectRatioModifier;
-    float rightBound = 1.0f / g_aspectRatioModifier;
-
-    glVertex2f(leftBound, -1.0f);
-    glVertex2f(rightBound, -1.0f);
-    glVertex2f(rightBound, top);
-    glVertex2f(leftBound, top);
-
-    glEnd();
-}
-
-void drawPoint(const aura::math::Vec2 &worldPoint, float size = 0.02f) {
-    const float x =
-            worldPoint.x * 0.1f * g_aspectRatioModifier;
-
-    const float y =
-            worldToScreenY(worldPoint.y);
-
-    glBegin(GL_QUADS);
-
-    glVertex2f(x - size, y - size);
-    glVertex2f(x + size, y - size);
-    glVertex2f(x + size, y + size);
-    glVertex2f(x - size, y + size);
-
-    glEnd();
-}
-
-void drawJoint(const aura::physics::Body2D &bodyA, const aura::physics::Body2D &bodyB,
-               const aura::physics::Joint2D &joint) {
-    const auto anchorA =
-            aura::physics::worldAnchorA(bodyA, joint);
-
-    const auto anchorB =
-            aura::physics::worldAnchorB(bodyB, joint);
-
-    drawPoint(anchorA);
-    drawPoint(anchorB);
-}
-
-void drawCircle(const aura::physics::Body2D &body, int segments = 32) {
+static void drawCircle(const aura::physics::Body2D &body, int segments = 32) {
     const float scale = 0.1f;
     const float x = body.position.x * scale * g_aspectRatioModifier;
     const float y = worldToScreenY(body.position.y);
@@ -125,7 +127,7 @@ void drawCircle(const aura::physics::Body2D &body, int segments = 32) {
     glEnd();
 }
 
-void drawCapsule(const aura::physics::Body2D &body, int segments = 16) {
+static void drawCapsule(const aura::physics::Body2D &body, int segments = 16) {
     const float scale = 0.1f;
     const float centerX = body.position.x * scale * g_aspectRatioModifier;
     const float centerY = worldToScreenY(body.position.y);
@@ -204,6 +206,7 @@ int main() {
             },
             {
                 .type = aura::body::BodyPartType::LeftThigh,
+                .shape = aura::body::BodyPartShape::Capsule,
                 .name = "left_thigh",
                 .body = {
                     .position = {-5.3f, 3.2f},
@@ -213,6 +216,7 @@ int main() {
             },
             {
                 .type = aura::body::BodyPartType::LeftShin,
+                .shape = aura::body::BodyPartShape::Capsule,
                 .name = "left_shin",
                 .body = {
                     .position = {-5.3f, 1.5f},
@@ -222,6 +226,7 @@ int main() {
             },
             {
                 .type = aura::body::BodyPartType::RightThigh,
+                .shape = aura::body::BodyPartShape::Capsule,
                 .name = "right_thigh",
                 .body = {
                     .position = {-4.7f, 3.2f},
@@ -231,6 +236,7 @@ int main() {
             },
             {
                 .type = aura::body::BodyPartType::RightShin,
+                .shape = aura::body::BodyPartShape::Capsule,
                 .name = "right_shin",
                 .body = {
                     .position = {-4.7f, 1.5f},
@@ -240,18 +246,20 @@ int main() {
             },
             {
                 .type = aura::body::BodyPartType::LeftFoot,
+                .shape = aura::body::BodyPartShape::Rectangle,
                 .name = "left_foot",
                 .body = {
-                    .position = {-5.15f, 0.45f},
+                    .position = {-5.15f, 0.175f},
                     .size = {1.0f, 0.35f},
                     .mass = 0.8f
                 }
             },
             {
                 .type = aura::body::BodyPartType::RightFoot,
+                .shape = aura::body::BodyPartShape::Rectangle,
                 .name = "right_foot",
                 .body = {
-                    .position = {-4.55f, 0.45f},
+                    .position = {-4.55f, 0.175f},
                     .size = {1.0f, 0.35f},
                     .mass = 0.8f
                 }
@@ -350,7 +358,7 @@ int main() {
                 .minAngle = -0.1f,
                 .maxAngle = 1.6f,
 
-                .targetAngle = 0.2f,
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             },
@@ -378,7 +386,7 @@ int main() {
                 .minAngle = -0.1f,
                 .maxAngle = 1.6f,
 
-                .targetAngle = 0.2f,
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             },
@@ -448,7 +456,7 @@ int main() {
                 .minAngle = -0.1f,
                 .maxAngle = 2.2f,
 
-                .targetAngle = 0.2f,
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             },
@@ -462,7 +470,7 @@ int main() {
                 .minAngle = -2.2f,
                 .maxAngle = 0.1f,
 
-                .targetAngle = -0.2f,
+                .targetAngle = 0.0f,
                 .motorStiffness = 10.0f,
                 .motorDamping = 2.0f
             },
@@ -497,23 +505,227 @@ int main() {
         }
     };
 
+    auto *leftFoot = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftFoot);
+    auto *rightFoot = aura::body::findPart(auraBody, aura::body::BodyPartType::RightFoot);
+    auto *leftShin = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftShin);
+    auto *rightShin = aura::body::findPart(auraBody, aura::body::BodyPartType::RightShin);
+    auto *leftThigh = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftThigh);
+    auto *rightThigh = aura::body::findPart(auraBody, aura::body::BodyPartType::RightThigh);
+    auto *torso = aura::body::findPart(auraBody, aura::body::BodyPartType::Torso);
+    auto *head = aura::body::findPart(auraBody, aura::body::BodyPartType::Head);
+    auto *leftUpperArm = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftUpperArm);
+    auto *rightUpperArm = aura::body::findPart(auraBody, aura::body::BodyPartType::RightUpperArm);
+    auto *leftForearm = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftForearm);
+    auto *rightForearm = aura::body::findPart(auraBody, aura::body::BodyPartType::RightForearm);
+    auto *leftHand = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftHand);
+    auto *rightHand = aura::body::findPart(auraBody, aura::body::BodyPartType::RightHand);
+
+    const auto leftAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::LeftShin &&
+               joint.partB == aura::body::BodyPartType::LeftFoot;
+    });
+    const auto rightAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::RightShin &&
+               joint.partB == aura::body::BodyPartType::RightFoot;
+    });
+    const auto leftKnee = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::LeftThigh &&
+               joint.partB == aura::body::BodyPartType::LeftShin;
+    });
+    const auto rightKnee = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::RightThigh &&
+               joint.partB == aura::body::BodyPartType::RightShin;
+    });
+    const auto leftHip = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::Torso &&
+               joint.partB == aura::body::BodyPartType::LeftThigh;
+    });
+    const auto rightHip = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::Torso &&
+               joint.partB == aura::body::BodyPartType::RightThigh;
+    });
+    const auto neck = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::Torso &&
+               joint.partB == aura::body::BodyPartType::Head;
+    });
+    const auto leftShoulder = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::Torso &&
+               joint.partB == aura::body::BodyPartType::LeftUpperArm;
+    });
+    const auto rightShoulder = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::Torso &&
+               joint.partB == aura::body::BodyPartType::RightUpperArm;
+    });
+    const auto leftElbow = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::LeftUpperArm &&
+               joint.partB == aura::body::BodyPartType::LeftForearm;
+    });
+    const auto rightElbow = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::RightUpperArm &&
+               joint.partB == aura::body::BodyPartType::RightForearm;
+    });
+    const auto leftWrist = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::LeftForearm &&
+               joint.partB == aura::body::BodyPartType::LeftHand;
+    });
+    const auto rightWrist = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+        return joint.partA == aura::body::BodyPartType::RightForearm &&
+               joint.partB == aura::body::BodyPartType::RightHand;
+    });
+
+    if (leftFoot != nullptr && rightFoot != nullptr &&
+        leftShin != nullptr && rightShin != nullptr &&
+        leftAnkle != auraBody.joints.end() && rightAnkle != auraBody.joints.end()) {
+        leftFoot->body.position.y = 0.175f;
+        rightFoot->body.position.y = 0.175f;
+
+        const auto leftAnkleWorld =
+                aura::physics::worldAnchorB(leftFoot->body, *leftAnkle);
+        leftShin->body.position = leftAnkleWorld - leftAnkle->localAnchorA;
+
+        const auto rightAnkleWorld =
+                aura::physics::worldAnchorB(rightFoot->body, *rightAnkle);
+        rightShin->body.position = rightAnkleWorld - rightAnkle->localAnchorA;
+    }
+
+    if (leftShin != nullptr && rightShin != nullptr &&
+        leftThigh != nullptr && rightThigh != nullptr &&
+        leftKnee != auraBody.joints.end() && rightKnee != auraBody.joints.end()) {
+        const auto leftKneeWorld =
+                aura::physics::worldAnchorB(leftShin->body, *leftKnee);
+        leftThigh->body.position = leftKneeWorld - leftKnee->localAnchorA;
+
+        const auto rightKneeWorld =
+                aura::physics::worldAnchorB(rightShin->body, *rightKnee);
+        rightThigh->body.position = rightKneeWorld - rightKnee->localAnchorA;
+    }
+
+    if (torso != nullptr && leftThigh != nullptr && rightThigh != nullptr &&
+        leftHip != auraBody.joints.end() && rightHip != auraBody.joints.end()) {
+        const auto leftHipWorld =
+                aura::physics::worldAnchorB(leftThigh->body, *leftHip);
+        const auto leftTorsoPosition =
+                leftHipWorld - aura::math::rotate(leftHip->localAnchorA, torso->body.angle);
+
+        const auto rightHipWorld =
+                aura::physics::worldAnchorB(rightThigh->body, *rightHip);
+        const auto rightTorsoPosition =
+                rightHipWorld - aura::math::rotate(rightHip->localAnchorA, torso->body.angle);
+
+        torso->body.position = (leftTorsoPosition + rightTorsoPosition) * 0.5f;
+    }
+
+    if (torso != nullptr && head != nullptr && neck != auraBody.joints.end()) {
+        const auto neckWorld =
+                aura::physics::worldAnchorA(torso->body, *neck);
+        head->body.position =
+                neckWorld - aura::math::rotate(neck->localAnchorB, head->body.angle);
+    }
+
+    if (torso != nullptr && leftUpperArm != nullptr && rightUpperArm != nullptr &&
+        leftShoulder != auraBody.joints.end() && rightShoulder != auraBody.joints.end()) {
+        const auto leftShoulderWorld =
+                aura::physics::worldAnchorA(torso->body, *leftShoulder);
+        leftUpperArm->body.position =
+                leftShoulderWorld - aura::math::rotate(leftShoulder->localAnchorB, leftUpperArm->body.angle);
+
+        const auto rightShoulderWorld =
+                aura::physics::worldAnchorA(torso->body, *rightShoulder);
+        rightUpperArm->body.position =
+                rightShoulderWorld - aura::math::rotate(rightShoulder->localAnchorB, rightUpperArm->body.angle);
+    }
+
+    if (leftForearm != nullptr && rightForearm != nullptr &&
+        leftUpperArm != nullptr && rightUpperArm != nullptr &&
+        leftElbow != auraBody.joints.end() &&
+        rightElbow != auraBody.joints.end()) {
+        const auto leftElbowWorld =
+                aura::physics::worldAnchorA(leftUpperArm->body, *leftElbow);
+        leftForearm->body.position =
+                leftElbowWorld - aura::math::rotate(leftElbow->localAnchorB, leftForearm->body.angle);
+
+        const auto rightElbowWorld =
+                aura::physics::worldAnchorA(rightUpperArm->body, *rightElbow);
+        rightForearm->body.position =
+                rightElbowWorld - aura::math::rotate(rightElbow->localAnchorB, rightForearm->body.angle);
+    }
+
+    if (leftForearm != nullptr && rightForearm != nullptr &&
+        leftHand != nullptr && rightHand != nullptr &&
+        leftWrist != auraBody.joints.end() && rightWrist != auraBody.joints.end()) {
+        const auto leftWristWorld =
+                aura::physics::worldAnchorA(leftForearm->body, *leftWrist);
+        leftHand->body.position =
+                leftWristWorld - aura::math::rotate(leftWrist->localAnchorB, leftHand->body.angle);
+
+        const auto rightWristWorld =
+                aura::physics::worldAnchorA(rightForearm->body, *rightWrist);
+        rightHand->body.position =
+                rightWristWorld - aura::math::rotate(rightWrist->localAnchorB, rightHand->body.angle);
+    }
+
+    std::cout << "Startup joint motor errors (radians)\n";
+    for (const auto &joint: auraBody.joints) {
+        const auto *partA = aura::body::findPart(auraBody, joint.partA);
+        const auto *partB = aura::body::findPart(auraBody, joint.partB);
+        if (partA == nullptr || partB == nullptr) {
+            continue;
+        }
+
+        const float relativeAngle =
+                aura::physics::relativeJointAngle(partA->body, partB->body);
+        const float motorError =
+                aura::physics::jointMotorError(partA->body, partB->body, joint);
+
+        std::cout << std::fixed << std::setprecision(6)
+                  << partA->name << " -> " << partB->name
+                  << " relative=" << relativeAngle
+                  << " target=" << joint.targetAngle
+                  << " error=" << motorError << '\n';
+    }
+
+    constexpr float FIXED_DT = 1.0f / 120.0f;
     double previousTime = glfwGetTime();
-    constexpr int stepsBetweenPrints = 60;
-    int stepsSinceLastPrint = 0;
+    double accumulator = 0.0;
+    int diagnosticStep = 0;
+    aura::body::FootContactState footContactState{};
 
     constexpr bool SHOW_JOINT_DEBUG = false;
 
     while (!glfwWindowShouldClose(window)) {
-        double currentTime = glfwGetTime();
-        auto dt = static_cast<float>(currentTime - previousTime);
+        const double currentTime = glfwGetTime();
+        accumulator += currentTime - previousTime;
         previousTime = currentTime;
 
-        aura::body::applyAllJointMotors(auraBody);
+        while (accumulator >= FIXED_DT) {
+            const int step = diagnosticStep + 1;
+            aura::body::updateFootContactState(auraBody, world, footContactState);
+            aura::body::applyBalanceController(auraBody, world, footContactState, 0.1f);
+            aura::body::applyAllJointMotors(auraBody);
 
-        aura::body::stepAllBodyParts(auraBody, world, dt);
+            aura::body::stepAllBodyParts(auraBody, world, FIXED_DT);
+            aura::body::solveBodyConstraints(auraBody, world, 8);
+            aura::body::updateFootContactState(auraBody, world, footContactState);
 
+            if ((step == 10 || step == 20 || step == 30 ||
+                 step == 40 || step == 50) &&
+                leftFoot != nullptr && rightFoot != nullptr) {
+                const float torsoAngleDegrees = torso->body.angle * 180.0f / std::numbers::pi_v<float>;
 
-        aura::body::solveAllJoints(auraBody);
+                std::cout << std::fixed << std::setprecision(6)
+                          << "step " << step
+                          << " | normalized balance error="
+                          << aura::body::normalizedBalanceErrorX(auraBody, world)
+                          << " left hip target=" << leftHip->targetAngle
+                          << " right hip target=" << rightHip->targetAngle
+                          << " torso angle=" << torsoAngleDegrees << " deg"
+                          << " | left grounded=" << aura::physics::isGrounded(leftFoot->body, world)
+                          << " right grounded=" << aura::physics::isGrounded(rightFoot->body, world)
+                          << '\n';
+            }
+            ++diagnosticStep;
+            accumulator -= FIXED_DT;
+        }
 
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
@@ -541,28 +753,22 @@ int main() {
                 case aura::body::BodyPartShape::Circle:
                     drawCircle(part.body);
 
-                    drawPoint(worldFront, 0.015f);
+                    if (part.type == aura::body::BodyPartType::Head) {
+                        drawPoint(worldFront, 0.015f);
+                    }
                     break;
 
                 case aura::body::BodyPartShape::Rectangle:
+                    drawRectangle(part.body);
+                    break;
                 case aura::body::BodyPartShape::Capsule:
                     drawCapsule(part.body);
                     break;
             }
         }
 
-        const auto &neck =
-                auraBody.joints[0];
-
-        auto *torso =
-                aura::body::findPart(auraBody, aura::body::BodyPartType::Torso);
-
-        auto *head =
-                aura::body::findPart(auraBody, aura::body::BodyPartType::Head);
-
-        if (SHOW_JOINT_DEBUG) {
-            drawJoint(torso->body, head->body, neck);
-        }
+        if (SHOW_JOINT_DEBUG)
+            drawJoint(torso->body, head->body, *neck);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

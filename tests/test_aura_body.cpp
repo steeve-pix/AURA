@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include <aura/body/AuraBody.hpp>
+#include <aura/body/BalanceController.hpp>
 #include <aura/math/Math.hpp>
 
 int main()
@@ -86,7 +87,7 @@ int main()
             -head->body.torque));
     assert(torso->body.torque != 0.0f || head->body.torque != 0.0f);
 
-    aura::body::solveAllJoints(aura);
+    aura::body::solveAllJoints(aura, TODO);
 
     const auto error = aura::physics::jointError(
             torso->body,
@@ -245,6 +246,16 @@ int main()
                     .mass = 1.0f
                 }
             }
+        },
+        .joints = {
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::LeftThigh
+            },
+            {
+                .partA = aura::body::BodyPartType::Torso,
+                .partB = aura::body::BodyPartType::RightThigh
+            }
         }
     };
 
@@ -255,13 +266,43 @@ int main()
     assert(balanceCom.x >= balanceSupport.minX &&
            balanceCom.x <= balanceSupport.maxX);
     assert(aura::body::isBalanced(balanceBody, world));
+    assert(aura::math::nearlyEqual(
+            aura::body::balanceErrorX(balanceBody, world),
+            0.0f));
+    assert(aura::math::nearlyEqual(
+            aura::body::normalizedBalanceErrorX(balanceBody, world),
+            0.0f));
 
     auto *balanceTorso = aura::body::findPart(
             balanceBody,
             aura::body::BodyPartType::Torso);
+
+    // The feet define a support interval from -1.5 to 1.5.
+    // Moving the torso to 1.8 puts the weighted COM at the right edge.
+    balanceTorso->body.position.x = 1.8f;
+    const auto rightEdgeCom = aura::body::centerOfMass(balanceBody);
+    assert(aura::math::nearlyEqual(rightEdgeCom.x, balanceSupport.maxX));
+    assert(aura::math::nearlyEqual(
+            aura::body::normalizedBalanceErrorX(balanceBody, world),
+            1.0f));
+
+    balanceTorso->body.position.x = -1.8f;
+    const auto leftEdgeCom = aura::body::centerOfMass(balanceBody);
+    assert(aura::math::nearlyEqual(leftEdgeCom.x, balanceSupport.minX));
+    assert(aura::math::nearlyEqual(
+            aura::body::normalizedBalanceErrorX(balanceBody, world),
+            -1.0f));
+
     balanceTorso->body.position.x = 10.0f;
 
     assert(!aura::body::isBalanced(balanceBody, world));
+    assert(aura::math::nearlyEqual(
+            aura::body::balanceErrorX(balanceBody, world),
+            8.333333f));
+
+    aura::body::applyBalanceController(balanceBody, world, 0.3f);
+    assert(balanceBody.joints[0].targetAngle < 0.0f);
+    assert(balanceBody.joints[1].targetAngle < 0.0f);
 
     aura::body::AuraBody skeleton{
         .parts = {

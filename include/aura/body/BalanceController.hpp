@@ -1,0 +1,51 @@
+#pragma once
+#include "AuraBody.hpp"
+
+namespace aura::body {
+    inline void applyBalanceController(AuraBody &aura, const physics::World2D &world,
+                                       const FootContactState &contactState, float gain) {
+        const auto setHipTargetsToNeutral = [&aura]() {
+            for (physics::Joint2D &joint: aura.joints) {
+                const bool isHip =
+                        joint.partA == BodyPartType::Torso &&
+                        (joint.partB == BodyPartType::LeftThigh ||
+                         joint.partB == BodyPartType::RightThigh);
+                if (isHip) {
+                    joint.targetAngle = 0.0f;
+                }
+            }
+        };
+
+        if (!contactState.leftGrounded || !contactState.rightGrounded) {
+            setHipTargetsToNeutral();
+            return;
+        }
+        const SupportInterval support =
+                supportInterval(aura, world, contactState);
+
+        if (!support.valid) {
+            setHipTargetsToNeutral();
+            return;
+        }
+
+        const float error =
+                normalizedBalanceErrorX(aura, world, contactState);
+
+        const float correction =
+                error * gain;
+
+        for (physics::Joint2D &joint: aura.joints) {
+            const bool isLeftHip =
+                    joint.partA == BodyPartType::Torso
+                    && joint.partB == BodyPartType::LeftThigh;
+
+            const bool isRightHip =
+                    joint.partA == BodyPartType::Torso
+                    && joint.partB == BodyPartType::RightThigh;
+
+            if (isLeftHip || isRightHip) {
+                joint.targetAngle = correction;
+            }
+        }
+    }
+}
