@@ -115,7 +115,7 @@ namespace aura::body {
             physics::correctJointAngularVelocity(partA->body, partB->body, joint);
         } else {
             if (!foundIncrease && !printedNoIncrease) {
-                std::cout << "No joint KE increase above 1e-6 in frames 1-5\n";
+                // std::cout << "No joint KE increase above 1e-6 in frames 1-5\n";
                 printedNoIncrease = true;
             }
 

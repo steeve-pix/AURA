@@ -1,6 +1,10 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
+#include <numbers>
+#include <string>
+#include <string_view>
 
 #include "aura/body/AuraBody.hpp"
 #include "aura/body/BalanceController.hpp"
@@ -10,7 +14,8 @@
 #include "aura/physics/JointConstraint.hpp"
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
-
+#include "aura/training/ObservationBuilder.hpp"
+#include "aura/training/ObservationJson.hpp"
 static float g_aspectRatioModifier = 1.0f;
 
 static float worldToScreenY(float worldY) {
@@ -167,7 +172,10 @@ static void drawCapsule(const aura::physics::Body2D &body, int segments = 16) {
     glEnd();
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    const bool observationOnce =
+            argc > 1 && std::string_view(argv[1]) == "--observation-once";
+
     if (!glfwInit())
         return 1;
 
@@ -664,33 +672,50 @@ int main() {
                 rightWristWorld - aura::math::rotate(rightWrist->localAnchorB, rightHand->body.angle);
     }
 
-    std::cout << "Startup joint motor errors (radians)\n";
-    for (const auto &joint: auraBody.joints) {
-        const auto *partA = aura::body::findPart(auraBody, joint.partA);
-        const auto *partB = aura::body::findPart(auraBody, joint.partB);
-        if (partA == nullptr || partB == nullptr) {
-            continue;
-        }
-
-        const float relativeAngle =
-                aura::physics::relativeJointAngle(partA->body, partB->body);
-        const float motorError =
-                aura::physics::jointMotorError(partA->body, partB->body, joint);
-
-        std::cout << std::fixed << std::setprecision(6)
-                  << partA->name << " -> " << partB->name
-                  << " relative=" << relativeAngle
-                  << " target=" << joint.targetAngle
-                  << " error=" << motorError << '\n';
-    }
-
     constexpr float FIXED_DT = 1.0f / 120.0f;
+    constexpr int LOG_INTERVAL_STEPS = 120;
     double previousTime = glfwGetTime();
     double accumulator = 0.0;
     int diagnosticStep = 0;
     aura::body::FootContactState footContactState{};
+    float previousBalanceError = 0.0f;
+    bool hasPreviousBalanceError = false;
 
     constexpr bool SHOW_JOINT_DEBUG = false;
+
+    if (observationOnce) {
+        aura::body::updateFootContactState(auraBody, world, footContactState);
+        aura::body::applyBalanceController(auraBody, world, footContactState, 0.1f);
+        aura::body::applyAllJointMotors(auraBody);
+        aura::body::stepAllBodyParts(auraBody, world, FIXED_DT);
+        aura::body::solveBodyConstraints(auraBody, world, 8);
+        aura::body::updateFootContactState(auraBody, world, footContactState);
+
+        const auto observation = aura::training::makeObservation(
+                auraBody, footContactState, world, previousBalanceError,
+                hasPreviousBalanceError, FIXED_DT);
+        std::cout << aura::training::ObservationToJson(observation) << '\n';
+
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return 0;
+    }
+
+    constexpr auto printTableBorder = [] {
+        std::cout <<
+                "+----------+-------------+---------------+---------+---------+-----------+---------------+---------------+\n";
+    };
+    printTableBorder();
+    std::cout << std::left
+            << "| " << std::setw(8) << "Time (s)"
+            << " | " << std::setw(11) << "Torso (deg)"
+            << " | " << std::setw(13) << "Omega (rad/s)"
+            << " | " << std::setw(7) << "Support"
+            << " | " << std::setw(7) << "Balance"
+            << " | " << std::setw(9) << "Rate (/s)"
+            << " | " << std::setw(13) << "L ankle (rad)"
+            << " | " << std::setw(13) << "R ankle (rad)" << " |\n";
+    printTableBorder();
 
     while (!glfwWindowShouldClose(window)) {
         const double currentTime = glfwGetTime();
@@ -707,21 +732,40 @@ int main() {
             aura::body::solveBodyConstraints(auraBody, world, 8);
             aura::body::updateFootContactState(auraBody, world, footContactState);
 
-            if ((step == 10 || step == 20 || step == 30 ||
-                 step == 40 || step == 50) &&
-                leftFoot != nullptr && rightFoot != nullptr) {
-                const float torsoAngleDegrees = torso->body.angle * 180.0f / std::numbers::pi_v<float>;
+            const auto observation = aura::training::makeObservation(
+                auraBody, footContactState, world, previousBalanceError, hasPreviousBalanceError, FIXED_DT);
 
-                std::cout << std::fixed << std::setprecision(6)
-                          << "step " << step
-                          << " | normalized balance error="
-                          << aura::body::normalizedBalanceErrorX(auraBody, world)
-                          << " left hip target=" << leftHip->targetAngle
-                          << " right hip target=" << rightHip->targetAngle
-                          << " torso angle=" << torsoAngleDegrees << " deg"
-                          << " | left grounded=" << aura::physics::isGrounded(leftFoot->body, world)
-                          << " right grounded=" << aura::physics::isGrounded(rightFoot->body, world)
-                          << '\n';
+            const bool hasSupport =
+                    observation.leftFootContact || observation.rightFootContact;
+            if (hasSupport) {
+                previousBalanceError = observation.balanceError;
+                hasPreviousBalanceError = true;
+            } else {
+                hasPreviousBalanceError = false;
+            }
+
+            if (step % LOG_INTERVAL_STEPS == 0) {
+                const char *support = observation.leftFootContact
+                                          ? (observation.rightFootContact ? "both" : "left")
+                                          : (observation.rightFootContact ? "right" : "none");
+                const float torsoAngleDegrees =
+                        observation.torsoAngle * 180.0f / std::numbers::pi_v<float>;
+                const float simulationTime = static_cast<float>(step) * FIXED_DT;
+
+                std::cout << std::fixed << std::setprecision(2) << std::right
+                        << "| " << std::setw(8) << simulationTime
+                        << " | " << std::setw(11) << torsoAngleDegrees
+                        << " | " << std::setw(13) << observation.torsoAngularVelocity
+                        << " | " << std::left << std::setw(7) << support << std::right << " | ";
+                if (hasSupport) {
+                    std::cout << std::setw(7) << observation.balanceError
+                            << " | " << std::setw(9) << observation.balanceErrorRate;
+                } else {
+                    std::cout << std::setw(7) << "n/a"
+                            << " | " << std::setw(9) << "n/a";
+                }
+                std::cout << " | " << std::setw(13) << observation.leftAnkleAngle
+                        << " | " << std::setw(13) << observation.rightAnkleAngle << " |\n";
             }
             ++diagnosticStep;
             accumulator -= FIXED_DT;

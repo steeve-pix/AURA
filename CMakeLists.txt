@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 project(AURA LANGUAGES CXX)
 
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -18,6 +22,13 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glfw)
 
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+FetchContent_Declare(
+        json
+        URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
+
 find_package(OpenGL REQUIRED)
 
 add_executable(
@@ -34,6 +45,7 @@ target_compile_definitions(aura PRIVATE GL_SILENCE_DEPRECATION)
 target_link_libraries(aura
         PRIVATE
         glfw
+        nlohmann_json::nlohmann_json
         OpenGL::GL
 )
 
