@@ -1,5 +1,6 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <exception>
 #include <iomanip>
 #include <iostream>
 #include <numbers>
@@ -14,6 +15,7 @@
 #include "aura/physics/JointConstraint.hpp"
 #include "aura/physics/Physics.hpp"
 #include "aura/physics/World2D.hpp"
+#include "aura/training/ActionJson.hpp"
 #include "aura/training/ObservationBuilder.hpp"
 #include "aura/training/ObservationJson.hpp"
 static float g_aspectRatioModifier = 1.0f;
@@ -175,6 +177,8 @@ static void drawCapsule(const aura::physics::Body2D &body, int segments = 16) {
 int main(int argc, char *argv[]) {
     const bool observationOnce =
             argc > 1 && std::string_view(argv[1]) == "--observation-once";
+    const bool actionOnce =
+            argc > 1 && std::string_view(argv[1]) == "--action-once";
 
     if (!glfwInit())
         return 1;
@@ -682,6 +686,54 @@ int main(int argc, char *argv[]) {
     bool hasPreviousBalanceError = false;
 
     constexpr bool SHOW_JOINT_DEBUG = false;
+
+    if (actionOnce) {
+        std::string line;
+        if (!std::getline(std::cin, line)) {
+            std::cerr << "Expected one JSON action on stdin.\n";
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            return 2;
+        }
+
+        aura::training::Action action;
+        try {
+            action = aura::training::actionFromJson(line);
+        } catch (const std::exception &error) {
+            std::cerr << "Could not parse action JSON: " << error.what() << '\n';
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            return 2;
+        }
+
+        if (leftShin == nullptr || leftFoot == nullptr ||
+            rightShin == nullptr || rightFoot == nullptr ||
+            leftAnkle == auraBody.joints.end() || rightAnkle == auraBody.joints.end()) {
+            std::cerr << "AURA is missing an ankle joint or body part.\n";
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            return 2;
+        }
+
+        aura::body::updateFootContactState(auraBody, world, footContactState);
+        aura::physics::applyJointTorque(
+                leftShin->body, leftFoot->body, action.leftAnkleTorque);
+        aura::physics::applyJointTorque(
+                rightShin->body, rightFoot->body, action.rightAnkleTorque);
+
+        aura::body::stepAllBodyParts(auraBody, world, FIXED_DT);
+        aura::body::solveBodyConstraints(auraBody, world, 8);
+        aura::body::updateFootContactState(auraBody, world, footContactState);
+
+        const auto observation = aura::training::makeObservation(
+                auraBody, footContactState, world, previousBalanceError,
+                hasPreviousBalanceError, FIXED_DT);
+        std::cout << aura::training::ObservationToJson(observation) << '\n';
+
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return 0;
+    }
 
     if (observationOnce) {
         aura::body::updateFootContactState(auraBody, world, footContactState);

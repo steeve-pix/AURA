@@ -95,7 +95,7 @@ namespace aura::body {
 
             if (delta > 0.000001f) {
                 if (!printedHeader) {
-                    std::cout << "Joint velocity corrections that increase pair KE (frames 1-5)\n"
+                    std::cerr << "Joint velocity corrections that increase pair KE (frames 1-5)\n"
                               << std::left << std::setw(9) << "frame"
                               << std::setw(12) << "iteration"
                               << std::setw(34) << "joint"
@@ -103,7 +103,7 @@ namespace aura::body {
                     printedHeader = true;
                 }
 
-                std::cout << std::setprecision(9)
+                std::cerr << std::setprecision(9)
                           << std::left << std::setw(9) << frame
                           << std::setw(12) << iteration
                           << std::setw(34) << (partA->name + " -> " + partB->name)
