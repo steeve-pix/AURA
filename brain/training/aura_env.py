@@ -24,8 +24,11 @@ class AuraEnv:
         line = self.process.stdout.readline()
         return json.loads(line)
 
-    def reset(self):
-        message = {"type": "reset"}
+    def reset(self, push_x=0.0):
+        message = {
+            "type": "reset",
+            "push_x": push_x,
+        }
 
         self.process.stdin.write(json.dumps(message) + "\n")
         self.process.stdin.flush()
