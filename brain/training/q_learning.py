@@ -93,9 +93,13 @@ def evaluate_greedy_policy(env, max_steps=300):
     return total_reward, max_steps
 
 
-def train(episodes=300, max_steps=300):
+def train(episodes=300, max_steps=300, render=False, render_delay=0.0):
     project_root = Path(__file__).resolve().parents[2]
-    env = AuraEnv(project_root / "build" / "aura")
+    env = AuraEnv(
+        project_root / "build" / "aura",
+        render=render,
+        render_delay=render_delay,
+    )
     state_visits = [0 for _ in range(STATE_COUNT)]
 
     try:

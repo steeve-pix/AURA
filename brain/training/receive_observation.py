@@ -1,21 +1,22 @@
-import json
-import subprocess
 from pathlib import Path
 
+from brain.training.aura_env import AuraEnv
+from brain.training.reward import standing_reward, has_fallen
+
 project_root = Path(__file__).resolve().parents[2]
-aura_exe = project_root / "build" / "aura"
-action = {
-    "left_ankle_torque": 1.0,
-    "right_ankle_torque": 1.0,
-}
+env = AuraEnv(project_root / "build" / "aura")
 
-result = subprocess.run(
-    [str(aura_exe), "--action-once"],
-    input=json.dumps(action),
-    capture_output=True,
-    text=True,
-    check=True,
-)
+observation = env.reset()
 
-observation = json.loads(result.stdout)
-print(observation)
+for step in range(1000):
+    observation = env.step(1.0, 1.0);
+
+    reward = standing_reward(observation)
+
+    print(step, reward)
+
+    if has_fallen(observation):
+        print("AURA fell at step", step)
+        break
+
+env.close()

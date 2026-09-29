@@ -174,25 +174,49 @@ static void drawCapsule(const aura::physics::Body2D &body, int segments = 16) {
     glEnd();
 }
 
+static bool hasArgument(int argc, char *argv[], std::string_view argument) {
+    for (int index = 1; index < argc; ++index) {
+        if (std::string_view(argv[index]) == argument) {
+            return true;
+        }
+    }
+    return false;
+}
+
 int main(int argc, char *argv[]) {
-    const bool observationOnce =
-            argc > 1 && std::string_view(argv[1]) == "--observation-once";
-    const bool actionOnce =
-            argc > 1 && std::string_view(argv[1]) == "--action-once";
-    const bool trainingLoop =
-            argc > 1 && std::string_view(argv[1]) == "--training-loop";
+    const bool observationOnce = hasArgument(argc, argv, "--observation-once");
+    const bool actionOnce = hasArgument(argc, argv, "--action-once");
+    const bool trainingLoop = hasArgument(argc, argv, "--training-loop");
+    const bool renderTraining = trainingLoop && hasArgument(argc, argv, "--render");
+    const bool createWindow = !trainingLoop || renderTraining;
 
-    if (!glfwInit())
-        return 1;
+    bool glfwInitialized = false;
+    GLFWwindow *window = nullptr;
+    if (createWindow) {
+        if (!glfwInit())
+            return 1;
+        glfwInitialized = true;
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "AURA v0.3", nullptr, nullptr);
-
-    if (window == nullptr) {
-        glfwTerminate();
-        return 1;
+        window = glfwCreateWindow(800, 600, "AURA v0.3", nullptr, nullptr);
+        if (window == nullptr) {
+            glfwTerminate();
+            return 1;
+        }
+        glfwMakeContextCurrent(window);
+        if (renderTraining) {
+            glfwShowWindow(window);
+            glfwFocusWindow(window);
+        }
     }
 
-    glfwMakeContextCurrent(window);
+    const auto closeWindow = [&] {
+        if (window != nullptr) {
+            glfwDestroyWindow(window);
+        }
+        if (glfwInitialized) {
+            glfwTerminate();
+        }
+    };
 
     aura::physics::World2D world{};
 
@@ -683,7 +707,7 @@ int main(int argc, char *argv[]) {
 
     constexpr float FIXED_DT = 1.0f / 120.0f;
     constexpr int LOG_INTERVAL_STEPS = 120;
-    double previousTime = glfwGetTime();
+    double previousTime = createWindow ? glfwGetTime() : 0.0;
     double accumulator = 0.0;
     int diagnosticStep = 0;
     aura::body::FootContactState footContactState{};
@@ -691,14 +715,58 @@ int main(int argc, char *argv[]) {
     bool hasPreviousBalanceError = false;
 
     constexpr bool SHOW_JOINT_DEBUG = false;
+    const auto renderCurrentState = [&] {
+        if (window == nullptr || glfwWindowShouldClose(window)) {
+            return;
+        }
+
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+        if (height == 0) height = 1;
+        if (width == 0) width = 1;
+
+        glViewport(0, 0, width, height);
+        g_aspectRatioModifier = static_cast<float>(height) / static_cast<float>(width);
+        glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        drawFloor(world);
+
+        for (const auto &part : auraBody.parts) {
+            const aura::math::Vec2 localFront{part.body.size.x * 0.5f, 0.0f};
+            const aura::math::Vec2 worldFront =
+                    aura::physics::localToWorldPoint(part.body, localFront);
+
+            switch (part.shape) {
+                case aura::body::BodyPartShape::Circle:
+                    drawCircle(part.body);
+                    if (part.type == aura::body::BodyPartType::Head) {
+                        drawPoint(worldFront, 0.015f);
+                    }
+                    break;
+                case aura::body::BodyPartShape::Rectangle:
+                    drawRectangle(part.body);
+                    break;
+                case aura::body::BodyPartShape::Capsule:
+                    drawCapsule(part.body);
+                    break;
+            }
+        }
+
+        if (SHOW_JOINT_DEBUG && torso != nullptr && head != nullptr &&
+            neck != auraBody.joints.end()) {
+            drawJoint(torso->body, head->body, *neck);
+        }
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    };
 
     if (actionOnce || trainingLoop) {
         if (leftShin == nullptr || leftFoot == nullptr ||
             rightShin == nullptr || rightFoot == nullptr ||
             leftAnkle == auraBody.joints.end() || rightAnkle == auraBody.joints.end()) {
             std::cerr << "AURA is missing an ankle joint or body part.\n";
-            glfwDestroyWindow(window);
-            glfwTerminate();
+            closeWindow();
             return 2;
         }
         const auto advanceWithAction = [&](const aura::training::Action &action) {
@@ -764,8 +832,7 @@ int main(int argc, char *argv[]) {
             std::string line;
             if (!std::getline(std::cin, line)) {
                 std::cerr << "Expected one JSON action on stdin.\n";
-                glfwDestroyWindow(window);
-                glfwTerminate();
+                closeWindow();
                 return 2;
             }
 
@@ -775,17 +842,20 @@ int main(int argc, char *argv[]) {
                 std::cout << aura::training::ObservationToJson(observation) << '\n';
             } catch (const std::exception &error) {
                 std::cerr << "Could not process action JSON: " << error.what() << '\n';
-                glfwDestroyWindow(window);
-                glfwTerminate();
+                closeWindow();
                 return 2;
             }
 
-            glfwDestroyWindow(window);
-            glfwTerminate();
+            closeWindow();
             return 0;
         }
 
         if (trainingLoop) {
+            if (renderTraining) {
+                // Show the starting pose even while waiting for Python's first message.
+                renderCurrentState();
+            }
+
             std::string line;
             while (std::getline(std::cin, line)) {
                 try {
@@ -794,19 +864,18 @@ int main(int argc, char *argv[]) {
                             message.type == aura::training::TrainingMessageType::Reset
                                 ? resetSimulation(message.pushX)
                                 : advanceWithAction(message.action);
+                    renderCurrentState();
                     std::cout << aura::training::ObservationToJson(observation) << '\n';
                     std::cout.flush();
                 } catch (const std::exception &error) {
                     std::cerr << "Could not process training message: " << error.what() << '\n';
-                    glfwDestroyWindow(window);
-                    glfwTerminate();
+                    closeWindow();
                     return 2;
                 }
             }
         }
 
-        glfwDestroyWindow(window);
-        glfwTerminate();
+        closeWindow();
         return 0;
     }
 
@@ -823,8 +892,7 @@ int main(int argc, char *argv[]) {
                 hasPreviousBalanceError, FIXED_DT);
         std::cout << aura::training::ObservationToJson(observation) << '\n';
 
-        glfwDestroyWindow(window);
-        glfwTerminate();
+        closeWindow();
         return 0;
     }
 
@@ -898,55 +966,10 @@ int main(int argc, char *argv[]) {
             accumulator -= FIXED_DT;
         }
 
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-
-        if (height == 0) height = 1;
-
-        glViewport(0, 0, width, height);
-
-        g_aspectRatioModifier = static_cast<float>(height) / static_cast<float>(width);
-
-        glClearColor(0.15f, 0.15f, 0.18f, 1.0f);
-
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // ...
-        drawFloor(world);
-
-
-        for (const auto &part: auraBody.parts) {
-            const aura::math::Vec2 localFront{part.body.size.x * 0.5f, 0.0f};
-            const aura::math::Vec2 worldFront =
-                    aura::physics::localToWorldPoint(part.body, localFront);
-
-            switch (part.shape) {
-                case aura::body::BodyPartShape::Circle:
-                    drawCircle(part.body);
-
-                    if (part.type == aura::body::BodyPartType::Head) {
-                        drawPoint(worldFront, 0.015f);
-                    }
-                    break;
-
-                case aura::body::BodyPartShape::Rectangle:
-                    drawRectangle(part.body);
-                    break;
-                case aura::body::BodyPartShape::Capsule:
-                    drawCapsule(part.body);
-                    break;
-            }
-        }
-
-        if (SHOW_JOINT_DEBUG)
-            drawJoint(torso->body, head->body, *neck);
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        renderCurrentState();
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    closeWindow();
 
     return 0;
 }

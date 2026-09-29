@@ -1,11 +1,19 @@
 import json
 import subprocess
+import time
 
 
 class AuraEnv:
-    def __init__(self, executable_path):
+    def __init__(self, executable_path, render=False, render_delay=0.0):
+        self.render = render
+        self.render_delay = render_delay
+
+        command = [str(executable_path), "--training-loop"]
+        if render:
+            command.append("--render")
+
         self.process = subprocess.Popen(
-            [str(executable_path), "--training-loop"],
+            command,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             text=True,
@@ -22,7 +30,12 @@ class AuraEnv:
         self.process.stdin.flush()
 
         line = self.process.stdout.readline()
-        return json.loads(line)
+        observation = json.loads(line)
+
+        if self.render and self.render_delay > 0.0:
+            time.sleep(self.render_delay)
+
+        return observation
 
     def reset(self, push_x=0.0):
         message = {
