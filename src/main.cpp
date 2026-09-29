@@ -179,6 +179,8 @@ int main(int argc, char *argv[]) {
             argc > 1 && std::string_view(argv[1]) == "--observation-once";
     const bool actionOnce =
             argc > 1 && std::string_view(argv[1]) == "--action-once";
+    const bool trainingLoop =
+            argc > 1 && std::string_view(argv[1]) == "--training-loop";
 
     if (!glfwInit())
         return 1;
@@ -532,11 +534,11 @@ int main(int argc, char *argv[]) {
     auto *leftHand = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftHand);
     auto *rightHand = aura::body::findPart(auraBody, aura::body::BodyPartType::RightHand);
 
-    const auto leftAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+    auto leftAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
         return joint.partA == aura::body::BodyPartType::LeftShin &&
                joint.partB == aura::body::BodyPartType::LeftFoot;
     });
-    const auto rightAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+    auto rightAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
         return joint.partA == aura::body::BodyPartType::RightShin &&
                joint.partB == aura::body::BodyPartType::RightFoot;
     });
@@ -676,6 +678,9 @@ int main(int argc, char *argv[]) {
                 rightWristWorld - aura::math::rotate(rightWrist->localAnchorB, rightHand->body.angle);
     }
 
+    // Keep the fully assembled initial pose as the reset state.
+    const aura::body::AuraBody initialAuraBody = auraBody;
+
     constexpr float FIXED_DT = 1.0f / 120.0f;
     constexpr int LOG_INTERVAL_STEPS = 120;
     double previousTime = glfwGetTime();
@@ -687,25 +692,7 @@ int main(int argc, char *argv[]) {
 
     constexpr bool SHOW_JOINT_DEBUG = false;
 
-    if (actionOnce) {
-        std::string line;
-        if (!std::getline(std::cin, line)) {
-            std::cerr << "Expected one JSON action on stdin.\n";
-            glfwDestroyWindow(window);
-            glfwTerminate();
-            return 2;
-        }
-
-        aura::training::Action action;
-        try {
-            action = aura::training::actionFromJson(line);
-        } catch (const std::exception &error) {
-            std::cerr << "Could not parse action JSON: " << error.what() << '\n';
-            glfwDestroyWindow(window);
-            glfwTerminate();
-            return 2;
-        }
-
+    if (actionOnce || trainingLoop) {
         if (leftShin == nullptr || leftFoot == nullptr ||
             rightShin == nullptr || rightFoot == nullptr ||
             leftAnkle == auraBody.joints.end() || rightAnkle == auraBody.joints.end()) {
@@ -714,21 +701,109 @@ int main(int argc, char *argv[]) {
             glfwTerminate();
             return 2;
         }
-
-        aura::body::updateFootContactState(auraBody, world, footContactState);
-        aura::physics::applyJointTorque(
+        const auto advanceWithAction = [&](const aura::training::Action &action) {
+            aura::body::updateFootContactState(auraBody, world, footContactState);
+            aura::physics::applyJointTorque(
                 leftShin->body, leftFoot->body, action.leftAnkleTorque);
-        aura::physics::applyJointTorque(
+            aura::physics::applyJointTorque(
                 rightShin->body, rightFoot->body, action.rightAnkleTorque);
 
-        aura::body::stepAllBodyParts(auraBody, world, FIXED_DT);
-        aura::body::solveBodyConstraints(auraBody, world, 8);
-        aura::body::updateFootContactState(auraBody, world, footContactState);
+            aura::body::stepAllBodyParts(auraBody, world, FIXED_DT);
+            aura::body::solveBodyConstraints(auraBody, world, 8);
+            aura::body::updateFootContactState(auraBody, world, footContactState);
 
-        const auto observation = aura::training::makeObservation(
+            const auto observation = aura::training::makeObservation(
                 auraBody, footContactState, world, previousBalanceError,
                 hasPreviousBalanceError, FIXED_DT);
-        std::cout << aura::training::ObservationToJson(observation) << '\n';
+            const bool hasSupport =
+                    observation.leftFootContact || observation.rightFootContact;
+            if (hasSupport) {
+                previousBalanceError = observation.balanceError;
+                hasPreviousBalanceError = true;
+            } else {
+                hasPreviousBalanceError = false;
+            }
+            return observation;
+        };
+
+        const auto resetSimulation = [&](float pushX) {
+            auraBody = initialAuraBody;
+
+            // Restoring the body may relocate its vectors, so refresh saved references.
+            torso = aura::body::findPart(auraBody, aura::body::BodyPartType::Torso);
+            leftFoot = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftFoot);
+            rightFoot = aura::body::findPart(auraBody, aura::body::BodyPartType::RightFoot);
+            leftShin = aura::body::findPart(auraBody, aura::body::BodyPartType::LeftShin);
+            rightShin = aura::body::findPart(auraBody, aura::body::BodyPartType::RightShin);
+            leftAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+                return joint.partA == aura::body::BodyPartType::LeftShin &&
+                       joint.partB == aura::body::BodyPartType::LeftFoot;
+            });
+            rightAnkle = std::find_if(auraBody.joints.begin(), auraBody.joints.end(), [](const auto &joint) {
+                return joint.partA == aura::body::BodyPartType::RightShin &&
+                       joint.partB == aura::body::BodyPartType::RightFoot;
+            });
+
+            footContactState = {};
+            previousBalanceError = 0.0f;
+            hasPreviousBalanceError = false;
+            aura::body::updateFootContactState(auraBody, world, footContactState);
+
+            if (torso != nullptr && pushX != 0.0f) {
+                const aura::math::Vec2 impulse{pushX, 0.0f};
+                aura::physics::applyImpulseAtPoint(
+                        torso->body, impulse, torso->body.position);
+            }
+
+            return aura::training::makeObservation(
+                    auraBody, footContactState, world, previousBalanceError,
+                    hasPreviousBalanceError, FIXED_DT);
+        };
+
+        if (actionOnce) {
+            std::string line;
+            if (!std::getline(std::cin, line)) {
+                std::cerr << "Expected one JSON action on stdin.\n";
+                glfwDestroyWindow(window);
+                glfwTerminate();
+                return 2;
+            }
+
+            try {
+                const auto action = aura::training::actionFromJson(line);
+                const auto observation = advanceWithAction(action);
+                std::cout << aura::training::ObservationToJson(observation) << '\n';
+            } catch (const std::exception &error) {
+                std::cerr << "Could not process action JSON: " << error.what() << '\n';
+                glfwDestroyWindow(window);
+                glfwTerminate();
+                return 2;
+            }
+
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            return 0;
+        }
+
+        if (trainingLoop) {
+            std::string line;
+            while (std::getline(std::cin, line)) {
+                try {
+                    const auto message = aura::training::trainingMessageFromJson(line);
+                    const auto observation =
+                            message.type == aura::training::TrainingMessageType::Reset
+                                ? resetSimulation(message.pushX)
+                                : advanceWithAction(message.action);
+                    std::cout << aura::training::ObservationToJson(observation) << '\n';
+                    std::cout.flush();
+                } catch (const std::exception &error) {
+                    std::cerr << "Could not process training message: " << error.what() << '\n';
+                    glfwDestroyWindow(window);
+                    glfwTerminate();
+                    return 2;
+                }
+            }
+        }
 
         glfwDestroyWindow(window);
         glfwTerminate();
