@@ -11,6 +11,8 @@ namespace aura::render {
 
         [[nodiscard]] math::Mat4 projectionMatrix() const;
 
+        void setAspectRatio(float aspectRatio);
+
     private:
         math::Vec3 position_;
         math::Vec3 target_;

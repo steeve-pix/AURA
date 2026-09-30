@@ -15,4 +15,10 @@ namespace aura::render {
     math::Mat4 Camera::projectionMatrix() const {
         return math::Mat4::perspective(fovRadians_, aspectRatio_, nearPlane_, farPlane_);
     }
+
+    void Camera::setAspectRatio(float aspectRatio) {
+        if (aspectRatio > 0.0f) {
+            aspectRatio_ = aspectRatio;
+        }
+    }
 }

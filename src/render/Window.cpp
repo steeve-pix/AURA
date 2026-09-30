@@ -1,6 +1,7 @@
 #include "aura/render/Window.hpp"
 
 #include <stdexcept>
+#include <utility>
 
 #include "GLFW/glfw3.h"
 
@@ -16,12 +17,21 @@ namespace aura::render {
 
 
         window_ = glfwCreateWindow(width, height, title, nullptr, nullptr);
-
         if (window_ == nullptr) {
             glfwTerminate();
-
             throw std::runtime_error("Failed to create GLFW window");
         }
+
+        glfwSetWindowUserPointer(window_, this);
+
+        glfwSetFramebufferSizeCallback(window_, [](GLFWwindow *glfwWindow, int width, int height) {
+            auto *window =
+                    static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+
+            if (window != nullptr && window->resizeCallback_) {
+                window->resizeCallback_(width, height);
+            }
+        });
 
         glfwMakeContextCurrent(window_);
     }
@@ -43,5 +53,27 @@ namespace aura::render {
 
     void Window::swapBuffers() {
         glfwSwapBuffers(window_);
+    }
+
+    int Window::framebufferWidth() const {
+        int width = 0;
+        int height = 0;
+
+        glfwGetFramebufferSize(window_, &width, &height);
+
+        return width;
+    }
+
+    int Window::framebufferHeight() const {
+        int width = 0;
+        int height = 0;
+
+        glfwGetFramebufferSize(window_, &width, &height);
+
+        return height;
+    }
+
+    void Window::setResizeCallback(ResizeCallback callback) {
+        resizeCallback_ = std::move(callback);
     }
 }

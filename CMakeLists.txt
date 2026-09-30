@@ -51,4 +51,8 @@ if (BUILD_TESTING)
     add_executable(aura_camera_tests tests/camera_tests.cpp src/render/Camera.cpp)
     target_link_libraries(aura_camera_tests PRIVATE aura_math)
     add_test(NAME camera COMMAND aura_camera_tests)
+
+    add_executable(aura_mesh_factory_tests tests/mesh_factory_tests.cpp src/render/MeshFactory.cpp)
+    target_include_directories(aura_mesh_factory_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME mesh_factory COMMAND aura_mesh_factory_tests)
 endif ()

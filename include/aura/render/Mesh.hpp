@@ -7,10 +7,15 @@ namespace aura::render {
         Lines
     };
 
+    enum class VertexLayout {
+        PositionOnly,
+        PositionNormal
+    };
+
     class Mesh {
     public:
-        explicit Mesh(const std::vector<float> &vertices,
-                      MeshPrimitive primitive = MeshPrimitive::Triangles);
+        explicit Mesh(const std::vector<float> &vertices, MeshPrimitive primitive = MeshPrimitive::Triangles,
+                      VertexLayout layout = VertexLayout::PositionOnly);
 
         ~Mesh();
 
