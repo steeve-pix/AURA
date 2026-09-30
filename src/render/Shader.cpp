@@ -85,4 +85,18 @@ namespace aura::render {
             readFile(vertexPath), readFile(fragmentPath)
         };
     }
+
+    void Shader::setMat4(const std::string &name, const math::Mat4 &matrix) {
+        const int location =
+                glGetUniformLocation(program_, name.c_str());
+
+        glUniformMatrix4fv(location, 1,GL_FALSE, matrix.data());
+    }
+
+    void Shader::setVec3(const std::string &name, const math::Vec3 &value) {
+        const int location =
+                glGetUniformLocation(program_, name.c_str());
+
+        glUniform3f(location, value.x, value.y, value.z);
+    }
 }

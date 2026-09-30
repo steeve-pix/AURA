@@ -1,34 +1,24 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
+
+#include "aura/render/Camera.hpp"
+#include "aura/render/Mesh.hpp"
+#include "aura/render/MeshFactory.hpp"
 #include "aura/render/Renderer3D.hpp"
 #include "aura/render/Shader.hpp"
 #include "aura/render/Window.hpp"
 
 int main() {
     aura::render::Window window{1280, 720, "AURA"};
-    aura::physics::Renderer3D renderer;
+    aura::render::Mesh cube(aura::render::MeshFactory::createCube());
+    aura::render::Mesh grid{aura::render::MeshFactory::createGrid(20, 1.0f), aura::render::MeshPrimitive::Lines};
+    aura::render::Mesh floor{aura::render::MeshFactory::createFloor(40.0f)};
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f
+    aura::render::Camera camera{
+        {0.0f, 3.0f, 6.0f},
+        {0.0f, 0.0f, 0.0f},
+        1280.0f / 720.0f
     };
-
-    unsigned int vao = 0;
-    unsigned int vbo = 0;
-
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-
-    glBindVertexArray(vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3,GL_FLOAT,GL_FALSE, 3 * sizeof(float), nullptr);
-
-    glEnableVertexAttribArray(0);
 
     auto shader =
             aura::render::Shader::fromFiles("../assets/shaders/basic.vert", "../assets/shaders/basic.frag");
@@ -41,10 +31,24 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.use();
+        shader.setMat4("uView", camera.viewMatrix());
+        shader.setMat4("uProjection", camera.projectionMatrix());
 
-        glBindVertexArray(vao);
+        // Solid Floor
+        shader.setVec3("uColor", {0.1f, 0.1f, 0.1f});
+        shader.setMat4("uModel", aura::math::Mat4::identity());
+        floor.draw();
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // Grid
+        shader.setVec3("uColor", {0.35f, 0.35f, 0.4f});
+        shader.setMat4("uModel", aura::math::Mat4::translation({0.0f, 0.002f, 0.0f}));
+        grid.draw();
+
+        //Cube
+        shader.setVec3("uColor", {0.1f, 0.6f, 0.9f});
+        shader.setMat4("uModel", aura::math::Mat4::translation({0.0, 0.5, 0.0f}));
+        cube.draw();
+
 
         window.swapBuffers();
         aura::render::Window::pollEvents();

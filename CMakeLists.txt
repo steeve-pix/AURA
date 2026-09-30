@@ -20,7 +20,8 @@ FetchContent_MakeAvailable(glfw)
 
 find_package(OpenGL REQUIRED)
 
-add_library(aura_math src/math/Vec3.cpp src/math/Rotation.cpp src/math/Quaternion.cpp)
+add_library(aura_math src/math/Vec3.cpp src/math/Rotation.cpp src/math/Quaternion.cpp
+        src/math/Math.cpp)
 target_include_directories(aura_math PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(aura_physics src/physics/RigidBody3D.cpp src/physics/Motion.cpp)
@@ -32,7 +33,9 @@ add_executable(aura src/main.cpp
         src/render/Shader.cpp
         src/render/Camera.cpp
         src/render/Mesh.cpp
-        include/aura/math/Mat4.hpp)
+        include/aura/math/Mat4.hpp
+        src/math/Math.cpp
+        src/render/MeshFactory.cpp)
 target_link_libraries(aura PRIVATE aura_physics glfw OpenGL::GL)
 
 include(CTest)
@@ -44,4 +47,8 @@ if (BUILD_TESTING)
     add_executable(aura_physics_tests tests/physics_tests.cpp)
     target_link_libraries(aura_physics_tests PRIVATE aura_physics)
     add_test(NAME physics COMMAND aura_physics_tests)
+
+    add_executable(aura_camera_tests tests/camera_tests.cpp src/render/Camera.cpp)
+    target_link_libraries(aura_camera_tests PRIVATE aura_math)
+    add_test(NAME camera COMMAND aura_camera_tests)
 endif ()

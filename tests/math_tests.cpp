@@ -2,6 +2,7 @@
 #include <iostream>
 #include <numbers>
 
+#include "aura/math/Mat4.hpp"
 #include "aura/math/Quaternion.hpp"
 #include "aura/math/Rotation.hpp"
 #include "aura/math/Vec3.hpp"
@@ -89,6 +90,29 @@ int main() {
     checkFloat("normalized quaternion length", normalized.length(), 1.0f, failures);
     checkFloat("normalized quaternion w", normalized.w, 1.0f, failures);
     std::cout << "Normalized quaternion length: " << normalized.length() << '\n';
+
+    const auto projection = aura::math::Mat4::perspective(
+        std::numbers::pi_v<float> / 3.0f,
+        1280.0f / 720.0f,
+        0.1f,
+        100.0f);
+    checkFloat("perspective horizontal scale", projection.data()[0], 0.974279f, failures);
+    checkFloat("perspective vertical scale", projection.data()[5], 1.73205f, failures);
+    std::cout << "Projection scales: " << projection.data()[0]
+              << ", " << projection.data()[5] << '\n';
+
+    const auto view = aura::math::Mat4::lookAt(
+        {0.0f, 3.0f, 6.0f},
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f});
+    checkFloat("view translation X", view.data()[12], 0.0f, failures);
+    checkFloat("view translation Y", view.data()[13], 0.0f, failures);
+    checkFloat("view translation Z", view.data()[14], -std::sqrt(45.0f), failures);
+    checkFloat("view homogeneous value", view.data()[15], 1.0f, failures);
+    std::cout << "View last column:\n";
+    for (int i = 12; i < 16; ++i) {
+        std::cout << view.data()[i] << '\n';
+    }
 
     if (failures == 0) {
         std::cout << "All math checks passed.\n";
