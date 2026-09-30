@@ -1,0 +1,1 @@
+// Shadow fragment shader placeholder.

@@ -28,7 +28,11 @@ target_link_libraries(aura_physics PUBLIC aura_math)
 
 add_executable(aura src/main.cpp
         src/render/Window.cpp
-        src/render/Renderer3D.cpp)
+        src/render/Renderer3D.cpp
+        src/render/Shader.cpp
+        src/render/Camera.cpp
+        src/render/Mesh.cpp
+        include/aura/math/Mat4.hpp)
 target_link_libraries(aura PRIVATE aura_physics glfw OpenGL::GL)
 
 include(CTest)

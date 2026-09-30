@@ -1,0 +1,1 @@
+// Shadow vertex shader placeholder.
