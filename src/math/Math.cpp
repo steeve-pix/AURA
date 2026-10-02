@@ -84,6 +84,36 @@ namespace aura::math {
         return result;
     }
 
+    Mat4 Mat4::rotation(const Quaternion &orientation) {
+        const Quaternion q = orientation.normalized();
+
+        const float xx = q.x * q.x;
+        const float yy = q.y * q.y;
+        const float zz = q.z * q.z;
+
+        const float xy = q.x * q.y;
+        const float xz = q.x * q.z;
+        const float yz = q.y * q.z;
+
+        const float wx = q.w * q.x;
+        const float wy = q.w * q.y;
+        const float wz = q.w * q.z;
+
+        Mat4 result = identity();
+
+        result.values_ = {
+            1.0f - 2.0f * (yy + zz), 2.0f * (xy + wz), 2.0f * (xz - wy), 0.0f,
+
+            2.0f * (xy - wz), 1.0f - 2.0f * (xx + zz), 2.0f * (yz + wx), 0.0f,
+
+            2.0f * (xz + wy), 2.0f * (yz - wx), 1.0f - 2.0f * (xx + yy), 0.0f,
+
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+
+        return result;
+    }
+
     Mat4 Mat4::orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane) {
         Mat4 result = identity();
 

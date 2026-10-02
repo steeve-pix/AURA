@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 
+#include "Quaternion.hpp"
 #include "Vec3.hpp"
 
 namespace aura::math {
@@ -17,6 +18,8 @@ namespace aura::math {
         static Mat4 lookAt(const Vec3 &position, const Vec3 &target, const Vec3 &up);
 
         static Mat4 translation(const Vec3 &positon);
+
+        static Mat4 rotation(const Quaternion &orientation);
 
         static Mat4 orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane);
 

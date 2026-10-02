@@ -10,6 +10,10 @@ namespace aura:: physics {
 
         math::Quaternion orientation{};
         math::Vec3 angularVelocity{};
+        math::Vec3 angularAcceleration{};
+        math::Vec3 torque{};
+
+        float momentOfInertia = 1.0f;
 
         float mass = 1.0f;
     };

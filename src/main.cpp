@@ -1,4 +1,5 @@
 #define GLFW_INCLUDE_GLCOREARB
+#include <iostream>
 #include <GLFW/glfw3.h>
 
 #include "aura/physics/Collision.hpp"
@@ -20,9 +21,10 @@ int main() {
         aura::render::VertexLayout::PositionNormal
     };
     aura::physics::RigidBody3D body;
-    body.position = {0.0f, 0.5f, 0.0f};
-    body.velocity = {0.5f, 0.0f, 0.0f};
+    body.position = {0.0f, 2.0f, 0.0f};
+    body.velocity = {3.0f, 0.0f, 0.0f};
     body.acceleration = {0.0f, -9.81f, 0.0f};
+    body.angularVelocity = {};
 
     aura::render::Mesh grid{aura::render::MeshFactory::createGrid(20, 1.0f), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh floor{
@@ -45,7 +47,11 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     auto renderFrame = [&] {
-        const auto model = aura::math::Mat4::translation(body.position);
+        const auto translation = aura::math::Mat4::translation(body.position);
+        const auto rotation = aura::math::Mat4::rotation(body.orientation);
+
+        const auto model =
+                translation * rotation;
 
         shadowMap.bindForWriting();
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -127,7 +133,13 @@ int main() {
         previousTime = currentTime;
 
         aura::physics::integrateLinearMotion(body, dt);
-        aura::physics::resolveFloorCollision(body, 0.5f, 0.0f);
+
+        body.torque = {0.0f, 2.0f, 0.0f};
+        aura::physics::updateAngularAcceleration(body);
+        aura::physics::integrateAngularMotion(body, dt);
+        aura::physics::clearTorque(body);
+
+        aura::physics::resolveFloorCollision(body, 0.5f, 0.0f, dt);
         renderFrame();
         aura::render::Window::pollEvents();
     }
