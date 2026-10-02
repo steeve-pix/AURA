@@ -1,1 +1,4 @@
-// Shadow fragment shader placeholder.
+#version 410 core
+
+void main() {
+}

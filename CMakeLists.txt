@@ -33,9 +33,11 @@ add_executable(aura src/main.cpp
         src/render/Shader.cpp
         src/render/Camera.cpp
         src/render/Mesh.cpp
-        include/aura/math/Mat4.hpp
         src/math/Math.cpp
-        src/render/MeshFactory.cpp)
+        src/render/MeshFactory.cpp
+        src/render/DirectionalLight.cpp
+        src/render/ShadowMap.cpp
+)
 target_link_libraries(aura PRIVATE aura_physics glfw OpenGL::GL)
 
 include(CTest)

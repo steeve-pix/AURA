@@ -83,4 +83,43 @@ namespace aura::math {
 
         return result;
     }
+
+    Mat4 Mat4::orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane) {
+        Mat4 result = identity();
+
+        result.values_[0] =
+                2.0f / (right - left);
+
+        result.values_[5] =
+                2.0f / (top - bottom);
+
+        result.values_[10] =
+                -2.0f / (farPlane - nearPlane);
+
+        result.values_[12] =
+                -(right + left) / (right - left);
+
+        result.values_[13] =
+                -(top + bottom) / (top - bottom);
+
+        result.values_[14] =
+                -(farPlane + nearPlane) / (farPlane - nearPlane);
+
+        return result;
+    }
+
+    Mat4 Mat4::operator*(const Mat4 &other) const {
+        Mat4 result;
+        for (int column{}; column < 4; ++column) {
+            for (int row{}; row < 4; ++row) {
+                float value = 0.0f;
+                for (int k{}; k < 4; ++k) {
+                    value += values_[k * 4 + row] * other.values_[column * 4 + k];
+                }
+                result.values_[column * 4 + row] = value;
+            }
+        }
+
+        return result;
+    }
 }

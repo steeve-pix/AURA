@@ -1,6 +1,4 @@
 #pragma once
-#include <numbers>
-#include <cmath>
 #include "Vec3.hpp"
 
 namespace aura::math {

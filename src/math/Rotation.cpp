@@ -1,4 +1,5 @@
 #include "aura/math/Rotation.hpp"
+#include <cmath>
 
 namespace aura::math {
     Vec3 rotateAroundY(const Vec3 &vec, const float angleRadians) {

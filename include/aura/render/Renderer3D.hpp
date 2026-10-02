@@ -3,7 +3,7 @@
 namespace aura::physics {
     class Renderer3D {
     public:
-        void clear();
+        static void clear();
 
         void drawCube();
     };
