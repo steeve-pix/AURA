@@ -24,7 +24,8 @@ add_library(aura_math src/math/Vec3.cpp src/math/Rotation.cpp src/math/Quaternio
         src/math/Math.cpp)
 target_include_directories(aura_math PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(aura_physics src/physics/RigidBody3D.cpp src/physics/Motion.cpp)
+add_library(aura_physics src/physics/RigidBody3D.cpp src/physics/Motion.cpp
+        src/physics/Collision.cpp)
 target_link_libraries(aura_physics PUBLIC aura_math)
 
 add_executable(aura src/main.cpp

@@ -1,6 +1,9 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
+#include "aura/physics/Collision.hpp"
+#include "aura/physics/Motion.hpp"
+#include "aura/physics/RigidBody3D.hpp"
 #include "aura/render/Camera.hpp"
 #include "aura/render/DirectionalLight.hpp"
 #include "aura/render/Mesh.hpp"
@@ -16,6 +19,11 @@ int main() {
         aura::render::MeshPrimitive::Triangles,
         aura::render::VertexLayout::PositionNormal
     };
+    aura::physics::RigidBody3D body;
+    body.position = {0.0f, 0.5f, 0.0f};
+    body.velocity = {0.5f, 0.0f, 0.0f};
+    body.acceleration = {0.0f, -9.81f, 0.0f};
+
     aura::render::Mesh grid{aura::render::MeshFactory::createGrid(20, 1.0f), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh floor{
         aura::render::MeshFactory::createFloor(40.0f), aura::render::MeshPrimitive::Triangles,
@@ -37,6 +45,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     auto renderFrame = [&] {
+        const auto model = aura::math::Mat4::translation(body.position);
+
         shadowMap.bindForWriting();
         glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -46,7 +56,7 @@ int main() {
         shadowShader.setMat4("uModel", aura::math::Mat4::identity());
         floor.draw();
 
-        shadowShader.setMat4("uModel", aura::math::Mat4::translation({0.0f, 0.5f, 0.0f}));
+        shadowShader.setMat4("uModel", model);
         cube.draw();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -86,7 +96,7 @@ int main() {
         //Cube
         litShader.use();
         litShader.setVec3("uColor", {0.1f, 0.6f, 0.9f});
-        litShader.setMat4("uModel", aura::math::Mat4::translation({0.0, 0.5, 0.0f}));
+        litShader.setMat4("uModel", model);
         cube.draw();
 
 
@@ -110,7 +120,14 @@ int main() {
         renderFrame();
     });
 
+    double previousTime = glfwGetTime();
     while (!window.shouldClose()) {
+        const double currentTime = glfwGetTime();
+        const auto dt = static_cast<float>(currentTime - previousTime);
+        previousTime = currentTime;
+
+        aura::physics::integrateLinearMotion(body, dt);
+        aura::physics::resolveFloorCollision(body, 0.5f, 0.0f);
         renderFrame();
         aura::render::Window::pollEvents();
     }

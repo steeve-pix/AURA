@@ -6,6 +6,7 @@ namespace aura:: physics {
     struct RigidBody3D {
         math::Vec3 position{};
         math::Vec3 velocity{};
+        math::Vec3 acceleration{};
 
         math::Quaternion orientation{};
         math::Vec3 angularVelocity{};
