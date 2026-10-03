@@ -33,16 +33,24 @@ int main() {
     aura::body::BodyPart3D torso;
     torso.name = "torso";
     torso.size = {1.2f, 2.0f, 0.6f};
-    torso.body.position = {0.0f, 4.0f, 0.0f};
+    torso.body.position = {0.0f, 5.0f, 0.0f};
     torso.body.momentOfInertia = aura::physics::boxMomentOfInertia(torso.body.mass, torso.size);
     torso.body.orientation = aura::math::Quaternion{};
 
     aura::body::BodyPart3D thigh;
     thigh.name = "left_thigh";
     thigh.size = {0.5f, 1.8f, 0.5f};
-    thigh.body.position = {0.0f, 2.1f, 0.0f};
+    thigh.body.position = {0.0f, 3.1f, 0.0f};
     thigh.body.momentOfInertia = aura::physics::boxMomentOfInertia(thigh.body.mass, thigh.size);
     thigh.body.orientation = aura::math::Quaternion{};
+
+    aura::body::BodyPart3D shin;
+    shin.name = "left_shin";
+    shin.size = {0.45f, 1.6f, 0.45f};
+    shin.body.position = {0.0f, 1.4f, 0.0f};
+    shin.body.momentOfInertia =
+            aura::physics::boxMomentOfInertia(shin.body.mass, shin.size);
+    shin.body.orientation = aura::math::Quaternion{};
 
     aura::body::Joint3D hip;
     hip.localAnchorA = {0.0f, -1.0f, 0.0f};
@@ -51,6 +59,14 @@ int main() {
     hip.minAngle = -0.8f;
     hip.maxAngle = 0.8f;
     hip.targetAngle = 0.5f;
+
+    aura::body::Joint3D knee;
+    knee.localAnchorA = {0.0f, -0.9f, 0.0f};
+    knee.localAnchorB = {0.0f, 0.8f, 0.0f};
+    knee.hingeAxis = {1.0f, 0.0f, 0.0f};
+    // Passive knee: straight at zero, positive angles bend the leg.
+    knee.minAngle = 0.0f;
+    knee.maxAngle = 2.2f;
 
     aura::render::Mesh cube{
         aura::render::MeshFactory::createCube(),
@@ -94,6 +110,9 @@ int main() {
         shadowShader.setMat4("uModel", aura::body::modelMatrix(thigh));
         cube.draw();
 
+        shadowShader.setMat4("uModel", aura::body::modelMatrix(shin));
+        cube.draw();
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         const int width = window.framebufferWidth();
         const int height = window.framebufferHeight();
@@ -135,6 +154,9 @@ int main() {
         cube.draw();
 
         litShader.setMat4("uModel", aura::body::modelMatrix(thigh));
+        cube.draw();
+
+        litShader.setMat4("uModel", aura::body::modelMatrix(shin));
         cube.draw();
 
         window.swapBuffers();
@@ -216,7 +238,7 @@ int main() {
             aura::body::applyJointMotor(torso, thigh, hip);
 
             const aura::math::Vec3 gravity{0.0f, -9.81f, 0.0f};
-            for (auto *part: {&torso, &thigh}) {
+            for (auto *part: {&torso, &thigh, &shin}) {
                 aura::physics::applyForce(part->body, gravity * part->body.mass);
                 aura::physics::updateLinearAcceleration(part->body);
                 aura::physics::updateAngularAcceleration(part->body);
@@ -229,29 +251,31 @@ int main() {
             for (int i = 0; i < jointIterations; ++i) {
                 aura::physics::resolveFloorCollision(torso.body, torso.size, 0.0f, contactDt);
                 aura::physics::resolveFloorCollision(thigh.body, thigh.size, 0.0f, contactDt);
+                aura::physics::resolveFloorCollision(shin.body, shin.size, 0.0f, contactDt);
                 aura::body::solveJoint(torso, thigh, hip);
+                aura::body::solveJoint(thigh, shin, knee);
             }
 
             // Temporary motor diagnostics: once per second of simulated time.
             if (++physicsStepsSinceLog == 120) {
                 physicsStepsSinceLog = 0;
                 const auto worldAxis = torso.body.orientation
-                    .rotate(hip.hingeAxis.normalized()).normalized();
+                        .rotate(hip.hingeAxis.normalized()).normalized();
                 const float error = aura::body::jointMotorError(torso, thigh, hip);
                 const float hingeOmega =
-                    (thigh.body.angularVelocity - torso.body.angularVelocity).dot(worldAxis);
+                        (thigh.body.angularVelocity - torso.body.angularVelocity).dot(worldAxis);
                 std::cout
-                    << "angle=" << aura::body::relativeJointAngle(torso, thigh, hip)
-                    << " target=" << hip.targetAngle
-                    << " error=" << error
-                    << " hingeOmega=" << hingeOmega
-                    << " spring=" << error * hip.motorStiffness
-                    << " damping=" << hingeOmega * hip.motorDamping
-                    << " torque=" << aura::body::jointMotorTorque(torso, thigh, hip)
-                    << '\n';
+                        << "angle=" << aura::body::relativeJointAngle(torso, thigh, hip)
+                        << " target=" << hip.targetAngle
+                        << " error=" << error
+                        << " hingeOmega=" << hingeOmega
+                        << " spring=" << error * hip.motorStiffness
+                        << " damping=" << hingeOmega * hip.motorDamping
+                        << " torque=" << aura::body::jointMotorTorque(torso, thigh, hip)
+                        << '\n';
             }
 
-            for (auto *part: {&torso, &thigh}) {
+            for (auto *part: {&torso, &thigh, &shin}) {
                 aura::physics::clearForce(part->body);
                 aura::physics::clearTorque(part->body);
             }
