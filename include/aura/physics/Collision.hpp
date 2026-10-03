@@ -4,5 +4,5 @@
 namespace aura::physics {
     bool intersectFloor(const RigidBody3D &body, float halfHeight, float floorY);
 
-    void resolveFloorCollision(RigidBody3D &body, float halfHeight, float floorY, float dt);
+    void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, float floorY, float dt);
 }

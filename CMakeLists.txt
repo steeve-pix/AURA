@@ -66,6 +66,10 @@ if (BUILD_TESTING)
     target_link_libraries(aura_physics_tests PRIVATE aura_physics)
     add_test(NAME physics COMMAND aura_physics_tests)
 
+    add_executable(aura_body_geometry_tests tests/body_geometry_tests.cpp)
+    target_link_libraries(aura_body_geometry_tests PRIVATE aura_physics)
+    add_test(NAME body_geometry COMMAND aura_body_geometry_tests)
+
     add_executable(aura_camera_tests
         tests/camera_tests.cpp
         src/render/Camera.cpp

@@ -10,22 +10,32 @@ namespace aura::physics {
         return body.position.y - halfHeight < floorY;
     }
 
-    void resolveFloorCollision(RigidBody3D &body, float halfHeight, float floorY, float dt) {
-        const float bottom =
-                body.position.y - halfHeight;
+    void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, float floorY, float dt) {
+        constexpr int solverIterations = 4;
 
-        if (bottom >= floorY) {
-            return;
-        }
-
-        const auto contactPoint =
-                lowestPoint(body, {1.0f, 1.0f, 1.0f});
+        const auto lowest =
+                lowestPoint(body, size);
 
         const float penetration =
-                floorY - contactPoint.y;
+                floorY - lowest.y;
 
-        body.position.y += penetration;
+        if (penetration > 0.0f) {
+            body.position.y += penetration;
+        }
 
+        constexpr float contactTolerance = 0.01f;
+
+        const auto contacts =
+                floorContactPoints(
+                    body,
+                    size,
+                    floorY,
+                    contactTolerance
+                );
+
+        if (contacts.empty()) {
+            return;
+        }
         constexpr float frictionStrength = 6.0f;
         constexpr float angularDamping = 1.5f;
 
@@ -41,37 +51,40 @@ namespace aura::physics {
 
         body.angularVelocity *= aDamping;
 
-        const math::Vec3 r =
-                contactPoint - body.position;
-
         const math::Vec3 normal{0.0f, 1.0f, 0.0f};
 
-        const math::Vec3 rCrossN =
-                r.cross(normal);
+        for (int iteration = 0; iteration < solverIterations; ++iteration) {
+            for (const auto &contactPoint: contacts) {
+                const auto contactVelocity = velocityAtWorldPoint(body, contactPoint);
+                const float normalVelocity = contactVelocity.dot(normal);
+                if (normalVelocity >= 0.0f) {
+                    continue;
+                }
 
-        const math::Vec3 inverseInertiaTimesRCrossN{
-            rCrossN.x / body.momentOfInertia.x,
-            rCrossN.y / body.momentOfInertia.y,
-            rCrossN.z / body.momentOfInertia.z,
-        };
+                const math::Vec3 r =
+                        contactPoint - body.position;
 
-        const float rotationalTerm =
-                inverseInertiaTimesRCrossN.cross(r).dot(normal);
+                const math::Vec3 rCrossN =
+                        r.cross(normal);
 
-        const float effectiveInverseMass =
-                (1.0f / body.mass) + rotationalTerm;
+                const math::Vec3 inverseInertiaTimesRCrossN{
+                    rCrossN.x / body.momentOfInertia.x,
+                    rCrossN.y / body.momentOfInertia.y,
+                    rCrossN.z / body.momentOfInertia.z,
+                };
 
-        const auto contactVelocity =
-                velocityAtWorldPoint(body, contactPoint);
+                const float rotationalTerm =
+                        inverseInertiaTimesRCrossN.cross(r).dot(normal);
 
-        const float normalVelocity = contactVelocity.dot(normal);
+                const float effectiveInverseMass =
+                        (1.0f / body.mass) + rotationalTerm;
 
-        if (normalVelocity < 0.0f) {
-            const float impulseMagnitude =
-                    -(1.0f + body.restitution) * normalVelocity / effectiveInverseMass;
-            const math::Vec3 impulse = normal * impulseMagnitude;
+                const float impulseMagnitude =
+                        -(1.0f + body.restitution) * normalVelocity / effectiveInverseMass;
+                const math::Vec3 impulse = normal * impulseMagnitude;
 
-            applyImpulseAtPoint(body, impulse, contactPoint);
+                applyImpulseAtPoint(body, impulse, contactPoint);
+            }
         }
     }
 }

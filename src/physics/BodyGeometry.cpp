@@ -53,4 +53,19 @@ namespace aura::physics {
 
         return body.velocity + rotationalVelocity;
     }
+
+    std::vector<math::Vec3> floorContactPoints(const RigidBody3D &body, const math::Vec3 &size, float floorY,
+                                               float tolerance) {
+        const auto corners = cubeCorners(body, size);
+        std::vector<math::Vec3> contacts;
+        contacts.reserve(corners.size());
+
+        for (const auto &corner: corners) {
+            if (corner.y <= floorY + tolerance) {
+                contacts.push_back(corner);
+            }
+        }
+
+        return contacts;
+    }
 }

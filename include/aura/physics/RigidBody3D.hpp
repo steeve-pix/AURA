@@ -17,6 +17,6 @@ namespace aura:: physics {
         math::Vec3 momentOfInertia{1.0f, 1.0f, 1.0f};
 
         float mass = 1.0f;
-        float restitution = 0.5f;
+        float restitution = 0.0f;
     };
 }

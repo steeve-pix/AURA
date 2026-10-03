@@ -17,10 +17,10 @@
 
 int main() {
     bool orbiting = false;
+    bool firstOrbitMove = false;
 
     double lastMouseX = 0.0;
     double lastMouseY = 0.0;
-    double previousTime = glfwGetTime();
 
     aura::render::Window window{1280, 720, "AURA"};
     aura::render::Mesh cube{
@@ -124,6 +124,8 @@ int main() {
         camera.setAspectRatio(static_cast<float>(initialWidth) / static_cast<float>(initialHeight));
     }
 
+    double previousTime = glfwGetTime();
+
     window.setResizeCallback([&](int width, int height) {
         if (width <= 0 || height <= 0) {
             return;
@@ -139,13 +141,15 @@ int main() {
     window.setMouseButtonCallback([&](int button, int action) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             orbiting = action == GLFW_PRESS;
+            firstOrbitMove = orbiting;
         }
     });
 
     window.setMouseMoveCallback([&](double x, double y) {
-        if (!orbiting) {
+        if (!orbiting || firstOrbitMove) {
             lastMouseX = x;
             lastMouseY = y;
+            firstOrbitMove = false;
             return;
         }
 
@@ -159,13 +163,11 @@ int main() {
             static_cast<float>(deltaX) * sensitivity,
             static_cast<float>(-deltaY) * sensitivity
         );
-        renderFrame();
     });
 
     window.setScrollCallback(
         [&](double, double yOffset) {
             camera.zoom(static_cast<float>(yOffset));
-            renderFrame();
         });
 
 
@@ -174,6 +176,11 @@ int main() {
     constexpr double FIXED_DT = 1.0 / 120.0;
 
     while (!window.shouldClose()) {
+        aura::render::Window::pollEvents();
+        if (window.shouldClose()) {
+            break;
+        }
+
         const double currentTime = glfwGetTime();
         double frameTime = currentTime - previousTime;
         frameTime = std::min(frameTime, 0.05);
@@ -199,15 +206,13 @@ int main() {
             aura::physics::integrateLinearMotion(body, dt);
             aura::physics::integrateAngularMotion(body, dt);
 
-            aura::physics::resolveFloorCollision(body, 0.5f, 0.0f, dt);
+            aura::physics::resolveFloorCollision(body, {1.0f, 1.0f, 1.0f}, 0.0f, dt);
             aura::physics::clearForce(body);
             aura::physics::clearTorque(body);
             accumulator -= FIXED_DT;
         }
 
         renderFrame();
-
-        aura::render::Window::pollEvents();
     }
 
     return 0;
