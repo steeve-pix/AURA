@@ -3,6 +3,9 @@
 #include <GLFW/glfw3.h>
 
 #include "aura/physics/Collision.hpp"
+#include "aura/physics/Forces.hpp"
+#include "aura/physics/Impulse.hpp"
+#include "aura/physics/Inertia.hpp"
 #include "aura/physics/Motion.hpp"
 #include "aura/physics/RigidBody3D.hpp"
 #include "aura/render/Camera.hpp"
@@ -22,9 +25,7 @@ int main() {
     };
     aura::physics::RigidBody3D body;
     body.position = {0.0f, 2.0f, 0.0f};
-    body.velocity = {3.0f, 0.0f, 0.0f};
-    body.acceleration = {0.0f, -9.81f, 0.0f};
-    body.angularVelocity = {};
+    body.momentOfInertia = aura::physics::boxMomentOfInertia(body.mass, {1.0f, 1.0f, 1.0f});
 
     aura::render::Mesh grid{aura::render::MeshFactory::createGrid(20, 1.0f), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh floor{
@@ -127,20 +128,34 @@ int main() {
     });
 
     double previousTime = glfwGetTime();
+    float forceTimer = 0.0f;
+
     while (!window.shouldClose()) {
         const double currentTime = glfwGetTime();
         const auto dt = static_cast<float>(currentTime - previousTime);
         previousTime = currentTime;
 
-        aura::physics::integrateLinearMotion(body, dt);
+        const aura::math::Vec3 gravity{0.0f, -9.81f, 0.0f};
+        aura::physics::applyForce(body, gravity * body.mass);
+        // Use body.position alone to compare with a force applied at the center.
+        forceTimer += dt;
 
-        body.torque = {0.0f, 2.0f, 0.0f};
+        if (forceTimer < 0.5f) {
+            aura::physics::applyForceAtPoint(body, {10.0f, 0.0f, 0.0f},
+                                             body.position + aura::math::Vec3{0.0f, 0.5f, 0.0f});
+        }
+
+        aura::physics::updateLinearAcceleration(body);
         aura::physics::updateAngularAcceleration(body);
+
+        aura::physics::integrateLinearMotion(body, dt);
         aura::physics::integrateAngularMotion(body, dt);
-        aura::physics::clearTorque(body);
 
         aura::physics::resolveFloorCollision(body, 0.5f, 0.0f, dt);
+        aura::physics::clearForce(body);
+        aura::physics::clearTorque(body);
         renderFrame();
+
         aura::render::Window::pollEvents();
     }
 

@@ -1,6 +1,9 @@
 #include "aura/physics/Collision.hpp"
+#include "aura/physics/Impulse.hpp"
 
 #include <algorithm>
+
+#include "aura/physics/BodyGeometry.hpp"
 
 namespace aura::physics {
     bool intersectFloor(const RigidBody3D &body, float halfHeight, float floorY) {
@@ -15,12 +18,15 @@ namespace aura::physics {
             return;
         }
 
+        const auto contactPoint =
+                lowestPoint(body, {1.0f, 1.0f, 1.0f});
+
         const float penetration =
-                floorY - bottom;
+                floorY - contactPoint.y;
 
         body.position.y += penetration;
 
-        const float frictionStrength = 6.0f;
+        constexpr float frictionStrength = 6.0f;
 
         const float damping =
                 std::max(0.0f, 1 - frictionStrength * dt);
@@ -29,9 +35,15 @@ namespace aura::physics {
         body.velocity.x *= damping;
         body.velocity.z *= damping;
 
-        if (body.velocity.y < 0.0f) {
-            constexpr float restitution = 0.5f;
-            body.velocity.y *= -restitution;
+        const math::Vec3 normal{0.0f, 1.0f, 0.0f};
+        const float normalVelocity = body.velocity.dot(normal);
+
+        if (normalVelocity < 0.0f) {
+            const float impulseMagnitude =
+                    -(1.0f + body.restitution) * normalVelocity * body.mass;
+            const math::Vec3 impulse = normal * impulseMagnitude;
+
+            applyImpulseAtPoint(body, impulse, contactPoint);
         }
     }
 }

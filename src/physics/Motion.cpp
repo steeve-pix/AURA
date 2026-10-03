@@ -25,8 +25,20 @@ namespace aura::physics {
         }.normalized();
     }
 
+    void updateLinearAcceleration(RigidBody3D &body) {
+        body.acceleration = body.force * (1.0f / body.mass);
+    }
+
     void updateAngularAcceleration(RigidBody3D &body) {
-        body.angularAcceleration = body.torque * (1.0f / body.momentOfInertia);
+        body.angularAcceleration = {
+            body.torque.x / body.momentOfInertia.x,
+            body.torque.y / body.momentOfInertia.y,
+            body.torque.z / body.momentOfInertia.z,
+        };
+    }
+
+    void clearForce(RigidBody3D &body) {
+        body.force = {};
     }
 
     void clearTorque(RigidBody3D &body) {
