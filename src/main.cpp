@@ -1,5 +1,7 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <algorithm>
+#include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <GLFW/glfw3.h>
 
@@ -59,14 +61,19 @@ int main() {
     hip.minAngle = -0.8f;
     hip.maxAngle = 0.8f;
     hip.targetAngle = 0.5f;
+    hip.motorStiffness = 15.0f;
+    hip.motorDamping = 4.0f;
 
     aura::body::Joint3D knee;
     knee.localAnchorA = {0.0f, -0.9f, 0.0f};
     knee.localAnchorB = {0.0f, 0.8f, 0.0f};
     knee.hingeAxis = {1.0f, 0.0f, 0.0f};
-    // Passive knee: straight at zero, positive angles bend the leg.
+    // Straight at zero, positive angles bend the leg.
     knee.minAngle = 0.0f;
     knee.maxAngle = 2.2f;
+    knee.targetAngle = 0.6f;
+    knee.motorStiffness = 10.0f;
+    knee.motorDamping = 4.0f;
 
     aura::render::Mesh cube{
         aura::render::MeshFactory::createCube(),
@@ -218,6 +225,7 @@ int main() {
 
     double accumulator = 0.0;
     int physicsStepsSinceLog = 0;
+    double simulatedTime = 0.0;
     constexpr int jointIterations = 8;
     constexpr double FIXED_DT = 1.0 / 120.0;
 
@@ -236,6 +244,7 @@ int main() {
         while (accumulator >= FIXED_DT) {
             const auto dt = static_cast<float>(FIXED_DT);
             aura::body::applyJointMotor(torso, thigh, hip);
+            aura::body::applyJointMotor(thigh, shin, knee);
 
             const aura::math::Vec3 gravity{0.0f, -9.81f, 0.0f};
             for (auto *part: {&torso, &thigh, &shin}) {
@@ -256,23 +265,65 @@ int main() {
                 aura::body::solveJoint(thigh, shin, knee);
             }
 
-            // Temporary motor diagnostics: once per second of simulated time.
+            simulatedTime += FIXED_DT;
+            // Diagnostics belong here in main, once per second of simulated time.
             if (++physicsStepsSinceLog == 120) {
                 physicsStepsSinceLog = 0;
-                const auto worldAxis = torso.body.orientation
-                        .rotate(hip.hingeAxis.normalized()).normalized();
-                const float error = aura::body::jointMotorError(torso, thigh, hip);
-                const float hingeOmega =
-                        (thigh.body.angularVelocity - torso.body.angularVelocity).dot(worldAxis);
-                std::cout
-                        << "angle=" << aura::body::relativeJointAngle(torso, thigh, hip)
-                        << " target=" << hip.targetAngle
-                        << " error=" << error
-                        << " hingeOmega=" << hingeOmega
-                        << " spring=" << error * hip.motorStiffness
-                        << " damping=" << hingeOmega * hip.motorDamping
-                        << " torque=" << aura::body::jointMotorTorque(torso, thigh, hip)
-                        << '\n';
+                bool finiteState = true;
+                float lowestBottom = 0.0f;
+                for (const auto *part: {&torso, &thigh, &shin}) {
+                    const auto &body = part->body;
+                    const auto &q = body.orientation;
+                    finiteState = finiteState &&
+                        std::isfinite(body.position.lengthSquared()) &&
+                        std::isfinite(body.velocity.lengthSquared()) &&
+                        std::isfinite(body.angularVelocity.lengthSquared()) &&
+                        std::isfinite(q.w) && std::isfinite(q.x) &&
+                        std::isfinite(q.y) && std::isfinite(q.z);
+                    lowestBottom = std::min(lowestBottom,
+                        aura::physics::lowestPoint(body, part->size).y);
+                }
+                std::cout << std::fixed << std::setprecision(4)
+                          << "[physics t=" << simulatedTime << "s] state="
+                          << (finiteState ? "finite" : "INVALID")
+                          << " floorPenetration=" << -lowestBottom << " units\n";
+
+                for (int jointIndex = 0; jointIndex < 2; ++jointIndex) {
+                    const auto &partA = jointIndex == 0 ? torso : thigh;
+                    const auto &partB = jointIndex == 0 ? thigh : shin;
+                    const auto &joint = jointIndex == 0 ? hip : knee;
+                    const float angle = aura::body::relativeJointAngle(partA, partB, joint);
+                    const float error = joint.targetAngle - angle;
+                    const auto worldAxis = partA.body.orientation
+                        .rotate(joint.hingeAxis.normalized()).normalized();
+                    const float omega =
+                        (partB.body.angularVelocity - partA.body.angularVelocity).dot(worldAxis);
+                    const float gap =
+                        (aura::body::localToWorldPoint(partB, joint.localAnchorB) -
+                         aura::body::localToWorldPoint(partA, joint.localAnchorA)).length();
+                    const float torque = aura::body::jointMotorTorque(partA, partB, joint);
+                    const char *status = "tracking";
+                    if (!std::isfinite(angle) || !std::isfinite(omega) ||
+                        !std::isfinite(gap) || !std::isfinite(torque)) {
+                        status = "INVALID";
+                    } else if (angle < joint.minAngle - 1e-5f || angle > joint.maxAngle + 1e-5f) {
+                        status = "LIMIT VIOLATION";
+                    } else if (gap > 0.01f) {
+                        status = "ANCHORS SEPARATED";
+                    } else if (std::abs(error) < 0.02f && std::abs(omega) < 0.05f) {
+                        status = "near target / slow";
+                    }
+                    std::cout << "  " << (jointIndex == 0 ? "hip " : "knee")
+                              << " angle=" << angle << " target=" << joint.targetAngle
+                              << " error=" << error << " rad"
+                              << " omega=" << omega << " rad/s"
+                              << " torque=" << torque << " N*m"
+                              << " gap=" << std::setprecision(6) << gap << " units"
+                              << std::setprecision(4)
+                              << " limits=[" << joint.minAngle << ", " << joint.maxAngle << "] rad"
+                              << " status=" << status << '\n';
+                }
+                std::cout.flush();
             }
 
             for (auto *part: {&torso, &thigh, &shin}) {

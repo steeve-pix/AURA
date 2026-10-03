@@ -262,8 +262,8 @@ int main() {
 
     }
 
-    // Three-part chain: hip motor active, knee passive with one-way limits.
-    {
+    // Compare the passive knee, isolated two-motor chain, and loaded two-motor chain.
+    for (int scenario = 0; scenario < 3; ++scenario) {
         aura::body::BodyPart3D torso, thigh, shin;
         torso.size = {1.2f, 2.0f, 0.6f};
         thigh.size = {0.5f, 1.8f, 0.5f};
@@ -273,11 +273,16 @@ int main() {
         shin.body.position = {0.0f, 1.4f, 0.0f};
         auto motorHip = hip;
         motorHip.targetAngle = 0.5f;
+        motorHip.motorStiffness = 15.0f;
+        motorHip.motorDamping = 4.0f;
         aura::body::Joint3D knee;
         knee.localAnchorA = {0.0f, -0.9f, 0.0f};
         knee.localAnchorB = {0.0f, 0.8f, 0.0f};
         knee.minAngle = 0.0f;
         knee.maxAngle = 2.2f;
+        knee.targetAngle = 0.6f;
+        knee.motorStiffness = 10.0f;
+        knee.motorDamping = 4.0f;
         for (auto *part : {&torso, &thigh, &shin}) {
             part->body.momentOfInertia = aura::physics::boxMomentOfInertia(part->body.mass, part->size);
         }
@@ -285,16 +290,21 @@ int main() {
         float minAngle = 2.2f, maxAngle = 0.0f, maxGap = 0.0f;
         for (int step = 0; step < 1200; ++step) {
             aura::body::applyJointMotor(torso, thigh, motorHip);
+            if (scenario != 0) aura::body::applyJointMotor(thigh, shin, knee);
             for (auto *part : {&torso, &thigh, &shin}) {
-                aura::physics::applyForce(part->body, aura::math::Vec3{0.0f, -9.81f, 0.0f} * part->body.mass);
+                if (scenario != 1) {
+                    aura::physics::applyForce(part->body, aura::math::Vec3{0.0f, -9.81f, 0.0f} * part->body.mass);
+                }
                 aura::physics::updateLinearAcceleration(part->body);
                 aura::physics::updateAngularAcceleration(part->body);
                 aura::physics::integrateLinearMotion(part->body, dt);
                 aura::physics::integrateAngularMotion(part->body, dt);
             }
             for (int iteration = 0; iteration < 8; ++iteration) {
-                for (auto *part : {&torso, &thigh, &shin}) {
-                    aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / 8);
+                if (scenario != 1) {
+                    for (auto *part : {&torso, &thigh, &shin}) {
+                        aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / 8);
+                    }
                 }
                 aura::body::solveJoint(torso, thigh, motorHip);
                 aura::body::solveJoint(thigh, shin, knee);
@@ -306,7 +316,7 @@ int main() {
             maxAngle = std::max(maxAngle, angle);
             maxGap = std::max(maxGap, gap);
             check(std::isfinite(angle) && angle >= -1e-5f && angle <= 2.2f + 1e-5f,
-                  "passive knee stays within one-way limits");
+                  "knee stays within one-way limits");
             check(std::isfinite(gap) && gap < 0.02f, "shin remains attached to thigh");
             for (auto *part : {&torso, &thigh, &shin}) {
                 check(std::isfinite(part->body.angularVelocity.lengthSquared()) &&
@@ -316,8 +326,28 @@ int main() {
                 aura::physics::clearTorque(part->body);
             }
         }
-        check(maxAngle > 0.1f, "passive knee folds in the positive direction");
-        std::cout << "Ten-second passive knee test: angle range = " << minAngle << " to " << maxAngle
+        check(maxAngle > 0.1f, "knee folds in the positive direction");
+        const float hipAngle = aura::body::relativeJointAngle(torso, thigh, motorHip);
+        const float kneeAngle = aura::body::relativeJointAngle(thigh, shin, knee);
+        const float hipOmega = (thigh.body.angularVelocity - torso.body.angularVelocity).dot(
+            torso.body.orientation.rotate(motorHip.hingeAxis).normalized());
+        const float kneeOmega = (shin.body.angularVelocity - thigh.body.angularVelocity).dot(
+            thigh.body.orientation.rotate(knee.hingeAxis).normalized());
+        if (scenario == 1) {
+            check(std::abs(hipAngle - motorHip.targetAngle) < 1e-4f &&
+                  std::abs(kneeAngle - knee.targetAngle) < 1e-4f,
+                  "both isolated motors converge to independent targets");
+            check(std::abs(hipOmega) < 1e-4f && std::abs(kneeOmega) < 1e-4f,
+                  "both isolated hinges settle to zero relative speed");
+            check(std::abs(aura::body::jointMotorTorque(torso, thigh, motorHip)) < 1e-4f &&
+                  std::abs(aura::body::jointMotorTorque(thigh, shin, knee)) < 1e-4f,
+                  "both isolated motor torques settle to zero");
+        }
+        std::cout << "Ten-second chain test (scenario " << scenario << "): hip=" << hipAngle
+                  << " knee=" << kneeAngle << " hipOmega=" << hipOmega << " kneeOmega=" << kneeOmega
+                  << " hipTorque=" << aura::body::jointMotorTorque(torso, thigh, motorHip)
+                  << " kneeTorque=" << aura::body::jointMotorTorque(thigh, shin, knee)
+                  << ", knee angle range = " << minAngle << " to " << maxAngle
                   << ", max knee anchor gap = " << maxGap << '\n';
     }
 
