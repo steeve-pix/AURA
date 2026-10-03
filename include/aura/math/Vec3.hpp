@@ -27,5 +27,7 @@ namespace aura::math {
         [[nodiscard]] float dot(const Vec3 &rhs) const;
 
         [[nodiscard]] Vec3 cross(const Vec3 &rhs) const;
+
+        Vec3 operator*=(const float &scalar) const;
     };
 }

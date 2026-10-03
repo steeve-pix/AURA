@@ -8,4 +8,6 @@ namespace aura::physics {
     std::array<math::Vec3, 8> cubeCorners(const RigidBody3D &body, const math::Vec3 &size);
 
     math::Vec3 lowestPoint(const RigidBody3D &body, const math::Vec3 &size);
+
+    math::Vec3 velocityAtWorldPoint(const RigidBody3D &body, const math::Vec3 &worldPoint);
 }

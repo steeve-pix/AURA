@@ -13,6 +13,14 @@ namespace aura::render {
 
         void setAspectRatio(float aspectRatio);
 
+        void orbit(float deltaYaw, float deltaPitch);
+
+        void zoom(float delta);
+
+        const math::Vec3 &target() const;
+
+        void pan(float deltaX, float deltaY);
+
     private:
         math::Vec3 position_;
         math::Vec3 target_;
@@ -22,5 +30,9 @@ namespace aura::render {
         float fovRadians_;
         float nearPlane_ = 0.1f;
         float farPlane_ = 100.0f;
+
+        float distance_ = 6.0f;
+        float yaw_ = 0.0f;
+        float pitch_ = 0.4f;
     };
 }

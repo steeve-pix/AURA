@@ -33,6 +33,39 @@ namespace aura::render {
             }
         });
 
+        glfwSetCursorPosCallback(
+            window_, [](GLFWwindow *glfwWindow, double x, double y) {
+                auto *window =
+                        static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+
+                if (window != nullptr && window->mouseMoveCallback_) {
+                    window->mouseMoveCallback_(x, y);
+                }
+            });
+
+        glfwSetMouseButtonCallback(
+            window_, [](GLFWwindow *glfwWindow, int button, int action, int) {
+                auto *window =
+                        static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+
+                if (window != nullptr && window->mouseButtonCallback_) {
+                    window->mouseButtonCallback_(button, action);
+                }
+            });
+
+        glfwSetScrollCallback(
+            window_,
+            [](GLFWwindow *glfwWindow, double xOffset, double yOffset) {
+                auto *window =
+                        static_cast<Window *>(
+                            glfwGetWindowUserPointer(glfwWindow)
+                        );
+
+                if (window != nullptr && window->scrollCallback_) {
+                    window->scrollCallback_(xOffset, yOffset);
+                }
+            });
+
         glfwMakeContextCurrent(window_);
     }
 
@@ -75,5 +108,17 @@ namespace aura::render {
 
     void Window::setResizeCallback(ResizeCallback callback) {
         resizeCallback_ = std::move(callback);
+    }
+
+    void Window::setMouseMoveCallback(MouseMoveCallback callback) {
+        mouseMoveCallback_ = std::move(callback);
+    }
+
+    void Window::setMouseButtonCallback(MouseButtonCallback callback) {
+        mouseButtonCallback_ = std::move(callback);
+    }
+
+    void Window::setScrollCallback(ScrollCallback callback) {
+        scrollCallback_ = std::move(callback);
     }
 }

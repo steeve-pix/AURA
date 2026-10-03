@@ -1,10 +1,9 @@
 #define GLFW_INCLUDE_GLCOREARB
-#include <iostream>
+#include <algorithm>
 #include <GLFW/glfw3.h>
 
 #include "aura/physics/Collision.hpp"
 #include "aura/physics/Forces.hpp"
-#include "aura/physics/Impulse.hpp"
 #include "aura/physics/Inertia.hpp"
 #include "aura/physics/Motion.hpp"
 #include "aura/physics/RigidBody3D.hpp"
@@ -17,6 +16,12 @@
 #include "aura/render/Window.hpp"
 
 int main() {
+    bool orbiting = false;
+
+    double lastMouseX = 0.0;
+    double lastMouseY = 0.0;
+    double previousTime = glfwGetTime();
+
     aura::render::Window window{1280, 720, "AURA"};
     aura::render::Mesh cube{
         aura::render::MeshFactory::createCube(),
@@ -24,6 +29,7 @@ int main() {
         aura::render::VertexLayout::PositionNormal
     };
     aura::physics::RigidBody3D body;
+    body.restitution = 0.0f; // Temporary floor-contact diagnostic.
     body.position = {0.0f, 2.0f, 0.0f};
     body.momentOfInertia = aura::physics::boxMomentOfInertia(body.mass, {1.0f, 1.0f, 1.0f});
 
@@ -34,6 +40,7 @@ int main() {
     };
     aura::render::DirectionalLight light{{4.0f, 8.0f, 4.0f}, {0.0f, 0.0f, 0.0f}};
     aura::render::Camera camera{{0.0f, 3.0f, 6.0f}, {0.0f, 0.0f, 0.0f}, 1280.0f / 720.0f};
+    camera.orbit(0.5f, 0.2f);
     aura::render::ShadowMap shadowMap{2048, 2048};
 
     auto litShader =
@@ -124,36 +131,80 @@ int main() {
 
         glViewport(0, 0, width, height);
         camera.setAspectRatio(static_cast<float>(width) / static_cast<float>(height));
+
+        previousTime = glfwGetTime();
         renderFrame();
     });
 
-    double previousTime = glfwGetTime();
+    window.setMouseButtonCallback([&](int button, int action) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            orbiting = action == GLFW_PRESS;
+        }
+    });
+
+    window.setMouseMoveCallback([&](double x, double y) {
+        if (!orbiting) {
+            lastMouseX = x;
+            lastMouseY = y;
+            return;
+        }
+
+        const double deltaX = x - lastMouseX;
+        const double deltaY = y - lastMouseY;
+        lastMouseX = x;
+        lastMouseY = y;
+
+        constexpr float sensitivity = 0.005f;
+        camera.orbit(
+            static_cast<float>(deltaX) * sensitivity,
+            static_cast<float>(-deltaY) * sensitivity
+        );
+        renderFrame();
+    });
+
+    window.setScrollCallback(
+        [&](double, double yOffset) {
+            camera.zoom(static_cast<float>(yOffset));
+            renderFrame();
+        });
+
+
+    double accumulator = 0.0;
     float forceTimer = 0.0f;
+    constexpr double FIXED_DT = 1.0 / 120.0;
 
     while (!window.shouldClose()) {
         const double currentTime = glfwGetTime();
-        const auto dt = static_cast<float>(currentTime - previousTime);
+        double frameTime = currentTime - previousTime;
+        frameTime = std::min(frameTime, 0.05);
         previousTime = currentTime;
+        accumulator += frameTime;
 
-        const aura::math::Vec3 gravity{0.0f, -9.81f, 0.0f};
-        aura::physics::applyForce(body, gravity * body.mass);
-        // Use body.position alone to compare with a force applied at the center.
-        forceTimer += dt;
+        while (accumulator >= FIXED_DT) {
+            const auto dt = static_cast<float>(FIXED_DT);
 
-        if (forceTimer < 0.5f) {
-            aura::physics::applyForceAtPoint(body, {10.0f, 0.0f, 0.0f},
-                                             body.position + aura::math::Vec3{0.0f, 0.5f, 0.0f});
+            const aura::math::Vec3 gravity{0.0f, -9.81f, 0.0f};
+            aura::physics::applyForce(body, gravity * body.mass);
+            // Use body.position alone to compare with a force applied at the center.
+            forceTimer += dt;
+
+            if (forceTimer < 0.5f) {
+                aura::physics::applyForceAtPoint(body, {10.0f, 0.0f, 0.0f},
+                                                 body.position + aura::math::Vec3{0.0f, 0.5f, 0.0f});
+            }
+
+            aura::physics::updateLinearAcceleration(body);
+            aura::physics::updateAngularAcceleration(body);
+
+            aura::physics::integrateLinearMotion(body, dt);
+            aura::physics::integrateAngularMotion(body, dt);
+
+            aura::physics::resolveFloorCollision(body, 0.5f, 0.0f, dt);
+            aura::physics::clearForce(body);
+            aura::physics::clearTorque(body);
+            accumulator -= FIXED_DT;
         }
 
-        aura::physics::updateLinearAcceleration(body);
-        aura::physics::updateAngularAcceleration(body);
-
-        aura::physics::integrateLinearMotion(body, dt);
-        aura::physics::integrateAngularMotion(body, dt);
-
-        aura::physics::resolveFloorCollision(body, 0.5f, 0.0f, dt);
-        aura::physics::clearForce(body);
-        aura::physics::clearTorque(body);
         renderFrame();
 
         aura::render::Window::pollEvents();

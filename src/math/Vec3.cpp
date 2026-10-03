@@ -58,4 +58,8 @@ namespace aura::math {
     Vec3 Vec3::cross(const Vec3 &rhs) const {
         return Vec3{y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x};
     }
+
+    Vec3 Vec3::operator*=(const float &scalar) const {
+        return Vec3{x * scalar, y * scalar, z * scalar};
+    }
 }

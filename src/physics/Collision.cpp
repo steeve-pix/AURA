@@ -27,20 +27,48 @@ namespace aura::physics {
         body.position.y += penetration;
 
         constexpr float frictionStrength = 6.0f;
+        constexpr float angularDamping = 1.5f;
+
 
         const float damping =
                 std::max(0.0f, 1 - frictionStrength * dt);
 
+        const float aDamping =
+                std::max(0.0f, 1.0f - angularDamping * dt);
 
         body.velocity.x *= damping;
         body.velocity.z *= damping;
 
+        body.angularVelocity *= aDamping;
+
+        const math::Vec3 r =
+                contactPoint - body.position;
+
         const math::Vec3 normal{0.0f, 1.0f, 0.0f};
-        const float normalVelocity = body.velocity.dot(normal);
+
+        const math::Vec3 rCrossN =
+                r.cross(normal);
+
+        const math::Vec3 inverseInertiaTimesRCrossN{
+            rCrossN.x / body.momentOfInertia.x,
+            rCrossN.y / body.momentOfInertia.y,
+            rCrossN.z / body.momentOfInertia.z,
+        };
+
+        const float rotationalTerm =
+                inverseInertiaTimesRCrossN.cross(r).dot(normal);
+
+        const float effectiveInverseMass =
+                (1.0f / body.mass) + rotationalTerm;
+
+        const auto contactVelocity =
+                velocityAtWorldPoint(body, contactPoint);
+
+        const float normalVelocity = contactVelocity.dot(normal);
 
         if (normalVelocity < 0.0f) {
             const float impulseMagnitude =
-                    -(1.0f + body.restitution) * normalVelocity * body.mass;
+                    -(1.0f + body.restitution) * normalVelocity / effectiveInverseMass;
             const math::Vec3 impulse = normal * impulseMagnitude;
 
             applyImpulseAtPoint(body, impulse, contactPoint);

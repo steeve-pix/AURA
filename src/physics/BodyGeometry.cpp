@@ -43,4 +43,14 @@ namespace aura::physics {
 
         return lowest;
     }
+
+    math::Vec3 velocityAtWorldPoint(const RigidBody3D &body, const math::Vec3 &worldPoint) {
+        const math::Vec3 r =
+                worldPoint - body.position;
+
+        const math::Vec3 rotationalVelocity =
+                body.angularVelocity.cross(r);
+
+        return body.velocity + rotationalVelocity;
+    }
 }
