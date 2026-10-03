@@ -138,6 +138,16 @@ namespace aura::math {
         return result;
     }
 
+    Mat4 Mat4::scale(const Vec3 &scale) {
+        Mat4 result = identity();
+
+        result.values_[0] = scale.x;
+        result.values_[5] = scale.y;
+        result.values_[10] = scale.z;
+
+        return result;
+    }
+
     Mat4 Mat4::operator*(const Mat4 &other) const {
         Mat4 result;
         for (int column{}; column < 4; ++column) {

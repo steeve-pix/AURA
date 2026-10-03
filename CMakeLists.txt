@@ -44,6 +44,7 @@ target_link_libraries(aura_physics PUBLIC aura_math)
 # Application
 add_executable(aura
     src/main.cpp
+    src/body/BodyPart3D.cpp
     src/render/Window.cpp
     src/render/Renderer3D.cpp
     src/render/Shader.cpp
@@ -52,6 +53,10 @@ add_executable(aura
     src/render/MeshFactory.cpp
     src/render/DirectionalLight.cpp
     src/render/ShadowMap.cpp
+        src/body/BodyPartTransform.cpp
+        src/body/Joint3D.cpp
+        src/body/JointGeometry.cpp
+        src/body/JointConstraint.cpp
 )
 target_link_libraries(aura PRIVATE aura_physics glfw OpenGL::GL)
 
@@ -69,6 +74,14 @@ if (BUILD_TESTING)
     add_executable(aura_body_geometry_tests tests/body_geometry_tests.cpp)
     target_link_libraries(aura_body_geometry_tests PRIVATE aura_physics)
     add_test(NAME body_geometry COMMAND aura_body_geometry_tests)
+
+    add_executable(aura_joint_tests
+        tests/joint_tests.cpp
+        src/body/JointGeometry.cpp
+        src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_joint_tests PRIVATE aura_physics)
+    add_test(NAME joint COMMAND aura_joint_tests)
 
     add_executable(aura_camera_tests
         tests/camera_tests.cpp

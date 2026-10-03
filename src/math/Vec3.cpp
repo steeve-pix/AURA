@@ -22,6 +22,10 @@ namespace aura::math {
         return {x - rhs.x, y - rhs.y, z - rhs.z};
     }
 
+    Vec3 Vec3::operator-() const {
+        return *this * -1;
+    }
+
     Vec3 Vec3::operator-=(const Vec3 &rhs) {
         x -= rhs.x;
         y -= rhs.y;
