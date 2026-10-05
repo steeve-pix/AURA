@@ -95,6 +95,11 @@ int main() {
         aura::render::MeshPrimitive::Triangles,
         aura::render::VertexLayout::PositionNormal
     };
+    aura::render::Mesh jointSphere{
+        aura::render::MeshFactory::createSphere(),
+        aura::render::MeshPrimitive::Triangles,
+        aura::render::VertexLayout::PositionNormal
+    };
     aura::render::Mesh grid{aura::render::MeshFactory::createGrid(20, 1.0f), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh floor{
         aura::render::MeshFactory::createFloor(40.0f), aura::render::MeshPrimitive::Triangles,
@@ -117,6 +122,18 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     auto renderFrame = [&] {
+        // Markers follow the anchors and have no collision or rigid-body state.
+        const auto jointMarkerModel = [](const auto &partA, const auto &partB, const auto &joint) {
+            const auto anchorA = aura::body::localToWorldPoint(partA, joint.localAnchorA);
+            const auto anchorB = aura::body::localToWorldPoint(partB, joint.localAnchorB);
+            constexpr float markerDiameter = 0.6f;
+            return aura::math::Mat4::translation((anchorA + anchorB) * 0.5f) *
+                   aura::math::Mat4::scale({markerDiameter, markerDiameter, markerDiameter});
+        };
+        const auto hipMarker = jointMarkerModel(torso, thigh, hip);
+        const auto kneeMarker = jointMarkerModel(thigh, shin, knee);
+        const auto ankleMarker = jointMarkerModel(shin, foot, ankle);
+
         shadowMap.bindForWriting();
         glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -137,6 +154,11 @@ int main() {
 
         shadowShader.setMat4("uModel", aura::body::modelMatrix(foot));
         cube.draw();
+
+        for (const auto &model: {hipMarker, kneeMarker, ankleMarker}) {
+            shadowShader.setMat4("uModel", model);
+            jointSphere.draw();
+        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         const int width = window.framebufferWidth();
@@ -186,6 +208,13 @@ int main() {
 
         litShader.setMat4("uModel", aura::body::modelMatrix(foot));
         cube.draw();
+
+        // Black joint markers, drawn with the same depth and shadow handling as the body.
+        litShader.setVec3("uColor", {0.0f, 0.0f, 0.0f});
+        for (const auto &model: {hipMarker, kneeMarker, ankleMarker}) {
+            litShader.setMat4("uModel", model);
+            jointSphere.draw();
+        }
 
         window.swapBuffers();
     };
