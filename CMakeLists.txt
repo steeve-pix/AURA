@@ -81,6 +81,8 @@ if (BUILD_TESTING)
 
     add_executable(aura_joint_tests
             tests/joint_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
             src/body/JointGeometry.cpp
             src/body/JointConstraint.cpp
     )

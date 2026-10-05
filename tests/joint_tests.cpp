@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "aura/body/AuraSkeleton3D.hpp"
 #include "aura/body/JointConstraint.hpp"
 #include "aura/body/JointGeometry.hpp"
 #include "aura/physics/BodyGeometry.hpp"
@@ -22,6 +23,36 @@ int main() {
         }
     };
     constexpr float tolerance = 1e-5f;
+    {
+        auto body = aura::body::createAuraBody3D();
+        const auto skeleton = aura::body::createAuraSkeleton3D(body);
+        const auto checkFlexion = [&](aura::body::BodyPart3D partA,
+                                      aura::body::BodyPart3D partB,
+                                      const aura::body::Joint3D &joint,
+                                      float maximum) {
+            partB.body.orientation = aura::math::Quaternion::fromAxisAngle({1, 0, 0}, 0.5f);
+            check(std::abs(aura::body::relativeJointAngle(partA, partB, joint) - 0.5f) < tolerance,
+                  "assembled elbow/knee measures positive X rotation as positive flexion");
+            check(joint.minAngle == 0.0f && joint.maxAngle == maximum,
+                  "elbow/knee permits only positive flexion within its configured range");
+            aura::body::correctJointAngle(partA, partB, joint);
+            check(std::abs(aura::body::relativeJointAngle(partA, partB, joint) - 0.5f) < tolerance,
+                  "allowed flexion is unchanged by angle correction");
+
+            for (float angle: {-0.5f, maximum + 0.2f}) {
+                partA.body.orientation = {};
+                partB.body.orientation = aura::math::Quaternion::fromAxisAngle({1, 0, 0}, angle);
+                aura::body::correctJointAngle(partA, partB, joint);
+                const float expected = angle < 0.0f ? 0.0f : maximum;
+                check(std::abs(aura::body::relativeJointAngle(partA, partB, joint) - expected) < tolerance,
+                      "hyperextension and excess flexion are corrected to the nearest limit");
+            }
+        };
+        checkFlexion(body.leftUpperArm, body.leftForearm, skeleton.leftElbow, 2.4f);
+        checkFlexion(body.rightUpperArm, body.rightForearm, skeleton.rightElbow, 2.4f);
+        checkFlexion(body.leftThigh, body.leftShin, skeleton.leftKnee, 2.2f);
+        checkFlexion(body.rightThigh, body.rightShin, skeleton.rightKnee, 2.2f);
+    }
     const aura::body::Joint3D hip{{0.0f, -1.0f, 0.0f}, {0.0f, 0.9f, 0.0f}};
 
     for (bool touchingFloor : {false, true}) {

@@ -16,7 +16,6 @@
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Collision.hpp"
 #include "aura/physics/Forces.hpp"
-#include "aura/physics/Inertia.hpp"
 #include "aura/physics/Motion.hpp"
 #include "aura/render/Camera.hpp"
 #include "aura/render/CapsuleTransform.hpp"
