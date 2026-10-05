@@ -1,8 +1,26 @@
 #include "aura/body/AuraBody3D.hpp"
 
+#include <initializer_list>
+
 #include "aura/physics/Inertia.hpp"
 
 namespace aura::body {
+    void translateUpperBody(AuraBody3D &body, const math::Vec3 &delta) {
+        for (auto *part: {&body.torso, &body.neck, &body.head,
+                         &body.leftUpperArm, &body.leftForearm, &body.leftHand,
+                         &body.rightUpperArm, &body.rightForearm, &body.rightHand}) {
+            part->body.position += delta;
+        }
+    }
+
+    void translateLowerBody(AuraBody3D &body, const math::Vec3 &delta) {
+        for (auto *part: {&body.pelvis,
+                         &body.leftThigh, &body.leftShin, &body.leftFoot,
+                         &body.rightThigh, &body.rightShin, &body.rightFoot}) {
+            part->body.position += delta;
+        }
+    }
+
     AuraBody3D createAuraBody3D() {
         AuraBody3D result;
         const auto setPart = [](BodyPart3D &part, const char *name,

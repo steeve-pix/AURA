@@ -60,6 +60,7 @@ add_executable(aura
         src/body/JointGeometry.cpp
         src/body/JointConstraint.cpp
         src/body/AuraSkeleton3D.cpp
+        src/body/AuraBodyConstraint.cpp
 )
 target_link_libraries(aura PRIVATE aura_physics glfw OpenGL::GL)
 target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
@@ -67,6 +68,47 @@ target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_D
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_neck_subtree_tests
+            tests/neck_subtree_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+    )
+    target_link_libraries(aura_neck_subtree_tests PRIVATE aura_physics)
+    add_test(NAME neck_subtree COMMAND aura_neck_subtree_tests)
+
+    add_executable(aura_head_pivot_tests
+            tests/head_pivot_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+    )
+    target_link_libraries(aura_head_pivot_tests PRIVATE aura_physics)
+    add_test(NAME head_pivot COMMAND aura_head_pivot_tests)
+
+    add_executable(aura_waist_group_tests
+            tests/waist_group_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+    )
+    target_link_libraries(aura_waist_group_tests PRIVATE aura_physics)
+    add_test(NAME waist_group COMMAND aura_waist_group_tests)
+
+    # Explicit headless diagnostic; reports the unstable baseline, so it is not a CTest gate.
+    add_executable(aura_full_body_diagnostics
+            tests/full_body_diagnostics.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_full_body_diagnostics PRIVATE aura_physics)
+
     add_executable(aura_tests tests/math_tests.cpp)
     target_link_libraries(aura_tests PRIVATE aura_math)
     add_test(NAME math COMMAND aura_tests)

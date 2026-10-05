@@ -26,6 +26,58 @@ int main() {
     {
         auto body = aura::body::createAuraBody3D();
         const auto skeleton = aura::body::createAuraSkeleton3D(body);
+        // Off-centre anchor impulses can restore outward hinge speed at either limit.
+        for (float sign: {-1.0f, 1.0f}) {
+            auto neck = body.neck;
+            auto head = body.head;
+            head.body.orientation = aura::math::Quaternion::fromAxisAngle({1, 0, 0}, sign * 0.5f);
+            head.body.position = aura::body::localToWorldPoint(neck, skeleton.head.localAnchorA) -
+                                 head.body.orientation.rotate(skeleton.head.localAnchorB);
+            neck.body.velocity = {0.0f, 0.0f, sign};
+            auto impulseNeck = neck;
+            auto impulseHead = head;
+            aura::body::correctJointVelocity(impulseNeck, impulseHead, skeleton.head);
+            check(sign * (impulseHead.body.angularVelocity - impulseNeck.body.angularVelocity).x > tolerance,
+                  "anchor impulse fixture produces outward hinge speed at the limit");
+            aura::body::correctJointAngularVelocity(impulseNeck, impulseHead, skeleton.head);
+            const auto anchorSpeed = [&](const auto &a, const auto &b) {
+                return (aura::physics::velocityAtWorldPoint(b.body,
+                            aura::body::localToWorldPoint(b, skeleton.head.localAnchorB)) -
+                        aura::physics::velocityAtWorldPoint(a.body,
+                            aura::body::localToWorldPoint(a, skeleton.head.localAnchorA))).length();
+            };
+            const float singlePassSpeed = anchorSpeed(impulseNeck, impulseHead);
+            aura::body::solveJoint(neck, head, skeleton.head);
+            check(anchorSpeed(neck, head) < singlePassSpeed,
+                  "coupled velocity iterations reduce anchor residual at either angular limit");
+            check(sign * (head.body.angularVelocity - neck.body.angularVelocity).x <= tolerance,
+                  "complete joint solve ends without outward hinge speed at either angular limit");
+            check((aura::body::localToWorldPoint(head, skeleton.head.localAnchorB) -
+                   aura::body::localToWorldPoint(neck, skeleton.head.localAnchorA)).length() < tolerance,
+                  "final angular velocity correction preserves the repaired anchor position");
+        }
+        const auto checkNeutralMotor = [&](aura::body::BodyPart3D partA,
+                                           aura::body::BodyPart3D partB,
+                                           const aura::body::Joint3D &joint,
+                                           float stiffness, float damping) {
+            check(joint.targetAngle == 0.0f && joint.motorStiffness == stiffness &&
+                  joint.motorDamping == damping, "upper-body motor uses its specified neutral gains");
+            check(std::abs(aura::body::jointMotorTorque(partA, partB, joint)) < tolerance,
+                  "neutral stationary upper-body joint produces no motor torque");
+            partB.body.orientation = aura::math::Quaternion::fromAxisAngle({1, 0, 0}, 0.2f);
+            check(std::abs(aura::body::jointMotorTorque(partA, partB, joint) + 0.2f * stiffness) < tolerance,
+                  "upper-body spring torque drives positive displacement toward neutral");
+            partB.body.angularVelocity = {1.0f, 0.0f, 0.0f};
+            check(std::abs(aura::body::jointMotorTorque(partA, partB, joint) +
+                           0.2f * stiffness + damping) < tolerance,
+                  "upper-body damping opposes motion away from neutral");
+        };
+        checkNeutralMotor(body.torso, body.pelvis, skeleton.waist, 8.0f, 3.0f);
+        checkNeutralMotor(body.torso, body.neck, skeleton.neck, 6.0f, 2.5f);
+        checkNeutralMotor(body.leftUpperArm, body.leftForearm, skeleton.leftElbow, 6.0f, 2.5f);
+        checkNeutralMotor(body.rightUpperArm, body.rightForearm, skeleton.rightElbow, 6.0f, 2.5f);
+        checkNeutralMotor(body.leftForearm, body.leftHand, skeleton.leftWrist, 4.0f, 2.0f);
+        checkNeutralMotor(body.rightForearm, body.rightHand, skeleton.rightWrist, 4.0f, 2.0f);
         const auto checkFlexion = [&](aura::body::BodyPart3D partA,
                                       aura::body::BodyPart3D partB,
                                       const aura::body::Joint3D &joint,
@@ -390,12 +442,11 @@ int main() {
                 if (scenario == 3) {
                     aura::body::correctJointAngle(shin, foot, ankle);
                     if (traceAnkle) captureAnkle("after_ankle_angle");
-                    aura::body::correctJointAngularVelocity(shin, foot, ankle);
                     const bool footIsTouchingFloor = !aura::physics::floorContactPoints(
                         foot.body, foot.size, 0.0f, 0.01f).empty();
                     aura::body::correctJointPositionWithFloorContact(shin, foot, ankle, footIsTouchingFloor);
                     if (traceAnkle) captureAnkle("after_ankle_position");
-                    aura::body::correctJointVelocity(shin, foot, ankle);
+                    aura::body::solveJointVelocityConstraints(shin, foot, ankle);
                     if (traceAnkle) captureAnkle("after_ankle_velocity");
                     // Backward pass for the four-part chain.
                     aura::body::solveJoint(thigh, shin, knee);

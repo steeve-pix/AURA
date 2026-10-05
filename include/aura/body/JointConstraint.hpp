@@ -7,9 +7,13 @@ namespace aura::body {
 
     // Experimental: part B is the foot; active floor contact blocks downward translation.
     void correctJointPositionWithFloorContact(BodyPart3D &partA, BodyPart3D &partB,
-                                              const Joint3D &joint, bool footIsTouchingFloor);
+                                             const Joint3D &joint, bool footIsTouchingFloor);
 
     void correctJointVelocity(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
+
+    inline constexpr int jointVelocityIterations = 4;
+    // Couple anchor velocity and angular-limit velocity without repeating position correction.
+    void solveJointVelocityConstraints(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
 
     void solveJoint(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
 

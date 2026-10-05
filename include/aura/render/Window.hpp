@@ -39,9 +39,7 @@ namespace aura::render {
         void setMouseButtonCallback(MouseButtonCallback callback);
 
         void setScrollCallback(ScrollCallback callback);
-
         void setKeyCallback(KeyCallback callback);
-
         void setTitle(const char *title);
 
     private:

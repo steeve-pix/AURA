@@ -113,11 +113,18 @@ namespace aura::body {
         physics::applyImpulseAtPoint(partB.body, impulse, worldB);
     }
 
+    void solveJointVelocityConstraints(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {
+        for (int i = 0; i < jointVelocityIterations; ++i) {
+            correctJointVelocity(partA, partB, joint);
+            // Anchor impulses can change angular velocity, so enforce limit velocity last.
+            correctJointAngularVelocity(partA, partB, joint);
+        }
+    }
+
     void solveJoint(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {
         correctJointAngle(partA, partB, joint);
-        correctJointAngularVelocity(partA, partB, joint);
         correctJointPosition(partA, partB, joint);
-        correctJointVelocity(partA, partB, joint);
+        solveJointVelocityConstraints(partA, partB, joint);
     }
 
     void correctJointAngle(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {

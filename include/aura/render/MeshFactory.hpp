@@ -19,26 +19,17 @@ namespace aura::render {
         // Sparse surface lines, rather than every triangle in the mesh.
         // hemisphere: 0 = whole sphere, +1 = upper cap, -1 = lower cap.
         static std::vector<float> createSphereLines(int segments = 48, int hemisphere = 0);
-
         static std::vector<float> createCylinderLines(int segments = 48);
-
         static std::vector<float> createCubeLines();
 
         // Broad, flat shoulder line and a rounded, tapered lower chest.
         static std::vector<float> createTorso();
-
         static std::vector<float> createTorsoLines();
-
         static std::vector<float> createWaist();
-
         static std::vector<float> createWaistLines();
-
         static std::vector<float> createPelvis();
-
         static std::vector<float> createPelvisLines();
-
         static std::vector<float> createRoundedBox();
-
         static std::vector<float> createSoleLines();
     };
 }

@@ -5,6 +5,24 @@
 #include <stdexcept>
 
 namespace aura::body {
+    void rotateSubtreeAroundWorldPoint(std::span<BodyPart3D *const> parts,
+                                       const math::Vec3 &pivot, const math::Quaternion &rotation) {
+        for (auto *part: parts) rotateBodyAroundWorldPoint(*part, pivot, rotation);
+    }
+
+    void translateSubtree(std::span<BodyPart3D *const> parts, const math::Vec3 &delta) {
+        for (auto *part: parts) part->body.position += delta;
+    }
+
+    void rotateBodyAroundWorldPoint(BodyPart3D &part, const math::Vec3 &pivot,
+                                    const math::Quaternion &rotation) {
+        const auto worldRotation = rotation.normalized();
+        const auto offset = part.body.position - pivot;
+        part.body.position = pivot + worldRotation.rotate(offset);
+        // Orientations map local -> world, so a world rotation multiplies on the left.
+        part.body.orientation = (worldRotation * part.body.orientation).normalized();
+    }
+
     math::Vec3 localToWorldPoint(const BodyPart3D &part, const math::Vec3 &localPoint) {
         return part.body.position + part.body.orientation.rotate(localPoint);
     }
