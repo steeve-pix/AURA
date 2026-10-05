@@ -5,6 +5,8 @@
 #include <numbers>
 #include <stdexcept>
 
+#include "aura/math/Vec3.hpp"
+
 namespace aura::render {
     std::vector<float> MeshFactory::createCube() {
         return {
@@ -70,13 +72,17 @@ namespace aura::render {
             if (stack == stacks) return {0.0f, -1.0f, 0.0f};
             const float latitude = std::numbers::pi_v<float> * stack / stacks;
             const float longitude = 2.0f * std::numbers::pi_v<float> * (slice % slices) / slices;
-            return {std::sin(latitude) * std::cos(longitude), std::cos(latitude),
-                    std::sin(latitude) * std::sin(longitude)};
+            return {
+                std::sin(latitude) * std::cos(longitude), std::cos(latitude),
+                std::sin(latitude) * std::sin(longitude)
+            };
         };
         const auto appendVertex = [&](const std::array<float, 3> &normal) {
             // On a sphere the unit radial vector is also the surface normal.
-            vertices.insert(vertices.end(), {normal[0] * 0.5f, normal[1] * 0.5f, normal[2] * 0.5f,
-                                             normal[0], normal[1], normal[2]});
+            vertices.insert(vertices.end(), {
+                                normal[0] * 0.5f, normal[1] * 0.5f, normal[2] * 0.5f,
+                                normal[0], normal[1], normal[2]
+                            });
         };
         const auto triangle = [&](const auto &a, const auto &b, const auto &c) {
             appendVertex(a);
@@ -130,5 +136,87 @@ namespace aura::render {
 
             h, 0.0f, h, 0.0f, 1.0f, 0.0f
         };
+    }
+
+    std::vector<float> MeshFactory::createCylinder(int segments) {
+        std::vector<float> vertices;
+
+        if (segments < 3) {
+            throw std::invalid_argument("Cylinder requires at least 3 segments");
+        }
+
+        const auto addVertex =
+                [&](const math::Vec3 &position, const math::Vec3 &normal) {
+            vertices.insert(vertices.end(), {
+                                position.x, position.y, position.z,
+                                normal.x, normal.y, normal.z
+                            });
+        };
+
+        for (int i{}; i < segments; ++i) {
+            float angle0 = 2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(segments);
+            float angle1 = 2.0f * std::numbers::pi_v<float> * static_cast<float>(i + 1) / static_cast<float>(segments);
+
+            math::Vec3 bottom0{
+                0.5f * std::cos(angle0),
+                -0.5f,
+                0.5f * std::sin(angle0)
+            };
+
+            math::Vec3 top0{
+                0.5f * std::cos(angle0),
+                0.5f,
+                0.5f * std::sin(angle0)
+            };
+
+            math::Vec3 bottom1{
+                0.5f * std::cos(angle1),
+                -0.5f,
+                0.5f * std::sin(angle1)
+            };
+
+            math::Vec3 top1{
+                0.5f * std::cos(angle1),
+                0.5f,
+                0.5f * std::sin(angle1)
+            };
+
+            math::Vec3 normal0{
+                std::cos(angle0),
+                0.0f,
+                std::sin(angle0)
+            };
+
+            math::Vec3 normal1{
+                std::cos(angle1),
+                0.0f,
+                std::sin(angle1)
+            };
+
+            // First triangle
+            addVertex(bottom0, normal0);
+            addVertex(top0, normal0);
+            addVertex(bottom1, normal1);
+
+            // Second triangle
+            addVertex(top0, normal0);
+            addVertex(top1, normal1);
+            addVertex(bottom1, normal1);
+
+            const math::Vec3 up{0.0f, 1.0f, 0.0f};
+            const math::Vec3 down{0.0f, -1.0f, 0.0f};
+
+            // Top cap
+            addVertex({0.0f, 0.5f, 0.0f}, up);
+            addVertex(top1, up);
+            addVertex(top0, up);
+
+            // Bottom cap
+            addVertex({0.0f, -0.5f, 0.0f}, down);
+            addVertex(bottom0, down);
+            addVertex(bottom1, down);
+        }
+
+        return vertices;
     }
 }

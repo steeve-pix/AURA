@@ -16,6 +16,7 @@
 #include "aura/physics/Inertia.hpp"
 #include "aura/physics/Motion.hpp"
 #include "aura/render/Camera.hpp"
+#include "aura/render/CapsuleTransform.hpp"
 #include "aura/render/DirectionalLight.hpp"
 #include "aura/render/Mesh.hpp"
 #include "aura/render/MeshFactory.hpp"
@@ -105,6 +106,11 @@ int main() {
         aura::render::MeshFactory::createFloor(40.0f), aura::render::MeshPrimitive::Triangles,
         aura::render::VertexLayout::PositionNormal
     };
+    aura::render::Mesh cylinder{
+        aura::render::MeshFactory::createCylinder(24),
+        aura::render::MeshPrimitive::Triangles,
+        aura::render::VertexLayout::PositionNormal
+    };
     aura::render::DirectionalLight light{{4.0f, 8.0f, 4.0f}, {0.0f, 0.0f, 0.0f}};
     aura::render::Camera camera{{0.0f, 3.0f, 6.0f}, {0.0f, 2.0f, 0.0f}, 1280.0f / 720.0f};
     camera.orbit(0.5f, 0.2f);
@@ -134,6 +140,9 @@ int main() {
         const auto kneeMarker = jointMarkerModel(thigh, shin, knee);
         const auto ankleMarker = jointMarkerModel(shin, foot, ankle);
 
+        const auto thighCapsule = aura::render::capsuleTransforms(thigh);
+        const auto shinCapsule = aura::render::capsuleTransforms(shin);
+
         shadowMap.bindForWriting();
         glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -146,11 +155,14 @@ int main() {
         shadowShader.setMat4("uModel", aura::body::modelMatrix(torso));
         cube.draw();
 
-        shadowShader.setMat4("uModel", aura::body::modelMatrix(thigh));
-        cube.draw();
-
-        shadowShader.setMat4("uModel", aura::body::modelMatrix(shin));
-        cube.draw();
+        for (const auto &capsule : {thighCapsule, shinCapsule}) {
+            shadowShader.setMat4("uModel", capsule.cylinder);
+            cylinder.draw();
+            for (const auto &model : {capsule.topSphere, capsule.bottomSphere}) {
+                shadowShader.setMat4("uModel", model);
+                jointSphere.draw();
+            }
+        }
 
         shadowShader.setMat4("uModel", aura::body::modelMatrix(foot));
         cube.draw();
@@ -200,11 +212,14 @@ int main() {
         litShader.setMat4("uModel", aura::body::modelMatrix(torso));
         cube.draw();
 
-        litShader.setMat4("uModel", aura::body::modelMatrix(thigh));
-        cube.draw();
-
-        litShader.setMat4("uModel", aura::body::modelMatrix(shin));
-        cube.draw();
+        for (const auto &capsule : {thighCapsule, shinCapsule}) {
+            litShader.setMat4("uModel", capsule.cylinder);
+            cylinder.draw();
+            for (const auto &model : {capsule.topSphere, capsule.bottomSphere}) {
+                litShader.setMat4("uModel", model);
+                jointSphere.draw();
+            }
+        }
 
         litShader.setMat4("uModel", aura::body::modelMatrix(foot));
         cube.draw();

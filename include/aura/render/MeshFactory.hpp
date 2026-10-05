@@ -13,5 +13,7 @@ namespace aura::render {
         static std::vector<float> createGrid(int halfSize, float spacing);
 
         static std::vector<float> createFloor(float size);
+
+        static std::vector<float> createCylinder(int segments);
     };
 }

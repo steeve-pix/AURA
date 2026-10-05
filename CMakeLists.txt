@@ -49,6 +49,7 @@ add_executable(aura
     src/render/Renderer3D.cpp
     src/render/Shader.cpp
     src/render/Camera.cpp
+    src/render/CapsuleTransform.cpp
     src/render/Mesh.cpp
     src/render/MeshFactory.cpp
     src/render/DirectionalLight.cpp
@@ -98,10 +99,18 @@ if (BUILD_TESTING)
     target_link_libraries(aura_camera_tests PRIVATE aura_math)
     add_test(NAME camera COMMAND aura_camera_tests)
 
+    add_executable(aura_capsule_transform_tests
+        tests/capsule_transform_tests.cpp
+        src/render/CapsuleTransform.cpp
+    )
+    target_link_libraries(aura_capsule_transform_tests PRIVATE aura_math)
+    add_test(NAME capsule_transform COMMAND aura_capsule_transform_tests)
+
     add_executable(aura_mesh_factory_tests
         tests/mesh_factory_tests.cpp
         src/render/MeshFactory.cpp
     )
     target_include_directories(aura_mesh_factory_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(aura_mesh_factory_tests PRIVATE aura_math)
     add_test(NAME mesh_factory COMMAND aura_mesh_factory_tests)
 endif()
