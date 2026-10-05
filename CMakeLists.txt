@@ -83,6 +83,14 @@ if (BUILD_TESTING)
     target_link_libraries(aura_joint_tests PRIVATE aura_physics)
     add_test(NAME joint COMMAND aura_joint_tests)
 
+    add_executable(aura_joint_convergence_tests
+        tests/joint_convergence_tests.cpp
+        src/body/JointGeometry.cpp
+        src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_joint_convergence_tests PRIVATE aura_physics)
+    add_test(NAME joint_convergence COMMAND aura_joint_convergence_tests)
+
     add_executable(aura_camera_tests
         tests/camera_tests.cpp
         src/render/Camera.cpp

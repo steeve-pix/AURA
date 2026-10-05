@@ -3,6 +3,7 @@
 #include <iostream>
 #include <numbers>
 #include <stdexcept>
+#include <vector>
 
 #include "aura/body/JointConstraint.hpp"
 #include "aura/body/JointGeometry.hpp"
@@ -22,6 +23,25 @@ int main() {
     };
     constexpr float tolerance = 1e-5f;
     const aura::body::Joint3D hip{{0.0f, -1.0f, 0.0f}, {0.0f, 0.9f, 0.0f}};
+
+    for (bool touchingFloor : {false, true}) {
+        for (float verticalError : {-1.0f, 1.0f}) {
+            aura::body::BodyPart3D shin, foot;
+            aura::body::Joint3D joint;
+            shin.body.mass = 2.0f;
+            foot.body.position = {0.3f, verticalError, 0.6f};
+            const auto before = foot.body.position;
+            aura::body::correctJointPositionWithFloorContact(shin, foot, joint, touchingFloor);
+            check((shin.body.position - foot.body.position).length() < tolerance,
+                  "floor-aware correction closes the full anchor gap");
+            const float expectedFootY = touchingFloor && verticalError > 0.0f ? before.y : before.y / 3.0f;
+            check(std::abs(foot.body.position.y - expectedFootY) < tolerance,
+                  "floor contact blocks downward correction and permits upward correction");
+            check(std::abs(shin.body.position.x - before.x / 3.0f) < tolerance &&
+                  std::abs(foot.body.position.z - before.z / 3.0f) < tolerance,
+                  "floor-aware horizontal correction retains inverse-mass weighting");
+        }
+    }
 
     for (const float torsoMass : {1.0f, 2.0f}) {
         aura::body::BodyPart3D torso;
@@ -263,14 +283,26 @@ int main() {
     }
 
     // Compare the passive knee, isolated two-motor chain, and loaded two-motor chain.
-    for (int scenario = 0; scenario < 3; ++scenario) {
-        aura::body::BodyPart3D torso, thigh, shin;
+    for (int scenario = 0; scenario < 4; ++scenario) {
+        aura::body::BodyPart3D torso, thigh, shin, foot;
         torso.size = {1.2f, 2.0f, 0.6f};
         thigh.size = {0.5f, 1.8f, 0.5f};
         shin.size = {0.45f, 1.6f, 0.45f};
         torso.body.position = {0.0f, 5.0f, 0.0f};
         thigh.body.position = {0.0f, 3.1f, 0.0f};
         shin.body.position = {0.0f, 1.4f, 0.0f};
+        foot.size = {0.8f, 0.4f, 1.4f};
+        foot.body.position = {0.0f, 0.4f, 0.4f};
+        std::vector<aura::body::BodyPart3D *> parts{&torso, &thigh, &shin};
+        if (scenario == 3) parts.push_back(&foot);
+        aura::body::Joint3D ankle;
+        ankle.localAnchorA = {0.0f, -0.8f, 0.0f};
+        ankle.localAnchorB = {0.0f, 0.2f, -0.4f};
+        ankle.minAngle = -0.8f;
+        ankle.maxAngle = 0.8f;
+        float minAnkleAngle = 0.8f, maxAnkleAngle = -0.8f, maxAnkleGap = 0.0f;
+        float maxPosition = 0.0f, maxSpeed = 0.0f, maxAngularSpeed = 0.0f, maxHipGap = 0.0f;
+        float minFootY = foot.body.position.y - foot.size.y * 0.5f;
         auto motorHip = hip;
         motorHip.targetAngle = 0.5f;
         motorHip.motorStiffness = 15.0f;
@@ -283,15 +315,16 @@ int main() {
         knee.targetAngle = 0.6f;
         knee.motorStiffness = 10.0f;
         knee.motorDamping = 4.0f;
-        for (auto *part : {&torso, &thigh, &shin}) {
+        for (auto *part : parts) {
             part->body.momentOfInertia = aura::physics::boxMomentOfInertia(part->body.mass, part->size);
         }
         constexpr float dt = 1.0f / 120.0f;
         float minAngle = 2.2f, maxAngle = 0.0f, maxGap = 0.0f;
+        const int jointIterations = scenario == 3 ? 16 : 8;
         for (int step = 0; step < 1200; ++step) {
             aura::body::applyJointMotor(torso, thigh, motorHip);
             if (scenario != 0) aura::body::applyJointMotor(thigh, shin, knee);
-            for (auto *part : {&torso, &thigh, &shin}) {
+            for (auto *part : parts) {
                 if (scenario != 1) {
                     aura::physics::applyForce(part->body, aura::math::Vec3{0.0f, -9.81f, 0.0f} * part->body.mass);
                 }
@@ -300,14 +333,72 @@ int main() {
                 aura::physics::integrateLinearMotion(part->body, dt);
                 aura::physics::integrateAngularMotion(part->body, dt);
             }
-            for (int iteration = 0; iteration < 8; ++iteration) {
+            struct AnkleCheckpoint {
+                const char *stage;
+                float angle, gap, lowestY;
+            };
+            std::vector<AnkleCheckpoint> ankleCheckpoints;
+            const auto captureAnkle = [&](const char *stage) {
+                ankleCheckpoints.push_back({stage,
+                    aura::body::relativeJointAngle(shin, foot, ankle),
+                    (aura::body::localToWorldPoint(foot, ankle.localAnchorB) -
+                     aura::body::localToWorldPoint(shin, ankle.localAnchorA)).length(),
+                    aura::physics::lowestPoint(foot.body, foot.size).y});
+            };
+            for (int iteration = 0; iteration < jointIterations; ++iteration) {
+                const bool traceAnkle = scenario == 3 && iteration == jointIterations - 1;
+                if (traceAnkle) captureAnkle("before_floor");
                 if (scenario != 1) {
-                    for (auto *part : {&torso, &thigh, &shin}) {
-                        aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / 8);
+                    for (auto *part : parts) {
+                        aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / jointIterations);
                     }
                 }
+                if (traceAnkle) captureAnkle("after_floor");
                 aura::body::solveJoint(torso, thigh, motorHip);
                 aura::body::solveJoint(thigh, shin, knee);
+                if (scenario == 3) {
+                    aura::body::correctJointAngle(shin, foot, ankle);
+                    if (traceAnkle) captureAnkle("after_ankle_angle");
+                    aura::body::correctJointAngularVelocity(shin, foot, ankle);
+                    const bool footIsTouchingFloor = !aura::physics::floorContactPoints(
+                        foot.body, foot.size, 0.0f, 0.01f).empty();
+                    aura::body::correctJointPositionWithFloorContact(shin, foot, ankle, footIsTouchingFloor);
+                    if (traceAnkle) captureAnkle("after_ankle_position");
+                    aura::body::correctJointVelocity(shin, foot, ankle);
+                    if (traceAnkle) captureAnkle("after_ankle_velocity");
+                    // Backward pass for the four-part chain.
+                    aura::body::solveJoint(thigh, shin, knee);
+                    aura::body::solveJoint(torso, thigh, motorHip);
+                }
+            }
+            if (scenario == 3) {
+                const float ankleAngle = aura::body::relativeJointAngle(shin, foot, ankle);
+                const float ankleGap = (aura::body::localToWorldPoint(foot, ankle.localAnchorB) -
+                                        aura::body::localToWorldPoint(shin, ankle.localAnchorA)).length();
+                const float footY = aura::physics::lowestPoint(foot.body, foot.size).y;
+                minFootY = std::min(minFootY, footY);
+                check(std::isfinite(footY), "foot lowest point remains finite");
+                check(footY >= -tolerance, "foot stays above floor at the end of each physics step");
+                minAnkleAngle = std::min(minAnkleAngle, ankleAngle);
+                maxAnkleAngle = std::max(maxAnkleAngle, ankleAngle);
+                maxAnkleGap = std::max(maxAnkleGap, ankleGap);
+                if (ankleGap >= 0.001f) {
+                    std::cout << "Ankle gap failure: step=" << step + 1 << " t=" << (step + 1) * dt
+                              << " gap=" << ankleGap << " angle=" << ankleAngle << '\n';
+                    for (const auto &checkpoint : ankleCheckpoints) {
+                        std::cout << "  stage=" << checkpoint.stage
+                                  << " angle=" << checkpoint.angle
+                                  << " gap=" << checkpoint.gap
+                                  << " lowestY=" << checkpoint.lowestY << '\n';
+                    }
+                }
+                check(std::isfinite(ankleAngle) && ankleAngle >= -0.8f - 1e-5f && ankleAngle <= 0.8f + 1e-5f,
+                      "passive ankle stays within limits");
+                check(std::isfinite(ankleGap) && ankleGap < 0.001f, "foot remains attached to shin");
+                const float hipGap = (aura::body::localToWorldPoint(thigh, motorHip.localAnchorB) -
+                                     aura::body::localToWorldPoint(torso, motorHip.localAnchorA)).length();
+                maxHipGap = std::max(maxHipGap, hipGap);
+                check(std::isfinite(hipGap) && hipGap < 0.01f, "four-part chain hip stays attached");
             }
             const float angle = aura::body::relativeJointAngle(thigh, shin, knee);
             const float gap = (aura::body::localToWorldPoint(thigh, knee.localAnchorA) -
@@ -318,15 +409,30 @@ int main() {
             check(std::isfinite(angle) && angle >= -1e-5f && angle <= 2.2f + 1e-5f,
                   "knee stays within one-way limits");
             check(std::isfinite(gap) && gap < 0.02f, "shin remains attached to thigh");
-            for (auto *part : {&torso, &thigh, &shin}) {
+            for (auto *part : parts) {
                 check(std::isfinite(part->body.angularVelocity.lengthSquared()) &&
                       std::isfinite(part->body.velocity.lengthSquared()) && part->body.position.length() < 20.0f,
-                      "three-part chain remains finite and bounded");
+                      "chain remains finite and bounded");
+                const auto &q = part->body.orientation;
+                check(std::isfinite(q.w) && std::isfinite(q.x) && std::isfinite(q.y) && std::isfinite(q.z),
+                      "chain orientations remain finite");
+                maxPosition = std::max(maxPosition, part->body.position.length());
+                maxSpeed = std::max(maxSpeed, part->body.velocity.length());
+                maxAngularSpeed = std::max(maxAngularSpeed, part->body.angularVelocity.length());
                 aura::physics::clearForce(part->body);
                 aura::physics::clearTorque(part->body);
             }
         }
         check(maxAngle > 0.1f, "knee folds in the positive direction");
+        if (scenario == 3) {
+            std::cout << "Passive ankle: angle range=" << minAnkleAngle << ".." << maxAnkleAngle
+                      << ", max limit overshoot=" << std::max({0.0f, ankle.minAngle - minAnkleAngle,
+                                                              maxAnkleAngle - ankle.maxAngle})
+                      << ", max gap=" << maxAnkleGap << ", lowest foot Y=" << minFootY
+                      << ", max position distance=" << maxPosition
+                      << ", max hip gap=" << maxHipGap
+                      << ", max speed=" << maxSpeed << ", max angular speed=" << maxAngularSpeed << '\n';
+        }
         const float hipAngle = aura::body::relativeJointAngle(torso, thigh, motorHip);
         const float kneeAngle = aura::body::relativeJointAngle(thigh, shin, knee);
         const float hipOmega = (thigh.body.angularVelocity - torso.body.angularVelocity).dot(

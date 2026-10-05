@@ -30,6 +30,24 @@ namespace aura::body {
         partB.body.position -= error * (inverseMassB / totalInverseMass);
     }
 
+    void correctJointPositionWithFloorContact(BodyPart3D &partA, BodyPart3D &partB,
+                                             const Joint3D &joint, bool footIsTouchingFloor) {
+        const auto error = localToWorldPoint(partB, joint.localAnchorB) -
+                           localToWorldPoint(partA, joint.localAnchorA);
+        const float inverseMassA = 1.0f / partA.body.mass;
+        const float inverseMassB = 1.0f / partB.body.mass;
+        const float totalInverseMass = inverseMassA + inverseMassB;
+        auto deltaA = error * (inverseMassA / totalInverseMass);
+        auto deltaB = error * (-inverseMassB / totalInverseMass);
+        if (footIsTouchingFloor && deltaB.y < 0.0f) {
+            // The floor supplies the missing vertical freedom: only A closes this gap.
+            deltaA.y = error.y;
+            deltaB.y = 0.0f;
+        }
+        partA.body.position += deltaA;
+        partB.body.position += deltaB;
+    }
+
     void correctJointVelocity(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {
         const auto worldA =
                 localToWorldPoint(partA, joint.localAnchorA);
@@ -96,10 +114,10 @@ namespace aura::body {
     }
 
     void solveJoint(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {
-        correctJointPosition(partA, partB, joint);
-        correctJointVelocity(partA, partB, joint);
         correctJointAngle(partA, partB, joint);
         correctJointAngularVelocity(partA, partB, joint);
+        correctJointPosition(partA, partB, joint);
+        correctJointVelocity(partA, partB, joint);
     }
 
     void correctJointAngle(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {
