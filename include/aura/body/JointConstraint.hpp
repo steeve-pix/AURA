@@ -7,7 +7,7 @@ namespace aura::body {
 
     // Experimental: part B is the foot; active floor contact blocks downward translation.
     void correctJointPositionWithFloorContact(BodyPart3D &partA, BodyPart3D &partB,
-                                             const Joint3D &joint, bool footIsTouchingFloor);
+                                              const Joint3D &joint, bool footIsTouchingFloor);
 
     void correctJointVelocity(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
 

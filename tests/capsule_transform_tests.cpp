@@ -28,6 +28,11 @@ int main() {
     checkPoint(thighCapsule.topSphere, aura::math::Vec3{0.5f, 0.0f, 0.0f},
                aura::math::Vec3{0.25f, 0.65f, 0.0f}, "thigh radius");
 
+    const auto insetThigh = aura::render::capsuleTransforms(thigh, 0.12f, 0.12f);
+    checkPoint(insetThigh.cylinder, origin, origin, "equal insets keep capsule centred");
+    checkPoint(insetThigh.topSphere, top, aura::math::Vec3{0.0f, 0.78f, 0.0f}, "top inset shortens upper extent");
+    checkPoint(insetThigh.bottomSphere, bottom, aura::math::Vec3{0.0f, -0.78f, 0.0f}, "bottom inset shortens lower extent");
+
     aura::body::BodyPart3D shin;
     shin.size = {0.45f, 1.6f, 0.45f};
     shin.body.position = {2.0f, 3.0f, 4.0f};
@@ -37,6 +42,11 @@ int main() {
     checkPoint(shinCapsule.cylinder, origin, shin.body.position, "shin cylinder follows body centre");
     checkPoint(shinCapsule.topSphere, origin, aura::math::Vec3{1.425f, 3.0f, 4.0f}, "rotated top centre");
     checkPoint(shinCapsule.bottomSphere, bottom, aura::math::Vec3{2.8f, 3.0f, 4.0f}, "rotated lower extent");
+
+    const auto insetShin = aura::render::capsuleTransforms(shin, 0.1f, 0.2f);
+    checkPoint(insetShin.cylinder, origin, aura::math::Vec3{1.95f, 3.0f, 4.0f}, "asymmetric centre shift follows rotation");
+    checkPoint(insetShin.topSphere, top, aura::math::Vec3{1.3f, 3.0f, 4.0f}, "rotated asymmetric upper extent");
+    checkPoint(insetShin.bottomSphere, bottom, aura::math::Vec3{2.6f, 3.0f, 4.0f}, "rotated asymmetric lower extent");
 
     // A short part collapses to coincident spheres rather than a negative-height cylinder.
     aura::body::BodyPart3D shortPart;

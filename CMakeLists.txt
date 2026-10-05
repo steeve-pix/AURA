@@ -8,9 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 
 FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG 3.4
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG 3.4
 )
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -23,43 +23,46 @@ find_package(OpenGL REQUIRED)
 
 # Project libraries
 add_library(aura_math
-    src/math/Vec3.cpp
-    src/math/Rotation.cpp
-    src/math/Quaternion.cpp
-    src/math/Math.cpp
+        src/math/Vec3.cpp
+        src/math/Rotation.cpp
+        src/math/Quaternion.cpp
+        src/math/Math.cpp
 )
 target_include_directories(aura_math PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(aura_physics
-    src/physics/RigidBody3D.cpp
-    src/physics/Motion.cpp
-    src/physics/Collision.cpp
-    src/physics/Forces.cpp
-    src/physics/Inertia.cpp
-    src/physics/Impulse.cpp
-    src/physics/BodyGeometry.cpp
+        src/physics/RigidBody3D.cpp
+        src/physics/Motion.cpp
+        src/physics/Collision.cpp
+        src/physics/Forces.cpp
+        src/physics/Inertia.cpp
+        src/physics/Impulse.cpp
+        src/physics/BodyGeometry.cpp
 )
 target_link_libraries(aura_physics PUBLIC aura_math)
 
 # Application
 add_executable(aura
-    src/main.cpp
-    src/body/BodyPart3D.cpp
-    src/render/Window.cpp
-    src/render/Renderer3D.cpp
-    src/render/Shader.cpp
-    src/render/Camera.cpp
-    src/render/CapsuleTransform.cpp
-    src/render/Mesh.cpp
-    src/render/MeshFactory.cpp
-    src/render/DirectionalLight.cpp
-    src/render/ShadowMap.cpp
+        src/main.cpp
+        src/body/BodyPart3D.cpp
+        src/body/AuraBody3D.cpp
+        src/render/Window.cpp
+        src/render/Renderer3D.cpp
+        src/render/Shader.cpp
+        src/render/Camera.cpp
+        src/render/CapsuleTransform.cpp
+        src/render/Mesh.cpp
+        src/render/MeshFactory.cpp
+        src/render/DirectionalLight.cpp
+        src/render/ShadowMap.cpp
         src/body/BodyPartTransform.cpp
         src/body/Joint3D.cpp
         src/body/JointGeometry.cpp
         src/body/JointConstraint.cpp
+        src/body/AuraSkeleton3D.cpp
 )
 target_link_libraries(aura PRIVATE aura_physics glfw OpenGL::GL)
+target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
 
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
@@ -77,40 +80,40 @@ if (BUILD_TESTING)
     add_test(NAME body_geometry COMMAND aura_body_geometry_tests)
 
     add_executable(aura_joint_tests
-        tests/joint_tests.cpp
-        src/body/JointGeometry.cpp
-        src/body/JointConstraint.cpp
+            tests/joint_tests.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
     )
     target_link_libraries(aura_joint_tests PRIVATE aura_physics)
     add_test(NAME joint COMMAND aura_joint_tests)
 
     add_executable(aura_joint_convergence_tests
-        tests/joint_convergence_tests.cpp
-        src/body/JointGeometry.cpp
-        src/body/JointConstraint.cpp
+            tests/joint_convergence_tests.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
     )
     target_link_libraries(aura_joint_convergence_tests PRIVATE aura_physics)
     add_test(NAME joint_convergence COMMAND aura_joint_convergence_tests)
 
     add_executable(aura_camera_tests
-        tests/camera_tests.cpp
-        src/render/Camera.cpp
+            tests/camera_tests.cpp
+            src/render/Camera.cpp
     )
     target_link_libraries(aura_camera_tests PRIVATE aura_math)
     add_test(NAME camera COMMAND aura_camera_tests)
 
     add_executable(aura_capsule_transform_tests
-        tests/capsule_transform_tests.cpp
-        src/render/CapsuleTransform.cpp
+            tests/capsule_transform_tests.cpp
+            src/render/CapsuleTransform.cpp
     )
     target_link_libraries(aura_capsule_transform_tests PRIVATE aura_math)
     add_test(NAME capsule_transform COMMAND aura_capsule_transform_tests)
 
     add_executable(aura_mesh_factory_tests
-        tests/mesh_factory_tests.cpp
-        src/render/MeshFactory.cpp
+            tests/mesh_factory_tests.cpp
+            src/render/MeshFactory.cpp
     )
     target_include_directories(aura_mesh_factory_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(aura_mesh_factory_tests PRIVATE aura_math)
     add_test(NAME mesh_factory COMMAND aura_mesh_factory_tests)
-endif()
+endif ()

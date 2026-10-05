@@ -16,6 +16,7 @@ namespace aura::render {
     class Window {
     public:
         using ResizeCallback = std::function<void(int width, int height)>;
+        using KeyCallback = std::function<void(int key, int action)>;
 
         Window(int width, int height, const char *title);
 
@@ -39,6 +40,10 @@ namespace aura::render {
 
         void setScrollCallback(ScrollCallback callback);
 
+        void setKeyCallback(KeyCallback callback);
+
+        void setTitle(const char *title);
+
     private:
         GLFWwindow *window_ = nullptr;
         ResizeCallback resizeCallback_;
@@ -46,5 +51,6 @@ namespace aura::render {
         MouseMoveCallback mouseMoveCallback_;
         MouseButtonCallback mouseButtonCallback_;
         ScrollCallback scrollCallback_;
+        KeyCallback keyCallback_;
     };
 }

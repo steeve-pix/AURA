@@ -1,10 +1,13 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <GLFW/glfw3.h>
 
+#include "aura/body/AuraBody3D.hpp"
+#include "aura/body/AuraSkeleton3D.hpp"
 #include "aura/body/BodyPart3D.hpp"
 #include "aura/body/BodyPartTransform.hpp"
 #include "aura/body/Joint3D.hpp"
@@ -31,118 +34,202 @@ int main() {
     double lastMouseX = 0.0;
     double lastMouseY = 0.0;
 
-    aura::render::Window window{1280, 720, "AURA"};
+    aura::render::Window window{1024, 820, "AURA - Physics running | P: pose | Space: pause | R: restart"};
 
-    aura::body::BodyPart3D torso;
-    torso.name = "torso";
-    torso.size = {1.2f, 2.0f, 0.6f};
-    torso.body.position = {0.0f, 5.0f, 0.0f};
-    torso.body.momentOfInertia = aura::physics::boxMomentOfInertia(torso.body.mass, torso.size);
-    torso.body.orientation = aura::math::Quaternion{};
-
-    aura::body::BodyPart3D thigh;
-    thigh.name = "left_thigh";
-    thigh.size = {0.5f, 1.8f, 0.5f};
-    thigh.body.position = {0.0f, 3.1f, 0.0f};
-    thigh.body.momentOfInertia = aura::physics::boxMomentOfInertia(thigh.body.mass, thigh.size);
-    thigh.body.orientation = aura::math::Quaternion{};
-
-    aura::body::BodyPart3D shin;
-    shin.name = "left_shin";
-    shin.size = {0.45f, 1.6f, 0.45f};
-    shin.body.position = {0.0f, 1.4f, 0.0f};
-    shin.body.momentOfInertia =
-            aura::physics::boxMomentOfInertia(shin.body.mass, shin.size);
-    shin.body.orientation = aura::math::Quaternion{};
-
-    aura::body::BodyPart3D foot;
-    foot.name = "left_foot";
-    foot.size = {0.8f, 0.4f, 1.4f};
-    foot.body.position = {0.0f, 0.4f, 0.4f};
-    foot.body.momentOfInertia =
-            aura::physics::boxMomentOfInertia(foot.body.mass, foot.size);
-    foot.body.orientation = aura::math::Quaternion{};
-
-    aura::body::Joint3D hip;
-    hip.localAnchorA = {0.0f, -1.0f, 0.0f};
-    hip.localAnchorB = {0.0f, 0.9f, 0.0f};
-    hip.hingeAxis = {1.0f, 0.0f, 0.0f};
-    hip.minAngle = -0.8f;
-    hip.maxAngle = 0.8f;
-    hip.targetAngle = 0.5f;
-    hip.motorStiffness = 15.0f;
-    hip.motorDamping = 4.0f;
-
-    aura::body::Joint3D knee;
-    knee.localAnchorA = {0.0f, -0.9f, 0.0f};
-    knee.localAnchorB = {0.0f, 0.8f, 0.0f};
-    knee.hingeAxis = {1.0f, 0.0f, 0.0f};
-    // Straight at zero, positive angles bend the leg.
-    knee.minAngle = 0.0f;
-    knee.maxAngle = 2.2f;
-    knee.targetAngle = 0.6f;
-    knee.motorStiffness = 10.0f;
-    knee.motorDamping = 4.0f;
-
-    aura::body::Joint3D ankle;
-    ankle.localAnchorA = {0.0f, -0.8f, 0.0f};
-    ankle.localAnchorB = {0.0f, 0.2f, -0.4f};
-    ankle.hingeAxis = {1.0f, 0.0f, 0.0f};
-    ankle.minAngle = -0.8f;
-    ankle.maxAngle = 0.8f;
-
-    aura::render::Mesh cube{
-        aura::render::MeshFactory::createCube(),
-        aura::render::MeshPrimitive::Triangles,
-        aura::render::VertexLayout::PositionNormal
+    auto auraBody = aura::body::createAuraBody3D();
+    const auto assembledBody = auraBody;
+    bool paused = false;
+    const std::array<aura::body::BodyPart3D *, 16> parts{
+        &auraBody.head, &auraBody.neck, &auraBody.torso, &auraBody.pelvis,
+        &auraBody.leftUpperArm, &auraBody.leftForearm, &auraBody.leftHand,
+        &auraBody.rightUpperArm, &auraBody.rightForearm, &auraBody.rightHand,
+        &auraBody.leftThigh, &auraBody.leftShin, &auraBody.leftFoot,
+        &auraBody.rightThigh, &auraBody.rightShin, &auraBody.rightFoot
     };
+    // Start above the floor so gravity is visible immediately.
+    for (auto *part: parts) part->body.position.y += 0.6f;
+
+    auto skeleton = aura::body::createAuraSkeleton3D(auraBody);
+
+    // Ordered connections refer to the skeleton's joints; flags and radii belong to this demo.
+    struct BodyJoint {
+        const char *name{};
+        aura::body::BodyPart3D *partA{};
+        aura::body::BodyPart3D *partB{};
+        aura::body::Joint3D &constraint;
+        bool motor = false;
+        bool floorAware = false;
+        float markerRadius = 0.0f;
+    };
+    // Root outward: spine/head, left arm, right arm, left leg, right leg.
+    std::array<BodyJoint, 15> joints{
+        {
+            {"waist", &auraBody.torso, &auraBody.pelvis, skeleton.waist, false, false, 0.0f},
+            {"neck", &auraBody.torso, &auraBody.neck, skeleton.neck, false, false, 0.0f},
+            {"head", &auraBody.neck, &auraBody.head, skeleton.head, false, false, 0.0f},
+            {"leftShoulder", &auraBody.torso, &auraBody.leftUpperArm, skeleton.leftShoulder, false, false, 0.145f},
+            {"leftElbow", &auraBody.leftUpperArm, &auraBody.leftForearm, skeleton.leftElbow, false, false, 0.14f},
+            {"leftWrist", &auraBody.leftForearm, &auraBody.leftHand, skeleton.leftWrist, false, false, 0.12f},
+            {"rightShoulder", &auraBody.torso, &auraBody.rightUpperArm, skeleton.rightShoulder, false, false, 0.145f},
+            {"rightElbow", &auraBody.rightUpperArm, &auraBody.rightForearm, skeleton.rightElbow, false, false, 0.14f},
+            {"rightWrist", &auraBody.rightForearm, &auraBody.rightHand, skeleton.rightWrist, false, false, 0.12f},
+            {"leftHip", &auraBody.pelvis, &auraBody.leftThigh, skeleton.leftHip, true, false, 0.16f},
+            {"leftKnee", &auraBody.leftThigh, &auraBody.leftShin, skeleton.leftKnee, true, false, 0.14f},
+            {"leftAnkle", &auraBody.leftShin, &auraBody.leftFoot, skeleton.leftAnkle, false, true, 0.12f},
+            {"rightHip", &auraBody.pelvis, &auraBody.rightThigh, skeleton.rightHip, true, false, 0.16f},
+            {"rightKnee", &auraBody.rightThigh, &auraBody.rightShin, skeleton.rightKnee, true, false, 0.14f},
+            {"rightAnkle", &auraBody.rightShin, &auraBody.rightFoot, skeleton.rightAnkle, false, true, 0.12f},
+        }
+    };
+
     aura::render::Mesh jointSphere{
-        aura::render::MeshFactory::createSphere(),
+        aura::render::MeshFactory::createSphere(48, 32),
         aura::render::MeshPrimitive::Triangles,
         aura::render::VertexLayout::PositionNormal
     };
-    aura::render::Mesh grid{aura::render::MeshFactory::createGrid(20, 1.0f), aura::render::MeshPrimitive::Lines};
+    aura::render::Mesh grid{aura::render::MeshFactory::createGrid(60, 1.0f), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh floor{
-        aura::render::MeshFactory::createFloor(40.0f), aura::render::MeshPrimitive::Triangles,
+        aura::render::MeshFactory::createFloor(120.0f), aura::render::MeshPrimitive::Triangles,
         aura::render::VertexLayout::PositionNormal
     };
     aura::render::Mesh cylinder{
-        aura::render::MeshFactory::createCylinder(24),
+        aura::render::MeshFactory::createCylinder(48),
         aura::render::MeshPrimitive::Triangles,
         aura::render::VertexLayout::PositionNormal
     };
     aura::render::DirectionalLight light{{4.0f, 8.0f, 4.0f}, {0.0f, 0.0f, 0.0f}};
-    aura::render::Camera camera{{0.0f, 3.0f, 6.0f}, {0.0f, 2.0f, 0.0f}, 1280.0f / 720.0f};
-    camera.orbit(0.5f, 0.2f);
+    aura::render::Camera camera{{0.0f, 4.0f, 11.0f}, {0.0f, 3.9f, 0.0f}, 1280.0f / 720.0f};
+    camera.zoom(-2.2f);
+    camera.orbit(0.55f, -0.15f);
     aura::render::ShadowMap shadowMap{2048, 2048};
 
     auto litShader =
-            aura::render::Shader::fromFiles("../assets/shaders/basic.vert", "../assets/shaders/basic.frag");
+            aura::render::Shader::fromFiles(AURA_ASSET_DIR "/shaders/basic.vert", AURA_ASSET_DIR "/shaders/basic.frag");
 
     auto unlitShader =
-            aura::render::Shader::fromFiles("../assets/shaders/unlit.vert", "../assets/shaders/unlit.frag");
+            aura::render::Shader::fromFiles(AURA_ASSET_DIR "/shaders/unlit.vert", AURA_ASSET_DIR "/shaders/unlit.frag");
 
     auto shadowShader =
-            aura::render::Shader::fromFiles("../assets/shaders/shadow.vert", "../assets/shaders/shadow.frag");
+            aura::render::Shader::fromFiles(AURA_ASSET_DIR "/shaders/shadow.vert",
+                                            AURA_ASSET_DIR "/shaders/shadow.frag");
+
+    auto outlineShader = aura::render::Shader::fromFiles(
+        AURA_ASSET_DIR "/shaders/outline.vert", AURA_ASSET_DIR "/shaders/unlit.frag");
+    aura::render::Mesh sphereLines{aura::render::MeshFactory::createSphereLines(), aura::render::MeshPrimitive::Lines};
+    aura::render::Mesh topSphereLines{
+        aura::render::MeshFactory::createSphereLines(48, 1), aura::render::MeshPrimitive::Lines
+    };
+    aura::render::Mesh bottomSphereLines{
+        aura::render::MeshFactory::createSphereLines(48, -1), aura::render::MeshPrimitive::Lines
+    };
+    aura::render::Mesh cylinderLines{
+        aura::render::MeshFactory::createCylinderLines(), aura::render::MeshPrimitive::Lines
+    };
+
+    aura::render::Mesh roundedBox{
+        aura::render::MeshFactory::createRoundedBox(), aura::render::MeshPrimitive::Triangles,
+        aura::render::VertexLayout::PositionNormal
+    };
+    aura::render::Mesh soleLines{aura::render::MeshFactory::createSoleLines(), aura::render::MeshPrimitive::Lines};
+    aura::render::Mesh noLines{std::vector<float>{}, aura::render::MeshPrimitive::Lines};
+    auto skinShader = aura::render::Shader::fromFiles(AURA_ASSET_DIR "/shaders/skin.vert",
+                                                      AURA_ASSET_DIR "/shaders/skin.frag");
 
     glEnable(GL_DEPTH_TEST);
 
-    auto renderFrame = [&] {
-        // Markers follow the anchors and have no collision or rigid-body state.
-        const auto jointMarkerModel = [](const auto &partA, const auto &partB, const auto &joint) {
-            const auto anchorA = aura::body::localToWorldPoint(partA, joint.localAnchorA);
-            const auto anchorB = aura::body::localToWorldPoint(partB, joint.localAnchorB);
-            constexpr float markerDiameter = 0.6f;
-            return aura::math::Mat4::translation((anchorA + anchorB) * 0.5f) *
-                   aura::math::Mat4::scale({markerDiameter, markerDiameter, markerDiameter});
+    // Physics remains box-shaped. These meshes only change its visible skin.
+    const auto drawBody = [&](const aura::render::Shader &shader, bool colored, bool details = false) {
+        const auto drawPiece = [&](const aura::math::Mat4 &model, const aura::render::Mesh &solid,
+                                   const aura::render::Mesh &lines) {
+            shader.setMat4("uModel", model);
+            (details ? lines : solid).draw();
         };
-        const auto hipMarker = jointMarkerModel(torso, thigh, hip);
-        const auto kneeMarker = jointMarkerModel(thigh, shin, knee);
-        const auto ankleMarker = jointMarkerModel(shin, foot, ankle);
+        if (colored) shader.setVec3("uColor", {0.96f, 0.97f, 1.0f});
+        drawPiece(aura::body::modelMatrix(auraBody.head), jointSphere, sphereLines);
+        const auto pelvisBase = aura::math::Mat4::translation(auraBody.pelvis.body.position) *
+                                aura::math::Mat4::rotation(auraBody.pelvis.body.orientation);
+        drawPiece(pelvisBase * aura::math::Mat4::scale({0.9f, 0.95f, 0.85f}), jointSphere, sphereLines);
 
-        const auto thighCapsule = aura::render::capsuleTransforms(thigh);
-        const auto shinCapsule = aura::render::capsuleTransforms(shin);
+        const auto &chest = auraBody.torso.size;
+        const auto torsoBase = aura::math::Mat4::translation(auraBody.torso.body.position) *
+                               aura::math::Mat4::rotation(auraBody.torso.body.orientation);
+        // Equal dimensions make the chest spherical, so it stays round from every view.
+        constexpr float chestDiameter = 1.45f;
+        drawPiece(torsoBase * aura::math::Mat4::scale({chestDiameter, chestDiameter, chestDiameter}),
+                  jointSphere, sphereLines);
+        for (float side: {-1.0f, 1.0f}) {
+            drawPiece(torsoBase * aura::math::Mat4::translation({side * 0.7f, 0.35f, 0.0f}) *
+                      aura::math::Mat4::scale({0.5f, 0.4f, 0.65f}), jointSphere, noLines);
+        }
+        // A small capsule connects the chest and pelvis without filling out the abdomen.
+        const auto chestBottom = aura::body::localToWorldPoint(auraBody.torso, {0.0f, -chest.y * 0.5f, 0.0f});
+        const auto pelvisTop = aura::body::localToWorldPoint(auraBody.pelvis, {0.0f, 0.475f, 0.0f});
+        const auto span = chestBottom - pelvisTop;
+        const float spanLength = span.length();
+        const auto localDirection = spanLength > 1e-5f
+                                        ? auraBody.torso.body.orientation.conjugate().rotate(span * (1.0f / spanLength))
+                                        : aura::math::Vec3{0.0f, 1.0f, 0.0f};
+        // Shortest rotation from local Y to the connection direction; handle the opposite pole.
+        const auto alignment = localDirection.y < -0.9999f
+                                   ? aura::math::Quaternion{0.0f, 1.0f, 0.0f, 0.0f}
+                                   : aura::math::Quaternion{
+                                       1.0f + localDirection.y, localDirection.z, 0.0f, -localDirection.x
+                                   }.normalized();
+        aura::body::BodyPart3D waistVisual;
+        waistVisual.body.position = (chestBottom + pelvisTop) * 0.5f;
+        waistVisual.body.orientation = auraBody.torso.body.orientation * alignment;
+        waistVisual.size = {0.55f, std::max(0.55f, spanLength + 0.18f), 0.55f};
+        const auto waistCapsule = aura::render::capsuleTransforms(waistVisual);
+        const auto waistDepth = aura::math::Mat4::scale({1.0f, 1.0f, 0.7f / 0.55f});
+        if (waistVisual.size.y > waistVisual.size.x)
+            drawPiece(waistCapsule.cylinder * waistDepth, cylinder, cylinderLines);
+        drawPiece(waistCapsule.topSphere * waistDepth, jointSphere, topSphereLines);
+        drawPiece(waistCapsule.bottomSphere * waistDepth, jointSphere, bottomSphereLines);
 
+        struct CapsulePart {
+            const aura::body::BodyPart3D *part;
+            float topInset, bottomInset;
+        };
+        constexpr float inset = 0.08f;
+        const CapsulePart limbs[] = {
+            {&auraBody.neck, 0.0f, 0.0f},
+            {&auraBody.leftUpperArm, inset, inset}, {&auraBody.rightUpperArm, inset, inset},
+            {&auraBody.leftForearm, inset, inset}, {&auraBody.rightForearm, inset, inset},
+            {&auraBody.leftThigh, inset, inset}, {&auraBody.rightThigh, inset, inset},
+            {&auraBody.leftShin, inset, inset}, {&auraBody.rightShin, inset, inset}
+        };
+        for (const auto &limb: limbs) {
+            const auto capsule = aura::render::capsuleTransforms(*limb.part, limb.topInset, limb.bottomInset);
+            // Short parts collapse to a sphere; skip the zero-height cylinder (singular normal matrix).
+            if (limb.part->size.y - limb.topInset - limb.bottomInset >
+                std::min(limb.part->size.x, limb.part->size.z))
+                drawPiece(capsule.cylinder, cylinder, cylinderLines);
+            drawPiece(capsule.topSphere, jointSphere, topSphereLines);
+            drawPiece(capsule.bottomSphere, jointSphere, bottomSphereLines);
+        }
+        for (const auto *part: {&auraBody.leftHand, &auraBody.rightHand}) {
+            drawPiece(aura::body::modelMatrix(*part), roundedBox, noLines);
+            const float thumbSide = part == &auraBody.leftHand ? 1.0f : -1.0f;
+            const auto handBase = aura::math::Mat4::translation(part->body.position) *
+                                  aura::math::Mat4::rotation(part->body.orientation);
+            drawPiece(handBase * aura::math::Mat4::translation({thumbSide * 0.15f, 0.06f, 0.04f}) *
+                      aura::math::Mat4::scale({0.14f, 0.24f, 0.16f}), jointSphere, noLines);
+        }
+        for (const auto *part: {&auraBody.leftFoot, &auraBody.rightFoot})
+            drawPiece(aura::body::modelMatrix(*part), roundedBox, soleLines);
+
+        if (colored) shader.setVec3("uColor", {0.15f, 0.17f, 0.24f});
+        for (const auto &joint: joints) {
+            if (joint.markerRadius == 0.0f) continue;
+            const auto a = aura::body::localToWorldPoint(*joint.partA, joint.constraint.localAnchorA);
+            const auto b = aura::body::localToWorldPoint(*joint.partB, joint.constraint.localAnchorB);
+            const float diameter = joint.markerRadius * 2.0f;
+            drawPiece(aura::math::Mat4::translation((a + b) * 0.5f) *
+                      aura::math::Mat4::scale({diameter, diameter, diameter}), jointSphere, sphereLines);
+        }
+    };
+
+    auto renderFrame = [&] {
         shadowMap.bindForWriting();
         glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -152,32 +239,14 @@ int main() {
         shadowShader.setMat4("uModel", aura::math::Mat4::identity());
         floor.draw();
 
-        shadowShader.setMat4("uModel", aura::body::modelMatrix(torso));
-        cube.draw();
-
-        for (const auto &capsule : {thighCapsule, shinCapsule}) {
-            shadowShader.setMat4("uModel", capsule.cylinder);
-            cylinder.draw();
-            for (const auto &model : {capsule.topSphere, capsule.bottomSphere}) {
-                shadowShader.setMat4("uModel", model);
-                jointSphere.draw();
-            }
-        }
-
-        shadowShader.setMat4("uModel", aura::body::modelMatrix(foot));
-        cube.draw();
-
-        for (const auto &model: {hipMarker, kneeMarker, ankleMarker}) {
-            shadowShader.setMat4("uModel", model);
-            jointSphere.draw();
-        }
+        drawBody(shadowShader, false);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         const int width = window.framebufferWidth();
         const int height = window.framebufferHeight();
         glViewport(0, 0, width, height);
 
-        glClearColor(0.12f, 0.12f, 0.14f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -194,7 +263,7 @@ int main() {
         litShader.setVec3("uLightDirection", {-0.5, -1.0f, -0.3f});
 
         // Solid Floor
-        litShader.setVec3("uColor", {0.1f, 0.1f, 0.1f});
+        litShader.setVec3("uColor", {0.015f, 0.015f, 0.015f});
         litShader.setMat4("uModel", aura::math::Mat4::identity());
         floor.draw();
 
@@ -202,34 +271,30 @@ int main() {
         unlitShader.use();
         unlitShader.setMat4("uView", view);
         unlitShader.setMat4("uProjection", projection);
-        unlitShader.setVec3("uColor", {0.35f, 0.35f, 0.4f});
+        unlitShader.setVec3("uColor", {0.38f, 0.38f, 0.4f});
         unlitShader.setMat4("uModel", aura::math::Mat4::translation({0.0f, 0.02f, 0.0f}));
         grid.draw();
 
-        // Body parts
-        litShader.use();
-        litShader.setVec3("uColor", {1.0f, 1.0f, 1.0f});
-        litShader.setMat4("uModel", aura::body::modelMatrix(torso));
-        cube.draw();
+        // Expanded back faces form a thin silhouette around the white surfaces.
+        outlineShader.use();
+        outlineShader.setMat4("uView", view);
+        outlineShader.setMat4("uProjection", projection);
+        outlineShader.setVec3("uColor", {0.12f, 0.13f, 0.15f});
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        drawBody(outlineShader, false);
+        glDisable(GL_CULL_FACE);
 
-        for (const auto &capsule : {thighCapsule, shinCapsule}) {
-            litShader.setMat4("uModel", capsule.cylinder);
-            cylinder.draw();
-            for (const auto &model : {capsule.topSphere, capsule.bottomSphere}) {
-                litShader.setMat4("uModel", model);
-                jointSphere.draw();
-            }
-        }
-
-        litShader.setMat4("uModel", aura::body::modelMatrix(foot));
-        cube.draw();
-
-        // Black joint markers, drawn with the same depth and shadow handling as the body.
-        litShader.setVec3("uColor", {0.0f, 0.0f, 0.0f});
-        for (const auto &model: {hipMarker, kneeMarker, ankleMarker}) {
-            litShader.setMat4("uModel", model);
-            jointSphere.draw();
-        }
+        skinShader.use();
+        skinShader.setMat4("uView", view);
+        skinShader.setMat4("uProjection", projection);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(2.0f, 2.0f);
+        drawBody(skinShader, true);
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        unlitShader.use();
+        unlitShader.setVec3("uColor", {0.18f, 0.19f, 0.22f});
+        drawBody(unlitShader, false, true);
 
         window.swapBuffers();
     };
@@ -289,145 +354,122 @@ int main() {
 
 
     double accumulator = 0.0;
-    int physicsStepsSinceLog = 0;
     double simulatedTime = 0.0;
-    float maxAnkleGap = 0.0f;
-    float minFootY = foot.body.position.y - foot.size.y * 0.5f;
+    int physicsStepsSinceLog = 0;
+    window.setKeyCallback([&](int key, int action) {
+        if (action != GLFW_PRESS) return;
+        // Repeatable inspection views: 1 front, 2 side, 3 three-quarter.
+        if (key >= GLFW_KEY_1 && key <= GLFW_KEY_3) {
+            const int width = window.framebufferWidth(), height = window.framebufferHeight();
+            if (width > 0 && height > 0) {
+                camera = aura::render::Camera{
+                    {0.0f, 4.0f, 11.0f}, {0.0f, 3.9f, 0.0f},
+                    static_cast<float>(width) / static_cast<float>(height)
+                };
+                camera.zoom(-2.2f);
+                const float yaw = key == GLFW_KEY_1 ? 0.0f : key == GLFW_KEY_2 ? 1.5707963f : 0.55f;
+                camera.orbit(yaw, -0.15f);
+            }
+        }
+        if (key == GLFW_KEY_SPACE) paused = !paused;
+        if (key == GLFW_KEY_P || key == GLFW_KEY_R) {
+            auraBody = assembledBody;
+            paused = key == GLFW_KEY_P;
+            if (!paused) for (auto *part: parts) part->body.position.y += 0.6f;
+            simulatedTime = 0.0;
+            physicsStepsSinceLog = 0;
+        }
+        window.setTitle(paused
+                            ? "AURA - Pose paused | Space: run physics | R: restart fall"
+                            : "AURA - Physics running | P: pose | Space: pause | R: restart");
+        accumulator = 0.0;
+        previousTime = glfwGetTime();
+    });
     constexpr int jointIterations = 16;
     constexpr double FIXED_DT = 1.0 / 120.0;
+    const auto solveConnection = [](BodyJoint &connection) {
+        auto &a = *connection.partA;
+        auto &b = *connection.partB;
+        if (!connection.floorAware) {
+            aura::body::solveJoint(a, b, connection.constraint);
+            return;
+        }
+        aura::body::correctJointAngle(a, b, connection.constraint);
+        aura::body::correctJointAngularVelocity(a, b, connection.constraint);
+        const bool touchingFloor = !aura::physics::floorContactPoints(b.body, b.size, 0.0f, 0.01f).empty();
+        aura::body::correctJointPositionWithFloorContact(a, b, connection.constraint, touchingFloor);
+        aura::body::correctJointVelocity(a, b, connection.constraint);
+    };
 
     while (!window.shouldClose()) {
         aura::render::Window::pollEvents();
-        if (window.shouldClose()) {
-            break;
-        }
-
+        if (window.shouldClose()) break;
         const double currentTime = glfwGetTime();
-        double frameTime = currentTime - previousTime;
-        frameTime = std::min(frameTime, 0.05);
+        const double frameTime = std::min(currentTime - previousTime, 0.05);
         previousTime = currentTime;
-        accumulator += frameTime;
+        if (!paused) accumulator += frameTime;
 
         while (accumulator >= FIXED_DT) {
             const auto dt = static_cast<float>(FIXED_DT);
-            aura::body::applyJointMotor(torso, thigh, hip);
-            aura::body::applyJointMotor(thigh, shin, knee);
-
-            const aura::math::Vec3 gravity{0.0f, -9.81f, 0.0f};
-            for (auto *part: {&torso, &thigh, &shin, &foot}) {
-                aura::physics::applyForce(part->body, gravity * part->body.mass);
+            for (auto &joint: joints) {
+                if (joint.motor) aura::body::applyJointMotor(*joint.partA, *joint.partB, joint.constraint);
+            }
+            for (auto *part: parts) {
+                aura::physics::applyForce(part->body, aura::math::Vec3{0.0f, -9.81f, 0.0f} * part->body.mass);
                 aura::physics::updateLinearAcceleration(part->body);
                 aura::physics::updateAngularAcceleration(part->body);
                 aura::physics::integrateLinearMotion(part->body, dt);
                 aura::physics::integrateAngularMotion(part->body, dt);
             }
-
-            // Floor contact can separate the anchors, so solve both constraints repeatedly.
-            const float contactDt = dt / jointIterations;
-            for (int i = 0; i < jointIterations; ++i) {
-                aura::physics::resolveFloorCollision(torso.body, torso.size, 0.0f, contactDt);
-                aura::physics::resolveFloorCollision(thigh.body, thigh.size, 0.0f, contactDt);
-                aura::physics::resolveFloorCollision(shin.body, shin.size, 0.0f, contactDt);
-                aura::physics::resolveFloorCollision(foot.body, foot.size, 0.0f, contactDt);
-
-                // Forward pass.
-                aura::body::solveJoint(torso, thigh, hip);
-                aura::body::solveJoint(thigh, shin, knee);
-                aura::body::correctJointAngle(shin, foot, ankle);
-                aura::body::correctJointAngularVelocity(shin, foot, ankle);
-                const bool footIsTouchingFloor = !aura::physics::floorContactPoints(
-                    foot.body, foot.size, 0.0f, 0.01f).empty();
-                aura::body::correctJointPositionWithFloorContact(shin, foot, ankle, footIsTouchingFloor);
-                aura::body::correctJointVelocity(shin, foot, ankle);
-
-                // Backward pass: propagate ankle corrections toward the torso.
-                aura::body::solveJoint(thigh, shin, knee);
-                aura::body::solveJoint(torso, thigh, hip);
-            }
-
-            const auto ankleA = aura::body::localToWorldPoint(shin, ankle.localAnchorA);
-            const auto ankleB = aura::body::localToWorldPoint(foot, ankle.localAnchorB);
-            const float ankleGap = (ankleB - ankleA).length();
-            maxAnkleGap = std::max(maxAnkleGap, ankleGap);
-            minFootY = std::min(minFootY, aura::physics::lowestPoint(foot.body, foot.size).y);
-            simulatedTime += FIXED_DT;
-            // Diagnostics belong here in main, once per second of simulated time.
-            if (++physicsStepsSinceLog == 120) {
-                physicsStepsSinceLog = 0;
-                bool finiteState = true;
-                float lowestBottom = 0.0f;
-                for (const auto *part: {&torso, &thigh, &shin, &foot}) {
-                    const auto &body = part->body;
-                    const auto &q = body.orientation;
-                    finiteState = finiteState &&
-                                  std::isfinite(body.position.lengthSquared()) &&
-                                  std::isfinite(body.velocity.lengthSquared()) &&
-                                  std::isfinite(body.angularVelocity.lengthSquared()) &&
-                                  std::isfinite(q.w) && std::isfinite(q.x) &&
-                                  std::isfinite(q.y) && std::isfinite(q.z);
-                    lowestBottom = std::min(lowestBottom,
-                                            aura::physics::lowestPoint(body, part->size).y);
+            for (int iteration = 0; iteration < jointIterations; ++iteration) {
+                for (auto *part: parts) {
+                    aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / jointIterations);
                 }
-                std::cout << std::fixed << std::setprecision(4)
-                        << "[physics t=" << simulatedTime << "s] state="
-                        << (finiteState ? "finite" : "INVALID")
-                        << " floorPenetration=" << -lowestBottom << " units"
-                        << " maxAnkleGap=" << std::setprecision(6) << maxAnkleGap
-                        << " minFootY=" << minFootY
-                        << std::setprecision(4) << " units\n";
-
-                for (int jointIndex = 0; jointIndex < 3; ++jointIndex) {
-                    const auto &partA = jointIndex == 0 ? torso : (jointIndex == 1 ? thigh : shin);
-                    const auto &partB = jointIndex == 0 ? thigh : (jointIndex == 1 ? shin : foot);
-                    const auto &joint = jointIndex == 0 ? hip : (jointIndex == 1 ? knee : ankle);
-                    const float angle = aura::body::relativeJointAngle(partA, partB, joint);
-                    const float error = joint.targetAngle - angle;
-                    const auto worldAxis = partA.body.orientation
-                            .rotate(joint.hingeAxis.normalized()).normalized();
-                    const float omega =
-                            (partB.body.angularVelocity - partA.body.angularVelocity).dot(worldAxis);
-                    const float gap =
-                    (aura::body::localToWorldPoint(partB, joint.localAnchorB) -
-                     aura::body::localToWorldPoint(partA, joint.localAnchorA)).length();
-                    const bool motorEnabled = jointIndex < 2;
-                    const float torque = motorEnabled ? aura::body::jointMotorTorque(partA, partB, joint) : 0.0f;
-                    const char *status = motorEnabled ? "tracking" : "passive";
-                    if (!std::isfinite(angle) || !std::isfinite(omega) ||
-                        !std::isfinite(gap) || !std::isfinite(torque)) {
-                        status = "INVALID";
-                    } else if (angle < joint.minAngle - 1e-5f || angle > joint.maxAngle + 1e-5f) {
-                        status = "LIMIT VIOLATION";
-                    } else if (gap > 0.01f) {
-                        status = "ANCHORS SEPARATED";
-                    } else if (motorEnabled && std::abs(error) < 0.02f && std::abs(omega) < 0.05f) {
-                        status = "near target / slow";
-                    }
-                    std::cout << "  " << (jointIndex == 0 ? "hip " : (jointIndex == 1 ? "knee" : "ankle"))
-                            << " angle=" << angle << " rad";
-                    if (motorEnabled) {
-                        std::cout << " target=" << joint.targetAngle
-                                << " error=" << error << " rad";
-                    }
-                    std::cout
-                            << " omega=" << omega << " rad/s"
-                            << " torque=" << torque << " N*m"
-                            << " gap=" << std::setprecision(6) << gap << " units"
-                            << std::setprecision(4)
-                            << " limits=[" << joint.minAngle << ", " << joint.maxAngle << "] rad"
-                            << " status=" << status << '\n';
-                }
-                std::cout.flush();
+                for (auto &joint: joints) solveConnection(joint);
+                for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i) solveConnection(joints[i]);
             }
-
-            for (auto *part: {&torso, &thigh, &shin, &foot}) {
+            for (auto *part: parts) {
                 aura::physics::clearForce(part->body);
                 aura::physics::clearTorque(part->body);
             }
+            simulatedTime += FIXED_DT;
+            if (++physicsStepsSinceLog == 120) {
+                physicsStepsSinceLog = 0;
+                bool finite = true;
+                float maxDistance = 0.0f, maxGap = 0.0f, lowestY = 0.0f;
+                const char *worstJoint = "none";
+                for (const auto *part: parts) {
+                    const auto &q = part->body.orientation;
+                    finite = finite && std::isfinite(part->body.position.lengthSquared()) &&
+                             std::isfinite(part->body.velocity.lengthSquared()) &&
+                             std::isfinite(part->body.angularVelocity.lengthSquared()) &&
+                             std::isfinite(q.w) && std::isfinite(q.x) && std::isfinite(q.y) && std::isfinite(q.z);
+                    maxDistance = std::max(maxDistance, part->body.position.length());
+                    lowestY = std::min(lowestY, aura::physics::lowestPoint(part->body, part->size).y);
+                }
+                for (const auto &joint: joints) {
+                    const float gap = (aura::body::localToWorldPoint(*joint.partB, joint.constraint.localAnchorB) -
+                                       aura::body::localToWorldPoint(*joint.partA, joint.constraint.localAnchorA)).
+                            length();
+                    finite = finite && std::isfinite(gap);
+                    if (gap > maxGap) {
+                        maxGap = gap;
+                        worstJoint = joint.name;
+                    }
+                }
+                std::cout << std::fixed << std::setprecision(4)
+                        << "[physics t=" << simulatedTime << "s] parts=" << parts.size()
+                        << " joints=" << joints.size() << " state=" << (finite ? "finite" : "INVALID")
+                        << " headY=" << auraBody.head.body.position.y
+                        << " torsoY=" << auraBody.torso.body.position.y
+                        << " maxDistance=" << maxDistance << " floorPenetration=" << -lowestY
+                        << " maxGap=" << std::setprecision(6) << maxGap
+                        << " worstJoint=" << worstJoint << '\n';
+                std::cout.flush();
+            }
             accumulator -= FIXED_DT;
         }
-
         renderFrame();
     }
-
     return 0;
 }

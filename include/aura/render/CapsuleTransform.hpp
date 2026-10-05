@@ -11,5 +11,7 @@ namespace aura::render {
     };
 
     // Render a Y-aligned capsule using unit-height/diameter cylinder and sphere meshes.
-    CapsuleTransforms capsuleTransforms(const body::BodyPart3D &part);
+    // Insets shorten the visual ends in local Y; zero preserves the full-height capsule.
+    CapsuleTransforms capsuleTransforms(const body::BodyPart3D &part,
+                                        float topInset = 0.0f, float bottomInset = 0.0f);
 }

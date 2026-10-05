@@ -24,6 +24,6 @@ namespace aura::math {
 
         [[nodiscard]] float length() const;
 
-        [[nodiscard]] Quaternion normalized()const;
+        [[nodiscard]] Quaternion normalized() const;
     };
 }

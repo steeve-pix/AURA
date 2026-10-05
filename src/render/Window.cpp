@@ -14,6 +14,7 @@ namespace aura::render {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,GLFW_TRUE);
+        glfwWindowHint(GLFW_SAMPLES, 4);
 
 
         window_ = glfwCreateWindow(width, height, title, nullptr, nullptr);
@@ -67,6 +68,10 @@ namespace aura::render {
             });
 
         glfwMakeContextCurrent(window_);
+        glfwSetKeyCallback(window_, [](GLFWwindow *handle, int key, int, int action, int) {
+            auto *window = static_cast<Window *>(glfwGetWindowUserPointer(handle));
+            if (window && window->keyCallback_) window->keyCallback_(key, action);
+        });
     }
 
     Window::~Window() {
@@ -120,5 +125,13 @@ namespace aura::render {
 
     void Window::setScrollCallback(ScrollCallback callback) {
         scrollCallback_ = std::move(callback);
+    }
+
+    void Window::setKeyCallback(KeyCallback callback) {
+        keyCallback_ = std::move(callback);
+    }
+
+    void Window::setTitle(const char *title) {
+        glfwSetWindowTitle(window_, title);
     }
 }
