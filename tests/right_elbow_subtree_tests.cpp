@@ -46,7 +46,7 @@ int main() {
         const auto beforeOmega = body.rightHand.body.angularVelocity - body.rightForearm.body.angularVelocity;
         const auto upperArmPosition = body.rightUpperArm.body.position;
         const auto leftForearm = body.leftForearm.body;
-        correctRightElbowAngleAroundPivot(body, skeleton.rightElbow, skeleton.rightWrist);
+        correctRightElbowAngleAroundPivot(body, skeleton, skeleton.rightElbow, skeleton.rightWrist);
         check(std::abs(relativeJointAngle(body.rightUpperArm, body.rightForearm, skeleton.rightElbow) -
                        std::clamp(angle, 0.0f, 2.4f)) < tolerance, "elbow enforces both limits with a rotated parent");
         check((relativeVelocity(body, skeleton.rightWrist) - beforeV).length() < tolerance,

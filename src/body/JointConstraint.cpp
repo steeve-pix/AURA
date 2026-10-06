@@ -7,6 +7,15 @@
 #include "aura/physics/Impulse.hpp"
 
 namespace aura::body {
+    void correctJointAngleWithComponent(BodyPart3D &parent, BodyPart3D &child,
+        const Joint3D &joint, std::span<BodyPart3D *const> childComponent) {
+        const float error = jointAngleError(parent, child, joint);
+        if (std::abs(error) < 0.000001f) return;
+        const auto axis = parent.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
+        const auto pivot = localToWorldPoint(child, joint.localAnchorB);
+        rotateSubtreeAroundWorldPoint(childComponent, pivot, math::Quaternion::fromAxisAngle(axis, -error));
+    }
+
     void correctJointPosition(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {
         const auto worldA =
                 localToWorldPoint(partA, joint.localAnchorA);

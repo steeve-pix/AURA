@@ -46,7 +46,7 @@ int main() {
                        aura::body::localToWorldPoint(body.neck, skeleton.head.localAnchorA);
             };
             const float beforeHeadGap = headGap().length();
-            aura::body::correctNeckAngleAroundPivot(body, skeleton.neck);
+            aura::body::correctNeckAngleAroundPivot(body, skeleton, skeleton.neck);
             check(std::abs(aura::body::relativeJointAngle(body.torso, body.neck, skeleton.neck) -
                            std::clamp(neckAngle, -0.5f, 0.5f)) < tolerance,
                   "neck subtree rotation enforces either limit with a rotated parent");

@@ -32,7 +32,7 @@ int main() {
             const auto beforeNeck = body.neck.body;
             const auto headAnchor = aura::body::localToWorldPoint(body.head, skeleton.head.localAnchorB);
             const auto neckAnchor = aura::body::localToWorldPoint(body.neck, skeleton.neck.localAnchorB);
-            aura::body::correctHeadAngleAroundPivot(body, skeleton.head);
+            aura::body::correctHeadAngleAroundPivot(body, skeleton, skeleton.head);
             const float expected = angle < -0.5f ? -0.5f : angle > 0.5f ? 0.5f : angle;
             check(std::abs(aura::body::relativeJointAngle(body.neck, body.head, skeleton.head) - expected) < tolerance,
                   "head reaches either limit and keeps allowed angles with a rotated parent");

@@ -56,7 +56,7 @@ int main() {
             const float gap1 = gap(root, middle, first).length();
             const float gap2 = gap(middle, end, second).length();
             const auto pivot = localToWorldPoint(root, joint.localAnchorB);
-            correctBranchAngleAroundPivot(body, joint, branch);
+            correctBranchAngleAroundPivot(body, skeleton, joint, branch);
             check(std::abs(relativeJointAngle(parent, root, joint) - std::clamp(angle, joint.minAngle, joint.maxAngle)) < tolerance,
                   "angle correction enforces both limits");
             check((localToWorldPoint(root, joint.localAnchorB) - pivot).length() < tolerance,
@@ -131,7 +131,7 @@ int main() {
             translateSubtree(parts, {0, -physics::lowestPoint(foot.body, foot.size).y, 0});
             const auto hipGap = gap(body.pelvis, root, joint);
             const auto waistGap = gap(body.torso, body.pelvis, skeleton.waist);
-            correctBranchAngleAroundPivot(body, joint, branch);
+            correctBranchAngleAroundPivot(body, skeleton, joint, branch);
             check(physics::lowestPoint(foot.body, foot.size).y >= -tolerance &&
                   std::abs(relativeJointAngle(body.pelvis, root, joint)) < tolerance,
                   "hip limit rotation clears floor without leaving angle error");

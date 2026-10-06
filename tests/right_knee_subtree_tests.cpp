@@ -46,7 +46,7 @@ int main() {
         const auto beforeOmega = body.rightFoot.body.angularVelocity - body.rightShin.body.angularVelocity;
         const auto thighPosition = body.rightThigh.body.position;
         const auto leftShin = body.leftShin.body;
-        correctRightKneeAngleAroundPivot(body, skeleton.rightKnee, skeleton.rightAnkle);
+        correctRightKneeAngleAroundPivot(body, skeleton, skeleton.rightKnee, skeleton.rightAnkle);
         check(std::abs(relativeJointAngle(body.rightThigh, body.rightShin, skeleton.rightKnee) -
                        std::clamp(angle, 0.0f, 2.2f)) < tolerance, "knee enforces both limits with a rotated parent");
         check((relativeVelocity(body, skeleton.rightAnkle) - beforeV).length() < tolerance,
@@ -88,7 +88,7 @@ int main() {
     translateSubtree(subtree, {0, -lowest, 0});
     body.rightThigh.body.position.y -= lowest;
     const auto hipGap = gap(body.pelvis, body.rightThigh, skeleton.rightHip);
-    correctRightKneeAngleAroundPivot(body, skeleton.rightKnee, skeleton.rightAnkle);
+    correctRightKneeAngleAroundPivot(body, skeleton, skeleton.rightKnee, skeleton.rightAnkle);
     check(physics::lowestPoint(body.rightFoot.body, body.rightFoot.size).y >= -tolerance &&
           gap(body.rightShin, body.rightFoot, skeleton.rightAnkle).length() < tolerance &&
           gap(body.rightThigh, body.rightShin, skeleton.rightKnee).length() < tolerance &&

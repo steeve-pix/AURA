@@ -115,6 +115,13 @@ Experimental body-specific corrections may be appropriate while learning.
 Document their assumptions and limits rather than presenting them as a general
 physically accurate articulated-body solver.
 
+`AuraSkeleton3D::collectComponent(body, start, jointToCut)` queries the fixed
+humanoid topology without retaining body pointers. Cut joints must belong to that
+skeleton; returned pointers belong to the supplied body. Head, neck, both shoulders,
+right elbow, and right knee use graph-derived components for angular geometry.
+Their wrappers retain existing velocity compensation and floor policies; the
+generic `correctJointAngleWithComponent` does not decide floor feasibility.
+
 ## Debugging and review
 
 Start with what happens, what was expected, and the smallest testable hypothesis.

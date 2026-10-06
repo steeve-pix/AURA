@@ -1,6 +1,7 @@
 #pragma once
 #include "AuraBody3D.hpp"
 #include "Joint3D.hpp"
+#include <vector>
 
 namespace aura::body {
     struct AuraSkeleton3D {
@@ -23,6 +24,12 @@ namespace aura::body {
         Joint3D rightHip;
         Joint3D rightKnee;
         Joint3D rightAnkle;
+
+        // Query this skeleton's topology against the supplied body. No body pointers
+        // are retained, so copies of a body/skeleton can be queried independently.
+        // jointToCut must be one of this skeleton's joint members.
+        std::vector<BodyPart3D *> collectComponent(AuraBody3D &body, BodyPart3D &start,
+                                                  const Joint3D &jointToCut) const;
     };
 
     // Create joints from an assembled body with identity orientations.

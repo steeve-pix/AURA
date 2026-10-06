@@ -47,7 +47,7 @@ int main() {
             const auto pivot = aura::body::localToWorldPoint(upper, skeleton.leftShoulder.localAnchorB);
             const float elbowGap = gap(upper, forearm, skeleton.leftElbow).length();
             const float wristGap = gap(forearm, hand, skeleton.leftWrist).length();
-            aura::body::correctLeftShoulderAngleAroundPivot(body, skeleton.leftShoulder);
+            aura::body::correctLeftShoulderAngleAroundPivot(body, skeleton, skeleton.leftShoulder);
             check(std::abs(aura::body::relativeJointAngle(body.torso, upper, skeleton.leftShoulder) -
                            std::clamp(angle, -1.5f, 1.5f)) < tolerance,
                   "shoulder subtree rotation enforces both limits with a rotated torso");

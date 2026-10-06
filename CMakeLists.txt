@@ -68,6 +68,17 @@ target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_D
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_component_angle_tests
+            tests/component_angle_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_component_angle_tests PRIVATE aura_physics)
+    add_test(NAME component_angle COMMAND aura_component_angle_tests)
+
     add_executable(aura_right_elbow_subtree_tests
             tests/right_elbow_subtree_tests.cpp
             src/body/AuraBody3D.cpp

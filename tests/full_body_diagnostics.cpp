@@ -58,6 +58,20 @@ int main(int argc, char **argv) {
     bool headWindow = false;
     bool ankleWindow = false;
     bool wristWindow = false;
+    bool handFloorReplay = false;
+    bool handContactCycles = false;
+    bool handContactCyclesDone = false;
+    bool handPositionStages = false;
+    bool handPositionStagesDone = false;
+    bool pinnedWristReplay = false;
+    bool pinnedWristReplayDone = false;
+    bool pinnedElbowReplay = false;
+    bool pinnedShoulderReplay = false;
+    bool shoulderComponentReplay = false;
+    bool shoulderComponentRotationReplay = false;
+    bool shoulderRotationFeasibility = false;
+    bool shoulderCapacityComparison = false;
+    bool shoulderLimitReplay = false;
     bool rightElbowSubtree = false;
     bool rightKneeSubtree = false;
     bool rightShinFloorSubtree = false;
@@ -78,6 +92,17 @@ int main(int argc, char **argv) {
         else if (argument == "--head-window") headWindow = true;
         else if (argument == "--ankle-window") ankleWindow = true;
         else if (argument == "--wrist-window") wristWindow = true;
+        else if (argument == "--hand-floor-replay") handFloorReplay = true;
+        else if (argument == "--hand-contact-cycles") handContactCycles = true;
+        else if (argument == "--hand-position-stages") handPositionStages = true;
+        else if (argument == "--pinned-wrist-replay") pinnedWristReplay = true;
+        else if (argument == "--pinned-elbow-replay") pinnedElbowReplay = true;
+        else if (argument == "--pinned-shoulder-replay") pinnedShoulderReplay = true;
+        else if (argument == "--shoulder-component-replay") shoulderComponentReplay = true;
+        else if (argument == "--shoulder-component-rotation-replay") shoulderComponentRotationReplay = true;
+        else if (argument == "--shoulder-rotation-feasibility") shoulderRotationFeasibility = true;
+        else if (argument == "--shoulder-capacity-comparison") shoulderCapacityComparison = true;
+        else if (argument == "--shoulder-limit-replay") shoulderLimitReplay = true;
         else if (argument == "--right-elbow-subtree") rightElbowSubtree = true;
         else if (argument == "--right-knee-subtree") rightKneeSubtree = true;
         else if (argument == "--right-shin-floor-subtree") rightShinFloorSubtree = true;
@@ -90,11 +115,16 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
     }
     if (shinFloorReplay) ankleWindow = true;
+    if (shoulderCapacityComparison) shoulderRotationFeasibility = true;
+    if (shoulderComponentRotationReplay || shoulderRotationFeasibility || shoulderLimitReplay) shoulderComponentReplay = true;
+    if (pinnedShoulderReplay || shoulderComponentReplay) pinnedElbowReplay = true;
+    if (pinnedElbowReplay) pinnedWristReplay = true;
+    if (handFloorReplay || handContactCycles || handPositionStages || pinnedWristReplay) wristWindow = true;
     if (static_cast<int>(contactWindow) + static_cast<int>(headWindow) + static_cast<int>(ankleWindow) + static_cast<int>(wristWindow) > 1) {
         std::cerr << "Choose one diagnostic window.\n";
         return 2;
@@ -277,6 +307,210 @@ int main(int argc, char **argv) {
                   << ',' << forearm.body.velocity.length() << ',' << forearm.body.angularVelocity.length()
                   << ',' << hand.body.velocity.length() << ',' << hand.body.angularVelocity.length() << '\n';
     };
+    const auto handReplaySample = [&](const aura::body::AuraBody3D &state, const char *variant,
+                                      const aura::math::Vec3 &delta) {
+        const auto jointGap = [&](const auto &a, const auto &b, const auto &joint) {
+            return aura::body::localToWorldPoint(b, joint.localAnchorB) -
+                   aura::body::localToWorldPoint(a, joint.localAnchorA);
+        };
+        const auto &forearm = state.rightForearm;
+        const auto &hand = state.rightHand;
+        const auto &wrist = skeleton.rightWrist;
+        const auto velocity = aura::physics::velocityAtWorldPoint(hand.body,
+                                  aura::body::localToWorldPoint(hand, wrist.localAnchorB)) -
+                              aura::physics::velocityAtWorldPoint(forearm.body,
+                                  aura::body::localToWorldPoint(forearm, wrist.localAnchorA));
+        std::cout << "handFloorReplay," << diagnosticTime << ',' << diagnosticIteration << ',' << variant
+                  << ',' << delta.y << ',' << jointGap(forearm, hand, wrist).length()
+                  << ',' << aura::body::relativeJointAngle(forearm, hand, wrist)
+                  << ',' << velocity.length()
+                  << ',' << jointGap(state.rightUpperArm, forearm, skeleton.rightElbow).length()
+                  << ',' << jointGap(state.torso, state.rightUpperArm, skeleton.rightShoulder).length()
+                  << ',' << aura::physics::lowestPoint(hand.body, hand.size).y << '\n';
+    };
+    const auto handCycleSample = [&](const aura::body::AuraBody3D &state, int cycle) {
+        const auto gap = [](const auto &a, const auto &b, const auto &joint) {
+            return (aura::body::localToWorldPoint(b, joint.localAnchorB) -
+                    aura::body::localToWorldPoint(a, joint.localAnchorA)).length();
+        };
+        const auto relativeVelocity = aura::physics::velocityAtWorldPoint(state.rightHand.body,
+            aura::body::localToWorldPoint(state.rightHand, skeleton.rightWrist.localAnchorB)) -
+            aura::physics::velocityAtWorldPoint(state.rightForearm.body,
+            aura::body::localToWorldPoint(state.rightForearm, skeleton.rightWrist.localAnchorA));
+        std::cout << "handContactCycle," << diagnosticTime << ',' << diagnosticIteration << ',' << cycle
+                  << ',' << aura::physics::lowestPoint(state.rightHand.body, state.rightHand.size).y
+                  << ',' << gap(state.rightForearm, state.rightHand, skeleton.rightWrist)
+                  << ',' << gap(state.rightUpperArm, state.rightForearm, skeleton.rightElbow)
+                  << ',' << gap(state.torso, state.rightUpperArm, skeleton.rightShoulder)
+                  << ',' << relativeVelocity.length() << '\n';
+    };
+    const auto handPositionSample = [&](const aura::body::AuraBody3D &state, const char *stage) {
+        const auto gap = [](const auto &a, const auto &b, const auto &joint) {
+            return (aura::body::localToWorldPoint(b, joint.localAnchorB) -
+                    aura::body::localToWorldPoint(a, joint.localAnchorA)).length();
+        };
+        std::cout << "handPositionStage," << diagnosticTime << ',' << diagnosticIteration << ',' << stage
+                  << ',' << aura::physics::lowestPoint(state.rightHand.body, state.rightHand.size).y
+                  << ',' << gap(state.rightForearm, state.rightHand, skeleton.rightWrist)
+                  << ',' << gap(state.rightUpperArm, state.rightForearm, skeleton.rightElbow)
+                  << ',' << gap(state.torso, state.rightUpperArm, skeleton.rightShoulder) << '\n';
+    };
+    const auto pinnedWristSample = [&](const aura::body::AuraBody3D &state, const char *stage) {
+        const auto gap = [](const auto &a, const auto &b, const auto &joint) {
+            return (aura::body::localToWorldPoint(b, joint.localAnchorB) -
+                    aura::body::localToWorldPoint(a, joint.localAnchorA)).length();
+        };
+        std::cout << "pinnedWristReplay," << diagnosticTime << ',' << diagnosticIteration << ',' << stage
+                  << ',' << aura::physics::lowestPoint(state.rightHand.body, state.rightHand.size).y
+                  << ',' << gap(state.rightForearm, state.rightHand, skeleton.rightWrist)
+                  << ',' << gap(state.rightUpperArm, state.rightForearm, skeleton.rightElbow)
+                  << ',' << gap(state.torso, state.rightUpperArm, skeleton.rightShoulder)
+                  << ',' << gap(state.torso, state.pelvis, skeleton.waist)
+                  << ',' << gap(state.torso, state.neck, skeleton.neck)
+                  << ',' << gap(state.torso, state.leftUpperArm, skeleton.leftShoulder)
+                  << ',' << gap(state.pelvis, state.leftThigh, skeleton.leftHip)
+                  << ',' << gap(state.pelvis, state.rightThigh, skeleton.rightHip)
+                  << ',' << aura::physics::lowestPoint(state.leftFoot.body, state.leftFoot.size).y
+                  << ',' << aura::physics::lowestPoint(state.rightFoot.body, state.rightFoot.size).y << '\n';
+    };
+    const auto componentRotationSample = [&](const aura::body::AuraBody3D &state, const char *stage) {
+        std::cout << "shoulderComponentRotation," << diagnosticTime << ',' << diagnosticIteration << ',' << stage
+                  << ',' << aura::body::relativeJointAngle(state.torso, state.rightUpperArm, skeleton.rightShoulder)
+                  << ',' << skeleton.rightShoulder.minAngle << ',' << skeleton.rightShoulder.maxAngle << '\n';
+        pinnedWristSample(state, stage);
+    };
+    const auto testRotationFeasibility = [&](const aura::body::AuraBody3D &initial, bool armSide) {
+        const auto pivot = aura::body::localToWorldPoint(initial.rightUpperArm, skeleton.rightShoulder.localAnchorB);
+        const auto axis = initial.torso.body.orientation.rotate(skeleton.rightShoulder.hingeAxis.normalized()).normalized();
+        const float relativeRequest = skeleton.rightShoulder.maxAngle -
+            aura::body::relativeJointAngle(initial.torso, initial.rightUpperArm, skeleton.rightShoulder);
+        // A rotation increases B-relative-to-A when B (arm) moves, but decreases
+        // it when A (torso side) moves. Both trials pursue the same relative request.
+        const float requestedAngle = armSide ? relativeRequest : -relativeRequest;
+        const auto rotatedCopy = [&](float alpha) {
+            auto candidate = initial;
+            const std::array torsoSide{
+                &candidate.torso, &candidate.neck, &candidate.head,
+                &candidate.leftUpperArm, &candidate.leftForearm, &candidate.leftHand,
+                &candidate.pelvis, &candidate.leftThigh, &candidate.leftShin, &candidate.leftFoot,
+                &candidate.rightThigh, &candidate.rightShin, &candidate.rightFoot
+            };
+            const auto rotation = aura::math::Quaternion::fromAxisAngle(axis, alpha * requestedAngle);
+            if (armSide) {
+                const std::array arm{&candidate.rightUpperArm, &candidate.rightForearm, &candidate.rightHand};
+                aura::body::rotateSubtreeAroundWorldPoint(arm, pivot, rotation);
+            } else {
+                aura::body::rotateSubtreeAroundWorldPoint(torsoSide, pivot, rotation);
+            }
+            return candidate;
+        };
+        const auto safe = [](const aura::body::AuraBody3D &state) {
+            return aura::physics::lowestPoint(state.rightHand.body, state.rightHand.size).y >= 0.0f &&
+                   aura::physics::lowestPoint(state.leftFoot.body, state.leftFoot.size).y >= 0.0f &&
+                   aura::physics::lowestPoint(state.rightFoot.body, state.rightFoot.size).y >= 0.0f;
+        };
+        if (!safe(initial)) {
+            std::cerr << "Rotation feasibility requires a floor-valid hand and both feet.\n";
+            return 0.0f;
+        }
+        const auto sample = [&](const aura::body::AuraBody3D &state, const char *stage, float alpha) {
+            std::cout << "rotationFeasibility," << (armSide ? "arm" : "torso") << ',' << stage << ',' << requestedAngle << ',' << alpha
+                      << ',' << aura::body::relativeJointAngle(state.torso, state.rightUpperArm, skeleton.rightShoulder)
+                      << ',' << aura::physics::lowestPoint(state.rightHand.body, state.rightHand.size).y
+                      << ',' << aura::physics::lowestPoint(state.leftFoot.body, state.leftFoot.size).y
+                      << ',' << aura::physics::lowestPoint(state.rightFoot.body, state.rightFoot.size).y;
+            const std::array<const aura::body::BodyPart3D *, 16> copiedParts{
+                &state.head, &state.neck, &state.torso, &state.pelvis,
+                &state.leftUpperArm, &state.leftForearm, &state.leftHand,
+                &state.rightUpperArm, &state.rightForearm, &state.rightHand,
+                &state.leftThigh, &state.leftShin, &state.leftFoot,
+                &state.rightThigh, &state.rightShin, &state.rightFoot
+            };
+            for (const auto &joint : joints) {
+                const auto indexA = std::find(parts.begin(), parts.end(), joint.partA) - parts.begin();
+                const auto indexB = std::find(parts.begin(), parts.end(), joint.partB) - parts.begin();
+                std::cout << ',' << (aura::body::localToWorldPoint(*copiedParts[indexB], joint.constraint.localAnchorB) -
+                                    aura::body::localToWorldPoint(*copiedParts[indexA], joint.constraint.localAnchorA)).length();
+            }
+            std::cout << '\n';
+        };
+        std::cout << "Requested geometric rotation toward maxAngle from the original valid pose; not an existing limit violation. Checks right hand and both feet with strict Y >= 0.\n"
+                  << "record,side,stage,requestedRotation,alpha,shoulderAngle,handY,leftFootY,rightFootY";
+        for (const auto &joint : joints) std::cout << ',' << joint.name << "Gap";
+        std::cout << '\n';
+        sample(initial, "initial", 0.0f);
+        sample(rotatedCopy(1.0f), "full_request", 1.0f);
+        // Establish the first unsafe bracket along the path before bisection:
+        // floor clearance need not be monotonic over a large rotation.
+        float lower = 0.0f;
+        float upper = 1.0f;
+        bool foundUnsafe = false;
+        for (int i = 1; i <= 128; ++i) {
+            const float alpha = static_cast<float>(i) / 128.0f;
+            if (!safe(rotatedCopy(alpha))) { upper = alpha; foundUnsafe = true; break; }
+            lower = alpha;
+        }
+        if (foundUnsafe) {
+            for (int i = 0; i < 24; ++i) {
+                const float middle = (lower + upper) * 0.5f;
+                if (middle == lower || middle == upper) break;
+                if (safe(rotatedCopy(middle))) lower = middle;
+                else upper = middle;
+            }
+        }
+        sample(rotatedCopy(lower), "safe_fraction", lower);
+        if (foundUnsafe) sample(rotatedCopy(upper), "unsafe_bracket", upper);
+        return std::abs(requestedAngle) * lower;
+    };
+    const auto testShoulderLimitRepair = [&](const aura::body::AuraBody3D &initial) {
+        auto candidate = initial;
+        const auto sample = [&](const char *stage) {
+            const auto gap = [](const auto &a, const auto &b, const auto &joint) {
+                return (aura::body::localToWorldPoint(b, joint.localAnchorB) -
+                        aura::body::localToWorldPoint(a, joint.localAnchorA)).length();
+            };
+            const std::array<const aura::body::BodyPart3D *, 16> allParts{
+                &candidate.head, &candidate.neck, &candidate.torso, &candidate.pelvis,
+                &candidate.leftUpperArm, &candidate.leftForearm, &candidate.leftHand,
+                &candidate.rightUpperArm, &candidate.rightForearm, &candidate.rightHand,
+                &candidate.leftThigh, &candidate.leftShin, &candidate.leftFoot,
+                &candidate.rightThigh, &candidate.rightShin, &candidate.rightFoot
+            };
+            float minimumY = std::numeric_limits<float>::infinity();
+            int penetratingParts = 0;
+            for (const auto *part : allParts) {
+                const float y = aura::physics::lowestPoint(part->body, part->size).y;
+                minimumY = std::min(minimumY, y);
+                if (y < 0.0f) ++penetratingParts;
+            }
+            std::cout << "shoulderLimitReplay," << stage
+                      << ',' << aura::body::relativeJointAngle(candidate.torso, candidate.rightUpperArm, skeleton.rightShoulder)
+                      << ',' << gap(candidate.torso, candidate.rightUpperArm, skeleton.rightShoulder)
+                      << ',' << gap(candidate.rightUpperArm, candidate.rightForearm, skeleton.rightElbow)
+                      << ',' << gap(candidate.rightForearm, candidate.rightHand, skeleton.rightWrist)
+                      << ',' << aura::physics::lowestPoint(candidate.rightHand.body, candidate.rightHand.size).y
+                      << ',' << aura::physics::lowestPoint(candidate.leftFoot.body, candidate.leftFoot.size).y
+                      << ',' << aura::physics::lowestPoint(candidate.rightFoot.body, candidate.rightFoot.size).y
+                      << ',' << aura::body::relativeJointAngle(candidate.rightUpperArm, candidate.rightForearm, skeleton.rightElbow)
+                      << ',' << aura::body::relativeJointAngle(candidate.rightForearm, candidate.rightHand, skeleton.rightWrist)
+                      << ',' << minimumY << ',' << penetratingParts << '\n';
+        };
+        std::cout << "Copied actual shoulder-limit violation: rotate full right arm to 1.7 rad, then use existing child-component angular correction with maxAngle=1.5. No integration, floor clamps, or velocity updates.\n"
+                  << "record,stage,shoulderAngle,shoulderGap,elbowGap,wristGap,handY,leftFootY,rightFootY,elbowAngle,wristAngle,minimumBodyY,penetratingParts\n";
+        sample("initial");
+        const auto pivot = aura::body::localToWorldPoint(candidate.rightUpperArm, skeleton.rightShoulder.localAnchorB);
+        const auto axis = candidate.torso.body.orientation.rotate(skeleton.rightShoulder.hingeAxis.normalized()).normalized();
+        const float initialAngle = aura::body::relativeJointAngle(candidate.torso, candidate.rightUpperArm, skeleton.rightShoulder);
+        const std::array arm{&candidate.rightUpperArm, &candidate.rightForearm, &candidate.rightHand};
+        aura::body::rotateSubtreeAroundWorldPoint(arm, pivot,
+            aura::math::Quaternion::fromAxisAngle(axis, 1.7f - initialAngle));
+        sample("forced_1.7");
+        std::cout << "shoulderLimitRequestedRotation,"
+                  << -aura::body::jointAngleError(candidate.torso, candidate.rightUpperArm, skeleton.rightShoulder) << '\n';
+        aura::body::correctBranchAngleAroundPivot(candidate, skeleton, skeleton.rightShoulder,
+            aura::body::MajorBodyBranch3D::RightShoulder);
+        sample("corrected_1.5");
+    };
     const auto solveConnection = [&](BodyJoint &connection) {
         auto &a = *connection.partA;
         auto &b = *connection.partB;
@@ -292,7 +526,7 @@ int main(int argc, char **argv) {
         if (neckSubtree && &connection.constraint == &skeleton.neck) {
             const bool log = headWindow && diagnosticTime >= 0.70 - 1e-9 && diagnosticTime <= 0.82 + 1e-9;
             if (log) neckSample("A");
-            aura::body::correctNeckAngleAroundPivot(auraBody, connection.constraint);
+            aura::body::correctNeckAngleAroundPivot(auraBody, skeleton, connection.constraint);
             if (log) neckSample("B");
             aura::body::correctNeckPositionAsSubtree(auraBody, connection.constraint);
             if (log) neckSample("C");
@@ -312,7 +546,7 @@ int main(int argc, char **argv) {
                              angle >= connection.constraint.maxAngle - nearLimit ||
                              std::abs(diagnosticTime - 0.741666667) < 1e-8;
             if (log) headSample("A");
-            if (headPivot) aura::body::correctHeadAngleAroundPivot(auraBody, connection.constraint);
+            if (headPivot) aura::body::correctHeadAngleAroundPivot(auraBody, skeleton, connection.constraint);
             else aura::body::correctJointAngle(a, b, connection.constraint);
             if (log) headSample("B");
             if (headLeafPosition) aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint);
@@ -327,7 +561,7 @@ int main(int argc, char **argv) {
             return;
         }
         if (headPivot && &connection.constraint == &skeleton.head) {
-            aura::body::correctHeadAngleAroundPivot(auraBody, connection.constraint);
+            aura::body::correctHeadAngleAroundPivot(auraBody, skeleton, connection.constraint);
             if (headLeafPosition) aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint);
             else aura::body::correctJointPosition(a, b, connection.constraint);
             aura::body::solveJointVelocityConstraints(a, b, connection.constraint);
@@ -336,7 +570,7 @@ int main(int argc, char **argv) {
         if (leftShoulderSubtree && &connection.constraint == &skeleton.leftShoulder) {
             const bool log = headWindow && diagnosticTime >= 0.70 - 1e-9 && diagnosticTime <= 0.82 + 1e-9;
             if (log) shoulderSample("A");
-            aura::body::correctLeftShoulderAngleAroundPivot(auraBody, connection.constraint);
+            aura::body::correctLeftShoulderAngleAroundPivot(auraBody, skeleton, connection.constraint);
             if (log) shoulderSample("B");
             aura::body::correctLeftShoulderPositionAsSubtree(auraBody, connection.constraint);
             if (log) shoulderSample("C");
@@ -353,7 +587,7 @@ int main(int argc, char **argv) {
                 ? aura::body::MajorBodyBranch3D::RightShoulder
                 : &connection.constraint == &skeleton.leftHip
                     ? aura::body::MajorBodyBranch3D::LeftHip : aura::body::MajorBodyBranch3D::RightHip;
-            aura::body::correctBranchAngleAroundPivot(auraBody, connection.constraint, branch);
+            aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch);
             aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
             aura::body::solveBranchSubtreeVelocityConstraints(auraBody, connection.constraint, branch);
             return;
@@ -362,7 +596,7 @@ int main(int argc, char **argv) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightKnee;
             const bool log = tracingAnkle();
             if (log) kneeSample("before");
-            aura::body::correctRightKneeAngleAroundPivot(auraBody, connection.constraint, skeleton.rightAnkle);
+            aura::body::correctRightKneeAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightAnkle);
             if (log) kneeSample("afterAngle");
             aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
             if (log) kneeSample("afterPosition");
@@ -376,7 +610,7 @@ int main(int argc, char **argv) {
             wristSample(elbow ? "A" : "E");
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightElbow;
             if (elbow && rightElbowSubtree)
-                aura::body::correctRightElbowAngleAroundPivot(auraBody, connection.constraint, skeleton.rightWrist);
+                aura::body::correctRightElbowAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightWrist);
             else aura::body::correctJointAngle(a, b, connection.constraint);
             wristSample(elbow ? "B" : "F");
             if (elbow && rightElbowSubtree)
@@ -399,7 +633,7 @@ int main(int argc, char **argv) {
         }
         if (rightElbowSubtree && &connection.constraint == &skeleton.rightElbow) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightElbow;
-            aura::body::correctRightElbowAngleAroundPivot(auraBody, connection.constraint, skeleton.rightWrist);
+            aura::body::correctRightElbowAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightWrist);
             aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
             aura::body::solveBranchSubtreeVelocityConstraints(auraBody, connection.constraint, branch);
             return;
@@ -512,6 +746,31 @@ int main(int argc, char **argv) {
                   << "A=before elbow, B=elbow angle, C=elbow position, D1..D4=elbow velocity pairs; E=before wrist, F=wrist angle, G=wrist position, H1..H4=wrist velocity pairs; I=completed backward elbow; start/end=entire outer iteration; floorBefore/AfterForearm and floorBefore/AfterHand isolate contact triggers.\n"
                   << "joint,time,iteration,sweep,stage,wristGap,wristAngle,wristAnchorRelSpeed,wristRelOmegaX,wristRelOmegaY,wristRelOmegaZ,elbowGap,forearmLinearSpeed,forearmAngularSpeed,handLinearSpeed,handAngularSpeed\n";
     }
+    if (handFloorReplay) {
+        std::cout << "Right-hand copied-state replay: A=hand only; B=forearm+hand; C=upperArm+forearm+hand when B disturbs elbow.\n"
+                  << "Original hand floor velocity response retained identically in A/B/C; other bodies' velocities unchanged. No live corrections added.\n"
+                  << "record,time,iteration,variant,handDeltaY,wristGap,wristAngle,wristAnchorRelSpeed,elbowGap,shoulderGap,handLowestY\n";
+    }
+    if (handContactCycles) {
+        std::cout << "Copied first penetrating right-hand pose in wrist window; four floor/wrist/elbow-subtree/shoulder-subtree cycles, no integration.\n"
+                  << "Floor dt remains physics dt / 16; original hand-only impulses retained; live ordering unchanged. Cycle 0 is before contact.\n"
+                  << "record,time,iteration,cycle,handLowestY,wristGap,elbowGap,shoulderGap,wristAnchorRelSpeed\n";
+    }
+    if (handPositionStages) {
+        std::cout << "Copied first penetrating right-hand pose: unchanged floor solve, then wrist/elbow-subtree/shoulder-subtree POSITION corrections only. No angle or joint velocity corrections, no integration, live state untouched.\n"
+                  << "record,time,iteration,stage,handLowestY,wristGap,elbowGap,shoulderGap\n";
+    }
+    if (pinnedWristReplay) {
+        std::cout << "Copied penetrating right-hand pose: original floor solve, then forearm-only wrist position repair. Hand fixed after floor; no angle or joint velocity repairs. Live state untouched.\n"
+                  << "Elbow replay=" << (pinnedElbowReplay ? "upper-arm-only position repair; forearm and hand fixed" : "OFF") << '\n'
+                  << "Shoulder replay=" << (pinnedShoulderReplay ? "torso-only position repair; entire right arm fixed" : "OFF") << '\n'
+                  << "Shoulder component replay=" << (shoulderComponentReplay ? "all 13 torso-side parts; right arm fixed; no floor clamp" : "OFF") << '\n'
+                  << "record,time,iteration,stage,handLowestY,wristGap,elbowGap,shoulderGap,waistGap,neckGap,leftShoulderGap,leftHipGap,rightHipGap,leftFootLowestY,rightFootLowestY\n";
+    }
+    if (shoulderComponentRotationReplay) {
+        std::cout << "Component rotation replay: after contact-rooted position repairs, force shoulder to maxAngle + 0.2 rad by rotating the torso-side component about the shared shoulder pivot, then rotate that same component back to the limit. Right arm fixed; no floor clamp, integration, or velocity updates.\n"
+                  << "record,time,iteration,stage,shoulderAngle,minAngle,maxAngle\n";
+    }
     // Sample after every complete step, not only at the once-per-second log interval.
     for (int frame = 0; frame < steps; ++frame) {
         diagnosticTime = (frame + 1) * FIXED_DT;
@@ -542,6 +801,146 @@ int main(int argc, char **argv) {
                 const auto before = part->body.position;
                 if (tracingWrist() && part == &auraBody.rightForearm) wristSample("floorBeforeForearm");
                 if (tracingWrist() && part == &auraBody.rightHand) wristSample("floorBeforeHand");
+                if (pinnedWristReplay && !pinnedWristReplayDone && tracingWrist() &&
+                    part == &auraBody.rightHand && aura::physics::lowestPoint(part->body, part->size).y < 0.0f) {
+                    auto replay = auraBody;
+                    aura::physics::resolveFloorCollision(replay.rightHand.body, replay.rightHand.size,
+                                                        0.0f, dt / jointIterations);
+                    pinnedWristSample(replay, "after_floor");
+                    const auto error = aura::body::localToWorldPoint(replay.rightHand, skeleton.rightWrist.localAnchorB) -
+                                       aura::body::localToWorldPoint(replay.rightForearm, skeleton.rightWrist.localAnchorA);
+                    replay.rightForearm.body.position += error;
+                    pinnedWristSample(replay, "after_pinned_wrist_position");
+                    if (pinnedElbowReplay) {
+                        const auto elbowError = aura::body::localToWorldPoint(replay.rightForearm, skeleton.rightElbow.localAnchorB) -
+                                                aura::body::localToWorldPoint(replay.rightUpperArm, skeleton.rightElbow.localAnchorA);
+                        replay.rightUpperArm.body.position += elbowError;
+                        pinnedWristSample(replay, "after_contact_rooted_elbow_position");
+                        if (pinnedShoulderReplay || shoulderComponentReplay) {
+                            const auto shoulderError = aura::body::localToWorldPoint(replay.rightUpperArm, skeleton.rightShoulder.localAnchorB) -
+                                                       aura::body::localToWorldPoint(replay.torso, skeleton.rightShoulder.localAnchorA);
+                            if (shoulderComponentReplay) {
+                                // Cut at the right shoulder. Translate the complete
+                                // opposite component, without moving any right-arm part.
+                                const std::array torsoSide{
+                                    &replay.torso, &replay.neck, &replay.head,
+                                    &replay.leftUpperArm, &replay.leftForearm, &replay.leftHand,
+                                    &replay.pelvis,
+                                    &replay.leftThigh, &replay.leftShin, &replay.leftFoot,
+                                    &replay.rightThigh, &replay.rightShin, &replay.rightFoot
+                                };
+                                aura::body::translateSubtree(torsoSide, shoulderError);
+                                pinnedWristSample(replay, "after_shoulder_component_position");
+                                if (shoulderLimitReplay) testShoulderLimitRepair(replay);
+                                if (shoulderRotationFeasibility) {
+                                    const float torsoCapacity = testRotationFeasibility(replay, false);
+                                    if (shoulderCapacityComparison) {
+                                        // Both capacity searches start from this identical, untouched pose.
+                                        const float armCapacity = testRotationFeasibility(replay, true);
+                                        const float required = std::abs(skeleton.rightShoulder.maxAngle -
+                                            aura::body::relativeJointAngle(replay.torso, replay.rightUpperArm, skeleton.rightShoulder));
+                                        std::cout << "record,torsoCapacity,armCapacity,totalCapacity,requiredRelativeRotation\n"
+                                                  << "shoulderCapacity," << torsoCapacity << ',' << armCapacity << ','
+                                                  << torsoCapacity + armCapacity << ',' << required << '\n';
+                                    }
+                                }
+                                if (shoulderComponentRotationReplay) {
+                                    componentRotationSample(replay, "rotation_initial");
+                                    const auto pivot = aura::body::localToWorldPoint(replay.rightUpperArm,
+                                        skeleton.rightShoulder.localAnchorB);
+                                    const auto axis = replay.torso.body.orientation.rotate(
+                                        skeleton.rightShoulder.hingeAxis.normalized()).normalized();
+                                    const float initialAngle = aura::body::relativeJointAngle(replay.torso,
+                                        replay.rightUpperArm, skeleton.rightShoulder);
+                                    const float forcedAngle = skeleton.rightShoulder.maxAngle + 0.2f;
+                                    // Rotating A in positive hinge direction decreases B relative to A.
+                                    aura::body::rotateSubtreeAroundWorldPoint(torsoSide, pivot,
+                                        aura::math::Quaternion::fromAxisAngle(axis, initialAngle - forcedAngle));
+                                    componentRotationSample(replay, "rotation_forced");
+                                    const float error = aura::body::jointAngleError(replay.torso,
+                                        replay.rightUpperArm, skeleton.rightShoulder);
+                                    const auto correctionAxis = replay.torso.body.orientation.rotate(
+                                        skeleton.rightShoulder.hingeAxis.normalized()).normalized();
+                                    aura::body::rotateSubtreeAroundWorldPoint(torsoSide, pivot,
+                                        aura::math::Quaternion::fromAxisAngle(correctionAxis, error));
+                                    componentRotationSample(replay, "rotation_corrected");
+                                }
+                            } else {
+                                replay.torso.body.position += shoulderError;
+                                pinnedWristSample(replay, "after_contact_rooted_shoulder_position");
+                            }
+                        }
+                    }
+                    pinnedWristReplayDone = true;
+                }
+                if (handPositionStages && !handPositionStagesDone && tracingWrist() &&
+                    part == &auraBody.rightHand && aura::physics::lowestPoint(part->body, part->size).y < 0.0f) {
+                    auto replay = auraBody;
+                    handPositionSample(replay, "before_floor");
+                    aura::physics::resolveFloorCollision(replay.rightHand.body, replay.rightHand.size,
+                                                        0.0f, dt / jointIterations);
+                    handPositionSample(replay, "after_floor");
+                    aura::body::correctJointPosition(replay.rightForearm, replay.rightHand, skeleton.rightWrist);
+                    handPositionSample(replay, "after_wrist_position");
+                    aura::body::correctBranchPositionAsSubtree(replay, skeleton.rightElbow,
+                        aura::body::MajorBodyBranch3D::RightElbow);
+                    handPositionSample(replay, "after_elbow_position");
+                    aura::body::correctBranchPositionAsSubtree(replay, skeleton.rightShoulder,
+                        aura::body::MajorBodyBranch3D::RightShoulder);
+                    handPositionSample(replay, "after_shoulder_position");
+                    handPositionStagesDone = true;
+                }
+                if (handContactCycles && !handContactCyclesDone && tracingWrist() &&
+                    part == &auraBody.rightHand && aura::physics::lowestPoint(part->body, part->size).y < 0.0f) {
+                    // Capture the historical contact trajectory, then evaluate the
+                    // current hierarchical elbow/shoulder corrections on a copy.
+                    auto replay = auraBody;
+                    handCycleSample(replay, 0);
+                    for (int cycle = 1; cycle <= 4; ++cycle) {
+                        aura::physics::resolveFloorCollision(replay.rightHand.body, replay.rightHand.size,
+                                                            0.0f, dt / jointIterations);
+                        aura::body::solveJoint(replay.rightForearm, replay.rightHand, skeleton.rightWrist);
+                        aura::body::correctRightElbowAngleAroundPivot(replay, skeleton, skeleton.rightElbow, skeleton.rightWrist);
+                        aura::body::correctBranchPositionAsSubtree(replay, skeleton.rightElbow,
+                            aura::body::MajorBodyBranch3D::RightElbow);
+                        aura::body::solveBranchSubtreeVelocityConstraints(replay, skeleton.rightElbow,
+                            aura::body::MajorBodyBranch3D::RightElbow);
+                        aura::body::correctBranchAngleAroundPivot(replay, skeleton, skeleton.rightShoulder,
+                            aura::body::MajorBodyBranch3D::RightShoulder);
+                        aura::body::correctBranchPositionAsSubtree(replay, skeleton.rightShoulder,
+                            aura::body::MajorBodyBranch3D::RightShoulder);
+                        aura::body::solveBranchSubtreeVelocityConstraints(replay, skeleton.rightShoulder,
+                            aura::body::MajorBodyBranch3D::RightShoulder);
+                        handCycleSample(replay, cycle);
+                    }
+                    handContactCyclesDone = true;
+                }
+                if (handFloorReplay && tracingWrist() && part == &auraBody.rightHand) {
+                    // Identical hand floor response in every copy. Only the scope
+                    // of the positional translation differs; the live state is untouched.
+                    auto handOnly = auraBody;
+                    aura::physics::resolveFloorCollision(handOnly.rightHand.body, handOnly.rightHand.size,
+                                                        0.0f, dt / jointIterations);
+                    const auto delta = handOnly.rightHand.body.position - part->body.position;
+                    if (delta.lengthSquared() > 0.0f) {
+                        handReplaySample(auraBody, "before", delta);
+                        handReplaySample(handOnly, "A_hand", delta);
+                        auto pair = handOnly;
+                        const std::array forearmOnly{&pair.rightForearm};
+                        aura::body::translateSubtree(forearmOnly, delta);
+                        handReplaySample(pair, "B_forearm_hand", delta);
+                        const auto beforeElbow = aura::body::localToWorldPoint(auraBody.rightForearm, skeleton.rightElbow.localAnchorB) -
+                                                 aura::body::localToWorldPoint(auraBody.rightUpperArm, skeleton.rightElbow.localAnchorA);
+                        const auto pairElbow = aura::body::localToWorldPoint(pair.rightForearm, skeleton.rightElbow.localAnchorB) -
+                                               aura::body::localToWorldPoint(pair.rightUpperArm, skeleton.rightElbow.localAnchorA);
+                        if ((pairElbow - beforeElbow).length() > 1e-6f) {
+                            auto arm = pair;
+                            const std::array upperArmOnly{&arm.rightUpperArm};
+                            aura::body::translateSubtree(upperArmOnly, delta);
+                            handReplaySample(arm, "C_whole_arm", delta);
+                        }
+                    }
+                }
                 if (tracingAnkle() && part == &auraBody.rightShin) {
                     ankleSample("AshinBefore");
                     if (shinFloorReplay) {

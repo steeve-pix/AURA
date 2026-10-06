@@ -88,14 +88,21 @@ namespace aura::body {
         }
     }
 
-    void correctBranchAngleAroundPivot(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch) {
+    void correctBranchAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch) {
         const auto parts = branchParts(body, branch);
         auto &root = *parts.subtree.front();
         const float error = jointAngleError(*parts.parent, root, joint);
         if (std::abs(error) < 0.000001f) return;
-        const auto axis = parts.parent->body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
-        const auto pivot = localToWorldPoint(root, joint.localAnchorB);
-        rotateSubtreeAroundWorldPoint(parts.childParts(), pivot, math::Quaternion::fromAxisAngle(axis, -error));
+        if (branch == MajorBodyBranch3D::RightShoulder || branch == MajorBodyBranch3D::RightElbow ||
+            branch == MajorBodyBranch3D::RightKnee) {
+            const auto component = skeleton.collectComponent(body, root, joint);
+            correctJointAngleWithComponent(*parts.parent, root, joint, component);
+        } else {
+            // Hip angular corrections are deliberately outside this migration.
+            const auto axis = parts.parent->body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
+            const auto pivot = localToWorldPoint(root, joint.localAnchorB);
+            rotateSubtreeAroundWorldPoint(parts.childParts(), pivot, math::Quaternion::fromAxisAngle(axis, -error));
+        }
         if (parts.foot != nullptr) {
             const float lowestY = physics::lowestPoint(parts.foot->body, parts.foot->size).y;
             if (lowestY < 0.0f) {
@@ -124,25 +131,25 @@ namespace aura::body {
         translateSubtree(parts.childParts(), delta);
     }
 
-    void correctRightKneeAngleAroundPivot(AuraBody3D &body, const Joint3D &knee, const Joint3D &ankle) {
+    void correctRightKneeAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &knee, const Joint3D &ankle) {
         const auto relativeVelocity = [&] {
             return physics::velocityAtWorldPoint(body.rightFoot.body, localToWorldPoint(body.rightFoot, ankle.localAnchorB)) -
                    physics::velocityAtWorldPoint(body.rightShin.body, localToWorldPoint(body.rightShin, ankle.localAnchorA));
         };
         const auto before = relativeVelocity();
-        correctBranchAngleAroundPivot(body, knee, MajorBodyBranch3D::RightKnee);
+        correctBranchAngleAroundPivot(body, skeleton, knee, MajorBodyBranch3D::RightKnee);
         // Keep existing relative motion; do not erase it or rotate its world vector.
         // Angular velocities remain unchanged by this geometry projection.
         body.rightFoot.body.velocity += before - relativeVelocity();
     }
 
-    void correctRightElbowAngleAroundPivot(AuraBody3D &body, const Joint3D &elbow, const Joint3D &wrist) {
+    void correctRightElbowAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &elbow, const Joint3D &wrist) {
         const auto relativeVelocity = [&] {
             return physics::velocityAtWorldPoint(body.rightHand.body, localToWorldPoint(body.rightHand, wrist.localAnchorB)) -
                    physics::velocityAtWorldPoint(body.rightForearm.body, localToWorldPoint(body.rightForearm, wrist.localAnchorA));
         };
         const auto before = relativeVelocity();
-        correctBranchAngleAroundPivot(body, elbow, MajorBodyBranch3D::RightElbow);
+        correctBranchAngleAroundPivot(body, skeleton, elbow, MajorBodyBranch3D::RightElbow);
         // Same geometry compensation as the knee: preserve the existing wrist
         // anchor velocity while its offsets rotate; leave angular velocities alone.
         body.rightHand.body.velocity += before - relativeVelocity();
@@ -175,13 +182,9 @@ namespace aura::body {
         }
     }
 
-    void correctLeftShoulderAngleAroundPivot(AuraBody3D &body, const Joint3D &shoulder) {
-        const float error = jointAngleError(body.torso, body.leftUpperArm, shoulder);
-        if (std::abs(error) < 0.000001f) return;
-        const auto axis = body.torso.body.orientation.rotate(shoulder.hingeAxis.normalized()).normalized();
-        const auto pivot = localToWorldPoint(body.leftUpperArm, shoulder.localAnchorB);
-        const std::array subtree{&body.leftUpperArm, &body.leftForearm, &body.leftHand};
-        rotateSubtreeAroundWorldPoint(subtree, pivot, math::Quaternion::fromAxisAngle(axis, -error));
+    void correctLeftShoulderAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &shoulder) {
+        const auto component = skeleton.collectComponent(body, body.leftUpperArm, shoulder);
+        correctJointAngleWithComponent(body.torso, body.leftUpperArm, shoulder, component);
     }
 
     void correctLeftShoulderPositionAsSubtree(AuraBody3D &body, const Joint3D &shoulder) {
@@ -241,14 +244,9 @@ namespace aura::body {
         }
     }
 
-    void correctNeckAngleAroundPivot(AuraBody3D &body, const Joint3D &neckJoint) {
-        const float error = jointAngleError(body.torso, body.neck, neckJoint);
-        if (std::abs(error) < 0.000001f) return;
-        const auto worldAxis = body.torso.body.orientation.rotate(neckJoint.hingeAxis.normalized()).normalized();
-        const auto pivot = localToWorldPoint(body.neck, neckJoint.localAnchorB);
-        const auto rotation = math::Quaternion::fromAxisAngle(worldAxis, -error);
-        const std::array subtree{&body.neck, &body.head};
-        rotateSubtreeAroundWorldPoint(subtree, pivot, rotation);
+    void correctNeckAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &neckJoint) {
+        const auto component = skeleton.collectComponent(body, body.neck, neckJoint);
+        correctJointAngleWithComponent(body.torso, body.neck, neckJoint, component);
     }
 
     void correctNeckPositionAsSubtree(AuraBody3D &body, const Joint3D &neckJoint) {
@@ -258,16 +256,9 @@ namespace aura::body {
         translateSubtree(subtree, -error);
     }
 
-    void correctHeadAngleAroundPivot(AuraBody3D &body, const Joint3D &headJoint) {
-        const float error = jointAngleError(body.neck, body.head, headJoint);
-        if (std::abs(error) < 0.000001f) return;
-        const auto worldAxis = body.neck.body.orientation.rotate(headJoint.hingeAxis.normalized()).normalized();
-        // Use the head's anchor so an existing integration gap is not rotated or enlarged.
-        // Position correction still closes that gap afterwards.
-        const auto pivot = localToWorldPoint(body.head, headJoint.localAnchorB);
-        const auto rotation = math::Quaternion::fromAxisAngle(worldAxis, -error);
-        const std::array subtree{&body.head};
-        rotateSubtreeAroundWorldPoint(subtree, pivot, rotation);
+    void correctHeadAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &headJoint) {
+        const auto component = skeleton.collectComponent(body, body.head, headJoint);
+        correctJointAngleWithComponent(body.neck, body.head, headJoint, component);
     }
 
     void correctHeadPositionAsLeaf(AuraBody3D &body, const Joint3D &headJoint) {
