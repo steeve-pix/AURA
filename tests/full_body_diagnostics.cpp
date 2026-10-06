@@ -17,6 +17,7 @@
 #include "aura/body/ComponentMass.hpp"
 #include "aura/body/ComponentVelocity.hpp"
 #include "aura/body/LocalJointVelocity.hpp"
+#include "aura/body/ComponentPosition.hpp"
 #include "aura/physics/Impulse.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Collision.hpp"
@@ -83,6 +84,12 @@ int main(int argc, char **argv) {
     bool legVelocityReplay = false;
     bool localLegVelocityReplay = false;
     bool skeletonVelocityReplay = false;
+    bool componentPositionReplay = false;
+    bool componentPositions = false;
+    bool localAngularLimits = false;
+    bool angularMomentumDiagnostic = false;
+    bool handGeometryMomentumDiagnostic = false;
+    bool floorFailureDiagnostic = false;
     bool allLocalAnchors = false;
     bool rightLegLocalAnchors = false;
     bool liveVelocityMetrics = false;
@@ -120,6 +127,12 @@ int main(int argc, char **argv) {
         else if (argument == "--right-elbow-subtree") rightElbowSubtree = true;
         else if (argument == "--left-limb-components") leftLimbComponents = true;
         else if (argument == "--energy-window") energyWindow = true;
+        else if (argument == "--component-position-replay") { componentPositionReplay = true; allLocalAnchors = true; }
+        else if (argument == "--component-positions") { componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--local-angular-limits") { localAngularLimits = true; angularMomentumDiagnostic = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--angular-momentum-diagnostic") { angularMomentumDiagnostic = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--hand-geometry-momentum") { handGeometryMomentumDiagnostic = true; allLocalAnchors = true; }
+        else if (argument == "--floor-failure-diagnostic") { floorFailureDiagnostic = true; allLocalAnchors = true; }
         else if (argument == "--all-local-anchors") { allLocalAnchors = true; liveVelocityMetrics = true; }
         else if (argument == "--skeleton-velocity-replay") skeletonVelocityReplay = true;
         else if (argument == "--right-leg-local-anchors") { rightLegLocalAnchors = true; liveVelocityMetrics = true; }
@@ -146,7 +159,7 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
     }
@@ -635,12 +648,124 @@ int main(int argc, char **argv) {
         std::cout << "liveVelocitySweep," << diagnosticTime << ',' << diagnosticIteration << ',' << stage
                   << ',' << currentKinetic() << ',' << maximum << ',' << owner << '\n';
     };
+    using WholeMomentum = std::array<double, 3>;
+    const auto wholeMomentum = [&] {
+        WholeMomentum sum{};
+        for (const auto *part : parts) {
+            sum[0] += static_cast<double>(part->body.mass) * part->body.velocity.x;
+            sum[1] += static_cast<double>(part->body.mass) * part->body.velocity.y;
+            sum[2] += static_cast<double>(part->body.mass) * part->body.velocity.z;
+        }
+        return sum;
+    };
+    struct MomentumStage { int iteration; std::string stage; WholeMomentum before, after; };
+    std::vector<MomentumStage> momentumStages;
+    struct MomentumOperation { int iteration; std::string sweep, object, operation; WholeMomentum before, after; };
+    std::vector<MomentumOperation> momentumOperations;
+    bool firstAngularMomentumReported = false;
+    bool firstMomentumReported = false;
+    WholeMomentum stepMomentumBefore{};
+    // Significant completed-step horizontal change: 0.1 kg m/s. Individual
+    // operations >=0.01 kg m/s are retained in the first step's small trace.
+    constexpr double horizontalMomentumThreshold = 0.1;
+    std::array<WholeMomentum, 5> cumulativeMomentum{}; // integration, floor, anchor, angular-limit, geometry
+    std::array<double, 5> cumulativeAbsoluteHorizontal{};
+    const auto momentumStage = [&](int iteration, const char *stage, const WholeMomentum &before) {
+        if (handGeometryMomentumDiagnostic && !firstMomentumReported)
+            momentumStages.push_back({iteration, stage, before, wholeMomentum()});
+    };
     const auto auditOperation = [&](const char *operationName, const auto &operation) {
         const auto measuredOperation = [&] {
+            const std::string op = operationName;
+            const auto momentumBefore = (handGeometryMomentumDiagnostic || angularMomentumDiagnostic) ? wholeMomentum() : WholeMomentum{};
+            const bool angularTrace = angularMomentumDiagnostic && !firstAngularMomentumReported &&
+                (op.find("Angular") != std::string::npos && op.find("Velocity") != std::string::npos);
+            auto angularJoint = joints.end();
+            aura::physics::RigidBody3D angularBeforeA, angularBeforeB;
+            if (angularTrace) {
+                angularJoint = std::find_if(joints.begin(), joints.end(), [&](const auto &c){return std::string(c.name)==energyObject;});
+                if (angularJoint != joints.end()) { angularBeforeA=angularJoint->partA->body; angularBeforeB=angularJoint->partB->body; }
+            }
+            const bool geometryTrace = handGeometryMomentumDiagnostic && diagnosticIteration == 16 &&
+                std::abs(diagnosticTime - 1.5083333333333333) < 1e-9 &&
+                (op.find("Position") != std::string::npos || op.find("Angle") != std::string::npos);
+            std::array<aura::physics::RigidBody3D, 16> geometryBefore{};
+            double handBefore = 0, gapBefore = 0;
+            auto tracedJoint = joints.end();
+            if (geometryTrace) {
+                for (std::size_t i = 0; i < parts.size(); ++i) geometryBefore[i] = parts[i]->body;
+                handBefore = aura::physics::lowestPoint(auraBody.rightHand.body, auraBody.rightHand.size).y;
+                tracedJoint = std::find_if(joints.begin(), joints.end(), [&](const auto &c) { return std::string(c.name) == energyObject; });
+                if (tracedJoint != joints.end())
+                    gapBefore = speed(aura::body::localToWorldPoint(*tracedJoint->partB, tracedJoint->constraint.localAnchorB) -
+                        aura::body::localToWorldPoint(*tracedJoint->partA, tracedJoint->constraint.localAnchorA));
+            }
             const bool anchor = std::string(operationName).find("Angular") == std::string::npos &&
                                 std::string(operationName).find("Velocity") != std::string::npos;
             const double before = liveVelocityMetrics && anchor ? currentKinetic() : 0;
             operation();
+            if (angularTrace && angularJoint != joints.end()) {
+                const auto after = wholeMomentum();
+                if (std::hypot(after[0]-momentumBefore[0],after[2]-momentumBefore[2]) > 0.01) {
+                    firstAngularMomentumReported=true;
+                    const auto &a=*angularJoint->partA; const auto &b=*angularJoint->partB; const auto &j=angularJoint->constraint;
+                    const auto axis=a.body.orientation.rotate(j.hingeAxis.normalized()).normalized();
+                    std::cout << std::scientific << std::setprecision(9)
+                              << "firstAngularMomentumEvent," << diagnosticTime << ',' << diagnosticIteration << ',' << diagnosticSweep
+                              << ',' << energyObject << ',' << operationName << ',' << aura::body::relativeJointAngle(a,b,j)
+                              << ',' << j.minAngle << ',' << j.maxAngle << ',' << (angularBeforeB.angularVelocity-angularBeforeA.angularVelocity).dot(axis)
+                              << ',' << (b.body.angularVelocity-a.body.angularVelocity).dot(axis)
+                              << ',' << momentumBefore[0] << ',' << momentumBefore[2] << ',' << after[0] << ',' << after[2] << '\n';
+                    const auto emit=[&](const char *side,const auto &old,const auto &now){
+                        std::cout << "angularMomentumBody," << side << ',' << old.velocity.x << ',' << old.velocity.y << ',' << old.velocity.z
+                                  << ',' << now.velocity.x << ',' << now.velocity.y << ',' << now.velocity.z
+                                  << ',' << old.angularVelocity.x << ',' << old.angularVelocity.y << ',' << old.angularVelocity.z
+                                  << ',' << now.angularVelocity.x << ',' << now.angularVelocity.y << ',' << now.angularVelocity.z << '\n';
+                    };
+                    emit("A",angularBeforeA,a.body); emit("B",angularBeforeB,b.body);
+                }
+            }
+            if (geometryTrace && tracedJoint != joints.end()) {
+                const double handAfter = aura::physics::lowestPoint(auraBody.rightHand.body, auraBody.rightHand.size).y;
+                const double gapAfter = speed(aura::body::localToWorldPoint(*tracedJoint->partB, tracedJoint->constraint.localAnchorB) -
+                    aura::body::localToWorldPoint(*tracedJoint->partA, tracedJoint->constraint.localAnchorA));
+                std::string moved, translations;
+                std::array<bool, 16> movedMask{};
+                for (std::size_t i = 0; i < parts.size(); ++i) {
+                    const auto &old = geometryBefore[i]; const auto &now = parts[i]->body;
+                    if ((old.position - now.position).lengthSquared() > 0 || old.orientation.w != now.orientation.w ||
+                        old.orientation.x != now.orientation.x || old.orientation.y != now.orientation.y || old.orientation.z != now.orientation.z) {
+                        movedMask[i] = true;
+                        if (!moved.empty()) { moved += ';'; translations += ';'; }
+                        moved += parts[i]->name;
+                        const auto delta = now.position - old.position;
+                        std::ostringstream detail;
+                        detail << std::scientific << std::setprecision(9) << parts[i]->name << ':' << delta.x << '/' << delta.y << '/' << delta.z;
+                        translations += detail.str();
+                    }
+                }
+                const auto scope = [&](aura::body::BodyPart3D &start) {
+                    const auto component = skeleton.collectComponent(auraBody, start, tracedJoint->constraint);
+                    std::size_t count = 0;
+                    for (auto *part : component) count += movedMask[std::find(parts.begin(), parts.end(), part) - parts.begin()];
+                    return count == 0 ? "none" : count == component.size() ? "full" : "partial";
+                };
+                const std::string componentScope = std::string("A=") + scope(*tracedJoint->partA) + ";B=" + scope(*tracedJoint->partB);
+                std::cout << "handGeometryOperation," << diagnosticTime << ',' << diagnosticIteration << ',' << diagnosticSweep
+                          << ',' << energyObject << ',' << operationName << ',' << handBefore << ',' << handAfter << ',' << handAfter - handBefore
+                          << ',' << gapBefore << ',' << gapAfter << ',' << (moved.empty() ? "none" : moved) << ',' << componentScope << ',' << (translations.empty() ? "none" : translations) << '\n';
+            }
+            if (handGeometryMomentumDiagnostic) {
+                const auto after = wholeMomentum();
+                const int category = op.starts_with("integrate") ? 0 : (op.starts_with("resolve") || op == "floorResponse") ? 1 :
+                    op == "correctLocalJointVelocity" ? 2 : (op.find("Angular") != std::string::npos && op.find("Velocity") != std::string::npos) ? 3 : 4;
+                WholeMomentum delta{};
+                for (int i = 0; i < 3; ++i) { delta[i] = after[i] - momentumBefore[i]; cumulativeMomentum[category][i] += delta[i]; }
+                const double horizontal = std::hypot(delta[0], delta[2]);
+                cumulativeAbsoluteHorizontal[category] += horizontal;
+                if (!firstMomentumReported && horizontal >= 0.01)
+                    momentumOperations.push_back({diagnosticIteration, diagnosticSweep, energyObject, operationName, momentumBefore, after});
+            }
             observeVelocityMetrics();
             if (liveVelocityMetrics && anchor) {
                 const double after = currentKinetic();
@@ -1083,6 +1208,20 @@ int main(int argc, char **argv) {
         energyObject = connection.name;
         auto &a = *connection.partA;
         auto &b = *connection.partB;
+        const auto angularOperation = [&](const char *legacyName, const auto &legacy) {
+            if (localAngularLimits)
+                auditOperation("correctLocalJointAngularLimitVelocity", [&] {
+                    aura::body::correctLocalJointAngularLimitVelocity(a, b, connection.constraint);
+                });
+            else auditOperation(legacyName, legacy);
+        };
+        const auto positionOperation = [&](const char *legacyName, const auto &legacy) {
+            if (componentPositions)
+                auditOperation("correctJointPositionWithComponents", [&] {
+                    aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+                });
+            else auditOperation(legacyName, legacy);
+        };
         const auto anchorOperation = [&](const char *legacyName, const auto &legacy) {
             if (allLocalAnchors)
                 auditOperation("correctLocalJointVelocity", [&] {
@@ -1103,10 +1242,10 @@ int main(int argc, char **argv) {
             const bool eitherFootTouchesFloor =
                 !aura::physics::floorContactPoints(auraBody.leftFoot.body, auraBody.leftFoot.size, 0.0f, 0.01f).empty() ||
                 !aura::physics::floorContactPoints(auraBody.rightFoot.body, auraBody.rightFoot.size, 0.0f, 0.01f).empty();
-            auditOperation("correctWaistPositionWithFloorContact", [&] { aura::body::correctWaistPositionWithFloorContact(auraBody, connection.constraint, eitherFootTouchesFloor); });
+            positionOperation("correctWaistPositionWithFloorContact", [&] { aura::body::correctWaistPositionWithFloorContact(auraBody, connection.constraint, eitherFootTouchesFloor); });
             for (int k = 0; k < aura::body::jointVelocityIterations; ++k) {
                 anchorOperation("correctJointVelocity", [&] { aura::body::correctJointVelocity(a, b, connection.constraint); });
-                auditOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
+                angularOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
             }
             return;
         }
@@ -1115,12 +1254,12 @@ int main(int argc, char **argv) {
             if (log) neckSample("A");
             auditOperation("correctNeckAngleAroundPivot", [&] { aura::body::correctNeckAngleAroundPivot(auraBody, skeleton, connection.constraint); });
             if (log) neckSample("B");
-            auditOperation("correctNeckPositionAsSubtree", [&] { aura::body::correctNeckPositionAsSubtree(auraBody, connection.constraint); });
+            positionOperation("correctNeckPositionAsSubtree", [&] { aura::body::correctNeckPositionAsSubtree(auraBody, connection.constraint); });
             if (log) neckSample("C");
             for (int i = 1; i <= aura::body::jointVelocityIterations; ++i) {
                 anchorOperation("correctNeckAnchorVelocityAsSubtree", [&] { aura::body::correctNeckAnchorVelocityAsSubtree(auraBody, connection.constraint); });
                 if (log) neckSample(("D" + std::to_string(i)).c_str());
-                auditOperation("correctNeckAngularVelocityAsSubtree", [&] { aura::body::correctNeckAngularVelocityAsSubtree(auraBody, connection.constraint); });
+                angularOperation("correctNeckAngularVelocityAsSubtree", [&] { aura::body::correctNeckAngularVelocityAsSubtree(auraBody, connection.constraint); });
                 if (log) neckSample(("E" + std::to_string(i)).c_str());
             }
             return;
@@ -1136,24 +1275,24 @@ int main(int argc, char **argv) {
             if (headPivot) auditOperation("correctHeadAngleAroundPivot", [&] { aura::body::correctHeadAngleAroundPivot(auraBody, skeleton, connection.constraint); });
             else auditOperation("correctJointAngle", [&] { aura::body::correctJointAngle(a, b, connection.constraint); });
             if (log) headSample("B");
-            if (headLeafPosition) auditOperation("correctHeadPositionAsLeaf", [&] { aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint); });
-            else auditOperation("correctJointPosition", [&] { aura::body::correctJointPosition(a, b, connection.constraint); });
+            if (headLeafPosition) positionOperation("correctHeadPositionAsLeaf", [&] { aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint); });
+            else positionOperation("correctJointPosition", [&] { aura::body::correctJointPosition(a, b, connection.constraint); });
             if (log) headSample("C");
             for (int velocityIteration = 1; velocityIteration <= aura::body::jointVelocityIterations; ++velocityIteration) {
                 anchorOperation("correctJointVelocity", [&] { aura::body::correctJointVelocity(a, b, connection.constraint); });
                 if (log) headSample(("D" + std::to_string(velocityIteration)).c_str());
-                auditOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
+                angularOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
                 if (log) headSample(("E" + std::to_string(velocityIteration)).c_str());
             }
             return;
         }
         if (headPivot && &connection.constraint == &skeleton.head) {
             auditOperation("correctHeadAngleAroundPivot", [&] { aura::body::correctHeadAngleAroundPivot(auraBody, skeleton, connection.constraint); });
-            if (headLeafPosition) auditOperation("correctHeadPositionAsLeaf", [&] { aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint); });
-            else auditOperation("correctJointPosition", [&] { aura::body::correctJointPosition(a, b, connection.constraint); });
+            if (headLeafPosition) positionOperation("correctHeadPositionAsLeaf", [&] { aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint); });
+            else positionOperation("correctJointPosition", [&] { aura::body::correctJointPosition(a, b, connection.constraint); });
             for (int k = 0; k < aura::body::jointVelocityIterations; ++k) {
                 anchorOperation("correctJointVelocity", [&] { aura::body::correctJointVelocity(a, b, connection.constraint); });
-                auditOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
+                angularOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
             }
             return;
         }
@@ -1162,12 +1301,12 @@ int main(int argc, char **argv) {
             if (log) shoulderSample("A");
             auditOperation("correctLeftShoulderAngleAroundPivot", [&] { aura::body::correctLeftShoulderAngleAroundPivot(auraBody, skeleton, connection.constraint); });
             if (log) shoulderSample("B");
-            auditOperation("correctLeftShoulderPositionAsSubtree", [&] { aura::body::correctLeftShoulderPositionAsSubtree(auraBody, connection.constraint); });
+            positionOperation("correctLeftShoulderPositionAsSubtree", [&] { aura::body::correctLeftShoulderPositionAsSubtree(auraBody, connection.constraint); });
             if (log) shoulderSample("C");
             for (int i = 1; i <= aura::body::jointVelocityIterations; ++i) {
                 anchorOperation("correctLeftShoulderAnchorVelocityAsSubtree", [&] { aura::body::correctLeftShoulderAnchorVelocityAsSubtree(auraBody, connection.constraint); });
                 if (log) shoulderSample(("D" + std::to_string(i)).c_str());
-                auditOperation("correctLeftShoulderAngularVelocityAsSubtree", [&] { aura::body::correctLeftShoulderAngularVelocityAsSubtree(auraBody, connection.constraint); });
+                angularOperation("correctLeftShoulderAngularVelocityAsSubtree", [&] { aura::body::correctLeftShoulderAngularVelocityAsSubtree(auraBody, connection.constraint); });
                 if (log) shoulderSample(("E" + std::to_string(i)).c_str());
             }
             return;
@@ -1178,11 +1317,11 @@ int main(int argc, char **argv) {
                 : &connection.constraint == &skeleton.leftHip
                     ? aura::body::MajorBodyBranch3D::LeftHip : aura::body::MajorBodyBranch3D::RightHip;
             auditOperation("correctBranchAngleAroundPivot", [&] { aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch); });
-            auditOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+            positionOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             for (int k = 0; k < aura::body::jointVelocityIterations; ++k) {
                 if (!(rightLegLocalAnchors && (branch == aura::body::MajorBodyBranch3D::RightHip || branch == aura::body::MajorBodyBranch3D::RightKnee)))
                     anchorOperation("correctBranchAnchorVelocityAsSubtree", [&] { aura::body::correctBranchAnchorVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
-                auditOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+                angularOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             }
             return;
         }
@@ -1192,12 +1331,12 @@ int main(int argc, char **argv) {
             if (log) kneeSample("before");
             auditOperation("correctRightKneeAngleAroundPivot", [&] { aura::body::correctRightKneeAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightAnkle); });
             if (log) kneeSample("afterAngle");
-            auditOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+            positionOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             if (log) kneeSample("afterPosition");
             for (int k = 0; k < aura::body::jointVelocityIterations; ++k) {
                 if (!(rightLegLocalAnchors && (branch == aura::body::MajorBodyBranch3D::RightHip || branch == aura::body::MajorBodyBranch3D::RightKnee)))
                     anchorOperation("correctBranchAnchorVelocityAsSubtree", [&] { aura::body::correctBranchAnchorVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
-                auditOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+                angularOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             }
             if (log) kneeSample("afterVelocity");
             return;
@@ -1212,18 +1351,18 @@ int main(int argc, char **argv) {
             else auditOperation("correctJointAngle", [&] { aura::body::correctJointAngle(a, b, connection.constraint); });
             wristSample(elbow ? "B" : "F");
             if (elbow && rightElbowSubtree)
-                auditOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
-            else auditOperation("correctJointPosition", [&] { aura::body::correctJointPosition(a, b, connection.constraint); });
+                positionOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+            else positionOperation("correctJointPosition", [&] { aura::body::correctJointPosition(a, b, connection.constraint); });
             wristSample(elbow ? "C" : "G");
             // Expand the same velocity loop to measure each pair without changing it.
             for (int i = 1; i <= aura::body::jointVelocityIterations; ++i) {
                 if (elbow && rightElbowSubtree) {
                     if (!(rightLegLocalAnchors && (branch == aura::body::MajorBodyBranch3D::RightHip || branch == aura::body::MajorBodyBranch3D::RightKnee)))
                     anchorOperation("correctBranchAnchorVelocityAsSubtree", [&] { aura::body::correctBranchAnchorVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
-                    auditOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+                    angularOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
                 } else {
                     anchorOperation("correctJointVelocity", [&] { aura::body::correctJointVelocity(a, b, connection.constraint); });
-                    auditOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
+                    angularOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
                 }
                 wristSample(((elbow ? "D" : "H") + std::to_string(i)).c_str());
             }
@@ -1233,11 +1372,11 @@ int main(int argc, char **argv) {
         if (rightElbowSubtree && &connection.constraint == &skeleton.rightElbow) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightElbow;
             auditOperation("correctRightElbowAngleAroundPivot", [&] { aura::body::correctRightElbowAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightWrist); });
-            auditOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+            positionOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             for (int k = 0; k < aura::body::jointVelocityIterations; ++k) {
                 if (!(rightLegLocalAnchors && (branch == aura::body::MajorBodyBranch3D::RightHip || branch == aura::body::MajorBodyBranch3D::RightKnee)))
                     anchorOperation("correctBranchAnchorVelocityAsSubtree", [&] { aura::body::correctBranchAnchorVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
-                auditOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+                angularOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             }
             return;
         }
@@ -1246,20 +1385,20 @@ int main(int argc, char **argv) {
             const auto branch = elbow ? aura::body::MajorBodyBranch3D::LeftElbow : aura::body::MajorBodyBranch3D::LeftKnee;
             const auto &descendant = elbow ? skeleton.leftWrist : skeleton.leftAnkle;
             auditOperation("correctLimbAngleAroundPivot", [&] { aura::body::correctLimbAngleAroundPivot(auraBody, skeleton, connection.constraint, descendant, branch); });
-            auditOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+            positionOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             for (int k = 0; k < aura::body::jointVelocityIterations; ++k) {
                 if (!(rightLegLocalAnchors && (branch == aura::body::MajorBodyBranch3D::RightHip || branch == aura::body::MajorBodyBranch3D::RightKnee)))
                     anchorOperation("correctBranchAnchorVelocityAsSubtree", [&] { aura::body::correctBranchAnchorVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
-                auditOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
+                angularOperation("correctBranchAngularVelocityAsSubtree", [&] { aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             }
             return;
         }
         if (!connection.floorAware) {
             auditOperation("correctJointAngle", [&] { aura::body::correctJointAngle(a, b, connection.constraint); });
-            auditOperation("correctJointPosition", [&] { aura::body::correctJointPosition(a, b, connection.constraint); });
+            positionOperation("correctJointPosition", [&] { aura::body::correctJointPosition(a, b, connection.constraint); });
             for (int k = 0; k < aura::body::jointVelocityIterations; ++k) {
                 anchorOperation("correctJointVelocity", [&] { aura::body::correctJointVelocity(a, b, connection.constraint); });
-                auditOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
+                angularOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
             }
             return;
         }
@@ -1267,14 +1406,14 @@ int main(int argc, char **argv) {
         auditOperation("correctJointAngle", [&] { aura::body::correctJointAngle(a, b, connection.constraint); });
         if (logAnkle) ankleSample("E");
         const bool touchingFloor = !aura::physics::floorContactPoints(b.body, b.size, 0.0f, 0.01f).empty();
-        auditOperation("correctJointPositionWithFloorContact", [&] { aura::body::correctJointPositionWithFloorContact(a, b, connection.constraint, touchingFloor); });
+        positionOperation("correctJointPositionWithFloorContact", [&] { aura::body::correctJointPositionWithFloorContact(a, b, connection.constraint, touchingFloor); });
         if (logAnkle) ankleSample("F");
         // Same four corrections as solveJointVelocityConstraints; sample each pair.
         for (int i = 1; i <= aura::body::jointVelocityIterations; ++i) {
             if (!(rightLegLocalAnchors && &connection.constraint == &skeleton.rightAnkle))
                 anchorOperation("correctJointVelocity", [&] { aura::body::correctJointVelocity(a, b, connection.constraint); });
             if (logAnkle) ankleSample(("G" + std::to_string(i) + "anchor").c_str());
-            auditOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
+            angularOperation("correctJointAngularVelocity", [&] { aura::body::correctJointAngularVelocity(a, b, connection.constraint); });
             if (logAnkle) ankleSample(("G" + std::to_string(i)).c_str());
         }
     };
@@ -1407,6 +1546,63 @@ int main(int argc, char **argv) {
         std::cout << "energyBalance,time,iteration,sweep,object,operation,beforeKinetic,afterKinetic\n";
         std::cout << "energyDecomposition,time,iteration,sweep,joint,beforeKinetic,afterParentRootImpulse,afterDescendantPropagation\n";
     }
+    bool componentPositionReplayDone = false;
+    const auto replayComponentPositions = [&] {
+        auto copy = auraBody;
+        const auto old = copy;
+        const auto sample = [&](const char *stage) {
+            const auto gap = [&](auto &a, auto &b, const auto &joint) {
+                return speed(aura::body::localToWorldPoint(b, joint.localAnchorB) - aura::body::localToWorldPoint(a, joint.localAnchorA));
+            };
+            std::cout << "componentPositionReplay," << stage << ','
+                      << aura::physics::lowestPoint(copy.rightHand.body, copy.rightHand.size).y << ','
+                      << gap(copy.rightForearm, copy.rightHand, skeleton.rightWrist) << ','
+                      << gap(copy.rightUpperArm, copy.rightForearm, skeleton.rightElbow) << '\n';
+        };
+        sample("afterFloor");
+        const auto wrist = aura::body::correctJointPositionWithComponents(copy, skeleton, copy.rightForearm, copy.rightHand, skeleton.rightWrist);
+        sample("afterWrist");
+        const auto elbow = aura::body::correctJointPositionWithComponents(copy, skeleton, copy.rightUpperArm, copy.rightForearm, skeleton.rightElbow);
+        sample("afterElbow");
+        const std::array beforeParts{&old.head,&old.neck,&old.torso,&old.pelvis,&old.leftUpperArm,&old.leftForearm,&old.leftHand,
+            &old.rightUpperArm,&old.rightForearm,&old.rightHand,&old.leftThigh,&old.leftShin,&old.leftFoot,&old.rightThigh,&old.rightShin,&old.rightFoot};
+        const std::array afterParts{&copy.head,&copy.neck,&copy.torso,&copy.pelvis,&copy.leftUpperArm,&copy.leftForearm,&copy.leftHand,
+            &copy.rightUpperArm,&copy.rightForearm,&copy.rightHand,&copy.leftThigh,&copy.leftShin,&copy.leftFoot,&copy.rightThigh,&copy.rightShin,&copy.rightFoot};
+        bool velocitiesUnchanged = true;
+        for (std::size_t i=0;i<beforeParts.size();++i)
+            velocitiesUnchanged = velocitiesUnchanged && (beforeParts[i]->body.velocity-afterParts[i]->body.velocity).lengthSquared()==0 &&
+                (beforeParts[i]->body.angularVelocity-afterParts[i]->body.angularVelocity).lengthSquared()==0;
+        std::cout << "componentPositionReplayChoices," << static_cast<int>(wrist.choice) << ',' << static_cast<int>(elbow.choice)
+                  << ",velocitiesUnchanged=" << velocitiesUnchanged << '\n';
+    };
+    struct FloorFailureCheckpoint {
+        std::array<float, 16> lowest{};
+        aura::math::Vec3 comPosition{};
+        aura::math::Vec3 comVelocity{};
+    };
+    struct FloorFailureIteration {
+        std::array<FloorFailureCheckpoint, 16> afterOwnFloor;
+        FloorFailureCheckpoint afterForward;
+        FloorFailureCheckpoint afterBackward;
+    };
+    bool floorFailureReported = false;
+    FloorFailureCheckpoint beginningOfStep;
+    std::array<FloorFailureIteration, jointIterations> floorFailureIterations;
+    const auto floorFailureCheckpoint = [&] {
+        FloorFailureCheckpoint sample;
+        for (std::size_t i = 0; i < parts.size(); ++i)
+            sample.lowest[i] = aura::physics::lowestPoint(parts[i]->body, parts[i]->size).y;
+        sample.comPosition = aura::body::componentCenterOfMass(parts);
+        sample.comVelocity = aura::body::componentCenterOfMassVelocity(parts);
+        return sample;
+    };
+    if (floorFailureDiagnostic)
+        std::cout << std::scientific << std::setprecision(9)
+                  << "Floor failure diagnostic: completed-step tolerance=-0.001, floor=0, contact tolerance=0.01; unchanged all-local 120Hz/16 outer/4 inner, gravity/floor and hip/knee motors ON. A=before integration, B=immediately after this body's floor solve, C/D=after full forward/backward geometry+velocity sweeps, E=end step.\n"
+                  << "record,time,iteration,stage,part,lowestY,comX,comY,comZ,comVX,comVY,comVZ\n";
+    if (handGeometryMomentumDiagnostic)
+        std::cout << std::scientific << std::setprecision(9)
+                  << "Hand geometry/momentum audit: unchanged all-local baseline; trace t=1.508333333 iteration=16; earliest completed-step horizontal momentum change >=0.1 kg m/s. Geometry list names the bodies actually moved.\n";
     // Sample after every complete step, not only at the once-per-second log interval.
     for (int frame = 0; frame < steps; ++frame) {
         diagnosticTime = (frame + 1) * FIXED_DT;
@@ -1414,9 +1610,16 @@ int main(int argc, char **argv) {
         diagnosticIteration = 0;
         diagnosticSweep = "integration";
         energyStage("stepStart");
+        if (handGeometryMomentumDiagnostic) {
+            momentumStages.clear(); momentumOperations.clear(); stepMomentumBefore = wholeMomentum();
+        }
+        const auto beforeMotorsMomentum = handGeometryMomentumDiagnostic ? wholeMomentum() : WholeMomentum{};
+        if (floorFailureDiagnostic && !floorFailureReported) beginningOfStep = floorFailureCheckpoint();
         for (auto &joint: joints) {
             if (joint.motor) aura::body::applyJointMotor(*joint.partA, *joint.partB, joint.constraint);
         }
+        momentumStage(0, "motors", beforeMotorsMomentum);
+        const auto beforeIntegrationMomentum = handGeometryMomentumDiagnostic ? wholeMomentum() : WholeMomentum{};
         for (auto *part: parts) {
             aura::physics::applyForce(part->body, aura::math::Vec3{0.0f, -9.81f, 0.0f} * part->body.mass);
             aura::physics::updateLinearAcceleration(part->body);
@@ -1425,11 +1628,13 @@ int main(int argc, char **argv) {
             auditOperation("integrateLinearMotion", [&] { aura::physics::integrateLinearMotion(part->body, dt); });
             auditOperation("integrateAngularMotion", [&] { aura::physics::integrateAngularMotion(part->body, dt); });
         }
+        momentumStage(0, "integrationGravity", beforeIntegrationMomentum);
         const double stepTime = (frame + 1) * FIXED_DT;
         const bool trace = contactWindow && stepTime >= 0.35 - 1e-9 && stepTime <= 0.40 + 1e-9;
         for (int iteration = 0; iteration < jointIterations; ++iteration) {
             diagnosticIteration = iteration + 1;
             diagnosticSweep = "floor";
+            const auto beforeFloorMomentum = handGeometryMomentumDiagnostic ? wholeMomentum() : WholeMomentum{};
             energyStage("A_beforeFloor");
             if (tracingWrist()) wristSample("start");
             if (tracingAnkle()) ankleSample("A");
@@ -1619,6 +1824,8 @@ int main(int argc, char **argv) {
                 else
                     aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / jointIterations);
                 });
+                if (floorFailureDiagnostic && !floorFailureReported)
+                    floorFailureIterations[iteration].afterOwnFloor[i] = floorFailureCheckpoint();
                 if (tracingEnergy()) {
                     const auto floorAfterY = aura::physics::lowestPoint(part->body, part->size).y;
                     const auto floorAfterCount = aura::physics::floorContactPoints(part->body, part->size, 0.0f, 0.01f).size();
@@ -1641,6 +1848,13 @@ int main(int argc, char **argv) {
                 if (tracingAnkle() && part == &auraBody.rightFoot) ankleSample("B");
                 if (trace) floorDelta[i] = part->body.position - before;
             }
+            momentumStage(iteration + 1, "floor", beforeFloorMomentum);
+            const auto beforeForwardMomentum = handGeometryMomentumDiagnostic ? wholeMomentum() : WholeMomentum{};
+            if (componentPositionReplay && !componentPositionReplayDone && diagnosticIteration == 16 &&
+                std::abs(diagnosticTime - 1.5083333333333333) < 1e-9) {
+                std::cout << std::scientific << std::setprecision(9);
+                replayComponentPositions(); componentPositionReplayDone = true;
+            }
             const auto gapsB = trace ? anchorGaps() : std::array<float, 15>{};
             const auto lowB = trace ? lowestPoints() : std::array<float, 16>{};
             const auto countB = trace ? contactCounts() : std::array<std::size_t, 16>{};
@@ -1652,9 +1866,13 @@ int main(int argc, char **argv) {
                 if (tracingAnkle() && &joint.constraint == &skeleton.rightHip) ankleSample("C");
                 if (tracingAnkle() && &joint.constraint == &skeleton.rightKnee) ankleSample("D");
             }
+            momentumStage(iteration + 1, "jointForwardGeometryVelocity", beforeForwardMomentum);
+            const auto beforeBackwardMomentum = handGeometryMomentumDiagnostic ? wholeMomentum() : WholeMomentum{};
             const auto gapsC = trace ? anchorGaps() : std::array<float, 15>{};
             const auto lowC = trace ? lowestPoints() : std::array<float, 16>{};
             const auto countC = trace ? contactCounts() : std::array<std::size_t, 16>{};
+            if (floorFailureDiagnostic && !floorFailureReported)
+                floorFailureIterations[iteration].afterForward = floorFailureCheckpoint();
             energyStage("C_afterForward");
             velocitySweepSample("afterForwardGeometryVelocity");
             diagnosticSweep = "backward";
@@ -1677,6 +1895,9 @@ int main(int argc, char **argv) {
                     }
                 }
             }
+            if (floorFailureDiagnostic && !floorFailureReported)
+                floorFailureIterations[iteration].afterBackward = floorFailureCheckpoint();
+            momentumStage(iteration + 1, "jointBackwardGeometryVelocity", beforeBackwardMomentum);
             energyStage("D_afterBackward");
             velocitySweepSample("afterBackwardGeometryVelocity");
             if (tracingAnkle()) ankleSample("J");
@@ -1709,6 +1930,54 @@ int main(int argc, char **argv) {
         energyStage("E_endStep");
         observeVelocityMetrics();
         const double time = (frame + 1) * FIXED_DT;
+        if (handGeometryMomentumDiagnostic && !firstMomentumReported) {
+            const auto after = wholeMomentum();
+            const double change = std::hypot(after[0] - stepMomentumBefore[0], after[2] - stepMomentumBefore[2]);
+            if (change >= horizontalMomentumThreshold) {
+                firstMomentumReported = true;
+                std::cout << "firstHorizontalMomentumStep," << time << ',' << change << '\n';
+                for (const auto &row : momentumStages) {
+                    std::cout << "momentumStage," << time << ',' << row.iteration << ',' << row.stage;
+                    for (double x : row.before) std::cout << ',' << x;
+                    for (double x : row.after) std::cout << ',' << x;
+                    std::cout << ',' << row.after[0] - row.before[0] << ',' << row.after[2] - row.before[2] << '\n';
+                }
+                for (const auto &row : momentumOperations) {
+                    std::cout << "momentumOperation," << time << ',' << row.iteration << ',' << row.sweep << ',' << row.object << ',' << row.operation;
+                    for (double x : row.before) std::cout << ',' << x;
+                    for (double x : row.after) std::cout << ',' << x;
+                    std::cout << ',' << row.after[0] - row.before[0] << ',' << row.after[2] - row.before[2] << '\n';
+                }
+            }
+        }
+        if (floorFailureDiagnostic) {
+            const auto end = floorFailureCheckpoint();
+            std::cout << "bodyCOM," << time << ',' << end.comPosition.x << ',' << end.comPosition.y << ',' << end.comPosition.z
+                      << ',' << end.comVelocity.x << ',' << end.comVelocity.y << ',' << end.comVelocity.z << '\n';
+            if (!floorFailureReported && *std::min_element(end.lowest.begin(), end.lowest.end()) < -0.001f) {
+                floorFailureReported = true;
+                for (std::size_t i = 0; i < parts.size(); ++i) {
+                    if (end.lowest[i] >= -0.001f) continue;
+                    const auto *part = parts[i];
+                    std::cout << "firstFloorFailure," << time << ',' << part->name << ',' << end.lowest[i]
+                              << ',' << aura::physics::floorContactPoints(part->body, part->size, 0.0f, 0.01f).size() << '\n';
+                    const auto emit = [&](int iteration, const char *stage, const FloorFailureCheckpoint &sample) {
+                        std::cout << "floorFailureStage," << time << ',' << iteration << ',' << stage << ',' << part->name
+                                  << ',' << sample.lowest[i] << ',' << sample.comPosition.x << ',' << sample.comPosition.y
+                                  << ',' << sample.comPosition.z << ',' << sample.comVelocity.x << ',' << sample.comVelocity.y
+                                  << ',' << sample.comVelocity.z << '\n';
+                    };
+                    emit(0, "A_beginStep", beginningOfStep);
+                    for (int iteration = 0; iteration < jointIterations; ++iteration) {
+                        const auto &samples = floorFailureIterations[iteration];
+                        emit(iteration + 1, "B_afterOwnFloor", samples.afterOwnFloor[i]);
+                        emit(iteration + 1, "C_afterForward", samples.afterForward);
+                        emit(iteration + 1, "D_afterBackward", samples.afterBackward);
+                    }
+                    emit(jointIterations, "E_endStep", end);
+                }
+            }
+        }
         for (const auto *part: parts) {
             const auto &b = part->body;
             const auto &q = b.orientation;
@@ -1813,6 +2082,15 @@ int main(int argc, char **argv) {
                   << " maxLocalEnergyDisagreement=" << maxLocalEnergyDisagreement << " suspiciousAnchorImpulses=" << suspiciousAnchorImpulses
                   << " suspiciousLocalImpulses=" << suspiciousLocalImpulses << " worstAnchorEnergyRise=" << worstAnchorEnergyRise << '\n';
     }
+    if (handGeometryMomentumDiagnostic) {
+        const std::array categories{"integrationGravity", "floor", "localAnchor", "angularLimitVelocity", "geometryVelocityCompensation"};
+        for (std::size_t i = 0; i < categories.size(); ++i)
+            std::cout << "momentumCumulative," << categories[i] << ',' << cumulativeMomentum[i][0] << ','
+                      << cumulativeMomentum[i][1] << ',' << cumulativeMomentum[i][2] << ',' << cumulativeAbsoluteHorizontal[i] << '\n';
+    }
+    if (angularMomentumDiagnostic && !firstAngularMomentumReported)
+        std::cout << "angularMomentumDiagnostic,no operation exceeded 0.01 kg m/s horizontal momentum change\n";
+    std::cout << "Position/angular policy: componentPositions=" << componentPositions << " localAngularLimits=" << localAngularLimits << '\n';
     // This diagnostic reports threshold violations without declaring the baseline stable.
     return finite ? 0 : 1;
 }

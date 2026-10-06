@@ -14,6 +14,7 @@
 #include "aura/body/JointConstraint.hpp"
 #include "aura/body/JointGeometry.hpp"
 #include "aura/body/LocalJointVelocity.hpp"
+#include "aura/body/ComponentPosition.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Collision.hpp"
 #include "aura/physics/Forces.hpp"
@@ -434,21 +435,7 @@ int main() {
             if (std::isfinite(before) && std::isfinite(after) && after - before > std::max(0.001, std::abs(before) * 1e-5))
                 std::cerr << "Anchor energy injection joint=" << connection.name << " time=" << simulatedTime
                           << " before=" << before << " after=" << after << '\n';
-            // Retain the existing angular-limit velocity policy, including propagation.
-            if (&joint == &skeleton.neck)
-                aura::body::correctNeckAngularVelocityAsSubtree(auraBody, joint);
-            else if (&joint == &skeleton.leftShoulder)
-                aura::body::correctLeftShoulderAngularVelocityAsSubtree(auraBody, joint);
-            else if (&joint == &skeleton.rightShoulder || &joint == &skeleton.leftHip || &joint == &skeleton.rightHip ||
-                     &joint == &skeleton.leftElbow || &joint == &skeleton.rightElbow || &joint == &skeleton.leftKnee || &joint == &skeleton.rightKnee) {
-                const auto branch = &joint == &skeleton.rightShoulder ? aura::body::MajorBodyBranch3D::RightShoulder :
-                    &joint == &skeleton.leftHip ? aura::body::MajorBodyBranch3D::LeftHip :
-                    &joint == &skeleton.rightHip ? aura::body::MajorBodyBranch3D::RightHip :
-                    &joint == &skeleton.leftElbow ? aura::body::MajorBodyBranch3D::LeftElbow :
-                    &joint == &skeleton.rightElbow ? aura::body::MajorBodyBranch3D::RightElbow :
-                    &joint == &skeleton.leftKnee ? aura::body::MajorBodyBranch3D::LeftKnee : aura::body::MajorBodyBranch3D::RightKnee;
-                aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, joint, branch);
-            } else aura::body::correctJointAngularVelocity(a, b, joint);
+            aura::body::correctLocalJointAngularLimitVelocity(a, b, joint);
         }
     };
     const auto solveConnection = [&](BodyJoint &connection) {
@@ -456,28 +443,25 @@ int main() {
         auto &b = *connection.partB;
         if (&connection.constraint == &skeleton.waist) {
             aura::body::correctJointAngle(a, b, connection.constraint);
-            const bool eitherFootTouchesFloor =
-                !aura::physics::floorContactPoints(auraBody.leftFoot.body, auraBody.leftFoot.size, 0.0f, 0.01f).empty() ||
-                !aura::physics::floorContactPoints(auraBody.rightFoot.body, auraBody.rightFoot.size, 0.0f, 0.01f).empty();
-            aura::body::correctWaistPositionWithFloorContact(auraBody, connection.constraint, eitherFootTouchesFloor);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.neck) {
             aura::body::correctNeckAngleAroundPivot(auraBody, skeleton, connection.constraint);
-            aura::body::correctNeckPositionAsSubtree(auraBody, connection.constraint);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.head) {
             aura::body::correctHeadAngleAroundPivot(auraBody, skeleton, connection.constraint);
-            aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.leftShoulder) {
             aura::body::correctLeftShoulderAngleAroundPivot(auraBody, skeleton, connection.constraint);
-            aura::body::correctLeftShoulderPositionAsSubtree(auraBody, connection.constraint);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
@@ -489,21 +473,21 @@ int main() {
                 : &connection.constraint == &skeleton.leftHip
                     ? aura::body::MajorBodyBranch3D::LeftHip : aura::body::MajorBodyBranch3D::RightHip;
             aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch);
-            aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.rightKnee) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightKnee;
             aura::body::correctRightKneeAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightAnkle);
-            aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.rightElbow) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightElbow;
             aura::body::correctRightElbowAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightWrist);
-            aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
@@ -512,19 +496,18 @@ int main() {
             const auto branch = elbow ? aura::body::MajorBodyBranch3D::LeftElbow : aura::body::MajorBodyBranch3D::LeftKnee;
             const auto &descendant = elbow ? skeleton.leftWrist : skeleton.leftAnkle;
             aura::body::correctLimbAngleAroundPivot(auraBody, skeleton, connection.constraint, descendant, branch);
-            aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         if (!connection.floorAware) {
             aura::body::correctJointAngle(a, b, connection.constraint);
-            aura::body::correctJointPosition(a, b, connection.constraint);
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         aura::body::correctJointAngle(a, b, connection.constraint);
-        const bool touchingFloor = !aura::physics::floorContactPoints(b.body, b.size, 0.0f, 0.01f).empty();
-        aura::body::correctJointPositionWithFloorContact(a, b, connection.constraint, touchingFloor);
+        aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
         solveVelocityLocally(connection);
     };
 

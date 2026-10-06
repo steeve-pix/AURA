@@ -51,5 +51,40 @@ int main() {
         const auto oldAnchorOffsetA = oldA.body.orientation.rotate(joint.localAnchorA);
         check((a.body.orientation.rotate(joint.localAnchorA) - oldAnchorOffsetA).length() == 0, "orientation unchanged");
     }
+    for (int sign : {-1, 1}) {
+        body::BodyPart3D a, b;
+        a.body.orientation = math::Quaternion::fromAxisAngle({0,1,0},0.7f);
+        b.body.orientation = (a.body.orientation * math::Quaternion::fromAxisAngle({1,0,0},sign*1.0f)).normalized();
+        a.body.momentOfInertia = {1,2,3}; b.body.momentOfInertia = {2,3,4};
+        a.body.velocity = {1,2,3}; b.body.velocity = {3,2,1};
+        const auto axis = a.body.orientation.rotate({1,0,0});
+        b.body.angularVelocity = axis * (sign*3.0f);
+        body::Joint3D joint;
+        joint.minAngle = -0.8f; joint.maxAngle = 0.8f;
+        const auto oldA = a.body, oldB = b.body;
+        const auto beforeA = physics::mechanicalState(a.body,{},{}), beforeB = physics::mechanicalState(b.body,{},{});
+        const auto result = body::correctLocalJointAngularLimitVelocity(a,b,joint);
+        const auto afterA = physics::mechanicalState(a.body,{},{}), afterB = physics::mechanicalState(b.body,{},{});
+        check(std::abs(result.projectedSpeedAfter)<1e-5f,"outward hinge omega removed at either limit");
+        check((a.body.velocity-oldA.velocity).lengthSquared()==0 && (b.body.velocity-oldB.velocity).lengthSquared()==0,
+              "angular impulse leaves all linear velocities unchanged");
+        check((afterA.angularMomentum+afterB.angularMomentum-beforeA.angularMomentum-beforeB.angularMomentum).length()<1e-5f,
+              "paired angular impulse preserves world angular momentum");
+        check(std::abs(result.predictedWork-result.measuredAngularWork)<1e-5,"angular work prediction agrees");
+        check(std::abs(afterA.energy()+afterB.energy()-beforeA.energy()-beforeB.energy()-result.measuredAngularWork-result.quadraticEnergy)<1e-5,
+              "angular work audit closes energy change");
+        check(afterA.energy()+afterB.energy()<=beforeA.energy()+beforeB.energy()+1e-5,"limit impulse dissipates kinetic energy");
+        b.body.angularVelocity = a.body.angularVelocity - axis*(sign*2.0f);
+        const auto inwardA=a.body.angularVelocity, inwardB=b.body.angularVelocity;
+        body::correctLocalJointAngularLimitVelocity(a,b,joint);
+        check((a.body.angularVelocity-inwardA).lengthSquared()==0 && (b.body.angularVelocity-inwardB).lengthSquared()==0,
+              "inward motion at limit remains free");
+        b.body.orientation=a.body.orientation;
+        b.body.angularVelocity=axis*3;
+        const auto insideA=a.body.angularVelocity, insideB=b.body.angularVelocity;
+        body::correctLocalJointAngularLimitVelocity(a,b,joint);
+        check((a.body.angularVelocity-insideA).lengthSquared()==0 && (b.body.angularVelocity-insideB).lengthSquared()==0,
+              "inside-range hinge is not braked");
+    }
     return passed ? 0 : 1;
 }

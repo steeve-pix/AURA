@@ -137,8 +137,10 @@ cause. Keep diagnostic output focused enough to interpret.
 headless investigation, with documented configuration differences. If changing
 simulation ordering or setup, check both paths and keep intended differences
 explicit. Do not extract a new simulation framework solely to remove duplication.
-Use `--all-local-anchors` for the current application configuration (full humanoid
-hierarchy, local two-body anchor impulses, hip/knee motors only). Use
+Use `--local-angular-limits` for the current application configuration (full humanoid
+hierarchy, contact-aware component positions, local two-body anchor and angular-limit
+impulses, hip/knee motors only). `--all-local-anchors` retains the earlier configuration
+with legacy position and angular-limit handling. Use
 `--left-limb-components` for the previous subtree-velocity baseline; without either
 flag the diagnostic retains the former pairwise left elbow/knee baseline.
 
@@ -167,14 +169,50 @@ snapshot, per-joint speeds, kinetic energy, and each impulse's work/energy audit
 Its maximum anchor speed decreases from 31.279 to 0.1372 m/s, with decreasing
 energy. This is isolated-pose evidence, not a full-body live stability result.
 
-The application now uses local two-body anchor impulses for all 15 joints. The
-previous geometry, contact, motor, angular-limit propagation, 16 outer iterations,
-and four inner velocity iterations remain unchanged. Legacy subtree anchor helpers
+The application uses local two-body anchor and angular-limit impulses for all 15
+joints, with 16 outer iterations and four inner velocity iterations. Angular-limit
+impulses are equal and opposite in world space and change only endpoint angular
+velocities. Legacy subtree anchor helpers
 remain for baseline diagnostics. `--all-local-anchors` audits every anchor correction
 and records maximum anchor speed after each existing forward/backward sweep (these
 sweeps still include geometry). The 10-second run stays finite with no gap/limit
 threshold failures and no detected anchor-energy injection, but reaches body Y=-1.73
 and position distance about 62. This is not physically acceptable full-body stability.
+
+`--floor-failure-diagnostic` runs the same all-local configuration unchanged,
+records mass-weighted whole-body COM position/velocity at every completed step,
+and saves all outer-iteration floor/forward/backward checkpoints for the first
+completed-step penetration below -0.001. The first violation is the right hand
+at 1.508333 s: its own floor solve restores Y=0, and subsequent geometry sweeps
+reintroduce penetration. End-run COM radius about 60.77 explains most of the
+61.98-unit body position radius as bulk motion, not attachment separation.
+
+`--hand-geometry-momentum` traces each geometry operation at 1.508333 s, outer
+iteration 16, including actual moved bodies and cut-component coverage. Forward
+right-wrist pair translation and backward right-elbow subtree translation each
+push the hand down about 0.007902 units. It also audits whole-body momentum by
+stage/category without changing physics. The earliest completed-step horizontal
+change >=0.1 kg m/s occurs at 0.366667 s in floor passes. Over ten seconds, local
+anchor impulses conserve net momentum to numerical noise, while the retained
+angular-limit propagation and geometry velocity compensation change net momentum
+substantially. Do not attribute the eventual launch solely to that first contact.
+
+`correctJointPositionWithComponents` prefers translating the child cut-component,
+then the opposite component, provided no world-space lowest point acquires or
+worsens floor penetration. Contact release upward is allowed. It modifies positions
+only, uses a 1e-6 roundoff allowance at Y=0, and reports `MultipleContacts` without
+moving either component when both candidates are blocked. This is a flat-floor
+geometric policy, not a general collision solver.
+
+`--component-position-replay` applies this policy to the copied 1.508333 s hand
+checkpoint and verifies unchanged velocities. `--angular-momentum-diagnostic`
+enables component positions but retains old angular-limit handling to capture its
+first horizontal momentum change above 0.01 kg m/s: neck at 0.458333 s, with
+delta Pz about -1.403594. `--local-angular-limits` enables the current local angular
+impulses. Its ten-second run stays finite, has no gap/limit threshold failures,
+minimum Y=-4.77e-7, and maximum position distance 13.33. Angular-limit operations
+change net linear momentum by zero. Geometry velocity compensation remains
+unchanged and still changes net momentum; do not claim general physical stability.
 
 In reviews, identify what works and distinguish **must fix**, **should improve**,
 and **optional** findings. Explain their observable consequences. Preserve the

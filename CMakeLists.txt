@@ -47,6 +47,7 @@ add_executable(aura
         src/main.cpp
         src/body/BodyPart3D.cpp
         src/body/ComponentMass.cpp
+            src/body/ComponentPosition.cpp
             src/body/ComponentVelocity.cpp
             src/body/LocalJointVelocity.cpp
         src/body/AuraBody3D.cpp
@@ -79,6 +80,15 @@ if (BUILD_TESTING)
     add_executable(aura_mechanical_state_tests tests/mechanical_state_tests.cpp)
     target_link_libraries(aura_mechanical_state_tests PRIVATE aura_physics)
     add_test(NAME mechanical_state COMMAND aura_mechanical_state_tests)
+
+    add_executable(aura_component_position_tests
+            tests/component_position_tests.cpp
+            src/body/ComponentPosition.cpp
+            src/body/JointGeometry.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp)
+    target_link_libraries(aura_component_position_tests PRIVATE aura_physics)
+    add_test(NAME component_position COMMAND aura_component_position_tests)
 
     add_executable(aura_local_joint_velocity_tests
             tests/local_joint_velocity_tests.cpp
@@ -218,6 +228,7 @@ if (BUILD_TESTING)
     add_executable(aura_full_body_diagnostics
             tests/full_body_diagnostics.cpp
             src/body/ComponentMass.cpp
+            src/body/ComponentPosition.cpp
             src/body/ComponentVelocity.cpp
             src/body/LocalJointVelocity.cpp
             src/body/AuraBody3D.cpp
