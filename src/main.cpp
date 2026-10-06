@@ -486,13 +486,45 @@ int main() {
         if (&connection.constraint == &skeleton.neck) {
             aura::body::correctNeckAngleAroundPivot(auraBody, connection.constraint);
             aura::body::correctNeckPositionAsSubtree(auraBody, connection.constraint);
-            aura::body::solveJointVelocityConstraints(a, b, connection.constraint);
+            aura::body::solveNeckSubtreeVelocityConstraints(auraBody, connection.constraint);
             return;
         }
         if (&connection.constraint == &skeleton.head) {
             aura::body::correctHeadAngleAroundPivot(auraBody, connection.constraint);
             aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint);
             aura::body::solveJointVelocityConstraints(a, b, connection.constraint);
+            return;
+        }
+        if (&connection.constraint == &skeleton.leftShoulder) {
+            aura::body::correctLeftShoulderAngleAroundPivot(auraBody, connection.constraint);
+            aura::body::correctLeftShoulderPositionAsSubtree(auraBody, connection.constraint);
+            aura::body::solveLeftShoulderSubtreeVelocityConstraints(auraBody, connection.constraint);
+            return;
+        }
+        if (&connection.constraint == &skeleton.rightShoulder ||
+            &connection.constraint == &skeleton.leftHip ||
+            &connection.constraint == &skeleton.rightHip) {
+            const auto branch = &connection.constraint == &skeleton.rightShoulder
+                ? aura::body::MajorBodyBranch3D::RightShoulder
+                : &connection.constraint == &skeleton.leftHip
+                    ? aura::body::MajorBodyBranch3D::LeftHip : aura::body::MajorBodyBranch3D::RightHip;
+            aura::body::correctBranchAngleAroundPivot(auraBody, connection.constraint, branch);
+            aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
+            aura::body::solveBranchSubtreeVelocityConstraints(auraBody, connection.constraint, branch);
+            return;
+        }
+        if (&connection.constraint == &skeleton.rightKnee) {
+            constexpr auto branch = aura::body::MajorBodyBranch3D::RightKnee;
+            aura::body::correctRightKneeAngleAroundPivot(auraBody, connection.constraint, skeleton.rightAnkle);
+            aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
+            aura::body::solveBranchSubtreeVelocityConstraints(auraBody, connection.constraint, branch);
+            return;
+        }
+        if (&connection.constraint == &skeleton.rightElbow) {
+            constexpr auto branch = aura::body::MajorBodyBranch3D::RightElbow;
+            aura::body::correctRightElbowAngleAroundPivot(auraBody, connection.constraint, skeleton.rightWrist);
+            aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
+            aura::body::solveBranchSubtreeVelocityConstraints(auraBody, connection.constraint, branch);
             return;
         }
         if (!connection.floorAware) {
@@ -527,7 +559,10 @@ int main() {
             }
             for (int iteration = 0; iteration < jointIterations; ++iteration) {
                 for (auto *part: parts) {
-                    aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / jointIterations);
+                    if (part == &auraBody.rightShin)
+                        aura::body::resolveRightShinFloorWithFootMotion(auraBody, dt / jointIterations);
+                    else
+                        aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / jointIterations);
                 }
                 for (auto &joint: joints) solveConnection(joint);
                 for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i) solveConnection(joints[i]);

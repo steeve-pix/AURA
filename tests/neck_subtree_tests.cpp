@@ -1,10 +1,12 @@
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 
 #include "aura/body/AuraBodyConstraint.hpp"
 #include "aura/body/AuraSkeleton3D.hpp"
 #include "aura/body/JointGeometry.hpp"
+#include "aura/physics/BodyGeometry.hpp"
 
 int main() {
     bool passed = true;
@@ -72,7 +74,44 @@ int main() {
                   (body.head.body.angularVelocity - headBefore.angularVelocity).length() == 0.0f &&
                   (body.neck.body.angularVelocity - neckBefore.angularVelocity).length() == 0.0f,
                   "geometric subtree corrections leave velocities unchanged");
+
+            const auto relativeHeadVelocity = [&] {
+                return aura::physics::velocityAtWorldPoint(body.head.body,
+                           aura::body::localToWorldPoint(body.head, skeleton.head.localAnchorB)) -
+                       aura::physics::velocityAtWorldPoint(body.neck.body,
+                           aura::body::localToWorldPoint(body.neck, skeleton.head.localAnchorA));
+            };
+            const auto headVelocityBefore = relativeHeadVelocity();
+            const auto relativeOmegaBefore = body.head.body.angularVelocity - body.neck.body.angularVelocity;
+            const auto neckOmegaBefore = body.neck.body.angularVelocity;
+            const auto headPositionBeforeVelocity = body.head.body.position;
+            const auto neckPositionBeforeVelocity = body.neck.body.position;
+            const auto internalGap = headGap();
+            aura::body::solveNeckSubtreeVelocityConstraints(body, skeleton.neck);
+            const auto deltaOmega = body.neck.body.angularVelocity - neckOmegaBefore;
+            check((body.head.body.angularVelocity - body.neck.body.angularVelocity - relativeOmegaBefore).length() < tolerance,
+                  "neck velocity corrections preserve descendant relative angular velocity");
+            // Rigid velocity fields evaluated at separated anchor points differ by deltaOmega x gap.
+            check((relativeHeadVelocity() - headVelocityBefore - deltaOmega.cross(internalGap)).length() < tolerance,
+                  "descendant anchor velocity changes only by the rigid field across its existing gap");
+            check((body.head.body.position - headPositionBeforeVelocity).length() == 0.0f &&
+                  (body.neck.body.position - neckPositionBeforeVelocity).length() == 0.0f,
+                  "subtree velocity correction does not change geometry");
         }
+    }
+
+    // Pure velocity translation and rotation induce one common rigid velocity field.
+    aura::body::BodyPart3D first, second;
+    first.body.position = {1, 2, 3};
+    second.body.position = {-2, 4, 1};
+    const std::array parts{&first, &second};
+    const aura::math::Vec3 pivot{0.5f, -1, 2}, deltaV{0.2f, 0.3f, -0.1f}, deltaOmega{0.4f, -0.2f, 0.6f};
+    aura::body::translateSubtreeVelocity(parts, deltaV);
+    aura::body::rotateSubtreeVelocityAroundWorldPoint(parts, pivot, deltaOmega);
+    for (const auto *part: parts) {
+        check((part->body.angularVelocity - deltaOmega).length() < tolerance &&
+              (part->body.velocity - deltaV - deltaOmega.cross(part->body.position - pivot)).length() < tolerance,
+              "subtree helpers add pivot-induced linear velocity and common angular velocity");
     }
     return passed ? 0 : 1;
 }

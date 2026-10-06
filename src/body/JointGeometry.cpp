@@ -5,6 +5,18 @@
 #include <stdexcept>
 
 namespace aura::body {
+    void translateSubtreeVelocity(std::span<BodyPart3D *const> parts, const math::Vec3 &deltaVelocity) {
+        for (auto *part: parts) part->body.velocity += deltaVelocity;
+    }
+
+    void rotateSubtreeVelocityAroundWorldPoint(std::span<BodyPart3D *const> parts,
+                                               const math::Vec3 &pivot, const math::Vec3 &deltaOmega) {
+        for (auto *part: parts) {
+            part->body.angularVelocity += deltaOmega;
+            part->body.velocity += deltaOmega.cross(part->body.position - pivot);
+        }
+    }
+
     void rotateSubtreeAroundWorldPoint(std::span<BodyPart3D *const> parts,
                                        const math::Vec3 &pivot, const math::Quaternion &rotation) {
         for (auto *part: parts) rotateBodyAroundWorldPoint(*part, pivot, rotation);

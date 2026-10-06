@@ -68,12 +68,68 @@ target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_D
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_right_elbow_subtree_tests
+            tests/right_elbow_subtree_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_right_elbow_subtree_tests PRIVATE aura_physics)
+    add_test(NAME right_elbow_subtree COMMAND aura_right_elbow_subtree_tests)
+
+    add_executable(aura_right_shin_floor_subtree_tests
+            tests/right_shin_floor_subtree_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_right_shin_floor_subtree_tests PRIVATE aura_physics)
+    add_test(NAME right_shin_floor_subtree COMMAND aura_right_shin_floor_subtree_tests)
+
+    add_executable(aura_right_knee_subtree_tests
+            tests/right_knee_subtree_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_right_knee_subtree_tests PRIVATE aura_physics)
+    add_test(NAME right_knee_subtree COMMAND aura_right_knee_subtree_tests)
+
+    add_executable(aura_major_branch_tests
+            tests/major_branch_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_major_branch_tests PRIVATE aura_physics)
+    add_test(NAME major_branches COMMAND aura_major_branch_tests)
+
+    add_executable(aura_left_shoulder_subtree_tests
+            tests/left_shoulder_subtree_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_left_shoulder_subtree_tests PRIVATE aura_physics)
+    add_test(NAME left_shoulder_subtree COMMAND aura_left_shoulder_subtree_tests)
+
     add_executable(aura_neck_subtree_tests
             tests/neck_subtree_tests.cpp
             src/body/AuraBody3D.cpp
             src/body/AuraSkeleton3D.cpp
             src/body/AuraBodyConstraint.cpp
             src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
     )
     target_link_libraries(aura_neck_subtree_tests PRIVATE aura_physics)
     add_test(NAME neck_subtree COMMAND aura_neck_subtree_tests)
@@ -84,6 +140,7 @@ if (BUILD_TESTING)
             src/body/AuraSkeleton3D.cpp
             src/body/AuraBodyConstraint.cpp
             src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
     )
     target_link_libraries(aura_head_pivot_tests PRIVATE aura_physics)
     add_test(NAME head_pivot COMMAND aura_head_pivot_tests)
@@ -94,6 +151,7 @@ if (BUILD_TESTING)
             src/body/AuraSkeleton3D.cpp
             src/body/AuraBodyConstraint.cpp
             src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
     )
     target_link_libraries(aura_waist_group_tests PRIVATE aura_physics)
     add_test(NAME waist_group COMMAND aura_waist_group_tests)

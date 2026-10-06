@@ -16,6 +16,10 @@ namespace aura::body {
                                        const math::Vec3 &pivot, const math::Quaternion &rotation);
     void translateSubtree(std::span<BodyPart3D *const> parts, const math::Vec3 &delta);
 
+    void translateSubtreeVelocity(std::span<BodyPart3D *const> parts, const math::Vec3 &deltaVelocity);
+    void rotateSubtreeVelocityAroundWorldPoint(std::span<BodyPart3D *const> parts,
+                                               const math::Vec3 &pivot, const math::Vec3 &deltaOmega);
+
     // Signed twist of part B relative to part A, in radians within [-pi, pi].
     // At a 180-degree swing perpendicular to the axis, twist is undefined; returns zero.
     float relativeJointAngle(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint);
