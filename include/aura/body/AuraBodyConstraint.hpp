@@ -5,18 +5,26 @@
 #include "aura/body/AuraSkeleton3D.hpp"
 
 namespace aura::body {
-    // Head, neck, both shoulders, right elbow and right knee derive their angle
-    // components from the skeleton graph. Wrapper-specific velocity compensation
-    // and knee floor lifting retain the pre-refactor behavior.
-    // Experimental branch corrections; hips and right knee use the current Y=0 floor.
-    // Floor-blocked translation moves the complementary group; hip rotation
+    // Head, neck, both shoulders and both elbows/knees derive their angle
+    // components from the skeleton graph. Elbow/knee position and velocity
+    // corrections use the same components and retain descendant motion/floor policies.
+    // Experimental branch corrections; hips and knees use the current Y=0 floor.
+    // Floor-blocked translation moves the complementary group; hip/knee rotation
     // that penetrates the floor lifts the whole body without splitting anchors.
-    enum class MajorBodyBranch3D { RightShoulder, LeftHip, RightHip, RightKnee, RightElbow };
+    enum class MajorBodyBranch3D { RightShoulder, LeftHip, RightHip, RightKnee, RightElbow, LeftKnee, LeftElbow };
     void correctBranchAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
-    void correctBranchPositionAsSubtree(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch);
-    void correctBranchAnchorVelocityAsSubtree(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch);
-    void correctBranchAngularVelocityAsSubtree(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch);
-    void solveBranchSubtreeVelocityConstraints(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch);
+    void correctBranchPositionAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
+    // Legacy anchor propagation retained for baseline diagnostics. The application
+    // uses correctLocalJointVelocity; angular-limit propagation remains active.
+    void correctBranchAnchorVelocityAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
+    void correctBranchAngularVelocityAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
+    void solveBranchSubtreeVelocityConstraints(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
+
+    // Elbow/knee geometry: preserve the wrist/ankle's existing world relative
+    // anchor velocity while rotating the graph-derived forearm-hand/shin-foot component.
+    void correctLimbAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton,
+                                    const Joint3D &joint, const Joint3D &descendantJoint,
+                                    MajorBodyBranch3D branch);
 
     // Geometry projection changes anchor offsets in moving bodies. Preserve the
     // ankle's world relative anchor velocity as well as its relative angular velocity.

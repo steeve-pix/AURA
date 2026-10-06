@@ -51,8 +51,8 @@ int main() {
                        std::clamp(angle, 0.0f, 2.4f)) < tolerance, "elbow enforces both limits with a rotated parent");
         check((relativeVelocity(body, skeleton.rightWrist) - beforeV).length() < tolerance,
               "angle correction preserves existing wrist anchor-relative velocity");
-        correctBranchPositionAsSubtree(body, skeleton.rightElbow, branch);
-        solveBranchSubtreeVelocityConstraints(body, skeleton.rightElbow, branch);
+        correctBranchPositionAsSubtree(body, skeleton, skeleton.rightElbow, branch);
+        solveBranchSubtreeVelocityConstraints(body, skeleton, skeleton.rightElbow, branch);
         check(gap(body.rightUpperArm, body.rightForearm, skeleton.rightElbow).length() < tolerance &&
               gap(body.rightForearm, body.rightHand, skeleton.rightWrist).length() < tolerance,
               "elbow repair closes its anchor without separating wrist");

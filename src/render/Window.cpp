@@ -111,6 +111,18 @@ namespace aura::render {
         return height;
     }
 
+    int Window::height() const {
+        int width = 0, height = 0;
+        glfwGetWindowSize(window_, &width, &height);
+        return height;
+    }
+
+    std::pair<double, double> Window::cursorPosition() const {
+        double x = 0, y = 0;
+        glfwGetCursorPos(window_, &x, &y);
+        return {x, y};
+    }
+
     void Window::setResizeCallback(ResizeCallback callback) {
         resizeCallback_ = std::move(callback);
     }

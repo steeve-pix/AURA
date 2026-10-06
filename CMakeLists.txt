@@ -33,6 +33,7 @@ target_include_directories(aura_math PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(aura_physics
         src/physics/RigidBody3D.cpp
         src/physics/Motion.cpp
+        src/physics/MechanicalState.cpp
         src/physics/Collision.cpp
         src/physics/Forces.cpp
         src/physics/Inertia.cpp
@@ -45,6 +46,9 @@ target_link_libraries(aura_physics PUBLIC aura_math)
 add_executable(aura
         src/main.cpp
         src/body/BodyPart3D.cpp
+        src/body/ComponentMass.cpp
+            src/body/ComponentVelocity.cpp
+            src/body/LocalJointVelocity.cpp
         src/body/AuraBody3D.cpp
         src/render/Window.cpp
         src/render/Renderer3D.cpp
@@ -68,6 +72,49 @@ target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_D
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_diagnostics_tests tests/diagnostics_tests.cpp src/body/JointGeometry.cpp)
+    target_link_libraries(aura_diagnostics_tests PRIVATE aura_physics)
+    add_test(NAME diagnostics COMMAND aura_diagnostics_tests)
+
+    add_executable(aura_mechanical_state_tests tests/mechanical_state_tests.cpp)
+    target_link_libraries(aura_mechanical_state_tests PRIVATE aura_physics)
+    add_test(NAME mechanical_state COMMAND aura_mechanical_state_tests)
+
+    add_executable(aura_local_joint_velocity_tests
+            tests/local_joint_velocity_tests.cpp
+            src/body/LocalJointVelocity.cpp
+            src/body/JointGeometry.cpp)
+    target_link_libraries(aura_local_joint_velocity_tests PRIVATE aura_physics)
+    add_test(NAME local_joint_velocity COMMAND aura_local_joint_velocity_tests)
+
+    add_executable(aura_component_velocity_tests
+            tests/component_velocity_tests.cpp
+            src/body/ComponentMass.cpp
+            src/body/ComponentVelocity.cpp
+            src/body/JointGeometry.cpp)
+    target_link_libraries(aura_component_velocity_tests PRIVATE aura_physics)
+    add_test(NAME component_velocity COMMAND aura_component_velocity_tests)
+
+    add_executable(aura_component_mass_tests
+            tests/component_mass_tests.cpp
+            src/body/ComponentMass.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+    )
+    target_link_libraries(aura_component_mass_tests PRIVATE aura_physics)
+    add_test(NAME component_mass COMMAND aura_component_mass_tests)
+
+    add_executable(aura_left_limb_component_tests
+            tests/left_limb_component_tests.cpp
+            src/body/AuraBody3D.cpp
+            src/body/AuraSkeleton3D.cpp
+            src/body/AuraBodyConstraint.cpp
+            src/body/JointGeometry.cpp
+            src/body/JointConstraint.cpp
+    )
+    target_link_libraries(aura_left_limb_component_tests PRIVATE aura_physics)
+    add_test(NAME left_limb_component COMMAND aura_left_limb_component_tests)
+
     add_executable(aura_component_angle_tests
             tests/component_angle_tests.cpp
             src/body/AuraBody3D.cpp
@@ -170,6 +217,9 @@ if (BUILD_TESTING)
     # Explicit headless diagnostic; reports the unstable baseline, so it is not a CTest gate.
     add_executable(aura_full_body_diagnostics
             tests/full_body_diagnostics.cpp
+            src/body/ComponentMass.cpp
+            src/body/ComponentVelocity.cpp
+            src/body/LocalJointVelocity.cpp
             src/body/AuraBody3D.cpp
             src/body/AuraSkeleton3D.cpp
             src/body/AuraBodyConstraint.cpp

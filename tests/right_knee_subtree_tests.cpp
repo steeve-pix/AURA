@@ -51,8 +51,8 @@ int main() {
                        std::clamp(angle, 0.0f, 2.2f)) < tolerance, "knee enforces both limits with a rotated parent");
         check((relativeVelocity(body, skeleton.rightAnkle) - beforeV).length() < tolerance,
               "angle correction preserves existing ankle anchor-relative velocity");
-        correctBranchPositionAsSubtree(body, skeleton.rightKnee, branch);
-        solveBranchSubtreeVelocityConstraints(body, skeleton.rightKnee, branch);
+        correctBranchPositionAsSubtree(body, skeleton, skeleton.rightKnee, branch);
+        solveBranchSubtreeVelocityConstraints(body, skeleton, skeleton.rightKnee, branch);
         check(gap(body.rightThigh, body.rightShin, skeleton.rightKnee).length() < tolerance &&
               gap(body.rightShin, body.rightFoot, skeleton.rightAnkle).length() < tolerance,
               "knee repair closes its anchor without separating ankle");
@@ -71,7 +71,7 @@ int main() {
         const auto skeleton = createAuraSkeleton3D(body);
         body.rightThigh.body.position.y -= errorY;
         const auto beforeGap = gap(body.rightShin, body.rightFoot, skeleton.rightAnkle);
-        correctBranchPositionAsSubtree(body, skeleton.rightKnee, branch);
+        correctBranchPositionAsSubtree(body, skeleton, skeleton.rightKnee, branch);
         check(gap(body.rightThigh, body.rightShin, skeleton.rightKnee).length() < tolerance &&
               (gap(body.rightShin, body.rightFoot, skeleton.rightAnkle) - beforeGap).length() < tolerance,
               "floor-aware knee translation preserves ankle and closes knee");

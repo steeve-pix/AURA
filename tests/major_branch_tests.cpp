@@ -64,7 +64,7 @@ int main() {
             check(std::abs(gap(root, middle, first).length() - gap1) < tolerance &&
                   std::abs(gap(middle, end, second).length() - gap2) < tolerance,
                   "rotation preserves descendant gaps");
-            correctBranchPositionAsSubtree(body, joint, branch);
+            correctBranchPositionAsSubtree(body, skeleton, joint, branch);
             check(gap(parent, root, joint).length() < tolerance &&
                   gap(root, middle, first).length() < tolerance && gap(middle, end, second).length() < tolerance,
                   "position correction repairs parent without separating descendants");
@@ -80,7 +80,7 @@ int main() {
             const auto v1 = relativeVelocity(root, middle, first), v2 = relativeVelocity(middle, end, second);
             const auto w1 = middle.body.angularVelocity - root.body.angularVelocity;
             const auto w2 = end.body.angularVelocity - middle.body.angularVelocity;
-            solveBranchSubtreeVelocityConstraints(body, joint, branch);
+            solveBranchSubtreeVelocityConstraints(body, skeleton, joint, branch);
             check((relativeVelocity(root, middle, first) - v1).length() < tolerance &&
                   (relativeVelocity(middle, end, second) - v2).length() < tolerance,
                   "velocity corrections preserve descendant anchor-relative velocities");
@@ -102,7 +102,7 @@ int main() {
                 body.pelvis.body.position.y -= verticalError;
                 const auto kneeGap = gap(root, middle, knee), ankleGap = gap(middle, foot, ankle);
                 const auto otherFootPosition = left ? body.rightFoot.body.position : body.leftFoot.body.position;
-                correctBranchPositionAsSubtree(body, joint, branch);
+                correctBranchPositionAsSubtree(body, skeleton, joint, branch);
                 check(gap(body.pelvis, root, joint).length() < tolerance && physics::lowestPoint(foot.body, foot.size).y >= -tolerance,
                       "hip closes while planted foot remains above floor");
                 check((gap(root, middle, knee) - kneeGap).length() < tolerance &&

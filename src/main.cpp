@@ -2,10 +2,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <iomanip>
-#include <iostream>
-#include <span>
-#include <sstream>
 #include <string>
 #include <GLFW/glfw3.h>
 
@@ -17,6 +13,7 @@
 #include "aura/body/Joint3D.hpp"
 #include "aura/body/JointConstraint.hpp"
 #include "aura/body/JointGeometry.hpp"
+#include "aura/body/LocalJointVelocity.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Collision.hpp"
 #include "aura/physics/Forces.hpp"
@@ -30,99 +27,16 @@
 #include "aura/render/ShadowMap.hpp"
 #include "aura/render/Window.hpp"
 
-namespace {
-    struct BodyJoint {
-        const char *name{};
-        aura::body::BodyPart3D *partA{};
-        aura::body::BodyPart3D *partB{};
-        aura::body::Joint3D &constraint;
-        bool motor = false;
-        bool floorAware = false;
-        float markerRadius = 0.0f;
-    };
+#include "BodyDiagnostics.hpp"
 
-    // Read-only snapshot, called after a complete physics step.
-    void printBodyDiagnostics(std::span<aura::body::BodyPart3D *const> parts,
-                              std::span<const BodyJoint> joints, double simulatedTime) {
-        std::ostringstream table;
-        table << std::fixed << std::setprecision(3);
-        const auto vectorText = [](const aura::math::Vec3 &v) {
-            std::ostringstream text;
-            text << std::fixed << std::setprecision(3)
-                 << '(' << v.x << ", " << v.y << ", " << v.z << ')';
-            return text.str();
-        };
-        const auto finiteVector = [](const aura::math::Vec3 &v) {
-            return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
-        };
-        table << "\n[Body diagnostics | simulated time=" << simulatedTime << "s]\n"
-              << "World-space vectors; angular speed in rad/s; contacts use floor Y=0, tolerance=0.01.\n"
-              << std::left << std::setw(18) << "Part"
-              << std::setw(29) << "Position (x,y,z)"
-              << std::setw(29) << "Velocity (x,y,z)"
-              << std::right << std::setw(10) << "|omega|"
-              << std::setw(11) << "Lowest Y"
-              << std::setw(10) << "Contacts"
-              << std::setw(10) << "State" << '\n'
-              << std::string(117, '-') << '\n';
-        for (const auto *part: parts) {
-            const auto &body = part->body;
-            const auto &q = body.orientation;
-            const bool finite = finiteVector(body.position) && finiteVector(body.velocity) &&
-                                finiteVector(body.acceleration) && finiteVector(body.angularVelocity) &&
-                                finiteVector(body.angularAcceleration) &&
-                                std::isfinite(q.w) && std::isfinite(q.x) &&
-                                std::isfinite(q.y) && std::isfinite(q.z);
-            const float lowestY = finite ? aura::physics::lowestPoint(body, part->size).y : 0.0f;
-            const auto contacts = finite ? aura::physics::floorContactPoints(body, part->size, 0.0f, 0.01f).size() : 0;
-            table << std::left << std::setw(18) << part->name
-                  << std::setw(29) << vectorText(body.position)
-                  << std::setw(29) << vectorText(body.velocity)
-                  << std::right << std::setw(10) << body.angularVelocity.length();
-            if (finite) table << std::setw(11) << lowestY << std::setw(10) << contacts;
-            else table << std::setw(11) << "-" << std::setw(10) << "-";
-            table << std::setw(10) << (finite ? "finite" : "INVALID") << '\n';
-        }
-
-        table << "\nJoint angles in radians; target/error/PD torque apply only to enabled motors.\n"
-              << std::left << std::setw(18) << "Joint"
-              << std::right << std::setw(10) << "Angle"
-              << std::setw(10) << "Min"
-              << std::setw(10) << "Max"
-              << std::setw(10) << "Target"
-              << std::setw(10) << "Error"
-              << std::setw(12) << "Hinge omega"
-              << std::setw(11) << "PD torque"
-              << std::setw(12) << "Anchor gap" << '\n'
-              << std::string(103, '-') << '\n';
-        for (const auto &connection: joints) {
-            const auto &a = *connection.partA;
-            const auto &b = *connection.partB;
-            const auto &joint = connection.constraint;
-            const float angle = aura::body::relativeJointAngle(a, b, joint);
-            const auto worldAxis = a.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
-            const float omega = (b.body.angularVelocity - a.body.angularVelocity).dot(worldAxis);
-            const float gap = (aura::body::localToWorldPoint(b, joint.localAnchorB) -
-                               aura::body::localToWorldPoint(a, joint.localAnchorA)).length();
-            table << std::left << std::setw(18) << connection.name << std::right
-                  << std::setw(10) << angle << std::setw(10) << joint.minAngle << std::setw(10) << joint.maxAngle;
-            if (connection.motor) {
-                table << std::setw(10) << joint.targetAngle << std::setw(10) << joint.targetAngle - angle;
-            } else {
-                table << std::setw(10) << "-" << std::setw(10) << "-";
-            }
-            table << std::setw(12) << omega;
-            if (connection.motor) table << std::setw(11) << aura::body::jointMotorTorque(a, b, joint);
-            else table << std::setw(11) << "-";
-            table << std::setprecision(6) << std::setw(12) << gap << std::setprecision(3) << '\n';
-        }
-        std::cout << table.str() << std::flush;
-    }
-}
+using aura::app::BodyJoint;
+using aura::app::BodyDiagnosticHistory;
+using aura::app::printBodyDiagnostics;
 
 int main() {
     bool orbiting = false;
-    bool firstOrbitMove = false;
+    bool panning = false;
+    bool followBody = false;
 
     double lastMouseX = 0.0;
     double lastMouseY = 0.0;
@@ -182,9 +96,18 @@ int main() {
         aura::render::VertexLayout::PositionNormal
     };
     aura::render::DirectionalLight light{{4.0f, 8.0f, 4.0f}, {0.0f, 0.0f, 0.0f}};
-    aura::render::Camera camera{{0.0f, 4.0f, 11.0f}, {0.0f, 3.9f, 0.0f}, 1280.0f / 720.0f};
-    camera.zoom(-2.2f);
-    camera.orbit(0.55f, -0.15f);
+    aura::render::Camera camera{{0.0f, 3.9f, 8.2f}, {0.0f, 3.9f, 0.0f}, 1280.0f / 720.0f};
+    camera.setOrbit(0.55f, 0.25f);
+    const auto updateTitle = [&] {
+        const std::string title = "AURA | paused=" + std::to_string(paused) +
+            " follow=" + std::to_string(followBody) + " | L-drag: orbit R-drag: pan | F: focus G: follow H: help";
+        window.setTitle(title.c_str());
+    };
+    const auto focusBody = [&] {
+        const auto state = aura::app::bodyMechanics(parts);
+        if (state.finite) camera.setTarget(state.center);
+    };
+    updateTitle();
     aura::render::ShadowMap shadowMap{2048, 2048};
 
     auto litShader =
@@ -346,10 +269,13 @@ int main() {
         litShader.setMat4("uLightSpaceMatrix", light.lightSpaceMatrix());
         litShader.setVec3("uLightDirection", {-0.5, -1.0f, -0.3f});
 
-        // Solid Floor
-        litShader.setVec3("uColor", {0.015f, 0.015f, 0.015f});
-        litShader.setMat4("uModel", aura::math::Mat4::identity());
-        floor.draw();
+        // The solid floor is visible from above; its grid remains visible from below
+        // for underside inspection. This changes rendering only, not floor collision.
+        if (camera.position().y >= 0.0f) {
+            litShader.setVec3("uColor", {0.015f, 0.015f, 0.015f});
+            litShader.setMat4("uModel", aura::math::Mat4::identity());
+            floor.draw();
+        }
 
         // Grid
         unlitShader.use();
@@ -400,22 +326,29 @@ int main() {
         glViewport(0, 0, width, height);
         camera.setAspectRatio(static_cast<float>(width) / static_cast<float>(height));
 
-        previousTime = glfwGetTime();
         renderFrame();
     });
 
     window.setMouseButtonCallback([&](int button, int action) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT) {
-            orbiting = action == GLFW_PRESS;
-            firstOrbitMove = orbiting;
+        if (button == GLFW_MOUSE_BUTTON_LEFT) orbiting = action == GLFW_PRESS;
+        if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+            panning = action == GLFW_PRESS;
+            if (panning) {
+                followBody = false;
+                updateTitle();
+            }
+        }
+        if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_MOUSE_BUTTON_RIGHT) {
+            const auto [x, y] = window.cursorPosition();
+            lastMouseX = x;
+            lastMouseY = y;
         }
     });
 
     window.setMouseMoveCallback([&](double x, double y) {
-        if (!orbiting || firstOrbitMove) {
+        if (!orbiting && !panning) {
             lastMouseX = x;
             lastMouseY = y;
-            firstOrbitMove = false;
             return;
         }
 
@@ -424,11 +357,13 @@ int main() {
         lastMouseX = x;
         lastMouseY = y;
 
-        constexpr float sensitivity = 0.005f;
-        camera.orbit(
-            static_cast<float>(deltaX) * sensitivity,
-            static_cast<float>(-deltaY) * sensitivity
-        );
+        if (panning) {
+            const int height = window.height();
+            if (height > 0) camera.pan(static_cast<float>(-deltaX / height), static_cast<float>(deltaY / height));
+        } else {
+            constexpr float sensitivity = 0.005f;
+            camera.orbit(static_cast<float>(deltaX) * sensitivity, static_cast<float>(-deltaY) * sensitivity);
+        }
     });
 
     window.setScrollCallback(
@@ -440,21 +375,35 @@ int main() {
     double accumulator = 0.0;
     double simulatedTime = 0.0;
     int physicsStepsSinceLog = 0;
+    BodyDiagnosticHistory diagnosticHistory;
+    diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
+    bool detailedDiagnostics = false;
     window.setKeyCallback([&](int key, int action) {
         if (action != GLFW_PRESS) return;
-        // Repeatable inspection views: 1 front, 2 side, 3 three-quarter.
-        if (key >= GLFW_KEY_1 && key <= GLFW_KEY_3) {
-            const int width = window.framebufferWidth(), height = window.framebufferHeight();
-            if (width > 0 && height > 0) {
-                camera = aura::render::Camera{
-                    {0.0f, 4.0f, 11.0f}, {0.0f, 3.9f, 0.0f},
-                    static_cast<float>(width) / static_cast<float>(height)
-                };
-                camera.zoom(-2.2f);
-                const float yaw = key == GLFW_KEY_1 ? 0.0f : key == GLFW_KEY_2 ? 1.5707963f : 0.55f;
-                camera.orbit(yaw, -0.15f);
-            }
+        if (key == GLFW_KEY_D) {
+            detailedDiagnostics = !detailedDiagnostics;
+            aura::app::printControl("detail", simulatedTime, paused, detailedDiagnostics, followBody);
+            if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulatedTime);
+            return;
         }
+        if (key == GLFW_KEY_H) { aura::app::printLoggingHelp(); return; }
+        if (key == GLFW_KEY_F) { focusBody(); return; }
+        if (key == GLFW_KEY_G) {
+            followBody = !followBody;
+            if (followBody) focusBody();
+            updateTitle();
+            aura::app::printControl("follow", simulatedTime, paused, detailedDiagnostics, followBody);
+            return;
+        }
+        // Absolute view angles preserve the current target and zoom.
+        if (key >= GLFW_KEY_1 && key <= GLFW_KEY_5) {
+            constexpr float halfPi = 1.57079632679f;
+            const float yaw = key == GLFW_KEY_2 ? halfPi : key == GLFW_KEY_3 ? 0.55f : 0.0f;
+            const float pitch = key == GLFW_KEY_4 ? 1.5f : key == GLFW_KEY_5 ? -1.5f : 0.25f;
+            camera.setOrbit(yaw, pitch);
+            return;
+        }
+        if (key != GLFW_KEY_SPACE && key != GLFW_KEY_P && key != GLFW_KEY_R) return;
         if (key == GLFW_KEY_SPACE) paused = !paused;
         if (key == GLFW_KEY_P || key == GLFW_KEY_R) {
             auraBody = assembledBody;
@@ -462,15 +411,46 @@ int main() {
             if (!paused) for (auto *part: parts) part->body.position.y += 0.6f;
             simulatedTime = 0.0;
             physicsStepsSinceLog = 0;
+            diagnosticHistory = {};
+            diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
         }
-        window.setTitle(paused
-                            ? "AURA - Pose paused | Space: run physics | R: restart fall"
-                            : "AURA - Physics running | P: pose | Space: pause | R: restart");
+        const char *actionName = key == GLFW_KEY_P ? "pose" : key == GLFW_KEY_R ? "restart" : "pause/run";
+        aura::app::printControl(actionName, simulatedTime, paused, detailedDiagnostics, followBody);
+        updateTitle();
         accumulator = 0.0;
         previousTime = glfwGetTime();
     });
     constexpr int jointIterations = 16;
     constexpr double FIXED_DT = 1.0 / 120.0;
+    aura::app::printStartup(joints, FIXED_DT, jointIterations);
+    const auto solveVelocityLocally = [&](BodyJoint &connection) {
+        auto &a = *connection.partA;
+        auto &b = *connection.partB;
+        const auto &joint = connection.constraint;
+        for (int i = 0; i < aura::body::jointVelocityIterations; ++i) {
+            const double before = aura::app::bodyEnergy(parts);
+            aura::body::correctLocalJointVelocity(a, b, joint);
+            const double after = aura::app::bodyEnergy(parts);
+            if (std::isfinite(before) && std::isfinite(after) && after - before > std::max(0.001, std::abs(before) * 1e-5))
+                std::cerr << "Anchor energy injection joint=" << connection.name << " time=" << simulatedTime
+                          << " before=" << before << " after=" << after << '\n';
+            // Retain the existing angular-limit velocity policy, including propagation.
+            if (&joint == &skeleton.neck)
+                aura::body::correctNeckAngularVelocityAsSubtree(auraBody, joint);
+            else if (&joint == &skeleton.leftShoulder)
+                aura::body::correctLeftShoulderAngularVelocityAsSubtree(auraBody, joint);
+            else if (&joint == &skeleton.rightShoulder || &joint == &skeleton.leftHip || &joint == &skeleton.rightHip ||
+                     &joint == &skeleton.leftElbow || &joint == &skeleton.rightElbow || &joint == &skeleton.leftKnee || &joint == &skeleton.rightKnee) {
+                const auto branch = &joint == &skeleton.rightShoulder ? aura::body::MajorBodyBranch3D::RightShoulder :
+                    &joint == &skeleton.leftHip ? aura::body::MajorBodyBranch3D::LeftHip :
+                    &joint == &skeleton.rightHip ? aura::body::MajorBodyBranch3D::RightHip :
+                    &joint == &skeleton.leftElbow ? aura::body::MajorBodyBranch3D::LeftElbow :
+                    &joint == &skeleton.rightElbow ? aura::body::MajorBodyBranch3D::RightElbow :
+                    &joint == &skeleton.leftKnee ? aura::body::MajorBodyBranch3D::LeftKnee : aura::body::MajorBodyBranch3D::RightKnee;
+                aura::body::correctBranchAngularVelocityAsSubtree(auraBody, skeleton, joint, branch);
+            } else aura::body::correctJointAngularVelocity(a, b, joint);
+        }
+    };
     const auto solveConnection = [&](BodyJoint &connection) {
         auto &a = *connection.partA;
         auto &b = *connection.partB;
@@ -480,25 +460,25 @@ int main() {
                 !aura::physics::floorContactPoints(auraBody.leftFoot.body, auraBody.leftFoot.size, 0.0f, 0.01f).empty() ||
                 !aura::physics::floorContactPoints(auraBody.rightFoot.body, auraBody.rightFoot.size, 0.0f, 0.01f).empty();
             aura::body::correctWaistPositionWithFloorContact(auraBody, connection.constraint, eitherFootTouchesFloor);
-            aura::body::solveJointVelocityConstraints(a, b, connection.constraint);
+            solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.neck) {
             aura::body::correctNeckAngleAroundPivot(auraBody, skeleton, connection.constraint);
             aura::body::correctNeckPositionAsSubtree(auraBody, connection.constraint);
-            aura::body::solveNeckSubtreeVelocityConstraints(auraBody, connection.constraint);
+            solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.head) {
             aura::body::correctHeadAngleAroundPivot(auraBody, skeleton, connection.constraint);
             aura::body::correctHeadPositionAsLeaf(auraBody, connection.constraint);
-            aura::body::solveJointVelocityConstraints(a, b, connection.constraint);
+            solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.leftShoulder) {
             aura::body::correctLeftShoulderAngleAroundPivot(auraBody, skeleton, connection.constraint);
             aura::body::correctLeftShoulderPositionAsSubtree(auraBody, connection.constraint);
-            aura::body::solveLeftShoulderSubtreeVelocityConstraints(auraBody, connection.constraint);
+            solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.rightShoulder ||
@@ -509,32 +489,43 @@ int main() {
                 : &connection.constraint == &skeleton.leftHip
                     ? aura::body::MajorBodyBranch3D::LeftHip : aura::body::MajorBodyBranch3D::RightHip;
             aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch);
-            aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
-            aura::body::solveBranchSubtreeVelocityConstraints(auraBody, connection.constraint, branch);
+            aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch);
+            solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.rightKnee) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightKnee;
             aura::body::correctRightKneeAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightAnkle);
-            aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
-            aura::body::solveBranchSubtreeVelocityConstraints(auraBody, connection.constraint, branch);
+            aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch);
+            solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.rightElbow) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightElbow;
             aura::body::correctRightElbowAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightWrist);
-            aura::body::correctBranchPositionAsSubtree(auraBody, connection.constraint, branch);
-            aura::body::solveBranchSubtreeVelocityConstraints(auraBody, connection.constraint, branch);
+            aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch);
+            solveVelocityLocally(connection);
+            return;
+        }
+        if (&connection.constraint == &skeleton.leftElbow || &connection.constraint == &skeleton.leftKnee) {
+            const bool elbow = &connection.constraint == &skeleton.leftElbow;
+            const auto branch = elbow ? aura::body::MajorBodyBranch3D::LeftElbow : aura::body::MajorBodyBranch3D::LeftKnee;
+            const auto &descendant = elbow ? skeleton.leftWrist : skeleton.leftAnkle;
+            aura::body::correctLimbAngleAroundPivot(auraBody, skeleton, connection.constraint, descendant, branch);
+            aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch);
+            solveVelocityLocally(connection);
             return;
         }
         if (!connection.floorAware) {
-            aura::body::solveJoint(a, b, connection.constraint);
+            aura::body::correctJointAngle(a, b, connection.constraint);
+            aura::body::correctJointPosition(a, b, connection.constraint);
+            solveVelocityLocally(connection);
             return;
         }
         aura::body::correctJointAngle(a, b, connection.constraint);
         const bool touchingFloor = !aura::physics::floorContactPoints(b.body, b.size, 0.0f, 0.01f).empty();
         aura::body::correctJointPositionWithFloorContact(a, b, connection.constraint, touchingFloor);
-        aura::body::solveJointVelocityConstraints(a, b, connection.constraint);
+        solveVelocityLocally(connection);
     };
 
     while (!window.shouldClose()) {
@@ -547,6 +538,8 @@ int main() {
 
         while (accumulator >= FIXED_DT) {
             const auto dt = static_cast<float>(FIXED_DT);
+            const double energyBeforeIntegration = aura::app::bodyEnergy(parts);
+            diagnosticHistory.sampleMotorWork(joints, dt);
             for (auto &joint: joints) {
                 if (joint.motor) aura::body::applyJointMotor(*joint.partA, *joint.partB, joint.constraint);
             }
@@ -554,9 +547,14 @@ int main() {
                 aura::physics::applyForce(part->body, aura::math::Vec3{0.0f, -9.81f, 0.0f} * part->body.mass);
                 aura::physics::updateLinearAcceleration(part->body);
                 aura::physics::updateAngularAcceleration(part->body);
+                const float previousY = part->body.position.y;
                 aura::physics::integrateLinearMotion(part->body, dt);
+                diagnosticHistory.gravityWork -= static_cast<double>(part->body.mass) * 9.81 *
+                    (part->body.position.y - previousY);
                 aura::physics::integrateAngularMotion(part->body, dt);
             }
+            double stageEnergy = aura::app::bodyEnergy(parts);
+            diagnosticHistory.integrationEnergy += stageEnergy - energyBeforeIntegration;
             for (int iteration = 0; iteration < jointIterations; ++iteration) {
                 for (auto *part: parts) {
                     if (part == &auraBody.rightShin)
@@ -564,20 +562,27 @@ int main() {
                     else
                         aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / jointIterations);
                 }
+                const double afterFloor = aura::app::bodyEnergy(parts);
+                diagnosticHistory.floorEnergy += afterFloor - stageEnergy;
                 for (auto &joint: joints) solveConnection(joint);
                 for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i) solveConnection(joints[i]);
+                stageEnergy = aura::app::bodyEnergy(parts);
+                diagnosticHistory.jointEnergy += stageEnergy - afterFloor;
             }
             for (auto *part: parts) {
                 aura::physics::clearForce(part->body);
                 aura::physics::clearTorque(part->body);
             }
             simulatedTime += FIXED_DT;
+            diagnosticHistory.observe(parts, joints, simulatedTime);
             if (++physicsStepsSinceLog == 120) {
                 physicsStepsSinceLog = 0;
-                printBodyDiagnostics(parts, joints, simulatedTime);
+                diagnosticHistory.printSummary(parts, joints, simulatedTime, paused, detailedDiagnostics, followBody);
+                if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulatedTime);
             }
             accumulator -= FIXED_DT;
         }
+        if (followBody) focusBody();
         renderFrame();
     }
     return 0;

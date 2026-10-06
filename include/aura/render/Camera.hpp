@@ -15,16 +15,21 @@ namespace aura::render {
 
         void orbit(float deltaYaw, float deltaPitch);
 
+        // Positive scroll steps zoom in by a constant ratio, independent of distance.
         void zoom(float delta);
+
+        void setOrbit(float yaw, float pitch);
+        void setTarget(const math::Vec3 &worldTarget);
+        [[nodiscard]] math::Vec3 position() const;
+        [[nodiscard]] float distance() const;
 
         const math::Vec3 &target() const;
 
+        // Screen-plane movement in fractions of viewport height (right/up positive).
         void pan(float deltaX, float deltaY);
 
     private:
-        math::Vec3 position_;
         math::Vec3 target_;
-        math::Vec3 up_{0.0f, 1.0f, 0.0f};
 
         float aspectRatio_;
         float fovRadians_;

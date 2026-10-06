@@ -40,25 +40,31 @@ namespace aura::body {
     namespace {
         struct BranchParts {
             BodyPart3D *parent;
-            std::array<BodyPart3D *, 3> subtree;
+            std::vector<BodyPart3D *> subtree;
             BodyPart3D *foot;
-            std::size_t count = 3;
 
-            std::span<BodyPart3D *const> childParts() const {
-                return {subtree.data(), count};
+            [[nodiscard]] std::span<BodyPart3D *const> childParts() const {
+                return subtree;
             }
         };
 
-        BranchParts branchParts(AuraBody3D &body, MajorBodyBranch3D branch) {
+        BranchParts branchParts(AuraBody3D &body, const AuraSkeleton3D &skeleton,
+                                MajorBodyBranch3D branch) {
+            // The branch identifies the graph edge. Physics may use a temporary
+            // joint copy (e.g. a test with different limits) without changing topology.
             if (branch == MajorBodyBranch3D::RightShoulder)
-                return {&body.torso, {&body.rightUpperArm, &body.rightForearm, &body.rightHand}, nullptr};
+                return {&body.torso, skeleton.collectComponent(body, body.rightUpperArm, skeleton.rightShoulder), nullptr};
             if (branch == MajorBodyBranch3D::RightElbow)
-                return {&body.rightUpperArm, {&body.rightForearm, &body.rightHand, nullptr}, nullptr, 2};
+                return {&body.rightUpperArm, skeleton.collectComponent(body, body.rightForearm, skeleton.rightElbow), nullptr};
+            if (branch == MajorBodyBranch3D::LeftElbow)
+                return {&body.leftUpperArm, skeleton.collectComponent(body, body.leftForearm, skeleton.leftElbow), nullptr};
             if (branch == MajorBodyBranch3D::RightKnee)
-                return {&body.rightThigh, {&body.rightShin, &body.rightFoot, nullptr}, &body.rightFoot, 2};
+                return {&body.rightThigh, skeleton.collectComponent(body, body.rightShin, skeleton.rightKnee), &body.rightFoot};
+            if (branch == MajorBodyBranch3D::LeftKnee)
+                return {&body.leftThigh, skeleton.collectComponent(body, body.leftShin, skeleton.leftKnee), &body.leftFoot};
             if (branch == MajorBodyBranch3D::LeftHip)
-                return {&body.pelvis, {&body.leftThigh, &body.leftShin, &body.leftFoot}, &body.leftFoot};
-            return {&body.pelvis, {&body.rightThigh, &body.rightShin, &body.rightFoot}, &body.rightFoot};
+                return {&body.pelvis, skeleton.collectComponent(body, body.leftThigh, skeleton.leftHip), &body.leftFoot};
+            return {&body.pelvis, skeleton.collectComponent(body, body.rightThigh, skeleton.rightHip), &body.rightFoot};
         }
 
         auto allParts(AuraBody3D &body) {
@@ -89,14 +95,14 @@ namespace aura::body {
     }
 
     void correctBranchAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch) {
-        const auto parts = branchParts(body, branch);
+        const auto parts = branchParts(body, skeleton, branch);
         auto &root = *parts.subtree.front();
         const float error = jointAngleError(*parts.parent, root, joint);
         if (std::abs(error) < 0.000001f) return;
         if (branch == MajorBodyBranch3D::RightShoulder || branch == MajorBodyBranch3D::RightElbow ||
-            branch == MajorBodyBranch3D::RightKnee) {
-            const auto component = skeleton.collectComponent(body, root, joint);
-            correctJointAngleWithComponent(*parts.parent, root, joint, component);
+            branch == MajorBodyBranch3D::RightKnee || branch == MajorBodyBranch3D::LeftElbow ||
+            branch == MajorBodyBranch3D::LeftKnee) {
+            correctJointAngleWithComponent(*parts.parent, root, joint, parts.childParts());
         } else {
             // Hip angular corrections are deliberately outside this migration.
             const auto axis = parts.parent->body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
@@ -114,8 +120,8 @@ namespace aura::body {
         }
     }
 
-    void correctBranchPositionAsSubtree(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch) {
-        const auto parts = branchParts(body, branch);
+    void correctBranchPositionAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch) {
+        const auto parts = branchParts(body, skeleton, branch);
         const auto error = localToWorldPoint(*parts.subtree.front(), joint.localAnchorB) -
                            localToWorldPoint(*parts.parent, joint.localAnchorA);
         auto delta = -error;
@@ -131,32 +137,33 @@ namespace aura::body {
         translateSubtree(parts.childParts(), delta);
     }
 
-    void correctRightKneeAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &knee, const Joint3D &ankle) {
+    void correctLimbAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton,
+                                    const Joint3D &joint, const Joint3D &descendantJoint,
+                                    MajorBodyBranch3D branch) {
+        const auto parts = branchParts(body, skeleton, branch);
+        auto &root = *parts.subtree.front();
+        auto &leaf = *parts.subtree.back();
         const auto relativeVelocity = [&] {
-            return physics::velocityAtWorldPoint(body.rightFoot.body, localToWorldPoint(body.rightFoot, ankle.localAnchorB)) -
-                   physics::velocityAtWorldPoint(body.rightShin.body, localToWorldPoint(body.rightShin, ankle.localAnchorA));
+            return physics::velocityAtWorldPoint(leaf.body, localToWorldPoint(leaf, descendantJoint.localAnchorB)) -
+                   physics::velocityAtWorldPoint(root.body, localToWorldPoint(root, descendantJoint.localAnchorA));
         };
         const auto before = relativeVelocity();
-        correctBranchAngleAroundPivot(body, skeleton, knee, MajorBodyBranch3D::RightKnee);
-        // Keep existing relative motion; do not erase it or rotate its world vector.
-        // Angular velocities remain unchanged by this geometry projection.
-        body.rightFoot.body.velocity += before - relativeVelocity();
+        correctBranchAngleAroundPivot(body, skeleton, joint, branch);
+        // Preserve the existing world relative motion during geometric projection.
+        // Angular velocities remain unchanged; do not erase or rotate this vector.
+        leaf.body.velocity += before - relativeVelocity();
+    }
+
+    void correctRightKneeAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &knee, const Joint3D &ankle) {
+        correctLimbAngleAroundPivot(body, skeleton, knee, ankle, MajorBodyBranch3D::RightKnee);
     }
 
     void correctRightElbowAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &elbow, const Joint3D &wrist) {
-        const auto relativeVelocity = [&] {
-            return physics::velocityAtWorldPoint(body.rightHand.body, localToWorldPoint(body.rightHand, wrist.localAnchorB)) -
-                   physics::velocityAtWorldPoint(body.rightForearm.body, localToWorldPoint(body.rightForearm, wrist.localAnchorA));
-        };
-        const auto before = relativeVelocity();
-        correctBranchAngleAroundPivot(body, skeleton, elbow, MajorBodyBranch3D::RightElbow);
-        // Same geometry compensation as the knee: preserve the existing wrist
-        // anchor velocity while its offsets rotate; leave angular velocities alone.
-        body.rightHand.body.velocity += before - relativeVelocity();
+        correctLimbAngleAroundPivot(body, skeleton, elbow, wrist, MajorBodyBranch3D::RightElbow);
     }
 
-    void correctBranchAnchorVelocityAsSubtree(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch) {
-        const auto parts = branchParts(body, branch);
+    void correctBranchAnchorVelocityAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch) {
+        const auto parts = branchParts(body, skeleton, branch);
         auto &root = *parts.subtree.front();
         const auto oldVelocity = root.body.velocity;
         const auto oldOmega = root.body.angularVelocity;
@@ -165,8 +172,8 @@ namespace aura::body {
                                     localToWorldPoint(root, joint.localAnchorB), oldVelocity, oldOmega);
     }
 
-    void correctBranchAngularVelocityAsSubtree(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch) {
-        const auto parts = branchParts(body, branch);
+    void correctBranchAngularVelocityAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch) {
+        const auto parts = branchParts(body, skeleton, branch);
         auto &root = *parts.subtree.front();
         const auto oldVelocity = root.body.velocity;
         const auto oldOmega = root.body.angularVelocity;
@@ -175,10 +182,10 @@ namespace aura::body {
                                     localToWorldPoint(root, joint.localAnchorB), oldVelocity, oldOmega);
     }
 
-    void solveBranchSubtreeVelocityConstraints(AuraBody3D &body, const Joint3D &joint, MajorBodyBranch3D branch) {
+    void solveBranchSubtreeVelocityConstraints(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch) {
         for (int i = 0; i < jointVelocityIterations; ++i) {
-            correctBranchAnchorVelocityAsSubtree(body, joint, branch);
-            correctBranchAngularVelocityAsSubtree(body, joint, branch);
+            correctBranchAnchorVelocityAsSubtree(body, skeleton, joint, branch);
+            correctBranchAngularVelocityAsSubtree(body, skeleton, joint, branch);
         }
     }
 

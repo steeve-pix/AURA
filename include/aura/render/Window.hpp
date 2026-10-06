@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <utility>
 
 struct GLFWwindow;
 
@@ -31,6 +32,10 @@ namespace aura::render {
         [[nodiscard]] int framebufferWidth() const;
 
         [[nodiscard]] int framebufferHeight() const;
+
+        // Logical pixels, matching GLFW cursor coordinates on Retina displays.
+        [[nodiscard]] int height() const;
+        [[nodiscard]] std::pair<double, double> cursorPosition() const;
 
         void setResizeCallback(ResizeCallback callback);
 

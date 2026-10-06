@@ -118,7 +118,8 @@ physically accurate articulated-body solver.
 `AuraSkeleton3D::collectComponent(body, start, jointToCut)` queries the fixed
 humanoid topology without retaining body pointers. Cut joints must belong to that
 skeleton; returned pointers belong to the supplied body. Head, neck, both shoulders,
-right elbow, and right knee use graph-derived components for angular geometry.
+both elbows, and both knees use graph-derived components for angular geometry.
+Elbow/knee position and velocity corrections use the same graph components.
 Their wrappers retain existing velocity compensation and floor policies; the
 generic `correctJointAngleWithComponent` does not decide floor feasibility.
 
@@ -136,6 +137,44 @@ cause. Keep diagnostic output focused enough to interpret.
 headless investigation, with documented configuration differences. If changing
 simulation ordering or setup, check both paths and keep intended differences
 explicit. Do not extract a new simulation framework solely to remove duplication.
+Use `--all-local-anchors` for the current application configuration (full humanoid
+hierarchy, local two-body anchor impulses, hip/knee motors only). Use
+`--left-limb-components` for the previous subtree-velocity baseline; without either
+flag the diagnostic retains the former pairwise left elbow/knee baseline.
+
+`--leg-velocity-replay` copies the audited 3.725 s right-hip state and runs four
+velocity-only right-leg sweeps. `ComponentVelocity` uses component COM momentum
+and scalar axis inertia to audit common motion impulses. It is experimental and
+is not used by the live solver; it excludes angular-limit velocity and contact
+corrections. Energy-consistent scalar projections do not yet eliminate all actual
+anchor-relative motion.
+
+`--local-leg-velocity-replay` uses the same copied 3.725 s pose for eight
+forward/backward right-leg sweeps with local two-body scalar impulses and
+world-transformed inverse inertia. It audits work and kinetic energy without
+descendant velocity propagation, geometry, contacts, motors, or angular limits.
+This converges on the copied pose; that result alone does not establish live stability.
+
+The mixed right-leg live experiment was reverted. `--right-leg-local-anchors`
+retains that failed experiment for explicit comparisons (nonfinite at 2.116667 s
+versus baseline 4.425 s). `--live-velocity-metrics` measures the old baseline.
+
+`--skeleton-velocity-replay` copies the same finite baseline state at 3.725 s and
+audits eight complete forward/reverse sweeps over all 15 joints using local
+two-body anchor impulses only. Geometry, integration, gravity, motors, floor,
+and angular-limit corrections are absent from the replay. It records the input
+snapshot, per-joint speeds, kinetic energy, and each impulse's work/energy audit.
+Its maximum anchor speed decreases from 31.279 to 0.1372 m/s, with decreasing
+energy. This is isolated-pose evidence, not a full-body live stability result.
+
+The application now uses local two-body anchor impulses for all 15 joints. The
+previous geometry, contact, motor, angular-limit propagation, 16 outer iterations,
+and four inner velocity iterations remain unchanged. Legacy subtree anchor helpers
+remain for baseline diagnostics. `--all-local-anchors` audits every anchor correction
+and records maximum anchor speed after each existing forward/backward sweep (these
+sweeps still include geometry). The 10-second run stays finite with no gap/limit
+threshold failures and no detected anchor-energy injection, but reaches body Y=-1.73
+and position distance about 62. This is not physically acceptable full-body stability.
 
 In reviews, identify what works and distinguish **must fix**, **should improve**,
 and **optional** findings. Explain their observable consequences. Preserve the
