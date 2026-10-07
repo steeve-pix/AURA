@@ -2,6 +2,26 @@
 #include "aura/body/AuraSkeleton3D.hpp"
 
 namespace aura::physics {
+    struct CollisionCapsule {
+        math::Vec3 pointA;
+        math::Vec3 pointB;
+        float radius;
+    };
+    struct SegmentClosestPoints {
+        math::Vec3 pointA;
+        math::Vec3 pointB;
+        float fractionA;
+        float fractionB;
+    };
+    // Local Y limb axis; uses physical dimensions, not rendered end insets.
+    // Short parts collapse to a sphere. Positive dimensions are required.
+    CollisionCapsule bodyPartCollisionCapsule(const body::BodyPart3D &part);
+    SegmentClosestPoints closestPointsBetweenSegments(
+        const math::Vec3 &a0, const math::Vec3 &a1,
+        const math::Vec3 &b0, const math::Vec3 &b1);
+    // Nonnegative overlap depth. Detection only: touching/separated return zero.
+    float capsulePenetration(const CollisionCapsule &a, const CollisionCapsule &b);
+
     struct CollisionSphere {
         math::Vec3 center;
         float radius;

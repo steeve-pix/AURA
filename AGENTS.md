@@ -410,6 +410,30 @@ The application self-collision pass was removed pending a compatible dynamic
 contact/joint model. Proxy dimensions, anatomy, filters and live joint geometry
 policies remain unchanged; experimental headless self-collision remains available.
 
+SelfCollision now also provides detection-only CollisionCapsule,
+bodyPartCollisionCapsule, closestPointsBetweenSegments, and capsulePenetration.
+Limb radius is half min(size.x,size.z), straight half-length max(0,size.y/2-radius).
+Endpoints follow local Y transformed by normalized orientation and world position.
+This uses physical dimensions, not rendering insets; short capsules collapse to
+spheres, so this is not a general fitting rule for flat feet/other body parts.
+Closest segment points include fractions clamped to [0,1]; double coefficients
+and a cross-product determinant handle parallel and near-parallel cases, including
+zero-length segments. Capsule penetration is max(0,radii sum - segment distance).
+There is no capsule resolution, impulse, runtime filtering or chooser integration.
+The existing neutral/attached-hip compatibility modes now emit hipCapsuleGeometry
+and hipCapsuleBody alongside sphere measurements. Neutral thighs have segment
+distance 0.68, radii sum 0.58, zero capsule overlap. The saved attached 1.650 s pose
+has interior closest fractions ~0.288372 and 0.761558, segment distance 0.05027333,
+and penetration 0.52972662. Center spheres underrepresented the collision, rather
+than creating a false positive: each limb capsule contains its same-radius center
+sphere. This is a fixed-orientation configuration conflict, not a neutral-body
+proportion failure or evidence that all orientations are impossible.
+The capsule_collision CTest covers transforms, parallel/crossing/skew/endpoint
+and collapsed segments, touching and separated capsules, neutral thighs, and the
+saved pose tests/fixtures/attached_thigh_capsules_1_650.csv. The closest connector
+in that fixture is perpendicular to both interior segment axes. Runtime
+self-collision remains disabled. Do not add capsule response until requested.
+
 
 
 In reviews, identify what works and distinguish **must fix**, **should improve**,

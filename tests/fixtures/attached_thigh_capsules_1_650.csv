@@ -1,0 +1,4 @@
+# Copied 1.650 s state, both hip anchors repaired at fixed orientations.
+# record,stage,side,sx,sy,sz,px,py,pz,qw,qx,qy,qz
+hipCapsuleBody,copiedBothHipsAttached,left,5.799999833e-01,1.799999952e+00,5.799999833e-01,-2.607695460e-01,2.941778421e+00,5.173518658e-01,8.182978034e-01,-3.704598248e-01,3.598884344e-01,2.522469759e-01
+hipCapsuleBody,copiedBothHipsAttached,right,5.799999833e-01,1.799999952e+00,5.799999833e-01,1.596534848e-01,2.725198746e+00,8.281911612e-01,7.729248405e-01,-3.632412255e-01,6.569830328e-02,5.160684586e-01

@@ -13,6 +13,51 @@ namespace aura::physics {
         }
     }
 
+    CollisionCapsule bodyPartCollisionCapsule(const body::BodyPart3D &part) {
+        const float radius = 0.5f * std::min(part.size.x, part.size.z);
+        const float halfSegment = std::max(0.0f, 0.5f * part.size.y - radius);
+        const auto orientation = part.body.orientation.normalized();
+        return {part.body.position + orientation.rotate({0,-halfSegment,0}),
+                part.body.position + orientation.rotate({0,halfSegment,0}), radius};
+    }
+
+    SegmentClosestPoints closestPointsBetweenSegments(
+        const math::Vec3 &a0, const math::Vec3 &a1,
+        const math::Vec3 &b0, const math::Vec3 &b1) {
+        const auto u = a1-a0, v = b1-b0, r = a0-b0;
+        // Solve the squared-distance minimum with fractions clamped to [0,1].
+        // Double coefficients avoid loss of accuracy for almost parallel lines.
+        const auto dot = [](const auto &a, const auto &b) {
+            return double(a.x)*b.x + double(a.y)*b.y + double(a.z)*b.z;
+        };
+        const double uu = dot(u,u), vv = dot(v,v), uv = dot(u,v);
+        const double ur = dot(u,r), vr = dot(v,r);
+        const auto unit = [](double value) { return std::clamp(value,0.0,1.0); };
+        double s=0,t=0;
+        if (uu==0 && vv==0) return {a0,b0,0,0};
+        if (uu==0) t=unit(vr/vv);
+        else if (vv==0) s=unit(-ur/uu);
+        else {
+            // |u x v|^2 equals uu*vv-uv*uv, without subtracting nearly
+            // identical squared lengths. Exactly parallel segments use s=0.
+            const double x=double(u.y)*v.z-double(u.z)*v.y;
+            const double y=double(u.z)*v.x-double(u.x)*v.z;
+            const double z=double(u.x)*v.y-double(u.y)*v.x;
+            const double denominator=x*x+y*y+z*z;
+            if (denominator>0) s=unit((uv*vr-ur*vv)/denominator);
+            t=(uv*s+vr)/vv;
+            if (t<0) { t=0; s=unit(-ur/uu); }
+            else if (t>1) { t=1; s=unit((uv-ur)/uu); }
+        }
+        return {a0+u*static_cast<float>(s),b0+v*static_cast<float>(t),
+                static_cast<float>(s),static_cast<float>(t)};
+    }
+
+    float capsulePenetration(const CollisionCapsule &a, const CollisionCapsule &b) {
+        const auto points=closestPointsBetweenSegments(a.pointA,a.pointB,b.pointA,b.pointB);
+        return std::max(0.0f,a.radius+b.radius-(points.pointB-points.pointA).length());
+    }
+
     CollisionSphere collisionSphere(const body::BodyPart3D &part) {
         return {part.body.position, 0.5f * std::min({part.size.x, part.size.y, part.size.z})};
     }

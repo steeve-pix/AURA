@@ -234,9 +234,13 @@ int main(int argc, char **argv) {
     for (std::size_t i=0;i<parts.size();++i) roomBodies[i]={&parts[i]->body,parts[i]->size};
 
     auto skeleton = aura::body::createAuraSkeleton3D(auraBody);
-    const auto reportHipSpheres = [](const char *stage, const auto &body, const auto &graph) {
+    const auto reportHipCollisionGeometry = [](const char *stage, const auto &body, const auto &graph) {
         const auto left = aura::physics::collisionSphere(body.leftThigh), right = aura::physics::collisionSphere(body.rightThigh);
         const float distance = (right.center-left.center).length(), required = left.radius+right.radius;
+        const auto leftCapsule = aura::physics::bodyPartCollisionCapsule(body.leftThigh);
+        const auto rightCapsule = aura::physics::bodyPartCollisionCapsule(body.rightThigh);
+        const auto closest = aura::physics::closestPointsBetweenSegments(leftCapsule.pointA,leftCapsule.pointB,
+                                                                          rightCapsule.pointA,rightCapsule.pointB);
         const auto gap = [&](const auto &thigh, const auto &joint) {
             return (aura::body::localToWorldPoint(thigh,joint.localAnchorB)-
                     aura::body::localToWorldPoint(body.pelvis,joint.localAnchorA)).length();
@@ -247,14 +251,28 @@ int main(int argc, char **argv) {
             << ',' << left.radius << ',' << right.radius << ',' << required << ',' << required-distance
             << ',' << std::max(0.0f,required-distance) << ',' << gap(body.leftThigh,graph.leftHip)
             << ',' << gap(body.rightThigh,graph.rightHip) << '\n';
+        std::cout << "hipCapsuleGeometry," << stage << ',' << (closest.pointB-closest.pointA).length()
+            << ',' << leftCapsule.radius << ',' << rightCapsule.radius << ','
+            << aura::physics::capsulePenetration(leftCapsule,rightCapsule) << ',' << closest.fractionA << ',' << closest.fractionB
+            << ',' << closest.pointA.x << ',' << closest.pointA.y << ',' << closest.pointA.z
+            << ',' << closest.pointB.x << ',' << closest.pointB.y << ',' << closest.pointB.z << '\n';
+        const auto emitBody = [&](const char *side,const auto &part) {
+            const auto &q=part.body.orientation;
+            std::cout << "hipCapsuleBody," << stage << ',' << side << ','
+                << part.size.x << ',' << part.size.y << ',' << part.size.z << ','
+                << part.body.position.x << ',' << part.body.position.y << ',' << part.body.position.z << ','
+                << q.w << ',' << q.x << ',' << q.y << ',' << q.z << '\n';
+        };
+        emitBody("left",body.leftThigh); emitBody("right",body.rightThigh);
     };
-    const auto hipSphereHeader = [] {
+    const auto hipGeometryHeader = [] {
+        std::cout << "hipCapsuleGeometry,stage,segmentDistance,leftRadius,rightRadius,penetration,leftFraction,rightFraction,closestLeftX,closestLeftY,closestLeftZ,closestRightX,closestRightY,closestRightZ\n";
         std::cout << "hipSphereGeometry,stage,leftX,leftY,leftZ,rightX,rightY,rightZ,centerDistance,leftRadius,rightRadius,requiredSeparation,signedPenetration,penetration,leftHipGap,rightHipGap\n";
     };
     if (neutralSphereCompatibility) {
         auto neutral = aura::body::createAuraBody3D();
         const auto graph = aura::body::createAuraSkeleton3D(neutral);
-        hipSphereHeader(); reportHipSpheres("neutralInitial",neutral,graph);
+        hipGeometryHeader(); reportHipCollisionGeometry("neutralInitial",neutral,graph);
         auto neutralParts=graph.collectComponent(neutral,neutral.torso,graph.head);
         neutralParts.push_back(&neutral.head);
         std::size_t eligible=0,overlapping=0;
@@ -1774,7 +1792,7 @@ int main(int argc, char **argv) {
                 std::string(diagnosticSweep)=="forward" && &connection.constraint==&skeleton.leftHip &&
                 std::abs(diagnosticTime-1.65)<1e-9) {
                 auto copy=auraBody;
-                hipSphereHeader(); reportHipSpheres("copiedBeforeRepair",copy,skeleton);
+                hipGeometryHeader(); reportHipCollisionGeometry("copiedBeforeRepair",copy,skeleton);
                 for (bool left : {true,false}) {
                     const auto &joint=left?skeleton.leftHip:skeleton.rightHip;
                     auto &thigh=left?copy.leftThigh:copy.rightThigh;
@@ -1783,7 +1801,7 @@ int main(int argc, char **argv) {
                                           aura::body::localToWorldPoint(thigh,joint.localAnchorB);
                     aura::body::translateSubtree(component,correction);
                 }
-                reportHipSpheres("copiedBothHipsAttached",copy,skeleton);
+                reportHipCollisionGeometry("copiedBothHipsAttached",copy,skeleton);
                 std::cout << "hipSphereCompatibilityReplay,time=" << diagnosticTime
                     << ",iteration=" << diagnosticIteration << ",orientationsFixed=1,noSelfCollisionRepair=1\n";
                 hipSphereCompatibilityReplayDone=true;
