@@ -17,6 +17,7 @@
 #include "aura/body/ComponentPosition.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Collision.hpp"
+#include "aura/physics/RoomCollision.hpp"
 #include "aura/physics/Forces.hpp"
 #include "aura/physics/Motion.hpp"
 #include "aura/render/Camera.hpp"
@@ -87,9 +88,15 @@ int main() {
         aura::render::MeshPrimitive::Triangles,
         aura::render::VertexLayout::PositionNormal
     };
+    const aura::physics::RoomBounds room;
+    std::array<aura::physics::RoomBody, 16> roomBodies;
+    for (std::size_t i=0;i<parts.size();++i) roomBodies[i]={&parts[i]->body,parts[i]->size};
+    const auto roomSize = room.maximum - room.minimum;
+    const auto roomOrigin = (room.minimum + room.maximum) * 0.5f - aura::math::Vec3{0,roomSize.y*0.5f,0};
+    aura::render::Mesh roomLines{aura::render::MeshFactory::createRoomLines(roomSize, 5.0f), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh grid{aura::render::MeshFactory::createGrid(60, 1.0f), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh floor{
-        aura::render::MeshFactory::createFloor(120.0f), aura::render::MeshPrimitive::Triangles,
+        aura::render::MeshFactory::createFloor(roomSize.x), aura::render::MeshPrimitive::Triangles,
         aura::render::VertexLayout::PositionNormal
     };
     aura::render::Mesh cylinder{
@@ -289,6 +296,9 @@ int main() {
         unlitShader.setVec3("uColor", {0.38f, 0.38f, 0.4f});
         unlitShader.setMat4("uModel", aura::math::Mat4::translation({0.0f, 0.02f, 0.0f}));
         grid.draw();
+        unlitShader.setVec3("uColor", {0.23f, 0.38f, 0.46f});
+        unlitShader.setMat4("uModel", aura::math::Mat4::translation(roomOrigin));
+        roomLines.draw();
 
         // Expanded back faces form a thin silhouette around the white surfaces.
         outlineShader.use();
@@ -566,6 +576,12 @@ int main() {
                 for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i) solveConnection(joints[i]);
                 stageEnergy = aura::app::bodyEnergy(parts);
                 diagnosticHistory.jointEnergy += stageEnergy - afterFloor;
+                // Room contacts have the last word on containment; later joint
+                // geometry must not leave a body outside the rendered enclosure.
+                aura::physics::resolveRoomCollisions(roomBodies, room);
+                const double afterRoom = aura::app::bodyEnergy(parts);
+                diagnosticHistory.roomEnergy += afterRoom - stageEnergy;
+                stageEnergy = afterRoom;
             }
             for (auto *part: parts) {
                 aura::physics::clearForce(part->body);

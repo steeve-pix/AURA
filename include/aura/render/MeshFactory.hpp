@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "aura/math/Vec3.hpp"
 
 namespace aura::render {
     class MeshFactory {
@@ -21,6 +22,8 @@ namespace aura::render {
         static std::vector<float> createSphereLines(int segments = 48, int hemisphere = 0);
         static std::vector<float> createCylinderLines(int segments = 48);
         static std::vector<float> createCubeLines();
+        // Wire grids on four walls and the ceiling, centred horizontally at Y=0.
+        static std::vector<float> createRoomLines(const math::Vec3 &size, float spacing = 2.0f);
 
         // Broad, flat shoulder line and a rounded, tapered lower chest.
         static std::vector<float> createTorso();

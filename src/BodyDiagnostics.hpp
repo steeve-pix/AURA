@@ -178,7 +178,7 @@ namespace aura::app {
         DiagnosticPeak gap, limit, penetration, angularSpeed, anchorSpeed, linearSpeed, rotation, quaternionError;
         double initialEnergy = 0.0;
         double motorAdded = 0.0, motorRemoved = 0.0, totalMotorWork = 0.0;
-        double gravityWork = 0.0, integrationEnergy = 0.0, floorEnergy = 0.0, jointEnergy = 0.0;
+        double gravityWork = 0.0, integrationEnergy = 0.0, floorEnergy = 0.0, jointEnergy = 0.0, roomEnergy = 0.0;
 
         void sampleMotorWork(std::span<const BodyJoint> joints, double dt) {
             for (const auto &c: joints) {
@@ -269,7 +269,7 @@ namespace aura::app {
             pair("Motor supplied~", motorAdded, "Motor absorbed~", motorRemoved);
             pair("Motor net~", motorAdded + motorRemoved, "Motor net~ (run)", totalMotorWork);
             pair("Integration dE", integrationEnergy, "Floor dE", floorEnergy);
-            out << "  " << std::left << std::setw(23) << "Joint dE" << std::right << std::setw(13) << logNumber(jointEnergy) << '\n';
+            pair("Joint dE", jointEnergy, "Room contact dE", roomEnergy);
             logSection(out, "BODY / MOMENTUM");
             pair("Total mass", state.mass, "Speed RMS (mass weight)", state.rmsSpeed);
             out << "  " << std::left << std::setw(23) << "Floor-band parts" << std::right << std::setw(13)
@@ -316,7 +316,7 @@ namespace aura::app {
             std::cout << out.str() << std::flush;
             gap = {}; limit = {}; penetration = {}; angularSpeed = {}; anchorSpeed = {};
             linearSpeed = {}; rotation = {}; quaternionError = {};
-            motorAdded = motorRemoved = gravityWork = integrationEnergy = floorEnergy = jointEnergy = 0.0;
+            motorAdded = motorRemoved = gravityWork = integrationEnergy = floorEnergy = jointEnergy = roomEnergy = 0.0;
             intervalStart = time;
         }
     };

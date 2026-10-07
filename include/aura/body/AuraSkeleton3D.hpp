@@ -25,6 +25,9 @@ namespace aura::body {
         Joint3D rightKnee;
         Joint3D rightAnkle;
 
+        bool areDirectlyConnected(const AuraBody3D &body, const BodyPart3D &a,
+                                  const BodyPart3D &b) const;
+
         // Query this skeleton's topology against the supplied body. No body pointers
         // are retained, so copies of a body/skeleton can be queried independently.
         // jointToCut must be one of this skeleton's joint members.

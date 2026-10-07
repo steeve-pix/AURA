@@ -1,3 +1,4 @@
+#include "aura/physics/SelfCollision.hpp"
 // Headless measurement tool, not a passing stability regression.
 // Keep setup and step ordering aligned with src/main.cpp; only upper-body motor flags differ.
 #include <algorithm>
@@ -22,6 +23,7 @@
 #include "aura/physics/Impulse.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Collision.hpp"
+#include "aura/physics/RoomCollision.hpp"
 #include "aura/physics/Forces.hpp"
 #include "aura/physics/Motion.hpp"
 
@@ -91,6 +93,21 @@ int main(int argc, char **argv) {
     bool angularMomentumDiagnostic = false;
     bool geometryMomentumDiagnostic = false;
     bool floorMomentumDiagnostic = false;
+    bool floorEnergyDiagnostic = false;
+    bool selfCollision = false;
+    bool roomBounds = false;
+    int roomFitFailures = 0;
+    const aura::physics::RoomBounds room;
+    float maxRoomPenetration = 0.0f;
+    bool selfCollisionWindow = false;
+    bool selfTranslationReplay = false;
+    bool selfTranslationReplayDone = false;
+    bool selfFractionReplay = false;
+    bool selfFractionReplayDone = false;
+    bool neutralSphereCompatibility = false;
+    bool hipSphereCompatibilityReplay = false;
+    bool hipSphereCompatibilityReplayDone = false;
+    float maxSelfPenetration = 0.0f;
     bool kneeProjectionReplay = false;
     bool legacyGeometryCompensation = false;
     bool handGeometryMomentumDiagnostic = false;
@@ -137,6 +154,14 @@ int main(int argc, char **argv) {
         else if (argument == "--local-angular-limits") { localAngularLimits = true; angularMomentumDiagnostic = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--legacy-geometry-compensation") legacyGeometryCompensation = true;
         else if (argument == "--knee-projection-replay") { legacyGeometryCompensation = true; kneeProjectionReplay = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--neutral-sphere-compatibility") neutralSphereCompatibility = true;
+        else if (argument == "--hip-sphere-compatibility-replay") { hipSphereCompatibilityReplay = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--self-fraction-replay") { selfFractionReplay = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--self-translation-replay") { selfTranslationReplay = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--self-collision-window") { selfCollisionWindow = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--room-bounds") { roomBounds = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--self-collision") { selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--floor-energy-diagnostic") { floorEnergyDiagnostic = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--floor-momentum-diagnostic") { floorMomentumDiagnostic = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--geometry-momentum-diagnostic") { geometryMomentumDiagnostic = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--angular-momentum-diagnostic") { angularMomentumDiagnostic = true; componentPositions = true; allLocalAnchors = true; }
@@ -168,7 +193,7 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--room-bounds] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
     }
@@ -205,7 +230,50 @@ int main(int argc, char **argv) {
     // Start above the floor so gravity is visible immediately.
     for (auto *part: parts) part->body.position.y += 0.6f;
 
+    std::array<aura::physics::RoomBody,16> roomBodies;
+    for (std::size_t i=0;i<parts.size();++i) roomBodies[i]={&parts[i]->body,parts[i]->size};
+
     auto skeleton = aura::body::createAuraSkeleton3D(auraBody);
+    const auto reportHipSpheres = [](const char *stage, const auto &body, const auto &graph) {
+        const auto left = aura::physics::collisionSphere(body.leftThigh), right = aura::physics::collisionSphere(body.rightThigh);
+        const float distance = (right.center-left.center).length(), required = left.radius+right.radius;
+        const auto gap = [&](const auto &thigh, const auto &joint) {
+            return (aura::body::localToWorldPoint(thigh,joint.localAnchorB)-
+                    aura::body::localToWorldPoint(body.pelvis,joint.localAnchorA)).length();
+        };
+        std::cout << std::scientific << std::setprecision(9)
+            << "hipSphereGeometry," << stage << ',' << left.center.x << ',' << left.center.y << ',' << left.center.z
+            << ',' << right.center.x << ',' << right.center.y << ',' << right.center.z << ',' << distance
+            << ',' << left.radius << ',' << right.radius << ',' << required << ',' << required-distance
+            << ',' << std::max(0.0f,required-distance) << ',' << gap(body.leftThigh,graph.leftHip)
+            << ',' << gap(body.rightThigh,graph.rightHip) << '\n';
+    };
+    const auto hipSphereHeader = [] {
+        std::cout << "hipSphereGeometry,stage,leftX,leftY,leftZ,rightX,rightY,rightZ,centerDistance,leftRadius,rightRadius,requiredSeparation,signedPenetration,penetration,leftHipGap,rightHipGap\n";
+    };
+    if (neutralSphereCompatibility) {
+        auto neutral = aura::body::createAuraBody3D();
+        const auto graph = aura::body::createAuraSkeleton3D(neutral);
+        hipSphereHeader(); reportHipSpheres("neutralInitial",neutral,graph);
+        auto neutralParts=graph.collectComponent(neutral,neutral.torso,graph.head);
+        neutralParts.push_back(&neutral.head);
+        std::size_t eligible=0,overlapping=0;
+        float maximum=0;
+        std::cout << "neutralSpherePair,partA,partB,centerDistance,requiredSeparation,signedPenetration,penetration\n";
+        for (std::size_t i=0;i<neutralParts.size();++i) for (std::size_t j=i+1;j<neutralParts.size();++j) {
+            const auto &a=*neutralParts[i],&b=*neutralParts[j];
+            if (!aura::physics::shouldSelfCollide(a,b,neutral,graph)) continue;
+            const auto sa=aura::physics::collisionSphere(a),sb=aura::physics::collisionSphere(b);
+            const float distance=(sb.center-sa.center).length(),required=sa.radius+sb.radius;
+            const float penetration=std::max(0.0f,required-distance);
+            ++eligible; overlapping += penetration>1e-6f; maximum=std::max(maximum,penetration);
+            std::cout << "neutralSpherePair," << a.name << ',' << b.name << ',' << distance << ',' << required
+                << ',' << required-distance << ',' << penetration << '\n';
+        }
+        std::cout << "neutralSphereSummary,eligiblePairs=" << eligible << ",overlappingPairs=" << overlapping
+            << ",maximumPenetration=" << maximum << '\n';
+        return 0;
+    }
 
     // Ordered connections refer to the skeleton's joints; flags and radii belong to this demo.
     // Root outward: spine/head, left arm, right arm, left leg, right leg.
@@ -235,6 +303,25 @@ int main(int argc, char **argv) {
     int diagnosticIteration = 0;
     const char *diagnosticSweep = "forward";
     const char *energyObject = "step";
+    // Buffer the final iteration so the first offending pair can be selected
+    // after the completed step, without rerunning or perturbing that trajectory.
+    using SelfPoses = std::array<aura::physics::RigidBody3D, 16>;
+    struct SelfGeometrySample {
+        std::string stage, joint, operation;
+        SelfPoses before, after;
+    };
+    std::vector<SelfGeometrySample> selfGeometrySamples;
+    const auto selfPoses = [&] {
+        SelfPoses result{};
+        for (std::size_t i = 0; i < parts.size(); ++i) result[i] = parts[i]->body;
+        return result;
+    };
+    const auto selfCheckpoint = [&](const char *stage) {
+        if (selfCollisionWindow && diagnosticIteration == jointIterations) {
+            const auto poses = selfPoses();
+            selfGeometrySamples.push_back({stage, "none", "none", poses, poses});
+        }
+    };
     const auto tracingEnergy = [&] {
         return energyWindow && diagnosticTime >= energyStart - 1e-9 && diagnosticTime <= 4.43 + 1e-9;
     };
@@ -686,6 +773,17 @@ int main(int argc, char **argv) {
     } largestFloor;
     std::size_t floorMomentumOperations = 0;
     double unexplainedFloorHorizontal = 0, unexplainedFloorVertical = 0;
+    struct FloorEnergyWorst {
+        double delta=-std::numeric_limits<double>::infinity(), time=0;
+        int outerIteration=0;
+        std::string part;
+        aura::physics::FloorCollisionAudit response;
+        aura::physics::FloorNormalImpulseAudit impulse;
+    } worstNormalPhase, worstDamping, worstNormalImpulse;
+    std::size_t energyFloorOperations=0, energyContactOperations=0, energyImpulseCount=0;
+    std::size_t positiveNormalPhases=0, positiveDamping=0, positiveNormalImpulses=0;
+    std::size_t energyReplayMismatches=0;
+    constexpr double contactEnergyNoise = 1e-5; // Report raw maxima as well; never clamp them.
     bool firstMomentumReported = false;
     WholeMomentum stepMomentumBefore{};
     // Significant completed-step horizontal change: 0.1 kg m/s. Individual
@@ -845,7 +943,7 @@ int main(int argc, char **argv) {
                 diagnosticIteration==1 && std::string(diagnosticSweep)=="forward" &&
                 std::string(energyObject)=="rightKnee" && op=="correctRightKneeAngleAroundPivot") replayKneeProjection();
             const auto momentumBefore = (handGeometryMomentumDiagnostic || angularMomentumDiagnostic || geometryMomentumDiagnostic || floorMomentumDiagnostic) ? wholeMomentum() : WholeMomentum{};
-            const bool floorTrace = floorMomentumDiagnostic && op=="floorResponse";
+            const bool floorTrace = (floorMomentumDiagnostic || floorEnergyDiagnostic) && op=="floorResponse";
             auto floorPart = parts.end();
             aura::physics::RigidBody3D floorOld, floorFootOld;
             if (floorTrace) {
@@ -897,9 +995,57 @@ int main(int argc, char **argv) {
                     aura::physics::velocityAtWorldPoint(c.partA->body,aura::body::localToWorldPoint(*c.partA,c.constraint.localAnchorA));
             };
             const auto oldDescendantVelocity = descendant!=joints.end() ? descendantVelocity(*descendant) : aura::math::Vec3{};
+            const bool selfGeometryTrace = selfCollisionWindow && diagnosticIteration == jointIterations &&
+                (op.find("Position") != std::string::npos || op.find("Angle") != std::string::npos) &&
+                op.find("Velocity") == std::string::npos;
+            const auto selfBefore = selfGeometryTrace ? selfPoses() : SelfPoses{};
             operation();
+            if (selfGeometryTrace)
+                selfGeometrySamples.push_back({diagnosticSweep, energyObject, operationName, selfBefore, selfPoses()});
+
             if (descendant!=joints.end()) descendant->partB->body.velocity += oldDescendantVelocity-descendantVelocity(*descendant);
-            if (floorTrace && floorPart!=parts.end()) {
+            if (floorEnergyDiagnostic && floorTrace && floorPart!=parts.end()) {
+                ++energyFloorOperations;
+                auto replay=floorOld; aura::physics::FloorCollisionAudit audit;
+                aura::physics::resolveFloorCollision(replay,(*floorPart)->size,0.0f,static_cast<float>(FIXED_DT)/jointIterations,&audit);
+                const auto &actual=(*floorPart)->body;
+                if((replay.velocity-actual.velocity).lengthSquared()!=0 || (replay.angularVelocity-actual.angularVelocity).lengthSquared()!=0)
+                    ++energyReplayMismatches;
+                const double normalDelta=audit.energyAfterNormal-audit.energyAfterDamping;
+                const double dampingDelta=audit.energyAfterDamping-audit.energyBefore;
+                float impulseSum=0; for(const auto &event:audit.impulseEvents) impulseSum+=event.magnitude;
+                std::cout << "floorEnergy," << diagnosticTime << ',' << diagnosticIteration << ',' << energyObject
+                    << ',' << audit.contacts.size() << ',' << audit.energyBefore << ',' << audit.energyAfterDamping
+                    << ',' << audit.energyAfterNormal << ',' << dampingDelta << ',' << normalDelta << ',' << impulseSum
+                    << ',' << audit.linearSpeedBefore << ',' << audit.linearSpeedAfterDamping << ',' << audit.linearSpeedAfterNormal
+                    << ',' << audit.angularSpeedBefore << ',' << audit.angularSpeedAfterDamping << ',' << audit.angularSpeedAfterNormal << '\n';
+                const auto retain=[&](auto &worst,double delta,const auto *impulse) {
+                    if(delta<=worst.delta) return;
+                    worst.delta=delta; worst.time=diagnosticTime; worst.outerIteration=diagnosticIteration; worst.part=energyObject; worst.response=audit;
+                    if(impulse) worst.impulse=*impulse;
+                };
+                if(!audit.contacts.empty()) {
+                    ++energyContactOperations;
+                    positiveNormalPhases += normalDelta>contactEnergyNoise;
+                    positiveDamping += dampingDelta>contactEnergyNoise;
+                    retain(worstNormalPhase,normalDelta,static_cast<const aura::physics::FloorNormalImpulseAudit *>(nullptr));
+                    retain(worstDamping,dampingDelta,static_cast<const aura::physics::FloorNormalImpulseAudit *>(nullptr));
+                }
+                for(const auto &event:audit.impulseEvents) {
+                    ++energyImpulseCount;
+                    const double delta=event.energyAfter-event.energyBefore;
+                    positiveNormalImpulses += delta>contactEnergyNoise;
+                    retain(worstNormalImpulse,delta,&event);
+                    const auto point=audit.contacts[event.contact];
+                    std::cout << "floorNormalImpulse," << diagnosticTime << ',' << diagnosticIteration << ',' << energyObject
+                        << ',' << event.iteration << ',' << event.contact << ',' << point.x << ',' << point.y << ',' << point.z
+                        << ',' << event.magnitude << ',' << event.normalVelocityBefore << ',' << event.normalVelocityAfter
+                        << ',' << event.energyBefore << ',' << event.energyAfter << ',' << delta
+                        << ',' << event.before.velocity.length() << ',' << event.after.velocity.length()
+                        << ',' << event.before.angularVelocity.length() << ',' << event.after.angularVelocity.length() << '\n';
+                }
+            }
+            if (floorMomentumDiagnostic && floorTrace && floorPart!=parts.end()) {
                 const auto after=wholeMomentum();
                 ++floorMomentumOperations;
                 const auto &root=(*floorPart)->body;
@@ -1468,6 +1614,150 @@ int main(int argc, char **argv) {
             aura::body::MajorBodyBranch3D::RightShoulder);
         sample("corrected_1.5");
     };
+    const auto replaySelfTranslation = [&] {
+        constexpr float tolerance = 0.001f;
+        const auto error = aura::body::localToWorldPoint(auraBody.leftThigh, skeleton.leftHip.localAnchorB) -
+                           aura::body::localToWorldPoint(auraBody.pelvis, skeleton.leftHip.localAnchorA);
+        const auto spherePenetration = [&](const auto &body) {
+            const auto a = aura::physics::collisionSphere(body.leftThigh);
+            const auto b = aura::physics::collisionSphere(body.rightThigh);
+            return a.radius+b.radius-(b.center-a.center).length();
+        };
+        std::cout << std::scientific << std::setprecision(9)
+            << "selfTranslationInput,time=" << diagnosticTime << ",iteration=" << diagnosticIteration
+            << ",joint=leftHip,gap=" << error.length() << ",thighPenetration=" << spherePenetration(auraBody)
+            << ",tolerance=" << tolerance << '\n'
+            << "selfTranslationCandidate,side,gapAfter,thighPenetration,lowestMovedY,maxPositivePenetrationIncrease,maxPenetrationAfter,floorSafe,selfSafe,movedParts\n";
+        for (bool child : {true,false}) {
+            auto copy = auraBody;
+            const auto component = skeleton.collectComponent(copy, child ? copy.leftThigh : copy.pelvis, skeleton.leftHip);
+            const auto delta = child ? -error : error;
+            const bool selfSafe = aura::physics::componentTranslationIsSelfCollisionSafe(copy,skeleton,component,delta,tolerance);
+            bool floorSafe = true;
+            std::string moved;
+            for (const auto *part : component) {
+                const float y = aura::physics::lowestPoint(part->body,part->size).y;
+                floorSafe &= y+delta.y >= std::min(0.0f,y)-1e-6f;
+                if (!moved.empty()) moved += ';'; moved += part->name;
+            }
+            aura::body::translateSubtree(component,delta);
+            float lowest = std::numeric_limits<float>::infinity(), increase = 0.0f;
+            for (const auto *part : component)
+                lowest = std::min(lowest,aura::physics::lowestPoint(part->body,part->size).y);
+            const auto originalComponent = skeleton.collectComponent(auraBody,child?auraBody.leftThigh:auraBody.pelvis,skeleton.leftHip);
+            // Observe all pairs for the requested metric; the reusable safety
+            // query above only evaluates pairs crossing the moved boundary.
+            for (std::size_t i=0;i<parts.size();++i) for (std::size_t j=i+1;j<parts.size();++j) {
+                if (!aura::physics::shouldSelfCollide(*parts[i],*parts[j],auraBody,skeleton)) continue;
+                const auto a = aura::physics::collisionSphere(*parts[i]), b = aura::physics::collisionSphere(*parts[j]);
+                auto predictedA = a.center, predictedB = b.center;
+                // Pointer identities from the original body identify the same
+                // graph side, independently of mutable part names.
+                if (std::find(originalComponent.begin(),originalComponent.end(),parts[i])!=originalComponent.end()) predictedA += delta;
+                if (std::find(originalComponent.begin(),originalComponent.end(),parts[j])!=originalComponent.end()) predictedB += delta;
+                const float before = std::max(0.0f,a.radius+b.radius-(b.center-a.center).length());
+                const float after = std::max(0.0f,a.radius+b.radius-(predictedB-predictedA).length());
+                increase = std::max(increase,after-before);
+            }
+            const float gap = (aura::body::localToWorldPoint(copy.leftThigh,skeleton.leftHip.localAnchorB)-
+                               aura::body::localToWorldPoint(copy.pelvis,skeleton.leftHip.localAnchorA)).length();
+            std::cout << "selfTranslationCandidate," << (child?"child":"opposite") << ',' << gap << ','
+                << spherePenetration(copy) << ',' << lowest << ',' << increase << ','
+                << aura::physics::maximumSelfCollisionPenetration(copy,skeleton) << ','
+                << floorSafe << ',' << selfSafe << ',' << moved << '\n';
+        }
+        selfTranslationReplayDone = true;
+    };
+    const auto replaySelfFraction = [&] {
+        constexpr float tolerance = 0.001f;
+        constexpr int searchIterations = 32;
+        constexpr int cycles = 16;
+        const auto thighPenetration = [](const auto &body) {
+            const auto a = aura::physics::collisionSphere(body.leftThigh), b = aura::physics::collisionSphere(body.rightThigh);
+            return std::max(0.0f,a.radius+b.radius-(b.center-a.center).length());
+        };
+        const auto gap = [&](const auto &body, bool left) {
+            const auto &joint = left?skeleton.leftHip:skeleton.rightHip;
+            const auto &thigh = left?body.leftThigh:body.rightThigh;
+            return (aura::body::localToWorldPoint(thigh,joint.localAnchorB)-
+                    aura::body::localToWorldPoint(body.pelvis,joint.localAnchorA)).length();
+        };
+        const auto partialHip = [&](auto &body, bool left) {
+            const auto &joint = left?skeleton.leftHip:skeleton.rightHip;
+            auto &thigh = left?body.leftThigh:body.rightThigh;
+            const auto component = skeleton.collectComponent(body,thigh,joint);
+            const auto delta = aura::body::localToWorldPoint(body.pelvis,joint.localAnchorA)-
+                               aura::body::localToWorldPoint(thigh,joint.localAnchorB);
+            const auto safe = [&](float alpha) {
+                const auto step = delta*alpha;
+                for (const auto *part : component) {
+                    const float y = aura::physics::lowestPoint(part->body,part->size).y;
+                    if (y+step.y < std::min(0.0f,y)-1e-6f) return false;
+                }
+                return aura::physics::componentTranslationIsSelfCollisionSafe(body,skeleton,component,step,tolerance);
+            };
+            float low=0,high=1;
+            if (safe(1)) low=1;
+            else for (int k=0;k<searchIterations;++k) {
+                const float middle=low+(high-low)*0.5f;
+                if (safe(middle)) low=middle; else high=middle;
+            }
+            aura::body::translateSubtree(component,delta*low);
+            return low;
+        };
+        std::cout << std::scientific << std::setprecision(9)
+            << "selfFractionInput,time=" << diagnosticTime << ",iteration=" << diagnosticIteration
+            << ",tolerance=" << tolerance << ",binarySearchIterations=" << searchIterations
+            << ",cycles=" << cycles << ",noIntegrationMotorsContactsVelocities=1\n";
+        auto single=auraBody;
+        const float alpha=partialHip(single,true);
+        const auto moved=skeleton.collectComponent(single,single.leftThigh,skeleton.leftHip);
+        float lowest=std::numeric_limits<float>::infinity(),increase=0;
+        for (const auto *part:moved) lowest=std::min(lowest,aura::physics::lowestPoint(part->body,part->size).y);
+        const auto originalMoved=skeleton.collectComponent(auraBody,auraBody.leftThigh,skeleton.leftHip);
+        const auto delta=aura::body::localToWorldPoint(auraBody.pelvis,skeleton.leftHip.localAnchorA)-
+                         aura::body::localToWorldPoint(auraBody.leftThigh,skeleton.leftHip.localAnchorB);
+        for (std::size_t i=0;i<parts.size();++i) for (std::size_t j=i+1;j<parts.size();++j) {
+            if (!aura::physics::shouldSelfCollide(*parts[i],*parts[j],auraBody,skeleton)) continue;
+            const auto a=aura::physics::collisionSphere(*parts[i]),b=aura::physics::collisionSphere(*parts[j]);
+            auto newA=a.center,newB=b.center;
+            if (std::find(originalMoved.begin(),originalMoved.end(),parts[i])!=originalMoved.end()) newA+=delta*alpha;
+            if (std::find(originalMoved.begin(),originalMoved.end(),parts[j])!=originalMoved.end()) newB+=delta*alpha;
+            const float before=std::max(0.0f,a.radius+b.radius-(b.center-a.center).length());
+            const float after=std::max(0.0f,a.radius+b.radius-(newB-newA).length());
+            increase=std::max(increase,after-before);
+        }
+        std::cout << "selfFractionCandidate,alpha,remainingHipGap,thighPenetration,maxPositivePenetrationIncrease,lowestMovedY\n"
+            << "selfFractionCandidate," << alpha << ',' << gap(single,true) << ',' << thighPenetration(single)
+            << ',' << increase << ',' << lowest << '\n';
+        auto copy=auraBody;
+        std::cout << "selfFractionCycle,cycle,stage,leftHipGap,rightHipGap,thighPenetration,leftAlpha,rightAlpha\n";
+        const auto sample=[&](int cycle,const char *stage,float a,float b) {
+            std::cout << "selfFractionCycle," << cycle << ',' << stage << ',' << gap(copy,true) << ','
+                << gap(copy,false) << ',' << thighPenetration(copy) << ',' << a << ',' << b << '\n';
+        };
+        sample(0,"initial",0,0);
+        for (int k=1;k<=cycles;++k) {
+            // Existing pair projection only, not an all-body contact pass.
+            aura::physics::resolveSelfCollision(copy.leftThigh,copy.rightThigh);
+            sample(k,"afterSeparation",0,0);
+            const float left=partialHip(copy,true);
+            sample(k,"afterLeftHip",left,0);
+            const float right=partialHip(copy,false);
+            sample(k,"afterRightHip",left,right);
+        }
+        bool velocitiesUnchanged=true;
+        auto copiedParts=skeleton.collectComponent(copy,copy.torso,skeleton.head);
+        auto originalParts=skeleton.collectComponent(auraBody,auraBody.torso,skeleton.head);
+        copiedParts.push_back(&copy.head); originalParts.push_back(&auraBody.head);
+        for (std::size_t i=0;i<copiedParts.size();++i) {
+            velocitiesUnchanged &= (copiedParts[i]->body.velocity-originalParts[i]->body.velocity).lengthSquared()==0 &&
+                (copiedParts[i]->body.angularVelocity-originalParts[i]->body.angularVelocity).lengthSquared()==0;
+        }
+        std::cout << "selfFractionResult,velocitiesUnchanged=" << velocitiesUnchanged
+            << ",liveChooserUnchanged=1,scope=twoHipsAndThighPairOnly\n";
+        selfFractionReplayDone=true;
+    };
     const auto solveConnection = [&](BodyJoint &connection) {
         energyObject = connection.name;
         auto &a = *connection.partA;
@@ -1480,6 +1770,30 @@ int main(int argc, char **argv) {
             else auditOperation(legacyName, legacy);
         };
         const auto positionOperation = [&](const char *legacyName, const auto &legacy) {
+            if (hipSphereCompatibilityReplay && !hipSphereCompatibilityReplayDone && diagnosticIteration==jointIterations &&
+                std::string(diagnosticSweep)=="forward" && &connection.constraint==&skeleton.leftHip &&
+                std::abs(diagnosticTime-1.65)<1e-9) {
+                auto copy=auraBody;
+                hipSphereHeader(); reportHipSpheres("copiedBeforeRepair",copy,skeleton);
+                for (bool left : {true,false}) {
+                    const auto &joint=left?skeleton.leftHip:skeleton.rightHip;
+                    auto &thigh=left?copy.leftThigh:copy.rightThigh;
+                    const auto component=skeleton.collectComponent(copy,thigh,joint);
+                    const auto correction=aura::body::localToWorldPoint(copy.pelvis,joint.localAnchorA)-
+                                          aura::body::localToWorldPoint(thigh,joint.localAnchorB);
+                    aura::body::translateSubtree(component,correction);
+                }
+                reportHipSpheres("copiedBothHipsAttached",copy,skeleton);
+                std::cout << "hipSphereCompatibilityReplay,time=" << diagnosticTime
+                    << ",iteration=" << diagnosticIteration << ",orientationsFixed=1,noSelfCollisionRepair=1\n";
+                hipSphereCompatibilityReplayDone=true;
+            }
+            if (selfFractionReplay && !selfFractionReplayDone && diagnosticIteration==jointIterations &&
+                std::string(diagnosticSweep)=="forward" && &connection.constraint==&skeleton.leftHip &&
+                std::abs(diagnosticTime-1.65)<1e-9) replaySelfFraction();
+            if (selfTranslationReplay && !selfTranslationReplayDone && diagnosticIteration==jointIterations &&
+                std::string(diagnosticSweep)=="forward" && &connection.constraint==&skeleton.leftHip &&
+                std::abs(diagnosticTime-1.65)<1e-9) replaySelfTranslation();
             if (componentPositions)
                 auditOperation("correctJointPositionWithComponents", [&] {
                     aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
@@ -1868,7 +2182,13 @@ int main(int argc, char **argv) {
         std::cout << std::scientific << std::setprecision(9)
                   << "Hand geometry/momentum audit: unchanged all-local baseline; trace t=1.508333333 iteration=16; earliest completed-step horizontal momentum change >=0.1 kg m/s. Geometry list names the bodies actually moved.\n";
     // Sample after every complete step, not only at the once-per-second log interval.
+    if(floorEnergyDiagnostic) {
+        std::cout << std::scientific << std::setprecision(9)
+            << "floorEnergy,time,outerIteration,part,contacts,KEbefore,KEafterDamping,KEafterNormal,deltaDamping,deltaNormal,normalImpulseSum,vBefore,vDamped,vFinal,wBefore,wDamped,wFinal\n"
+            << "floorNormalImpulse,time,outerIteration,part,contactIteration,contactIndex,x,y,z,J,vnBefore,vnAfter,KEbefore,KEafter,deltaKE,vBefore,vAfter,wBefore,wAfter\n";
+    }
     for (int frame = 0; frame < steps; ++frame) {
+        selfGeometrySamples.clear();
         diagnosticTime = (frame + 1) * FIXED_DT;
         const auto dt = static_cast<float>(FIXED_DT);
         diagnosticIteration = 0;
@@ -2123,6 +2443,9 @@ int main(int argc, char **argv) {
             const auto lowB = trace ? lowestPoints() : std::array<float, 16>{};
             const auto countB = trace ? contactCounts() : std::array<std::size_t, 16>{};
             energyStage("B_afterFloor");
+            selfCheckpoint("A_beforeSelfCollision");
+            if (selfCollision) aura::physics::resolveBodySelfCollisions(auraBody, skeleton);
+            selfCheckpoint("B_afterSelfCollision");
             diagnosticSweep = "forward";
             for (auto &joint: joints) {
                 if (tracingAnkle() && &joint.constraint == &skeleton.rightHip) ankleSample("Cbefore");
@@ -2162,6 +2485,7 @@ int main(int argc, char **argv) {
             if (floorFailureDiagnostic && !floorFailureReported)
                 floorFailureIterations[iteration].afterBackward = floorFailureCheckpoint();
             momentumStage(iteration + 1, "jointBackwardGeometryVelocity", beforeBackwardMomentum);
+            if (roomBounds && !aura::physics::resolveRoomCollisions(roomBodies,room)) ++roomFitFailures;
             energyStage("D_afterBackward");
             velocitySweepSample("afterBackwardGeometryVelocity");
             if (tracingAnkle()) ankleSample("J");
@@ -2192,6 +2516,64 @@ int main(int argc, char **argv) {
         }
 
         energyStage("E_endStep");
+        selfCheckpoint("E_endStep");
+        if (hipSphereCompatibilityReplay && hipSphereCompatibilityReplayDone) return 0;
+        if (selfFractionReplay && selfFractionReplayDone) return 0;
+        if (selfTranslationReplay && selfTranslationReplayDone) {
+            std::cout << "selfTranslationReplay,completedLiveStepWithoutChangingChooser=1\n";
+            return 0;
+        }
+        if (selfCollisionWindow) {
+            constexpr float overlapThreshold = 0.001f;
+            for (std::size_t i = 0; i < parts.size(); ++i) for (std::size_t j = i + 1; j < parts.size(); ++j) {
+                if (!aura::physics::shouldSelfCollide(*parts[i], *parts[j], auraBody, skeleton)) continue;
+                const float radii = aura::physics::collisionSphere(*parts[i]).radius +
+                                    aura::physics::collisionSphere(*parts[j]).radius;
+                const auto penetration = [&](const SelfPoses &pose) {
+                    return radii - (pose[j].position - pose[i].position).length();
+                };
+                if (penetration(selfGeometrySamples.back().after) <= overlapThreshold) continue;
+                std::cout << std::scientific << std::setprecision(9)
+                    << "firstSelfOverlap,time=" << diagnosticTime << ",pair=" << parts[i]->name << ';' << parts[j]->name
+                    << ",threshold=" << overlapThreshold << ",outerIterations=" << jointIterations
+                    << ",dt=" << FIXED_DT << '\n'
+                    << "selfOverlapStage,stage,joint,operation,pair,penetration,centerDistance,movedParts,componentScope\n";
+                bool reopened = false;
+                for (const auto &sample : selfGeometrySamples) {
+                    std::string moved, scope = "none";
+                    std::array<bool,16> mask{};
+                    for (std::size_t k = 0; k < parts.size(); ++k) {
+                        const auto &a = sample.before[k]; const auto &b = sample.after[k];
+                        mask[k] = (a.position-b.position).lengthSquared() > 0 ||
+                            a.orientation.w != b.orientation.w || a.orientation.x != b.orientation.x ||
+                            a.orientation.y != b.orientation.y || a.orientation.z != b.orientation.z;
+                        if (mask[k]) { if (!moved.empty()) moved += ';'; moved += parts[k]->name; }
+                    }
+                    const auto joint = std::find_if(joints.begin(),joints.end(),[&](const auto &c){return sample.joint==c.name;});
+                    if (joint != joints.end()) {
+                        const auto side = [&](auto &start) {
+                            const auto component = skeleton.collectComponent(auraBody,start,joint->constraint);
+                            std::size_t count = 0;
+                            for (auto *part : component) count += mask[std::find(parts.begin(),parts.end(),part)-parts.begin()];
+                            return count==0 ? "none" : count==component.size() ? "full" : "partial";
+                        };
+                        scope = std::string("A=")+side(*joint->partA)+";B="+side(*joint->partB);
+                    }
+                    const float after = penetration(sample.after), before = penetration(sample.before);
+                    std::cout << "selfOverlapStage," << sample.stage << ',' << sample.joint << ',' << sample.operation
+                        << ',' << parts[i]->name << ';' << parts[j]->name << ',' << after << ','
+                        << (sample.after[j].position-sample.after[i].position).length() << ','
+                        << (moved.empty()?"none":moved) << ',' << scope << '\n';
+                    if (!reopened && joint != joints.end() && before <= overlapThreshold && after > overlapThreshold) {
+                        reopened = true;
+                        std::cout << "firstSelfOverlapReopened," << sample.stage << ',' << sample.joint << ',' << sample.operation
+                            << ",before=" << before << ",after=" << after << '\n';
+                    }
+                }
+                std::cout << "selfOverlapDiagnostic,stoppedAtFirstCompletedStep=1,reopenedByGeometry=" << reopened << '\n';
+                return 0;
+            }
+        }
         observeVelocityMetrics();
         const double time = (frame + 1) * FIXED_DT;
         if (handGeometryMomentumDiagnostic && !firstMomentumReported) {
@@ -2242,6 +2624,8 @@ int main(int argc, char **argv) {
                 }
             }
         }
+        maxSelfPenetration = std::max(maxSelfPenetration,
+            aura::physics::maximumSelfCollisionPenetration(auraBody, skeleton));
         for (const auto *part: parts) {
             const auto &b = part->body;
             const auto &q = b.orientation;
@@ -2249,6 +2633,8 @@ int main(int argc, char **argv) {
                      finiteVector(b.angularVelocity) && finiteVector(b.acceleration) &&
                      finiteVector(b.angularAcceleration) && std::isfinite(q.w) &&
                      std::isfinite(q.x) && std::isfinite(q.y) && std::isfinite(q.z);
+            if (roomBounds) maxRoomPenetration = std::max(maxRoomPenetration,
+                aura::physics::roomPenetration(b,part->size,room));
             maxDistance = std::max(maxDistance, b.position.length());
             minimumLowestY = std::min(minimumLowestY, aura::physics::lowestPoint(b, part->size).y);
             if (!aura::physics::floorContactPoints(b, part->size, 0.0f, 0.01f).empty()) {
@@ -2356,6 +2742,40 @@ int main(int argc, char **argv) {
             std::cout << "momentumCumulative," << categories[i] << ',' << cumulativeMomentum[i][0] << ','
                       << cumulativeMomentum[i][1] << ',' << cumulativeMomentum[i][2] << ',' << cumulativeAbsoluteHorizontal[i] << '\n';
     }
+    if (floorEnergyDiagnostic) {
+        std::cout << std::scientific << std::setprecision(9)
+            << "floorEnergySummary,operations=" << energyFloorOperations << ",contactOperations=" << energyContactOperations
+            << ",impulses=" << energyImpulseCount << ",normalPhasesAboveNoise=" << positiveNormalPhases
+            << ",normalImpulsesAboveNoise=" << positiveNormalImpulses << ",dampingAboveNoise=" << positiveDamping
+            << ",noiseJ=" << contactEnergyNoise << ",replayMismatches=" << energyReplayMismatches << '\n';
+        const auto emit=[&](const char *name,const auto &worst,bool single) {
+            const auto &a=worst.response;
+            std::cout << "worstFloorEnergy," << name << ',' << worst.time << ',' << worst.outerIteration << ',' << worst.part
+                << ',' << worst.delta << ',' << a.energyBefore << ',' << a.energyAfterDamping << ',' << a.energyAfterNormal
+                << ',' << a.contacts.size() << ',' << a.lowestBefore << '\n';
+            if(single) {
+                const auto &e=worst.impulse; const auto point=a.contacts[e.contact];
+                std::cout << "worstFloorImpulse," << e.iteration << ',' << e.contact << ',' << point.x << ',' << point.y << ',' << point.z
+                    << ',' << e.magnitude << ',' << e.normalVelocityBefore << ',' << e.normalVelocityAfter
+                    << ',' << e.energyBefore << ',' << e.energyAfter
+                    << ',' << e.before.velocity.length() << ',' << e.after.velocity.length()
+                    << ',' << e.before.angularVelocity.length() << ',' << e.after.angularVelocity.length() << '\n';
+                const auto &b=e.before;
+                std::cout << "worstFloorImpulseInput,mass,restitution,px,py,pz,qw,qx,qy,qz,vx,vy,vz,wx,wy,wz,Ix,Iy,Iz,cx,cy,cz\n"
+                    << "worstFloorImpulseInput," << b.mass << ',' << b.restitution
+                    << ',' << b.position.x << ',' << b.position.y << ',' << b.position.z
+                    << ',' << b.orientation.w << ',' << b.orientation.x << ',' << b.orientation.y << ',' << b.orientation.z
+                    << ',' << b.velocity.x << ',' << b.velocity.y << ',' << b.velocity.z
+                    << ',' << b.angularVelocity.x << ',' << b.angularVelocity.y << ',' << b.angularVelocity.z
+                    << ',' << b.momentOfInertia.x << ',' << b.momentOfInertia.y << ',' << b.momentOfInertia.z
+                    << ',' << point.x << ',' << point.y << ',' << point.z << '\n';
+                std::cout << "worstFloorInertiaState," << b.mass << ',' << b.restitution
+                    << ',' << b.orientation.w << ',' << b.orientation.x << ',' << b.orientation.y << ',' << b.orientation.z
+                    << ',' << b.momentOfInertia.x << ',' << b.momentOfInertia.y << ',' << b.momentOfInertia.z << '\n';
+            }
+        };
+        emit("normalPhase",worstNormalPhase,false);emit("damping",worstDamping,false);emit("individualNormalImpulse",worstNormalImpulse,true);
+    }
     if (floorMomentumDiagnostic) {
         std::cout << std::scientific << std::setprecision(9)
             << "floorMomentumBudget,operations=" << floorMomentumOperations
@@ -2401,6 +2821,9 @@ int main(int argc, char **argv) {
     if (angularMomentumDiagnostic && !firstAngularMomentumReported)
         std::cout << "angularMomentumDiagnostic,no operation exceeded 0.01 kg m/s horizontal momentum change\n";
     std::cout << "Position/angular policy: componentPositions=" << componentPositions << " localAngularLimits=" << localAngularLimits << " legacyGeometryCompensation=" << legacyGeometryCompensation << '\n';
+    std::cout << "selfCollisionSummary,enabled=" << selfCollision
+              << ",maximumCompletedStepSpherePenetration=" << maxSelfPenetration << '\n';
+    if (roomBounds) std::cout << "roomSummary,enabled=1,maximumCompletedStepBoxPenetration=" << maxRoomPenetration << ",groupFitFailures=" << roomFitFailures << '\n';
     // This diagnostic reports threshold violations without declaring the baseline stable.
     return finite ? 0 : 1;
 }

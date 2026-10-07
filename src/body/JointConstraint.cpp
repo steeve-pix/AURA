@@ -1,3 +1,4 @@
+#include "aura/physics/Inertia.hpp"
 #include "aura/body/JointConstraint.hpp"
 
 #include <cmath>
@@ -90,16 +91,8 @@ namespace aura::body {
         const auto rBCrossN =
                 rB.cross(direction);
 
-        const math::Vec3 invInertiaRA{
-            rACrossN.x / partA.body.momentOfInertia.x,
-            rACrossN.y / partA.body.momentOfInertia.y,
-            rACrossN.z / partA.body.momentOfInertia.z
-        };
-        const math::Vec3 invInertiaRB{
-            rBCrossN.x / partB.body.momentOfInertia.x,
-            rBCrossN.y / partB.body.momentOfInertia.y,
-            rBCrossN.z / partB.body.momentOfInertia.z
-        };
+        const auto invInertiaRA = physics::applyInverseInertiaWorld(partA.body, rACrossN);
+        const auto invInertiaRB = physics::applyInverseInertiaWorld(partB.body, rBCrossN);
 
         const float rotationalA =
                 invInertiaRA.cross(rA).dot(direction);

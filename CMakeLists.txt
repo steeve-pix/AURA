@@ -35,10 +35,12 @@ add_library(aura_physics
         src/physics/Motion.cpp
         src/physics/MechanicalState.cpp
         src/physics/Collision.cpp
+        src/physics/RoomCollision.cpp
         src/physics/Forces.cpp
         src/physics/Inertia.cpp
         src/physics/Impulse.cpp
         src/physics/BodyGeometry.cpp
+        src/physics/SelfCollision.cpp
 )
 target_link_libraries(aura_physics PUBLIC aura_math)
 
@@ -99,6 +101,17 @@ endif ()
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_room_collision_tests tests/room_collision_tests.cpp)
+    target_link_libraries(aura_room_collision_tests PRIVATE aura_physics)
+    add_test(NAME room_collision COMMAND aura_room_collision_tests)
+    add_executable(aura_self_collision_tests tests/self_collision_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp)
+    target_link_libraries(aura_self_collision_tests PRIVATE aura_physics)
+    add_test(NAME self_collision COMMAND aura_self_collision_tests)
+    add_executable(aura_world_inertia_impulse_replay tests/world_inertia_impulse_replay.cpp)
+    target_link_libraries(aura_world_inertia_impulse_replay PRIVATE aura_physics)
+    add_test(NAME world_inertia_impulse_replay COMMAND aura_world_inertia_impulse_replay
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/right_foot_normal_impulse_9_725.csv")
     # Saved-state velocity regression; does not establish full-body stability.
     add_executable(aura_shin_contact_velocity_replay
         tests/shin_contact_velocity_replay.cpp

@@ -29,5 +29,6 @@ namespace aura::body {
 
     // Translate each side of the waist without changing the group's internal anchor offsets.
     void translateUpperBody(AuraBody3D &body, const math::Vec3 &delta);
+
     void translateLowerBody(AuraBody3D &body, const math::Vec3 &delta);
 }

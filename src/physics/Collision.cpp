@@ -1,9 +1,11 @@
 #include "aura/physics/Collision.hpp"
 #include "aura/physics/Impulse.hpp"
+#include "aura/physics/Inertia.hpp"
 
 #include <algorithm>
 
 #include "aura/physics/BodyGeometry.hpp"
+#include "aura/physics/MechanicalState.hpp"
 
 namespace aura::physics {
     bool intersectFloor(const RigidBody3D &body, float halfHeight, float floorY) {
@@ -14,6 +16,15 @@ namespace aura::physics {
                                FloorCollisionAudit *audit) {
         constexpr int solverIterations = 4;
         if (audit) *audit = {};
+        const auto kinetic = [&] {
+            const auto state = mechanicalState(body);
+            return state.linearKinetic + state.rotationalKinetic;
+        };
+        if (audit) {
+            audit->energyBefore = audit->energyAfterDamping = audit->energyAfterNormal = kinetic();
+            audit->linearSpeedBefore = audit->linearSpeedAfterDamping = audit->linearSpeedAfterNormal = body.velocity.length();
+            audit->angularSpeedBefore = audit->angularSpeedAfterDamping = audit->angularSpeedAfterNormal = body.angularVelocity.length();
+        }
 
         const auto lowest =
                 lowestPoint(body, size);
@@ -63,6 +74,9 @@ namespace aura::physics {
         if (audit) {
             audit->dampingDeltaVelocity = body.velocity - oldVelocity;
             audit->dampingDeltaOmega = body.angularVelocity - oldOmega;
+            audit->energyAfterDamping = kinetic();
+            audit->linearSpeedAfterDamping = body.velocity.length();
+            audit->angularSpeedAfterDamping = body.angularVelocity.length();
         }
         const auto afterDampingVelocity = body.velocity;
         const auto afterDampingOmega = body.angularVelocity;
@@ -83,11 +97,7 @@ namespace aura::physics {
                 const math::Vec3 rCrossN =
                         r.cross(normal);
 
-                const math::Vec3 inverseInertiaTimesRCrossN{
-                    rCrossN.x / body.momentOfInertia.x,
-                    rCrossN.y / body.momentOfInertia.y,
-                    rCrossN.z / body.momentOfInertia.z,
-                };
+                const auto inverseInertiaTimesRCrossN = applyInverseInertiaWorld(body, rCrossN);
 
                 const float rotationalTerm =
                         inverseInertiaTimesRCrossN.cross(r).dot(normal);
@@ -99,13 +109,31 @@ namespace aura::physics {
                         -(1.0f + body.restitution) * normalVelocity / effectiveInverseMass;
                 const math::Vec3 impulse = normal * impulseMagnitude;
 
+                FloorNormalImpulseAudit event;
+                if (audit) {
+                    event.iteration = iteration + 1;
+                    event.contact = &contactPoint - contacts.data();
+                    event.magnitude = impulseMagnitude;
+                    event.normalVelocityBefore = normalVelocity;
+                    event.energyBefore = kinetic();
+                    event.before = body;
+                }
                 applyImpulseAtPoint(body, impulse, contactPoint);
                 if (audit) audit->normalImpulses[&contactPoint - contacts.data()] += impulse;
+                if (audit) {
+                    event.normalVelocityAfter = velocityAtWorldPoint(body, contactPoint).dot(normal);
+                    event.energyAfter = kinetic();
+                    event.after = body;
+                    audit->impulseEvents.push_back(event);
+                }
             }
         }
         if (audit) {
             audit->normalDeltaVelocity = body.velocity - afterDampingVelocity;
             audit->normalDeltaOmega = body.angularVelocity - afterDampingOmega;
+            audit->energyAfterNormal = kinetic();
+            audit->linearSpeedAfterNormal = body.velocity.length();
+            audit->angularSpeedAfterNormal = body.angularVelocity.length();
         }
     }
 }

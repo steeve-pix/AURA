@@ -1,4 +1,5 @@
 #include "aura/physics/Impulse.hpp"
+#include "aura/physics/Inertia.hpp"
 
 namespace aura::physics {
     void applyImpulse(RigidBody3D &body, const math::Vec3 &impulse) {
@@ -15,10 +16,6 @@ namespace aura::physics {
         const math::Vec3 angularImpulse =
                 r.cross(impulse);
 
-        body.angularVelocity += math::Vec3{
-            angularImpulse.x / body.momentOfInertia.x,
-            angularImpulse.y / body.momentOfInertia.y,
-            angularImpulse.z / body.momentOfInertia.z
-        };
+        body.angularVelocity += applyInverseInertiaWorld(body, angularImpulse);
     }
 }

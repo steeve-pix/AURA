@@ -296,10 +296,146 @@ max gap=9.61e-7). Peak KE increases 737.7 -> 962.2 J and angular speed
 Do not mix investigation of the separately failing legacy joint-chain regression
 with this floor velocity change or undo the corrected angular damping.
 
+`--floor-energy-diagnostic` runs the same current ten-second configuration and
+records contacting-body KE before damping, after damping, and after the normal
+phase, plus each individual normal impulse's point, magnitude, normal velocities,
+KE and speed changes. The actual order is damping then normal impulses; measure
+each stage against its own immediate input. Rotational KE uses the body-local
+principal moments with angular velocity transformed into local space. Every floor
+operation is replayed on a copy and checked for exact live endpoint velocity
+agreement. This is read-only instrumentation and does not correct inverse inertia.
+The unchanged run has 307,200 floor operations, 11,767 with contact and 14,856
+normal impulses; 3,826 impulses add more than 1e-5 J, while damping adds none.
+Worst normal impulse: right foot at 9.725 s, outer iteration 4, restitution zero,
+J=1.90959, normal velocity -5.39979 -> about zero, KE +9.22938 J and angular
+speed 22.87 -> 33.75 rad/s. Largest damping delta is negative (-3.51e-5 J).
+The next physics target is the world/local inverse-inertia mismatch in the floor
+effective mass and `applyImpulseAtPoint`; leave damping and gains unchanged.
+
+`applyInverseInertiaWorld` in Inertia.hpp/.cpp now drives runtime floor effective
+mass and `applyImpulseAtPoint`: transform world vectors into the normalized local
+frame, divide by positive principal moments, and transform back. The retained
+pairwise anchor solver uses the same helper in its denominator. MechanicalState
+normalizes orientation when measuring local spin. The saved 9.725 s foot replay
+retains an explicit historical response (+9.229378 J); the production impulse
+response gives -7.140815 J. The ten-second floor-only baseline stays finite with
+no gap/limit failures, max gap 9.90e-7, minimum Y -7.15e-7, peak KE 1072.3 J,
+peak angular speed 55.60 rad/s. All complete normal phases stay below 1e-5 J
+positive energy; two individual impulses reach about 1.21e-5 J (roundoff scale).
+This replaces the prior coordinate-space bug; no gains/damping were tuned.
+
+SelfCollision.hpp/.cpp is a position-only prototype using an inscribed sphere at
+each physical COM (radius = half the smallest physical dimension). It does not
+cover full boxes, limb lengths, or rendered capsules, and has no collision impulse
+or friction. `shouldSelfCollide` requires the owning body as well as the skeleton
+because adjacency is defined by member identity, not mutable names. Same-part and
+all fifteen directly connected joint pairs are excluded; other pairs are eligible.
+The skeleton shares its fixed connection table between graph traversal and the
+adjacency query, without retaining pointers. Positive dimensions/masses are API
+preconditions. Coincident sphere centers separate along world X.
+The application currently leaves experimental self-collision disabled. The
+headless diagnostic can apply one pair sweep after floor contacts and before
+joint repairs in each existing outer iteration. It enables this
+with `--self-collision`, which selects the current all-local velocity/component
+geometry configuration (hip/knee motors only). Without this flag it keeps the
+inertia-corrected baseline for comparison. `selfCollisionSummary` measures maximum
+sphere penetration after completed steps in either configuration. Later joint
+projections may reopen sphere overlaps; do not claim full-body nonintersection
+from the isolated pair tests or add velocity copying to compensate.
+The first ten-second self-collision run stays finite, with no joint gap/limit
+threshold failures (max gap 1.53e-5, min Y -7.15e-7), but maximum completed-step
+sphere penetration is 0.6737803 (baseline 0.6706313), position radius 128.7654,
+and peak KE 10174.1 J.
+It is an experimental pair-projection pass, not a stable full-body self-collision
+solution: joint projections can undo separation and introduce large pose changes.
+Do not add damping/clamps/iterations or claim volumes cannot intersect to hide
+this failed interaction checkpoint. The newly corrected legacy joint regression
+now passes without changing its threshold; physics/body_geometry tests still use
+outdated floor signatures and fail to compile independently.
+`--self-collision-window` uses the live sphere-projection configuration, buffers
+only the final outer iteration, and stops at the first completed step with an
+eligible pair penetration > 0.001. It prints before/after self-collision, every
+forward/backward joint geometry operation, and end-step penetration/distance.
+Moved-part identities and A/B full/partial component scopes come from observed
+pose changes, not assumed solver choices. No physics/chooser policy is changed.
+First event: 1.650 s, left thigh/right thigh. Penetration 0.014064252 before the
+self pass -> 5.96e-8 after -> 0.007032096 after forward left-hip position repair
+(moves left thigh/shin/foot) -> 0.014064133 after forward right-hip position repair
+(moves right thigh/shin/foot). Hip angular repairs do nothing at this encounter;
+backward repairs leave the overlap unchanged. Component selection currently
+checks floor feasibility only. The alternative component's self-collision
+feasibility was subsequently tested by `--self-translation-replay` (see below).
+
+`componentTranslationIsSelfCollisionSafe` is a read-only sphere feasibility query
+in physics; it checks eligible pairs crossing the supplied component boundary.
+It allows unchanged/reduced existing overlap and rejects positive penetration
+increases greater than the supplied tolerance. It is NOT wired into the live
+position chooser. `--self-translation-replay` captures forward left-hip position
+repair at 1.650 s, final iteration 16, evaluates both full translations on copies,
+and stops after completing that unchanged live step. At tolerance 0.001 both
+choices are floor-safe but self-unsafe: child hip gap 2.98e-8, opposite gap zero;
+both thigh penetrations 0.007032096 and maximum positive overlap increase
+0.007032037. Lowest moved Y: child 1.566652, opposite 0.2426735. Moving child by
+-error versus the complementary component by +error produces poses differing
+only by a global translation, so relative self-collision distances are identical.
+Switching sides alone cannot fix this event. No fractional correction or runtime
+geometry policy has been introduced by this copied-state experiment.
+
+`--self-fraction-replay` captures that same pre-left-hip state. On copies only,
+32 binary-search rounds find a floor-safe child translation using the crossing
+pair no-worsening query with 0.001 per-operation tolerance. The measured fraction
+is 0.14220719, remaining left-hip gap 0.006032060, thigh penetration 0.001000047
+(increase 0.000999987), lowest moved Y 1.568960. The 16-cycle experiment applies
+only the existing thigh-pair separation, then partial left/right hip component
+translations; no integration, velocity, orientation, floor or other joint solves.
+It does not converge: after separation both hip gaps return to ~0.007032, and
+after both partial repairs they plateau at ~0.006032 with overlap ~0.002000034.
+The overlap allowance is incremental per operation, so left and right repairs
+each add ~0.001. Local fraction feasibility alone does not establish constraint
+convergence. Live solver/chooser are unchanged; do not enable this policy or
+increase cycles/tolerances to present it as a passing solution.
+
+`--neutral-sphere-compatibility` checks the fresh assembled body before dynamics
+and reports all 105 eligible pairs. None overlap. Neutral thighs: centers
+(-0.34, 2.92, 0) and (+0.34, 2.92, 0), center distance 0.68, individual radii
+0.29, required separation 0.58, clearance 0.10. The self_collision CTest checks
+all 15 neutral joint anchor attachments and all eligible neutral sphere pairs.
+`--hip-sphere-compatibility-replay` captures the 1.650 s pre-left-hip state and
+forces both hip attachments on a copy using child-component translations only.
+Orientations are fixed; no floor, self-collision or velocity responses occur.
+Both hip gaps become 2.98e-8, but thigh distance is 0.5659358501 and penetration
+0.01406413317. This proves incompatibility at those fixed dynamic orientations,
+not in the initialized neutral body or in all possible joint orientations.
+The application self-collision pass was removed pending a compatible dynamic
+contact/joint model. Proxy dimensions, anatomy, filters and live joint geometry
+policies remain unchanged; experimental headless self-collision remains available.
+
+
 
 In reviews, identify what works and distinguish **must fix**, **should improve**,
 and **optional** findings. Explain their observable consequences. Preserve the
 developer's code where practical; avoid rewrites based only on style preferences.
+
+The application now has a static room matching the original 120 x 120 platform:
+X/Z in [-60,60], floor Y=0, ceiling Y=30. `RoomCollision.hpp/.cpp` uses world-space
+box corners and inward plane normals. After each existing forward/backward joint
+sweep pair, it translates the whole body by one common displacement into the
+room, preserving joint geometry, then applies four normal-impulse passes only to
+contacting parts. It adds no damping, friction, restitution gain, or geometric
+velocity compensation. The existing floor friction remains. Room contact energy
+has its own runtime diagnostic category. `resolveRoomCollisions` reports false
+without modifying a group too large to fit; ordinary humanoid configurations fit.
+The walls/roof render as wire grids to retain visibility; collisions use physical
+oriented boxes, not rendered capsule/ornament surfaces.
+`--room-bounds` selects the current self-collision/local impulse/component geometry
+configuration plus this same final room pass. Without it, the headless trajectory
+retains its previous room-free configuration. The ten-second room run remains
+finite with zero completed-step physical-box room penetration, zero group-fit
+failures, max anchor gap 3.844384e-6, and no gap/limit threshold failures. It still
+has self-overlap (maximum sphere penetration 0.733533) and peak joint-relative
+angular speed about 208.79 rad/s. This establishes containment for the measured
+run, not a fix for unstable motion or physically acceptable body stability.
+
 
 ## Build and validation
 

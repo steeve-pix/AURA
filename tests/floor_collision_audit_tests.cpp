@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include "aura/physics/Collision.hpp"
+#include "aura/physics/MechanicalState.hpp"
 
 int main() {
     using namespace aura;
@@ -47,6 +48,21 @@ int main() {
         check((impulse-audit.normalDeltaVelocity*body.mass).length()<1e-5f,
               "per-contact impulse sums agree with the measured normal momentum change");
         check(airborne ? audit.contacts.empty() : !audit.contacts.empty(), "audit records the actual contacts");
+        const auto oldEnergy = physics::mechanicalState(before);
+        const auto newEnergy = physics::mechanicalState(body);
+        check(audit.energyBefore == oldEnergy.linearKinetic + oldEnergy.rotationalKinetic &&
+              audit.energyAfterNormal == newEnergy.linearKinetic + newEnergy.rotationalKinetic,
+              "energy audit uses the body's local inertia axes and matches endpoint KE");
+        double normalWork = 0;
+        for (const auto &event : audit.impulseEvents) {
+            normalWork += event.energyAfter-event.energyBefore;
+            check(event.energyAfter <= event.energyBefore + 1e-5,
+                  "inelastic normal impulse does not add energy for upright or tilted inertia");
+        }
+        check(std::abs(normalWork-(audit.energyAfterNormal-audit.energyAfterDamping))<1e-10,
+              "individual normal impulse changes sum to the complete normal phase");
+        check(audit.energyAfterDamping <= audit.energyBefore + 1e-10,
+              "damping does not add kinetic energy in the audit fixtures");
     }
     return passed ? 0 : 1;
 }

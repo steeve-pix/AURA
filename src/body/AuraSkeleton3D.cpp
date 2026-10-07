@@ -6,25 +6,32 @@
 #include <stdexcept>
 
 namespace aura::body {
+    namespace {
+        template<class Body, class Part>
+        auto connectionsFor(const AuraSkeleton3D &skeleton, Body &body) {
+            struct Connection { const Joint3D *joint; Part *a; Part *b; };
+            return std::array<Connection, 15>{{
+                {&skeleton.waist, &body.torso, &body.pelvis},
+                {&skeleton.neck, &body.torso, &body.neck}, {&skeleton.head, &body.neck, &body.head},
+                {&skeleton.leftShoulder, &body.torso, &body.leftUpperArm},
+                {&skeleton.leftElbow, &body.leftUpperArm, &body.leftForearm},
+                {&skeleton.leftWrist, &body.leftForearm, &body.leftHand},
+                {&skeleton.rightShoulder, &body.torso, &body.rightUpperArm},
+                {&skeleton.rightElbow, &body.rightUpperArm, &body.rightForearm},
+                {&skeleton.rightWrist, &body.rightForearm, &body.rightHand},
+                {&skeleton.leftHip, &body.pelvis, &body.leftThigh},
+                {&skeleton.leftKnee, &body.leftThigh, &body.leftShin},
+                {&skeleton.leftAnkle, &body.leftShin, &body.leftFoot},
+                {&skeleton.rightHip, &body.pelvis, &body.rightThigh},
+                {&skeleton.rightKnee, &body.rightThigh, &body.rightShin},
+                {&skeleton.rightAnkle, &body.rightShin, &body.rightFoot}
+            }};
+        }
+    }
+
     std::vector<BodyPart3D *> AuraSkeleton3D::collectComponent(
         AuraBody3D &body, BodyPart3D &start, const Joint3D &jointToCut) const {
-        struct Connection { const Joint3D *joint; BodyPart3D *a; BodyPart3D *b; };
-        const std::array<Connection, 15> connections{{
-            {&waist, &body.torso, &body.pelvis},
-            {&neck, &body.torso, &body.neck}, {&head, &body.neck, &body.head},
-            {&leftShoulder, &body.torso, &body.leftUpperArm},
-            {&leftElbow, &body.leftUpperArm, &body.leftForearm},
-            {&leftWrist, &body.leftForearm, &body.leftHand},
-            {&rightShoulder, &body.torso, &body.rightUpperArm},
-            {&rightElbow, &body.rightUpperArm, &body.rightForearm},
-            {&rightWrist, &body.rightForearm, &body.rightHand},
-            {&leftHip, &body.pelvis, &body.leftThigh},
-            {&leftKnee, &body.leftThigh, &body.leftShin},
-            {&leftAnkle, &body.leftShin, &body.leftFoot},
-            {&rightHip, &body.pelvis, &body.rightThigh},
-            {&rightKnee, &body.rightThigh, &body.rightShin},
-            {&rightAnkle, &body.rightShin, &body.rightFoot}
-        }};
+        const auto connections = connectionsFor<AuraBody3D, BodyPart3D>(*this, body);
         if (std::none_of(connections.begin(), connections.end(), [&](const auto &edge) {
                 return edge.joint == &jointToCut;
             })) throw std::invalid_argument("Cut joint does not belong to this skeleton");
@@ -44,6 +51,14 @@ namespace aura::body {
             }
         }
         return component;
+    }
+
+    bool AuraSkeleton3D::areDirectlyConnected(const AuraBody3D &body,
+        const BodyPart3D &a, const BodyPart3D &b) const {
+        const auto connections = connectionsFor<const AuraBody3D, const BodyPart3D>(*this, body);
+        return std::any_of(connections.begin(), connections.end(), [&](const auto &edge) {
+            return (edge.a == &a && edge.b == &b) || (edge.a == &b && edge.b == &a);
+        });
     }
 
     AuraSkeleton3D createAuraSkeleton3D(AuraBody3D &body) {

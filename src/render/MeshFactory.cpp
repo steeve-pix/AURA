@@ -198,6 +198,34 @@ namespace aura::render {
         return result;
     }
 
+    std::vector<float> MeshFactory::createRoomLines(const math::Vec3 &size, float spacing) {
+        if (spacing <= 0 || size.x <= 0 || size.y <= 0 || size.z <= 0)
+            throw std::invalid_argument("Room dimensions and grid spacing must be positive");
+        std::vector<float> result;
+        const float x = size.x * 0.5f, z = size.z * 0.5f;
+        const auto line = [&](math::Vec3 a, math::Vec3 b) {
+            result.insert(result.end(), {a.x,a.y,a.z,b.x,b.y,b.z});
+        };
+        // Include both edges even when a dimension is not a multiple of spacing.
+        const auto grid = [&](float length, const auto &draw) {
+            for (float t=0; t<length; t+=spacing) draw(t);
+            draw(length);
+        };
+        grid(size.x, [&](float t) {
+            for (float side : {-z,z}) line({t-x,0,side},{t-x,size.y,side});
+            line({t-x,size.y,-z},{t-x,size.y,z});
+        });
+        grid(size.z, [&](float t) {
+            for (float side : {-x,x}) line({side,0,t-z},{side,size.y,t-z});
+            line({-x,size.y,t-z},{x,size.y,t-z});
+        });
+        grid(size.y, [&](float t) {
+            for (float side : {-z,z}) line({-x,t,side},{x,t,side});
+            for (float side : {-x,x}) line({side,t,-z},{side,t,z});
+        });
+        return result;
+    }
+
     std::vector<float> MeshFactory::createCube() {
         return {
             // Front face (Z = +0.5)
