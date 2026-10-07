@@ -118,6 +118,9 @@ namespace aura::body {
         }
 
         for (auto *hip: {&skeleton.leftHip, &skeleton.rightHip}) {
+            hip->type = JointType::SwingTwist;
+            hip->minSwingZ = -0.4f;
+            hip->maxSwingZ = 0.4f;
             hip->targetAngle = 0.5f;
             hip->motorStiffness = 15.0f;
             hip->motorDamping = 4.0f;

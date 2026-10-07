@@ -3,6 +3,7 @@
 #include <set>
 #include <sstream>
 #include "HipCapsuleRotationReplay.hpp"
+#include "aura/body/ThighSelfCollision.hpp"
 
 int main(int argc,char **argv) {
     using namespace aura;
@@ -83,6 +84,84 @@ int main(int argc,char **argv) {
         check(count==result.acceptedSteps+1,"all accepted search steps checked");
         std::cout << (aligned?"attached reference":"source copy") << ": steps=" << result.acceptedSteps
                   << " finalPenetration=" << result.final.penetration << " maxGap=" << result.maximumGap << '\n';
+    }
+    check(body::floorMoveIsNoWorse(-0.027495f,-0.027495f),"existing floor penetration may remain unchanged");
+    check(body::floorMoveIsNoWorse(-0.027495f,-0.02f),"existing penetration may improve");
+    check(!body::floorMoveIsNoWorse(-0.027495f,-0.035f),"existing penetration may not deepen");
+    check(body::floorMoveIsNoWorse(0.1f,-1e-6f),"clear body permits only floor roundoff");
+    check(!body::floorMoveIsNoWorse(0.1f,-2e-6f),"clear body cannot acquire penetration");
+    check(!body::floorMoveIsNoWorse(-0.5e-6f,-1.25e-6f),"near-clear state uses absolute floor allowance");
+    check(body::floorMoveIsNoWorse(-0.02f,-0.02f-0.5e-6f),"existing penetration permits roundoff");
+    check(!body::floorMoveIsNoWorse(-0.02f,-0.02f-2e-6f),"existing penetration rejects worsening beyond roundoff");
+    auto liveCopy=input;
+    auto before=liveCopy;
+    const auto step=body::correctThighCapsuleOverlap(liveCopy,skeleton);
+    auto auditedCopy=before;
+    body::ThighCollisionAudit audit;
+    const auto auditedStep=body::correctThighCapsuleOverlap(auditedCopy,skeleton,0.01f,0.001f,&audit);
+    check(audit.candidateCount==24 && audit.improvingCandidates>0,"all signed hip candidates audited");
+    check(auditedStep.leftAngle==step.leftAngle && auditedStep.rightAngle==step.rightAngle &&
+          auditedStep.penetrationAfter==step.penetrationAfter,"audit leaves chosen correction unchanged");
+    auto auditedParts=skeleton.collectComponent(auditedCopy,auditedCopy.torso,skeleton.head);
+    auditedParts.push_back(&auditedCopy.head);
+    auto plainParts=skeleton.collectComponent(liveCopy,liveCopy.torso,skeleton.head);
+    plainParts.push_back(&liveCopy.head);
+    for (size_t i=0;i<plainParts.size();++i) {
+        const auto& a=auditedParts[i]->body;const auto& b=plainParts[i]->body;
+        check((a.position-b.position).lengthSquared()==0 && a.orientation.w==b.orientation.w &&
+              a.orientation.x==b.orientation.x && a.orientation.y==b.orientation.y &&
+              a.orientation.z==b.orientation.z,"audited endpoint poses exactly match");
+    }
+    int improving=0,feasibleImproving=0;std::uint32_t rejected=0;
+    for (int i=0;i<audit.candidateCount;++i) {
+        const auto& c=audit.candidates[i];
+        check(c.improves==(c.penetration<step.penetrationBefore-1e-7f),"improvement classification uses input overlap");
+        check(bool(c.rejections&body::LeftFootFloor)==(c.leftFootY<-1e-6f),"left foot floor classification");
+        check(bool(c.rejections&body::RightFootFloor)==(c.rightFootY<-1e-6f),"right foot floor classification");
+        check(bool(c.rejections&body::LeftJointLimit)==(c.leftLimitError>1e-5f),"left limit classification");
+        check(bool(c.rejections&body::RightJointLimit)==(c.rightLimitError>1e-5f),"right limit classification");
+        if (c.improves) {++improving;rejected|=c.rejections;feasibleImproving+=c.rejections==0;}
+    }
+    check(improving==audit.improvingCandidates && rejected==audit.improvingRejections &&
+          feasibleImproving==audit.feasibleImprovingCandidates,"audit aggregation matches candidate rows");
+    check(step.corrected && step.penetrationAfter<step.penetrationBefore,"live bounded step reduces overlap");
+    check(std::abs(step.leftAngle)<=0.01f && std::abs(step.rightAngle)<=0.01f,"live angle budget");
+    auto oldParts=skeleton.collectComponent(before,before.torso,skeleton.head);
+    auto newParts=skeleton.collectComponent(liveCopy,liveCopy.torso,skeleton.head);
+    oldParts.push_back(&before.head);newParts.push_back(&liveCopy.head);
+    for (size_t i=0;i<oldParts.size();++i) {
+        check((oldParts[i]->body.velocity-newParts[i]->body.velocity).lengthSquared()==0,"live linear velocities unchanged");
+        check((oldParts[i]->body.angularVelocity-newParts[i]->body.angularVelocity).lengthSquared()==0,"live angular velocities unchanged");
+    }
+    const auto m=test::hipRotationMetrics(liveCopy,skeleton);
+    check(m.minimumLegY>=-1e-6f && m.maximumLimitError<=1e-5f,"live floor and limits");
+    const auto originalMetrics=test::hipRotationMetrics(before,skeleton);
+    for (size_t i=0;i<6;++i) check(std::abs(m.gaps[i]-originalMetrics.gaps[i])<1e-5f,"live leg attachments preserved");
+    auto neutral=body::createAuraBody3D();
+    const auto neutralSkeleton=body::createAuraSkeleton3D(neutral);
+    check(!body::correctThighCapsuleOverlap(neutral,neutralSkeleton).corrected,"separated neutral pose is untouched");
+    auto blocked=input;
+    auto blockedParts=skeleton.collectComponent(blocked,blocked.torso,skeleton.head);
+    blockedParts.push_back(&blocked.head);
+    for (auto* part:blockedParts) part->body.position.y-=100;
+    const auto blockedPosition=blocked.leftThigh.body.position;
+    body::ThighCollisionAudit blockedAudit;
+    check(!body::correctThighCapsuleOverlap(blocked,skeleton,0.01f,0.001f,&blockedAudit,body::ThighFloorPolicy::StrictClearance).corrected,"floor-invalid candidates rejected");
+    check((blockedAudit.initial.rejections&body::LeftFootFloor) &&
+          (blockedAudit.initial.rejections&body::RightFootFloor),"pre-existing floor violations recorded separately");
+    check((blockedAudit.improvingRejections&body::LeftFootFloor) &&
+          (blockedAudit.improvingRejections&body::RightFootFloor),"blocked candidate floor reasons retained");
+    check((blocked.leftThigh.body.position-blockedPosition).lengthSquared()==0,"blocked solve leaves pose unchanged");
+    auto noWorseCopy=blocked;
+    body::ThighCollisionAudit noWorseAudit;
+    const auto noWorseStep=body::correctThighCapsuleOverlap(noWorseCopy,skeleton,0.01f,0.001f,&noWorseAudit);
+    check(noWorseStep.corrected && noWorseStep.penetrationAfter<noWorseStep.penetrationBefore,"pre-existing floor violation no longer blocks all improving candidates");
+    auto newBlockedParts=skeleton.collectComponent(noWorseCopy,noWorseCopy.torso,skeleton.head);newBlockedParts.push_back(&noWorseCopy.head);
+    for (size_t i=0;i<blockedParts.size();++i) {
+        check(body::floorMoveIsNoWorse(physics::lowestPoint(blockedParts[i]->body,blockedParts[i]->size).y,
+                                      physics::lowestPoint(newBlockedParts[i]->body,newBlockedParts[i]->size).y),"selected projection never worsens any existing floor violation");
+        check((blockedParts[i]->body.velocity-newBlockedParts[i]->body.velocity).lengthSquared()==0 &&
+              (blockedParts[i]->body.angularVelocity-newBlockedParts[i]->body.angularVelocity).lengthSquared()==0,"no-worsening policy leaves velocities unchanged");
     }
     return passed?0:1;
 }

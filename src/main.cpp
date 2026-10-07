@@ -15,9 +15,11 @@
 #include "aura/body/JointGeometry.hpp"
 #include "aura/body/LocalJointVelocity.hpp"
 #include "aura/body/ComponentPosition.hpp"
+#include "aura/body/ThighSelfCollision.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Collision.hpp"
 #include "aura/physics/RoomCollision.hpp"
+#include "aura/physics/SelfCollision.hpp"
 #include "aura/physics/Forces.hpp"
 #include "aura/physics/Motion.hpp"
 #include "aura/render/Camera.hpp"
@@ -36,7 +38,14 @@ using aura::app::BodyJoint;
 using aura::app::BodyDiagnosticHistory;
 using aura::app::printBodyDiagnostics;
 
-int main() {
+int main(int argc, char **argv) {
+    bool thighSelfCollision = false, thighKneeCompensation = false;
+    for (int i=1;i<argc;++i) {
+        if (std::string(argv[i]) == "--thigh-self-collision") thighSelfCollision = true;
+        if (std::string(argv[i]) == "--thigh-knee-compensation") {thighSelfCollision=true;thighKneeCompensation=true;}
+    }
+    int thighCorrections = 0, thighHipOnlyCorrections = 0, thighCoupledCorrections = 0;
+    float maximumThighPenetration = 0, maximumLegGap = 0, minimumFootY = 1e30f, maximumThighAngle = 0;
     bool orbiting = false;
     bool panning = false;
     bool followBody = false;
@@ -433,6 +442,9 @@ int main() {
             simulatedTime = 0.0;
             physicsStepsSinceLog = 0;
             diagnosticHistory = {};
+            thighCorrections = thighHipOnlyCorrections = thighCoupledCorrections = 0;
+            maximumThighPenetration = maximumLegGap = maximumThighAngle = 0;
+            minimumFootY = 1e30f;
             diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
         }
         const char *actionName = key == GLFW_KEY_P ? "pose" : key == GLFW_KEY_R ? "restart" : "pause/run";
@@ -574,6 +586,15 @@ int main() {
                 diagnosticHistory.floorEnergy += afterFloor - stageEnergy;
                 for (auto &joint: joints) solveConnection(joint);
                 for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i) solveConnection(joints[i]);
+                if (thighSelfCollision) {
+                    const auto correction = aura::body::correctThighCapsuleOverlap(auraBody, skeleton,0.01f,0.001f,nullptr,
+                        aura::body::ThighFloorPolicy::NoWorsening,thighKneeCompensation);
+                    thighCorrections += correction.corrected;
+                    const bool coupled=correction.leftKneeAngle!=0 || correction.rightKneeAngle!=0;
+                    thighHipOnlyCorrections+=correction.corrected && !coupled;
+                    thighCoupledCorrections+=correction.corrected && coupled;
+                    maximumThighAngle = std::max({maximumThighAngle,std::abs(correction.leftAngle),std::abs(correction.rightAngle)});
+                }
                 stageEnergy = aura::app::bodyEnergy(parts);
                 diagnosticHistory.jointEnergy += stageEnergy - afterFloor;
                 // Room contacts have the last word on containment; later joint
@@ -587,11 +608,26 @@ int main() {
                 aura::physics::clearForce(part->body);
                 aura::physics::clearTorque(part->body);
             }
+            maximumThighPenetration = std::max(maximumThighPenetration,
+                aura::physics::capsulePenetration(aura::physics::bodyPartCollisionCapsule(auraBody.leftThigh),
+                                                aura::physics::bodyPartCollisionCapsule(auraBody.rightThigh)));
+            minimumFootY = std::min({minimumFootY,
+                aura::physics::lowestPoint(auraBody.leftFoot.body,auraBody.leftFoot.size).y,
+                aura::physics::lowestPoint(auraBody.rightFoot.body,auraBody.rightFoot.size).y});
+            for (const auto& connection : joints) {
+                if (std::string(connection.name).find("Hip") != std::string::npos || std::string(connection.name).find("Knee") != std::string::npos || std::string(connection.name).find("Ankle") != std::string::npos)
+                    maximumLegGap = std::max(maximumLegGap,
+                        (aura::body::localToWorldPoint(*connection.partB,connection.constraint.localAnchorB)-
+                         aura::body::localToWorldPoint(*connection.partA,connection.constraint.localAnchorA)).length());
+            }
             simulatedTime += FIXED_DT;
             diagnosticHistory.observe(parts, joints, simulatedTime);
             if (++physicsStepsSinceLog == 120) {
                 physicsStepsSinceLog = 0;
                 diagnosticHistory.printSummary(parts, joints, simulatedTime, paused, detailedDiagnostics, followBody);
+                std::cout << "thighCollision enabled=" << thighSelfCollision << " maxPenetration=" << maximumThighPenetration
+                          << " maxLegGap=" << maximumLegGap << " minFootY=" << minimumFootY
+                          << " corrections=" << thighCorrections << " hipOnly=" << thighHipOnlyCorrections << " hipPlusKnee=" << thighCoupledCorrections << " maxAnglePerIteration=" << maximumThighAngle << '\n';
                 if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulatedTime);
             }
             accumulator -= FIXED_DT;

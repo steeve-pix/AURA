@@ -570,3 +570,345 @@ editing. Explain the scope briefly before changing several files.
 Keep changes scoped to the requested step. Update these instructions when the
 architecture or working practices actually change, so future agents can rely on
 them without following an obsolete roadmap.
+
+
+### Opt-in thigh capsule live experiment
+
+`--thigh-self-collision` enables only left-thigh/right-thigh capsule pose
+projection in the application and headless diagnostic. `ThighSelfCollision`
+belongs to body articulation: one candidate search per existing outer iteration,
+after forward/backward joints and before room containment. Signed half/full
+steps never exceed 0.01 rad per leg per call. Torque-derived axes rotate whole
+leg cut-components around fixed hip pivots. Candidates must reduce penetration,
+preserve the six leg anchor gaps within 1e-5, satisfy existing twist limits
+within 1e-5, and keep all six physical leg boxes above floor within 1e-6.
+Velocities are untouched; these are the current twist limits, not full 3D hip
+anatomical constraints. Coincident closest points have no fallback normal.
+
+For matching room-inclusive OFF/ON runs use `--room-bounds
+--no-sphere-self-collision --live-velocity-metrics`, adding
+`--thigh-self-collision` only for ON. The explicit no-sphere flag overrides the
+historical sphere-pass implication of room-bounds regardless of argument order.
+No settings, gains, timestep or iteration counts change. Ten-second results:
+OFF/ON max completed-step thigh penetration 0.579609/0.2515273, max leg gap
+9.54e-7/7.15e-7, minimum foot Y zero in both. ON has 358 accepted corrections,
+675 blocked overlapping calls, maximum per-leg step 0.01 rad. Both stay finite
+without gap/limit failures or room penetration. Peak KE rises 801.6 -> 1045.6 J;
+this is not a successful nonintersection or general stability milestone.
+The experiment remains opt-in; generic sphere/capsule resolution is not enabled.
+Application logs cumulative completed-step thigh/leg/foot metrics every120 steps
+and resets them with restart/pose. Headless `thighCollisionSummary` reports the
+same metrics plus blocked calls. Artifacts: build/thigh_live_off_10s.csv and
+build/thigh_live_on_10s.csv. The hip rotation test also checks the production
+bounded helper, unchanged velocities, neutral no-op and blocked-floor behavior.
+
+### Thigh collision rejection audit
+
+`ThighCollisionAudit` is optional read-only output from the bounded thigh helper.
+It records all 24 signed half/full-angle candidate pairs, including candidates
+which do not improve penetration. Floor flags distinguish each foot from the
+other leg bodies; limit errors include all six leg joints; anchor drift is separate.
+A blocked-call reason is counted when at least one improving candidate fails that
+check. Counts overlap and are not an exclusive partition. `floorOnly` and
+`limitsOnly` partition calls whose improving-candidate rejection union contains
+only that constraint family. The diagnostic also records whether every improving
+candidate fails floor or limits, and saves the worst completed-step pose and the
+worst blocked-call trials separately. No new-pair collision feasibility check exists;
+it is explicitly reported as not implemented rather than claiming zero rejections.
+
+The same room-inclusive ten-second ON trajectory still has 358 accepted and 675
+blocked calls. All 675 have an improving candidate rejected by a floor check;
+488 also have improving candidates rejected by joint limits. 187 are floor-only,
+none limit-only. Individual overlapping counts: left foot 517, right foot 126,
+right thigh/shin 47, left thigh/shin 0, left limits 423, right limits 212. No call is
+blocked by lack of improvement, degeneracy, or anchor drift. Instrumentation
+reproduces all 38,400 velocity-sweep lines and run/energy/room summaries exactly.
+The worst completed-step overlap occurs at 9.975 s, penetration 0.2515273,
+left/right hip angles 0.7999855/0.1790255 and feet Y 2.062015/0.6176354. It still
+has a feasible right-leg-only  +0.01 rad candidate, reducing penetration to 0.2397777;
+do not confuse this finite per-iteration progress with the blocked-call cases.
+`build/thigh_block_reasons_final_10s.csv` contains per-call masks, counters and
+both worst-case candidate tables. Audit/no-audit endpoint equivalence and candidate
+classification are covered by the hip capsule rotation test. No live feasibility
+policy, angle cap, damping, gains, timestep, or iteration counts were changed.
+The final audit distinguishes pre-existing floor violations from candidate-induced
+ones: 45 blocked calls already have a floor-invalid leg; 32 have an improving
+candidate passing a diagnostic no-worsening floor test with the same limit/gap
+checks. That hypothetical policy is NOT enabled. Every improving candidate is
+floor-rejected in 322 calls and limit-rejected in 236 (these counts can overlap).
+The worst blocked call is at 1.508333 s, iteration 1, overlap 0.1424013, hips
+0.7989424/0.7999999, feet Y -0.02749506/0.4039449. A right-only +0.01 rad trial
+reduces overlap to 0.1396259 and satisfies limits, but is rejected because the
+unchanged left foot already penetrates. A left-only +0.01 rad trial reduces
+penetration to 0.1341601 but worsens left-foot penetration and exceeds the left
+hip limit by 0.0017465 rad. Thus existing-floor rejection is a real policy
+restriction, but accounts for a minority of calls; the majority start floor-valid.
+The 0.01 cap, runtime solver decisions and trajectory remain unchanged. The final
+artifact matches the original ON run's 38,400 velocity-sweep lines and all
+run/energy/thigh/room summaries exactly. All 29 runnable tests pass; the two
+pre-existing outdated floor-signature tests remain excluded.
+
+### No-worsening floor policy for thigh candidates
+
+The opt-in thigh correction now uses `ThighFloorPolicy::NoWorsening` by default.
+Only its floor test changed: each physical leg body's candidate lowest Y is
+compared with that same body's input Y. Input Y >= -1e-6 requires output Y >=
+-1e-6; deeper existing penetration requires output Y >= input Y -1e-6. The
+helper does not resolve unrelated existing penetration, and all twist-limit,
+anchor-gap, axis, angle-cap, ordering, velocity and room policies remain intact.
+`--strict-thigh-floor` retains the previous absolute-clearance check for explicit
+headless comparisons; it does not turn on the thigh experiment by itself.
+
+`--thigh-floor-policy-replay` generates the exact previous strict-policy
+trajectory with room bounds and no sphere pass, stops before the 1.508333 s,
+iteration-1 correction, and evaluates both policies on copies. Old rejects; new
+accepts right +0.01 rad, overlap 0.1424013376 -> 0.1396258771. Left foot Y is
+exactly unchanged (-0.02749505639), right foot Y remains positive
+(0.4039449394 -> 0.4014346302). All 16 bodies' velocities remain exactly unchanged,
+all six leg gaps are preserved within 1e-5, no floor violation worsens, and limit
+error is zero. The replay checks those invariants and returns failure if any fail.
+Artifact: build/thigh_floor_policy_replay.csv. Unit tests cover clear, near-clear,
+unchanged/decreased existing penetration, worsening rejection and the strict
+comparison behavior on an overlapping fixture with pre-existing penetration.
+
+Matching ten-second live runs use `--room-bounds --no-sphere-self-collision
+--live-velocity-metrics --thigh-self-collision`, adding `--strict-thigh-floor` only
+for the old policy. Artifacts: build/thigh_floor_strict_10s.csv and
+build/thigh_floor_no_worse_10s.csv. Strict reproduces all 38,400 previous velocity
+sweep lines and run/energy/room summaries exactly. Strict -> no-worsening:
+accepted 358 -> 1696, blocked 675 -> 1705, floor-only blocked 187 -> 421,
+floor+limits blocked 488 -> 923, limits-only blocked 0 -> 361, maximum completed
+thigh penetration 0.2515273 -> 0.5394549. Both runs stay finite without joint
+gap/limit threshold failures, minimum completed foot Y zero, and zero room
+penetration. Maximum leg gap 7.15e-7 -> 9.61e-7; max angle remains 0.01 rad.
+New-policy blocked calls with an improving candidate passing no-worsening floor
+and the same other checks: zero (old 32). Peak KE 1045.6 -> 904.2 J.
+
+This fixes the demonstrated local false floor rejection but does NOT improve live
+thigh separation. The trajectory changes, encounters more overlaps, and the worst
+completed overlap is now at 5.675 s with left hip/knee and right ankle at their
+limits and the right foot on floor. Rejection reason counts still overlap; do
+not infer global geometric impossibility or label joint limits the sole blocker.
+No knee/pelvis participation or stronger rotations were added. The collision pass
+remains opt-in and is not a successful full-body nonintersection solver. All 29
+runnable tests pass; the two unrelated outdated floor-signature tests remain
+excluded.
+
+### Copied hip + knee floor compensation
+
+`--thigh-knee-replay` runs the unchanged current no-worsening, room-inclusive,
+hip-only live trajectory without the sphere pass. It classifies improving
+candidates in blocked calls as A (floor-rejected, both hip limits satisfied) or
+B (at least one hip limit violated, regardless of floor). Calls can contain both
+candidate classes. Ten-second counts: A calls 1092, B calls 1284, both 671;
+exclusive partition A-only 421, B-only 613, both 671 = 1705. Improving candidate
+counts A 7776, B 11574; 6386 B candidates have no floor rejection.
+
+The copied experiment selects a one-sided hip trial with only that leg's foot
+floor flag, all limits satisfied, no anchor drift, and all six input leg boxes
+floor-valid within 1e-6. `tests/ThighKneeReplay.hpp` reproduces the same hip axis
+and pivot, then searches signed knee steps in 0.0005-rad increments, smallest
+magnitude first, up to 0.01 rad. The knee world axis is transformed from its local
+hinge using the already hip-rotated thigh, and its pivot is that thigh's knee
+anchor. Only shin + foot rotate. Every candidate checks all six leg boxes against
+input no-worsening floor feasibility, all leg twist limits and anchor preservation.
+No impulses, integration, motors, floor/room repair, or live knee participation.
+
+The FIRST eligible replay succeeds: 1.400000 s, outer iteration 2, left hip
++0.005 rad. Initial thigh penetration 0.0011601448 becomes zero, but hip alone
+lowers left foot from -1.192e-7 (roundoff) to -0.0017089844. Knee +0.0015 rad
+(the sixth tested signed trial) restores foot Y to +0.0005810559, retaining zero
+overlap and the exact same thigh/hip state. Hip angle 0.79955685 is unchanged by
+the knee; knee angle 1.37785995 -> 1.37935996. Hip/knee/ankle gaps after coupling
+2.46e-7 / 2.73e-7 / 2.38e-7, zero limit error, all 16 velocities exactly unchanged.
+This proves knee compensation can rescue this floor-blocked hip trial, not that
+it can repair a hip-limit violation or stabilize live self-collision.
+
+`tests/fixtures/thigh_knee_floor_block.csv` saves all 16 input bodies and the hip
+choice. Configure skeleton anchors from neutral before loading it. The
+`thigh_knee_replay` CTest checks the actual hip-floor failure, coupled feasibility,
+unchanged thigh geometry, all leg attachments/limits/floor depths/velocities and
+full ankle relative orientation. Artifact build/thigh_knee_replay_10s.csv records
+the input, comparison table and classification. All 38,400 velocity-sweep lines
+and run/energy/thigh/room summaries match build/thigh_floor_no_worse_10s.csv
+exactly. All 30 runnable tests pass; the two unrelated outdated floor-signature
+tests remain excluded. The application physics and default collision mode are
+unchanged; no multi-joint resolver has been wired live.
+
+### Opt-in live Class-A knee compensation
+
+`--thigh-knee-compensation` enables the thigh pass plus knee compensation in the
+application/diagnostic; `--thigh-self-collision` alone retains hip-only behavior.
+Neither is on by default. Production `correctThighCapsuleOverlap` has a final
+`compensateKnees` option defaulting false. Only improving hip candidates whose
+sole rejections are moved legs' FOOT floor flags enter compensation. Any hip,
+knee or ankle limit error, anchor drift, or thigh/shin floor rejection excludes
+that candidate. Class-B hip-limit candidates never try knee motion.
+
+The bounded search uses the already hip-rotated thigh's world hinge axis and knee
+anchor, rotates shin + foot only, and probes +/-0.001 rad. Directions must raise
+the lowest foot point. In each such direction it samples successive 0.001-rad
+magnitudes up to 0.01, retains the first fully feasible bracket, and bisects it
+12 times while retaining a checked feasible endpoint. It chooses the smaller
+found magnitude across directions. This is refinement within the first sampled
+feasible bracket, not proof of global optimality for nonmonotonic motion. All
+leg limits/gaps and per-body no-worsening floor checks are verified again after
+both legs' compensation, with exactly unchanged thigh penetration. Nothing
+copies/invents velocities; no pelvis/other-joint correction is added. Audit
+records raw hip rejections and knee attempt/feasibility separately.
+
+The saved Class-A fixture exercises the production path: selected hips
++0.005/-0.005 rad, left knee about +0.00111914 rad, right knee zero. The test
+checks no compensation on Class B, pose-only state, all attachments/limits/floor
+feasibility, exact audit/no-audit endpoint agreement, and loss of floor feasibility
+when the selected knee magnitude is reduced by 1e-6 rad.
+
+Matching ten-second room-inclusive runs use `--room-bounds
+--no-sphere-self-collision --live-velocity-metrics --thigh-self-collision`, adding
+`--thigh-knee-compensation` only for ON. Artifacts:
+build/live_class_a_hip_only_10s.csv and build/live_class_a_hip_knee_10s.csv.
+OFF -> ON: hip-only accepted 1696 -> 909, hip+knee accepted 0 -> 42;
+blocked total 1705 -> 586; calls with A candidates 1092 -> 110, with B candidates
+1284 -> 586, both 671 -> 110. Exclusive A-only 421 -> 0, B-only 613 -> 476.
+All remaining calls contain B, but 110 also contain unsolved A candidates; do
+not present hip limits as the sole remaining constraint. Max thigh penetration
+0.5394549 -> 0.5462599 (slightly worse), minimum completed foot/body Y zero in
+both, max leg gap 9.61e-7 -> 1.43e-6. Both finite, no gap/limit threshold failures,
+zero room penetration or group-fit failures. Largest knee compensation 0.00969751
+rad, hip cap unchanged 0.01. Peak KE 904.2 -> 926.9 J; no suspicious anchor
+energy impulses. This validates live compensation but not full self-nonintersection.
+
+The OFF trajectory's 38,400 sweep lines and run/energy/room summaries exactly
+reproduce the previous no-worsening baseline. All 30 runnable tests pass; two
+unrelated outdated floor-signature tests remain excluded. The mode remains
+experimental and opt-in; gains, damping, timestep and solver ordering are unchanged.
+
+### Copied shared-hip Class-B search
+
+`--shared-hip-replay` generates the current room-inclusive hip+knee opt-in
+trajectory with sphere projection off, stops at the first blocked call containing
+Class B but no Class A, and searches copies only. The event is 1.433333 s,
+outer iteration 1. Both hip angles are at their +0.8 rad maximum; thigh capsule
+penetration is 0.00830555. The intermediate left foot is already at -0.01988094,
+so candidate floor feasibility uses per-body no-worsening, not absolute clearance.
+
+`tests/SharedHipReplay.hpp` tests 6,561 signed rotation pairs at 0.00025 rad
+spacing within the unchanged +/-0.01 rad per-hip cap, including single-side,
+symmetric and biased pairs. Torque-derived axes already encode opposite
+separating forces: +0.005/+0.005 is the symmetric separating trial, while
++0.005/-0.005 is also reported separately. Rotations move complete leg components
+around their hip pivots. Knees/pelvis receive no independent adjustment; all six
+leg limits, anchor-gap drift and floor no-worsening are checked, and velocities
+remain exactly unchanged.
+
+Left-only +0.005 reduces penetration to 0.00484389 but exceeds the left hip
+limit and worsens left-foot depth. Right-only +0.005 gives 0.00687593 and exceeds
+the right hip limit. Symmetric +0.005/+0.005 gives 0.00341541 but violates both
+hip limits and the left floor check. Of the grid trials, 1,681 are feasible and
+none improves penetration by more than 1e-7. Ignoring feasibility finds zero
+penetration at +0.008/+0.00975, but that violates both limits and floor policy.
+This is failure to find a feasible correction along these two fixed axes and
+sampled budget, not proof that every possible 3D hip motion is impossible.
+
+Artifact build/shared_hip_replay.csv and fixture
+tests/fixtures/shared_hip_class_b.csv retain the original candidates and all 16
+body states. The shared_hip_replay test checks the saturated limits, separation
+versus feasibility conflict, preserved leg anchors and unchanged velocities.
+The live helper already tries coarse paired hip rotations; this diagnostic
+refines distribution rather than introducing paired rotations for the first
+time. Runtime physics, defaults and Class-A knee logic are unchanged.
+All 31 runnable CTests pass; the two pre-existing outdated floor-signature
+tests remain excluded. No additional ten-second live experiment is needed for
+this copied-only diagnostic, and no shared-hip runtime policy was enabled.
+
+### Copied secondary hip Z swing
+
+`aura_hip_z_replay_tests tests/fixtures/shared_hip_class_b.csv` reuses the exact
+1.433333 s Class-B snapshot. `tests/HipZReplay.hpp` first applies pure rotations
+around pelvis-local Z transformed to world, at fixed world hip pivots. Outward
+signs in this tilted pose are left negative/right positive. Raw -0.01/+0.01
+reduces penetration 0.00830555 -> 0.00124580 but changes the measured X twists
+to 0.7965945/0.8083278 and worsens left-foot Y -0.01988094 -> -0.02501024.
+Thus pure parent-local Z does not preserve extracted X twist in this pose.
+
+The second copied variant removes the candidate's quaternion X twist and
+reattaches the original X twist (`candidateSwing * originalTwist`). This is a
+Z-driven, twist-preserving swing projection, not a pure Z-only rotation. Its
+world rotation updates each entire leg's orientation and position around the
+hip pivot. No knee/pelvis adjustment, velocity change or runtime solver wiring
+is introduced. Constrained -0.01/+0.01 lowers overlap to 0.00333887, keeps both
+X twists at 0.8, but worsens the existing left-foot depth to -0.02103437.
+
+A copied search samples unequal outward shares at 0.05 ratio spacing, brackets
+with 0.001-rad Z probes up to 0.25 rad per hip and refines the first feasible
+zero-penetration endpoint with 20 binary rounds. Among these sampled shares,
+the smallest maximum probe is left zero/right +0.160193 rad (about 9.18 degrees).
+Penetration becomes zero; X twists are 0.8000000/0.8000002; left foot depth stays
+-0.01988094 and right foot is +0.2032191; maximum leg anchor gap is 6.08e-7.
+All leg limits/no-worsening floor checks pass and all sixteen bodies' velocities
+are exactly unchanged. The input is an imperfect intermediate pose; this is
+no-worsening floor feasibility, not absolute clearance of the left foot. The
+search does not prove a global minimum over all swing directions or ratios.
+
+Artifact build/hip_z_replay.csv records raw and constrained trials. CTest
+hip_z_replay verifies the raw twist coupling, the constrained floor conflict,
+successful biased separation, all leg anchors/limits, unchanged upper-body
+poses/velocities and preserved full knee/ankle relative orientations. All 32
+runnable tests pass; the two existing outdated floor-signature tests remain
+excluded. Runtime joint types, axes, gains and physics are unchanged.
+
+The existing Joint3D implementation measures, limits and motors only twist
+about hingeAxis; it does not enforce transverse swing locking for a true hinge,
+and minAngles/maxAngles are not active multi-axis limits. This experiment
+validates useful secondary swing geometry, not a completed ball-joint model or
+proof that the live solver formerly locked every non-X rotation.
+
+### Initial reusable SwingTwist representation
+
+Joint3D now appends `JointType { Hinge, SwingTwist }` and Z swing bounds without
+breaking existing aggregate initializers. Both hips advertise SwingTwist with
+minSwingZ=-0.4/maxSwingZ=+0.4 rad; knees/elbows and other joints retain Hinge.
+These are initial experimental bounds, not calibrated anatomical ranges.
+The live solver still handles axial twist exactly as before: type metadata does
+not yet activate general swing-limit geometry/velocity constraints or transverse
+locking on Hinge joints. Self-collision remains OFF by default.
+
+JointGeometry now exposes relativeJointSwingTwist, relativeJointTwistAngle,
+relativeJointSwing and relativeJointSwingZ. Relative orientation in part A's
+local frame is `swing * twist`; the twist axis is joint.hingeAxis. Swing Z is the
+Z component of the shortest quaternion rotation vector (`log(swing)`), not an
+Euler angle and not the probe angle. Y swing remains unbounded in this narrow
+first representation. At perpendicular 180-degree swing, twistDefined=false;
+the decomposition uses identity twist while reconstructing orientation, and
+the legacy scalar angle still returns zero. relativeJointAngle delegates to
+the named twist helper while retaining the previous angle calculation.
+
+`applyJointSwingWithComponent` supports X-axis SwingTwist joints. It takes an
+A-local axis/probe angle and an explicit child component, removes the candidate
+twist, reattaches the original twist, checks absolute candidate Z swing bounds,
+then rotates the component about A's world anchor. It changes pose only and
+rejects undefined twist, Hinge mode or out-of-range swing without moving bodies.
+Unsupported axes, invalid bounds/probes or parent/child component misuse are
+reported as invalid arguments. Floor/contact feasibility remains caller-owned.
+This is a bounded pose-projection API, not a general ball-joint dynamics solver.
+
+HipZReplay's constrained variant now calls this production API rather than
+duplicating quaternion decomposition. The saved right-hip probe +0.160193 rad
+still preserves X twist 0.8, respects the new absolute swing bounds and reduces
+thigh overlap below 1e-6. Refined search reaches zero at about +0.1601935 rad;
+final left/right swing Z coordinates are about +0.304311/-0.041802 rad. Maximum
+leg anchor gap remains below 1e-6, velocities unchanged, and floor no-worsening
+holds. The saved left foot remains pre-penetrating; this is not full floor repair.
+
+The joint_swing_twist CTest covers reconstruction, mixed swing/twist, signed and
+scaled quaternion invariance, bounded rejection, retained pivot/twist/velocity,
+Hinge rejection, zero axes and the undefined-twist singularity. hip_z_replay
+additionally checks both hip modes, the fixed saved probe and production Z
+bounds before running the copied search and descendant-preservation checks.
+All 33 runnable CTests pass after rebuilding their targets; the two pre-existing
+outdated floor-signature tests remain excluded. The application and full-body
+diagnostic build successfully. Artifact build/swing_twist_metadata_10s.csv
+repeats the same room-inclusive hip+knee opt-in run: its 38,400 velocity-sweep
+rows, thigh correction/block summaries and room summary exactly match
+build/live_class_a_hip_knee_10s.csv. This verifies unchanged live behavior, not
+new stability or live swing-limit enforcement.

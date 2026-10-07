@@ -50,6 +50,7 @@ add_executable(aura
         src/AssetPath.cpp
         src/body/BodyPart3D.cpp
         src/body/ComponentMass.cpp
+        src/body/ThighSelfCollision.cpp
         src/body/ComponentPosition.cpp
         src/body/ComponentVelocity.cpp
         src/body/LocalJointVelocity.cpp
@@ -101,11 +102,29 @@ endif ()
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_joint_swing_twist_tests tests/joint_swing_twist_tests.cpp src/body/JointGeometry.cpp)
+    target_link_libraries(aura_joint_swing_twist_tests PRIVATE aura_physics)
+    add_test(NAME joint_swing_twist COMMAND aura_joint_swing_twist_tests)
+    add_executable(aura_hip_z_replay_tests tests/hip_z_replay_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp src/body/ThighSelfCollision.cpp)
+    target_link_libraries(aura_hip_z_replay_tests PRIVATE aura_physics)
+    add_test(NAME hip_z_replay COMMAND aura_hip_z_replay_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/shared_hip_class_b.csv")
+    add_executable(aura_shared_hip_replay_tests tests/shared_hip_replay_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp src/body/ThighSelfCollision.cpp)
+    target_link_libraries(aura_shared_hip_replay_tests PRIVATE aura_physics)
+    add_test(NAME shared_hip_replay COMMAND aura_shared_hip_replay_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/shared_hip_class_b.csv")
     add_executable(aura_room_collision_tests tests/room_collision_tests.cpp)
     target_link_libraries(aura_room_collision_tests PRIVATE aura_physics)
     add_test(NAME room_collision COMMAND aura_room_collision_tests)
+    add_executable(aura_thigh_knee_replay_tests tests/thigh_knee_replay_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp src/body/ThighSelfCollision.cpp)
+    target_link_libraries(aura_thigh_knee_replay_tests PRIVATE aura_physics)
+    add_test(NAME thigh_knee_replay COMMAND aura_thigh_knee_replay_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/thigh_knee_floor_block.csv")
     add_executable(aura_hip_capsule_rotation_tests tests/hip_capsule_rotation_tests.cpp
-        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp)
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp src/body/ThighSelfCollision.cpp)
     target_link_libraries(aura_hip_capsule_rotation_tests PRIVATE aura_physics)
     add_test(NAME hip_capsule_rotation COMMAND aura_hip_capsule_rotation_tests
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/thigh_hip_rotation_1_650.csv")
@@ -288,6 +307,7 @@ if (BUILD_TESTING)
 
     # Explicit headless diagnostic; reports the unstable baseline, so it is not a CTest gate.
     add_executable(aura_full_body_diagnostics
+            src/body/ThighSelfCollision.cpp
             tests/full_body_diagnostics.cpp
             src/body/ComponentMass.cpp
             src/body/ComponentPosition.cpp
