@@ -30,6 +30,6 @@ namespace aura::math {
 
         [[nodiscard]] Vec3 cross(const Vec3 &rhs) const;
 
-        Vec3 operator*=(const float &scalar) const;
+        Vec3 &operator*=(float scalar);
     };
 }

@@ -251,6 +251,51 @@ baseline (27.46 m/s and 75.38 rad/s), so this is a conservation checkpoint rathe
 than general physical stability. Pose projections can still change rotational
 energy through orientation changes at fixed world angular velocity.
 
+`--floor-momentum-diagnostic` runs the current ten-second configuration unchanged
+and retains the single floor operation with the largest whole-body horizontal
+momentum change. `FloorCollisionAudit` optionally records actual contact points,
+per-contact normal impulse sums, and separate damping/normal velocity changes
+without altering the collision result. A copied replay checks exact live endpoint
+velocity agreement and can account separately for historical right-shin-to-foot
+response propagation. The former maximum was right shin at 8.283333 s, outer iteration 1:
+horizontal delta magnitude 3.64678 kg m/s. Direct normal impulses add zero
+horizontal momentum; propagating their angular response to the foot adds about
+(-1.90545, -3.12650) kg m/s horizontally. This is not a Coulomb friction response.
+Those measurements used the former nonmutating `Vec3::operator*=`. It is now
+fixed to mutate and return a reference, so configured angular damping is active.
+Do not expect regenerated trajectories to match the former inactive-damping run.
+
+
+`tests/fixtures/right_shin_contact_8_283333.csv` stores all 16 body states from the
+original inactive-angular-damping contact event. `aura_shin_contact_velocity_replay`
+loads this fixture with skeleton anchors configured from the neutral pose before
+loading body state. It preserves the shin-to-foot position translation but applies
+floor velocity response to shin only, then runs frozen-pose local knee/ankle
+anchor and angular-limit impulses. The fixture is registered as an isolated
+velocity regression, not a full-body stability gate. Four sweeps reduce both
+anchor speeds below 0.001 m/s; floor momentum accounting closes and foot velocity
+is exactly untouched by contact. Live shin-to-foot velocity propagation has now
+been removed; the geometric translation remains. The operator fix changes live
+damping behavior without changing gains: the legacy `joint` four-part chain test
+now fails its existing ankle-gap threshold. Do not weaken that threshold or tune
+damping to hide this result. Two older collision-signature test build errors remain.
+
+
+Runtime floor responses change velocities only on the contacting rigid body.
+Right-shin floor position correction still translates shin + foot. The old motion
+copying helper exists only in `tests/LegacyFloorResponse.hpp`; explicit
+`--right-shin-floor-motion` enables it for comparisons. Other hierarchy flags now
+select position propagation only. Current `--floor-momentum-diagnostic
+--hand-geometry-momentum --live-velocity-metrics` checks all 307,200 floor
+operations in ten seconds and finds exactly zero momentum change outside the
+contacting body. Compared with the working-damping copied-motion baseline, max
+horizontal floor event decreases 3.02035 -> 0.02145 kg m/s and position distance
+9.49 -> 8.42. State remains finite with no gap/limit failures (min Y=-5.36e-7,
+max gap=9.61e-7). Peak KE increases 737.7 -> 962.2 J and angular speed
+63.20 -> 88.12 rad/s, so do not describe this as general physical stability.
+Do not mix investigation of the separately failing legacy joint-chain regression
+with this floor velocity change or undo the corrected angular damping.
+
 
 In reviews, identify what works and distinguish **must fix**, **should improve**,
 and **optional** findings. Explain their observable consequences. Preserve the

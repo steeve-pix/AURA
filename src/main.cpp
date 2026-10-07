@@ -102,7 +102,8 @@ int main() {
     camera.setOrbit(0.55f, 0.25f);
     const auto updateTitle = [&] {
         const std::string title = "AURA | paused=" + std::to_string(paused) +
-            " follow=" + std::to_string(followBody) + " | L-drag: orbit R-drag: pan | F: focus G: follow H: help";
+                                  " follow=" + std::to_string(followBody) +
+                                  " | L-drag: orbit R-drag: pan | F: focus G: follow H: help";
         window.setTitle(title.c_str());
     };
     const auto focusBody = [&] {
@@ -113,10 +114,12 @@ int main() {
     aura::render::ShadowMap shadowMap{2048, 2048};
 
     auto litShader =
-            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/basic.vert"), aura::app::assetPath("shaders/basic.frag"));
+            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/basic.vert"),
+                                            aura::app::assetPath("shaders/basic.frag"));
 
     auto unlitShader =
-            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/unlit.vert"), aura::app::assetPath("shaders/unlit.frag"));
+            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/unlit.vert"),
+                                            aura::app::assetPath("shaders/unlit.frag"));
 
     auto shadowShader =
             aura::render::Shader::fromFiles(aura::app::assetPath("shaders/shadow.vert"),
@@ -388,8 +391,14 @@ int main() {
             if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulatedTime);
             return;
         }
-        if (key == GLFW_KEY_H) { aura::app::printLoggingHelp(); return; }
-        if (key == GLFW_KEY_F) { focusBody(); return; }
+        if (key == GLFW_KEY_H) {
+            aura::app::printLoggingHelp();
+            return;
+        }
+        if (key == GLFW_KEY_F) {
+            focusBody();
+            return;
+        }
         if (key == GLFW_KEY_G) {
             followBody = !followBody;
             if (followBody) focusBody();
@@ -434,8 +443,8 @@ int main() {
             aura::body::correctLocalJointVelocity(a, b, joint);
             // const double after = aura::app::bodyEnergy(parts);
             // if (std::isfinite(before) && std::isfinite(after) && after - before > std::max(0.001, std::abs(before) * 1e-5))
-                // std::cerr << "Anchor energy injection joint=" << connection.name << " time=" << simulatedTime
-                          // << " before=" << before << " after=" << after << '\n';
+            // std::cerr << "Anchor energy injection joint=" << connection.name << " time=" << simulatedTime
+            // << " before=" << before << " after=" << after << '\n';
             aura::body::correctLocalJointAngularLimitVelocity(a, b, joint);
         }
     };
@@ -470,9 +479,10 @@ int main() {
             &connection.constraint == &skeleton.leftHip ||
             &connection.constraint == &skeleton.rightHip) {
             const auto branch = &connection.constraint == &skeleton.rightShoulder
-                ? aura::body::MajorBodyBranch3D::RightShoulder
-                : &connection.constraint == &skeleton.leftHip
-                    ? aura::body::MajorBodyBranch3D::LeftHip : aura::body::MajorBodyBranch3D::RightHip;
+                                    ? aura::body::MajorBodyBranch3D::RightShoulder
+                                    : &connection.constraint == &skeleton.leftHip
+                                          ? aura::body::MajorBodyBranch3D::LeftHip
+                                          : aura::body::MajorBodyBranch3D::RightHip;
             aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch);
             aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
@@ -480,21 +490,25 @@ int main() {
         }
         if (&connection.constraint == &skeleton.rightKnee) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightKnee;
-            aura::body::correctRightKneeAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightAnkle);
+            aura::body::correctRightKneeAngleAroundPivot(auraBody, skeleton, connection.constraint,
+                                                         skeleton.rightAnkle);
             aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.rightElbow) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightElbow;
-            aura::body::correctRightElbowAngleAroundPivot(auraBody, skeleton, connection.constraint, skeleton.rightWrist);
+            aura::body::correctRightElbowAngleAroundPivot(auraBody, skeleton, connection.constraint,
+                                                          skeleton.rightWrist);
             aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.leftElbow || &connection.constraint == &skeleton.leftKnee) {
             const bool elbow = &connection.constraint == &skeleton.leftElbow;
-            const auto branch = elbow ? aura::body::MajorBodyBranch3D::LeftElbow : aura::body::MajorBodyBranch3D::LeftKnee;
+            const auto branch = elbow
+                                    ? aura::body::MajorBodyBranch3D::LeftElbow
+                                    : aura::body::MajorBodyBranch3D::LeftKnee;
             const auto &descendant = elbow ? skeleton.leftWrist : skeleton.leftAnkle;
             aura::body::correctLimbAngleAroundPivot(auraBody, skeleton, connection.constraint, descendant, branch);
             aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
@@ -534,7 +548,7 @@ int main() {
                 const float previousY = part->body.position.y;
                 aura::physics::integrateLinearMotion(part->body, dt);
                 diagnosticHistory.gravityWork -= static_cast<double>(part->body.mass) * 9.81 *
-                    (part->body.position.y - previousY);
+                        (part->body.position.y - previousY);
                 aura::physics::integrateAngularMotion(part->body, dt);
             }
             double stageEnergy = aura::app::bodyEnergy(parts);
@@ -542,7 +556,7 @@ int main() {
             for (int iteration = 0; iteration < jointIterations; ++iteration) {
                 for (auto *part: parts) {
                     if (part == &auraBody.rightShin)
-                        aura::body::resolveRightShinFloorWithFootMotion(auraBody, dt / jointIterations);
+                        aura::body::resolveRightShinFloorWithFootTranslation(auraBody, dt / jointIterations);
                     else
                         aura::physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / jointIterations);
                 }

@@ -43,6 +43,12 @@ int main() {
     checkVec3("scalar multiplication", a * 2.0f, {2.0f, 4.0f, 6.0f}, failures);
 
     Vec3 changed = a;
+    Vec3 scaled{2.0f, 4.0f, 6.0f};
+    auto &scaledResult = (scaled *= 0.5f);
+    if (scaled.x != 1.0f || scaled.y != 2.0f || scaled.z != 3.0f || &scaledResult != &scaled) {
+        std::cerr << "FAIL scalar assignment must mutate and return this vector\n";
+        ++failures;
+    }
     checkVec3("addition assignment result", changed += b, {5.0f, 7.0f, 9.0f}, failures);
     checkVec3("addition assignment mutation", changed, {5.0f, 7.0f, 9.0f}, failures);
     checkVec3("subtraction assignment result", changed -= b, a, failures);

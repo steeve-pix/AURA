@@ -23,7 +23,6 @@ int main() {
         body.rightShin.body.angularVelocity = {0.2f, 0.3f, 0.4f};
         body.rightFoot.body.velocity = {-0.2f, 0.4f, 0.1f};
         body.rightFoot.body.angularVelocity = {0.25f, 0.28f, 0.41f};
-        auto motion = body;
         auto reference = body.rightShin.body;
         const auto oldFoot = body.rightFoot.body;
         const auto oldShinPosition = body.rightShin.body.position;
@@ -53,27 +52,7 @@ int main() {
               "floor impulse is not propagated to foot");
         check((body.leftShin.body.position - leftShinPosition).length() == 0.0f,
               "left leg stays unchanged");
-        const auto relativeVelocity = [&](const auto &state) {
-            return aura::physics::velocityAtWorldPoint(state.rightFoot.body,
-                    aura::body::localToWorldPoint(state.rightFoot, skeleton.rightAnkle.localAnchorB)) -
-                   aura::physics::velocityAtWorldPoint(state.rightShin.body,
-                    aura::body::localToWorldPoint(state.rightShin, skeleton.rightAnkle.localAnchorA));
-        };
-        const auto beforeRelativeV = relativeVelocity(motion);
-        const auto beforeRelativeOmega = motion.rightFoot.body.angularVelocity - motion.rightShin.body.angularVelocity;
-        const auto beforeShinOmega = motion.rightShin.body.angularVelocity;
-        aura::body::resolveRightShinFloorWithFootMotion(motion, dt);
-        const auto deltaOmega = motion.rightShin.body.angularVelocity - beforeShinOmega;
-        const auto expectedRelativeV = beforeRelativeV + deltaOmega.cross(beforeGap);
-        check((relativeVelocity(motion) - expectedRelativeV).length() < 1e-5f,
-              "anchor relative velocity changes only by deltaOmega cross existing anchor gap");
-        check((motion.rightFoot.body.angularVelocity - motion.rightShin.body.angularVelocity - beforeRelativeOmega).length() < tolerance,
-              "floor velocity propagation preserves relative angular velocity");
-        check((motion.rightShin.body.velocity - reference.velocity).length() == 0.0f &&
-              (motion.rightShin.body.angularVelocity - reference.angularVelocity).length() == 0.0f &&
-              (motion.rightShin.body.position - body.rightShin.body.position).length() == 0.0f &&
-              (motion.rightFoot.body.position - body.rightFoot.body.position).length() == 0.0f,
-              "motion propagation keeps existing shin response and positional correction unchanged");
+
     }
     auto body = aura::body::createAuraBody3D();
     body.rightShin.body.position.y += 2.0f;
@@ -81,30 +60,18 @@ int main() {
     aura::body::resolveRightShinFloorWithFootTranslation(body, 1.0f / 1920.0f);
     check((body.rightFoot.body.position - beforeFoot.position).length() == 0.0f,
           "foot is untouched when shin has no positional floor correction");
-    // Touching without penetration: position-only helper returns early, but floor
-    // damping/impulses still change velocity and must reach the descendant.
+    // Contact without penetration must also leave descendant velocity untouched.
     body.rightShin.body.position.y = 0.8f;
     body.rightShin.body.velocity = {0.2f, -1.0f, 0.3f};
     body.rightShin.body.angularVelocity = {0.1f, 0.2f, 0.3f};
-    const auto skeleton = aura::body::createAuraSkeleton3D(body);
-    body.rightFoot.body.orientation = body.rightShin.body.orientation;
-    body.rightFoot.body.position = aura::body::localToWorldPoint(body.rightShin, skeleton.rightAnkle.localAnchorA) -
-                                  body.rightFoot.body.orientation.rotate(skeleton.rightAnkle.localAnchorB);
-    const auto anchorRelativeV = [&] {
-        return aura::physics::velocityAtWorldPoint(body.rightFoot.body,
-                aura::body::localToWorldPoint(body.rightFoot, skeleton.rightAnkle.localAnchorB)) -
-               aura::physics::velocityAtWorldPoint(body.rightShin.body,
-                aura::body::localToWorldPoint(body.rightShin, skeleton.rightAnkle.localAnchorA));
-    };
-    const auto beforeRelativeV = anchorRelativeV();
-    const auto beforeRelativeOmega = body.rightFoot.body.angularVelocity - body.rightShin.body.angularVelocity;
+    const auto oldFoot = body.rightFoot.body;
     const auto beforeShinV = body.rightShin.body.velocity;
     const auto beforeShinPosition = body.rightShin.body.position;
-    aura::body::resolveRightShinFloorWithFootMotion(body, 1.0f / 1920.0f);
-    check((body.rightShin.body.position - beforeShinPosition).length() == 0.0f &&
+    aura::body::resolveRightShinFloorWithFootTranslation(body, 1.0f / 1920.0f);
+    check((body.rightShin.body.position - beforeShinPosition).lengthSquared() == 0 &&
           (body.rightShin.body.velocity - beforeShinV).length() > 0.01f &&
-          (anchorRelativeV() - beforeRelativeV).length() < tolerance &&
-          (body.rightFoot.body.angularVelocity - body.rightShin.body.angularVelocity - beforeRelativeOmega).length() < tolerance,
-          "matched anchors preserve velocity through floor contact with no positional correction");
+          (body.rightFoot.body.velocity - oldFoot.velocity).lengthSquared() == 0 &&
+          (body.rightFoot.body.angularVelocity - oldFoot.angularVelocity).lengthSquared() == 0,
+          "contact changes shin velocity without copying motion to foot");
     return passed ? 0 : 1;
 }

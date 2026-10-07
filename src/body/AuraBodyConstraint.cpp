@@ -25,18 +25,6 @@ namespace aura::body {
         }
     }
 
-    void resolveRightShinFloorWithFootMotion(AuraBody3D &body, float dt) {
-        const auto oldVelocity = body.rightShin.body.velocity;
-        const auto oldOmega = body.rightShin.body.angularVelocity;
-        resolveRightShinFloorWithFootTranslation(body, dt);
-        const auto deltaV = body.rightShin.body.velocity - oldVelocity;
-        const auto deltaOmega = body.rightShin.body.angularVelocity - oldOmega;
-        const std::array descendants{&body.rightFoot};
-        translateSubtreeVelocity(descendants, deltaV);
-        // A change in rotation about shin COM also changes foot COM velocity.
-        rotateSubtreeVelocityAroundWorldPoint(descendants, body.rightShin.body.position, deltaOmega);
-    }
-
     namespace {
         struct BranchParts {
             BodyPart3D *parent;

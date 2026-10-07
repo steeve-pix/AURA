@@ -63,7 +63,10 @@ namespace aura::math {
         return Vec3{y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x};
     }
 
-    Vec3 Vec3::operator*=(const float &scalar) const {
-        return Vec3{x * scalar, y * scalar, z * scalar};
+    Vec3 &Vec3::operator*=(float scalar) {
+        x *= scalar;
+        y *= scalar;
+        z *= scalar;
+        return *this;
     }
 }

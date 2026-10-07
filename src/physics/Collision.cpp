@@ -10,14 +10,17 @@ namespace aura::physics {
         return body.position.y - halfHeight < floorY;
     }
 
-    void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, float floorY, float dt) {
+    void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, float floorY, float dt,
+                               FloorCollisionAudit *audit) {
         constexpr int solverIterations = 4;
+        if (audit) *audit = {};
 
         const auto lowest =
                 lowestPoint(body, size);
 
         const float penetration =
                 floorY - lowest.y;
+        if (audit) audit->lowestBefore = lowest.y;
 
         if (penetration > 0.0f) {
             body.position.y += penetration;
@@ -32,6 +35,11 @@ namespace aura::physics {
                     floorY,
                     contactTolerance
                 );
+        if (audit) {
+            audit->lowestAfterPosition = lowestPoint(body, size).y;
+            audit->contacts = contacts;
+            audit->normalImpulses.resize(contacts.size());
+        }
 
         if (contacts.empty()) {
             return;
@@ -46,10 +54,18 @@ namespace aura::physics {
         const float aDamping =
                 std::max(0.0f, 1.0f - angularDamping * dt);
 
+        const auto oldVelocity = body.velocity;
+        const auto oldOmega = body.angularVelocity;
         body.velocity.x *= damping;
         body.velocity.z *= damping;
 
         body.angularVelocity *= aDamping;
+        if (audit) {
+            audit->dampingDeltaVelocity = body.velocity - oldVelocity;
+            audit->dampingDeltaOmega = body.angularVelocity - oldOmega;
+        }
+        const auto afterDampingVelocity = body.velocity;
+        const auto afterDampingOmega = body.angularVelocity;
 
         const math::Vec3 normal{0.0f, 1.0f, 0.0f};
 
@@ -84,7 +100,12 @@ namespace aura::physics {
                 const math::Vec3 impulse = normal * impulseMagnitude;
 
                 applyImpulseAtPoint(body, impulse, contactPoint);
+                if (audit) audit->normalImpulses[&contactPoint - contacts.data()] += impulse;
             }
+        }
+        if (audit) {
+            audit->normalDeltaVelocity = body.velocity - afterDampingVelocity;
+            audit->normalDeltaOmega = body.angularVelocity - afterDampingOmega;
         }
     }
 }

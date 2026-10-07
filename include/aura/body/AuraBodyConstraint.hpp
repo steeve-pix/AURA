@@ -36,10 +36,6 @@ namespace aura::body {
     // upward positional correction to the foot. Foot velocities are untouched.
     void resolveRightShinFloorWithFootTranslation(AuraBody3D &body, float dt);
 
-    // Right-shin experiment: additionally propagate the shin's actual floor
-    // velocity change as a rigid velocity field about its COM.
-    void resolveRightShinFloorWithFootMotion(AuraBody3D &body, float dt);
-
     // Left shoulder only: upper arm, forearm and hand are one child subtree.
     void correctLeftShoulderAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &shoulder);
     void correctLeftShoulderPositionAsSubtree(AuraBody3D &body, const Joint3D &shoulder);

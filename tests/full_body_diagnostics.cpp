@@ -1,6 +1,7 @@
 // Headless measurement tool, not a passing stability regression.
 // Keep setup and step ordering aligned with src/main.cpp; only upper-body motor flags differ.
 #include <algorithm>
+#include "LegacyFloorResponse.hpp"
 #include <array>
 #include <cmath>
 #include <iomanip>
@@ -89,6 +90,7 @@ int main(int argc, char **argv) {
     bool localAngularLimits = false;
     bool angularMomentumDiagnostic = false;
     bool geometryMomentumDiagnostic = false;
+    bool floorMomentumDiagnostic = false;
     bool kneeProjectionReplay = false;
     bool legacyGeometryCompensation = false;
     bool handGeometryMomentumDiagnostic = false;
@@ -135,6 +137,7 @@ int main(int argc, char **argv) {
         else if (argument == "--local-angular-limits") { localAngularLimits = true; angularMomentumDiagnostic = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--legacy-geometry-compensation") legacyGeometryCompensation = true;
         else if (argument == "--knee-projection-replay") { legacyGeometryCompensation = true; kneeProjectionReplay = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--floor-momentum-diagnostic") { floorMomentumDiagnostic = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--geometry-momentum-diagnostic") { geometryMomentumDiagnostic = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--angular-momentum-diagnostic") { angularMomentumDiagnostic = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--hand-geometry-momentum") { handGeometryMomentumDiagnostic = true; allLocalAnchors = true; }
@@ -165,7 +168,7 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
     }
@@ -183,7 +186,7 @@ int main(int argc, char **argv) {
     if (headWindow) waistGroups = true;
     if (energyWindow || linearMassReplay || legVelocityReplay || localLegVelocityReplay || rightLegLocalAnchors || liveVelocityMetrics || skeletonVelocityReplay || allLocalAnchors) leftLimbComponents = true;
     if (leftLimbComponents) rightElbowSubtree = true;
-    if (shinContactAudit || wristWindow || rightElbowSubtree) rightShinFloorMotion = true;
+    if (shinContactAudit || wristWindow || rightElbowSubtree) rightShinFloorSubtree = true;
     if (rightShinFloorMotion) rightShinFloorSubtree = true;
     if (rightShinFloorSubtree) rightKneeSubtree = true;
     if (ankleWindow || rightKneeSubtree) majorBranches = true;
@@ -670,6 +673,19 @@ int main(int argc, char **argv) {
     std::vector<MomentumOperation> momentumOperations;
     bool firstAngularMomentumReported = false;
     bool firstGeometryMomentumReported = false;
+    struct FloorMomentumEvent {
+        double magnitude = -1, time = 0;
+        int iteration = 0;
+        std::string part;
+        WholeMomentum before{}, after{};
+        aura::physics::RigidBody3D bodyBefore{}, bodyAfter{}, footBefore{}, footAfter{};
+        aura::physics::FloorCollisionAudit response;
+        aura::math::Vec3 normalRoot{}, dampingRoot{}, normalDescendant{}, dampingDescendant{};
+        bool propagated = false, replayMatches = false;
+        std::array<aura::physics::RigidBody3D,16> input;
+    } largestFloor;
+    std::size_t floorMomentumOperations = 0;
+    double unexplainedFloorHorizontal = 0, unexplainedFloorVertical = 0;
     bool firstMomentumReported = false;
     WholeMomentum stepMomentumBefore{};
     // Significant completed-step horizontal change: 0.1 kg m/s. Individual
@@ -828,7 +844,15 @@ int main(int argc, char **argv) {
             if (kneeProjectionReplay && !kneeProjectionDone && std::abs(diagnosticTime-152*FIXED_DT)<1e-9 &&
                 diagnosticIteration==1 && std::string(diagnosticSweep)=="forward" &&
                 std::string(energyObject)=="rightKnee" && op=="correctRightKneeAngleAroundPivot") replayKneeProjection();
-            const auto momentumBefore = (handGeometryMomentumDiagnostic || angularMomentumDiagnostic || geometryMomentumDiagnostic) ? wholeMomentum() : WholeMomentum{};
+            const auto momentumBefore = (handGeometryMomentumDiagnostic || angularMomentumDiagnostic || geometryMomentumDiagnostic || floorMomentumDiagnostic) ? wholeMomentum() : WholeMomentum{};
+            const bool floorTrace = floorMomentumDiagnostic && op=="floorResponse";
+            auto floorPart = parts.end();
+            aura::physics::RigidBody3D floorOld, floorFootOld;
+            if (floorTrace) {
+                floorPart=std::find_if(parts.begin(),parts.end(),[&](const auto *p){return p->name==energyObject;});
+                if (floorPart!=parts.end()) floorOld=(*floorPart)->body;
+                floorFootOld=auraBody.rightFoot.body;
+            }
             const bool compensationTrace = geometryMomentumDiagnostic && !firstGeometryMomentumReported &&
                 (op.find("Position") != std::string::npos || op.find("Angle") != std::string::npos) &&
                 op.find("Velocity") == std::string::npos;
@@ -875,6 +899,40 @@ int main(int argc, char **argv) {
             const auto oldDescendantVelocity = descendant!=joints.end() ? descendantVelocity(*descendant) : aura::math::Vec3{};
             operation();
             if (descendant!=joints.end()) descendant->partB->body.velocity += oldDescendantVelocity-descendantVelocity(*descendant);
+            if (floorTrace && floorPart!=parts.end()) {
+                const auto after=wholeMomentum();
+                ++floorMomentumOperations;
+                const auto &root=(*floorPart)->body;
+                const double extraX=after[0]-momentumBefore[0]-double(root.mass)*(double(root.velocity.x)-floorOld.velocity.x);
+                const double extraY=after[1]-momentumBefore[1]-double(root.mass)*(double(root.velocity.y)-floorOld.velocity.y);
+                const double extraZ=after[2]-momentumBefore[2]-double(root.mass)*(double(root.velocity.z)-floorOld.velocity.z);
+                unexplainedFloorHorizontal=std::max(unexplainedFloorHorizontal,std::hypot(extraX,extraZ));
+                unexplainedFloorVertical=std::max(unexplainedFloorVertical,std::abs(extraY));
+                const double horizontal=std::hypot(after[0]-momentumBefore[0],after[2]-momentumBefore[2]);
+                if (horizontal>largestFloor.magnitude) {
+                    auto &event=largestFloor;
+                    event.magnitude=horizontal; event.time=diagnosticTime; event.iteration=diagnosticIteration;
+                    event.part=(*floorPart)->name; event.before=momentumBefore; event.after=after;
+                    event.bodyBefore=floorOld; event.bodyAfter=(*floorPart)->body;
+                    event.footBefore=floorFootOld; event.footAfter=auraBody.rightFoot.body;
+                    for(std::size_t k=0;k<parts.size();++k) event.input[k]=parts[k]->body;
+                    event.input[floorPart-parts.begin()]=floorOld;
+                    if(*floorPart==&auraBody.rightShin) event.input[15]=floorFootOld;
+                    auto replay=floorOld;
+                    aura::physics::resolveFloorCollision(replay,(*floorPart)->size,0.0f,static_cast<float>(FIXED_DT)/jointIterations,&event.response);
+                    event.replayMatches=(replay.velocity-event.bodyAfter.velocity).lengthSquared()==0 &&
+                        (replay.angularVelocity-event.bodyAfter.angularVelocity).lengthSquared()==0;
+                    event.normalRoot=event.response.normalDeltaVelocity*floorOld.mass;
+                    event.dampingRoot=event.response.dampingDeltaVelocity*floorOld.mass;
+                    event.normalDescendant={}; event.dampingDescendant={};
+                    event.propagated=rightShinFloorMotion && *floorPart==&auraBody.rightShin;
+                    if (event.propagated) {
+                        const auto r=event.footAfter.position-event.bodyAfter.position;
+                        event.normalDescendant=(event.response.normalDeltaVelocity+event.response.normalDeltaOmega.cross(r))*event.footAfter.mass;
+                        event.dampingDescendant=(event.response.dampingDeltaVelocity+event.response.dampingDeltaOmega.cross(r))*event.footAfter.mass;
+                    }
+                }
+            }
             if (compensationTrace) {
                 const auto after = wholeMomentum();
                 if (std::hypot(after[0]-momentumBefore[0], after[2]-momentumBefore[2]) > 0.01) {
@@ -2006,7 +2064,7 @@ int main(int argc, char **argv) {
                         aura::body::resolveRightShinFloorWithFootTranslation(replay, dt / jointIterations);
                         ankleSample("after", &replay, "shinFloorReplay");
                         auto motionReplay = auraBody;
-                        aura::body::resolveRightShinFloorWithFootMotion(motionReplay, dt / jointIterations);
+                        aura::test::resolveRightShinFloorWithLegacyFootMotion(motionReplay, dt / jointIterations);
                         ankleSample("afterVelocityPropagation", &motionReplay, "shinFloorReplay");
                     }
                 }
@@ -2016,7 +2074,7 @@ int main(int argc, char **argv) {
                 if (rightShinFloorMotion && part == &auraBody.rightShin) {
                     const bool audit = shinContactAudit && auditedShinContacts < 8;
                     const auto beforeMotion = audit ? auraBody : aura::body::AuraBody3D{};
-                    aura::body::resolveRightShinFloorWithFootMotion(auraBody, dt / jointIterations);
+                    aura::test::resolveRightShinFloorWithLegacyFootMotion(auraBody, dt / jointIterations);
                     if (audit && ((part->body.position - beforeMotion.rightShin.body.position).lengthSquared() > 0.0f ||
                                   (part->body.velocity - beforeMotion.rightShin.body.velocity).lengthSquared() > 0.0f ||
                                   (part->body.angularVelocity - beforeMotion.rightShin.body.angularVelocity).lengthSquared() > 0.0f)) {
@@ -2297,6 +2355,46 @@ int main(int argc, char **argv) {
         for (std::size_t i = 0; i < categories.size(); ++i)
             std::cout << "momentumCumulative," << categories[i] << ',' << cumulativeMomentum[i][0] << ','
                       << cumulativeMomentum[i][1] << ',' << cumulativeMomentum[i][2] << ',' << cumulativeAbsoluteHorizontal[i] << '\n';
+    }
+    if (floorMomentumDiagnostic) {
+        std::cout << std::scientific << std::setprecision(9)
+            << "floorMomentumBudget,operations=" << floorMomentumOperations
+            << ",maxMomentumOutsideContactBodyHorizontal=" << unexplainedFloorHorizontal
+            << ",maxMomentumOutsideContactBodyVertical=" << unexplainedFloorVertical << '\n';
+        const auto &e=largestFloor;
+        std::cout << std::scientific << std::setprecision(9)
+            << "largestFloorMomentum,time,iteration,part,contacts,lowestBefore,lowestAfterPosition,horizontalDelta,PxBefore,PzBefore,PxAfter,PzAfter,propagated,replayVelocityMatches\n"
+            << "largestFloorMomentum," << e.time << ',' << e.iteration << ',' << e.part << ',' << e.response.contacts.size()
+            << ',' << e.response.lowestBefore << ',' << e.response.lowestAfterPosition << ',' << e.magnitude
+            << ',' << e.before[0] << ',' << e.before[2] << ',' << e.after[0] << ',' << e.after[2]
+            << ',' << e.propagated << ',' << e.replayMatches << '\n';
+        const auto vector=[&](const auto &v){std::cout << ',' << v.x << ',' << v.y << ',' << v.z;};
+        std::cout << "floorContactInput,part,sx,sy,sz,mass,px,py,pz,qw,qx,qy,qz,vx,vy,vz,wx,wy,wz,Ix,Iy,Iz,restitution\n";
+        for(std::size_t k=0;k<parts.size();++k) {
+            const auto &b=e.input[k];
+            std::cout << "floorContactInput," << parts[k]->name;vector(parts[k]->size);std::cout << ',' << b.mass;
+            vector(b.position);std::cout << ',' << b.orientation.w << ',' << b.orientation.x << ',' << b.orientation.y << ',' << b.orientation.z;
+            vector(b.velocity);vector(b.angularVelocity);vector(b.momentOfInertia);std::cout << ',' << b.restitution << '\n';
+        }
+        std::cout << "floorMomentumContribution,source,deltaPx,deltaPy,deltaPz\n";
+        const auto contribution=[&](const char *name,const auto &v){std::cout << "floorMomentumContribution," << name;vector(v);std::cout << '\n';};
+        contribution("normalBody",e.normalRoot); contribution("horizontalAndAngularDampingBody",e.dampingRoot);
+        contribution("normalPropagatedToFoot",e.normalDescendant); contribution("dampingPropagatedToFoot",e.dampingDescendant);
+        const auto predicted=e.normalRoot+e.dampingRoot+e.normalDescendant+e.dampingDescendant;
+        contribution("decompositionResidual",aura::math::Vec3{
+            static_cast<float>(e.after[0]-e.before[0])-predicted.x,
+            static_cast<float>(e.after[1]-e.before[1])-predicted.y,
+            static_cast<float>(e.after[2]-e.before[2])-predicted.z});
+        std::cout << "floorMomentumBody,part,vxBefore,vyBefore,vzBefore,vxAfter,vyAfter,vzAfter,wxBefore,wyBefore,wzBefore,wxAfter,wyAfter,wzAfter\n";
+        const auto body=[&](const std::string &name,const auto &old,const auto &now){
+            std::cout << "floorMomentumBody," << name; vector(old.velocity);vector(now.velocity);
+            vector(old.angularVelocity);vector(now.angularVelocity);std::cout << '\n';};
+        body(e.part,e.bodyBefore,e.bodyAfter);
+        if(e.propagated) body("right_foot",e.footBefore,e.footAfter);
+        std::cout << "floorMomentumContact,index,x,y,z,normalImpulseX,normalImpulseY,normalImpulseZ\n";
+        for(std::size_t i=0;i<e.response.contacts.size();++i) {
+            std::cout << "floorMomentumContact," << i;vector(e.response.contacts[i]);vector(e.response.normalImpulses[i]);std::cout << '\n';
+        }
     }
     if (geometryMomentumDiagnostic && !firstGeometryMomentumReported)
         std::cout << "geometryMomentumDiagnostic,no operation exceeded 0.01 kg m/s horizontal momentum change\n";
