@@ -140,18 +140,10 @@ namespace aura::body {
     void correctLimbAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton,
                                     const Joint3D &joint, const Joint3D &descendantJoint,
                                     MajorBodyBranch3D branch) {
-        const auto parts = branchParts(body, skeleton, branch);
-        auto &root = *parts.subtree.front();
-        auto &leaf = *parts.subtree.back();
-        const auto relativeVelocity = [&] {
-            return physics::velocityAtWorldPoint(leaf.body, localToWorldPoint(leaf, descendantJoint.localAnchorB)) -
-                   physics::velocityAtWorldPoint(root.body, localToWorldPoint(root, descendantJoint.localAnchorA));
-        };
-        const auto before = relativeVelocity();
+        // Pose projection does not imply a physical impulse. Anchor and limit
+        // velocity errors are repaired later by the local two-body solvers.
+        (void)descendantJoint; // Retained for source compatibility with limb wrappers.
         correctBranchAngleAroundPivot(body, skeleton, joint, branch);
-        // Preserve the existing world relative motion during geometric projection.
-        // Angular velocities remain unchanged; do not erase or rotate this vector.
-        leaf.body.velocity += before - relativeVelocity();
     }
 
     void correctRightKneeAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &knee, const Joint3D &ankle) {

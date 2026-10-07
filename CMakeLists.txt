@@ -45,6 +45,7 @@ target_link_libraries(aura_physics PUBLIC aura_math)
 # Application
 add_executable(aura
         src/main.cpp
+        src/AssetPath.cpp
         src/body/BodyPart3D.cpp
         src/body/ComponentMass.cpp
             src/body/ComponentPosition.cpp
@@ -68,7 +69,32 @@ add_executable(aura
         src/body/AuraBodyConstraint.cpp
 )
 target_link_libraries(aura PRIVATE aura_physics glfw OpenGL::GL)
-target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+if (APPLE)
+    set_target_properties(aura PROPERTIES
+        MACOSX_BUNDLE TRUE
+        OUTPUT_NAME AURA
+        MACOSX_BUNDLE_BUNDLE_NAME AURA
+        MACOSX_BUNDLE_GUI_IDENTIFIER dev.aura.simulation
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
+        MACOSX_BUNDLE_BUNDLE_VERSION "0.1.0"
+    )
+    find_library(AURA_COREFOUNDATION CoreFoundation REQUIRED)
+    target_link_libraries(aura PRIVATE "${AURA_COREFOUNDATION}")
+
+    # Register individual resources for CMake 3.20 compatibility. Changes to
+    # existing assets are copied on rebuild; new assets trigger reconfiguration.
+    file(GLOB_RECURSE AURA_ASSETS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
+    foreach(asset IN LISTS AURA_ASSETS)
+        file(RELATIVE_PATH relative_asset "${CMAKE_CURRENT_SOURCE_DIR}/assets" "${asset}")
+        get_filename_component(asset_directory "${relative_asset}" DIRECTORY)
+        set_source_files_properties("${asset}" PROPERTIES
+            MACOSX_PACKAGE_LOCATION "Resources/assets/${asset_directory}"
+        )
+    endforeach()
+    target_sources(aura PRIVATE ${AURA_ASSETS})
+else()
+    target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+endif()
 
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)

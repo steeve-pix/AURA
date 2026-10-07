@@ -120,7 +120,7 @@ humanoid topology without retaining body pointers. Cut joints must belong to tha
 skeleton; returned pointers belong to the supplied body. Head, neck, both shoulders,
 both elbows, and both knees use graph-derived components for angular geometry.
 Elbow/knee position and velocity corrections use the same graph components.
-Their wrappers retain existing velocity compensation and floor policies; the
+Their geometry wrappers change pose only and retain existing floor policies; the
 generic `correctJointAngleWithComponent` does not decide floor feasibility.
 
 ## Debugging and review
@@ -140,8 +140,10 @@ explicit. Do not extract a new simulation framework solely to remove duplication
 Use `--local-angular-limits` for the current application configuration (full humanoid
 hierarchy, contact-aware component positions, local two-body anchor and angular-limit
 impulses, hip/knee motors only). `--all-local-anchors` retains the earlier configuration
-with legacy position and angular-limit handling. Use
-`--left-limb-components` for the previous subtree-velocity baseline; without either
+with legacy position and angular-limit handling. Add
+`--legacy-geometry-compensation` when reproducing historical trajectories that
+used geometric leaf velocity adjustments. Use `--left-limb-components` for the
+previous subtree-velocity baseline; without either
 flag the diagnostic retains the former pairwise left elbow/knee baseline.
 
 `--leg-velocity-replay` copies the audited 3.725 s right-hip state and runs four
@@ -211,8 +213,44 @@ first horizontal momentum change above 0.01 kg m/s: neck at 0.458333 s, with
 delta Pz about -1.403594. `--local-angular-limits` enables the current local angular
 impulses. Its ten-second run stays finite, has no gap/limit threshold failures,
 minimum Y=-4.77e-7, and maximum position distance 13.33. Angular-limit operations
-change net linear momentum by zero. Geometry velocity compensation remains
-unchanged and still changes net momentum; do not claim general physical stability.
+change net linear momentum by zero. Those measurements predate removal of
+geometry velocity compensation; use `--legacy-geometry-compensation` to reproduce
+that configuration. Do not claim general physical stability.
+
+`--geometry-momentum-diagnostic` runs the current configuration unchanged and
+records the first geometric operation whose horizontal momentum change exceeds
+0.01 kg m/s. It emits the joint angle/limits/pivot and all 16 bodies' before/after
+positions, orientations, velocities, and angular velocities. The first event is
+the forward right-knee angle repair at 1.266667 s, iteration 1: the limb helper's
+direct foot velocity compensation changes horizontal momentum by about 0.08730
+kg m/s. This historical event is reproduced with `--legacy-geometry-compensation`.
+The application no longer applies geometry velocity compensation.
+
+`--knee-projection-replay` copies the 1.266667 s right-knee event (outer iteration
+1, forward sweep). It compares legacy geometry with the same branch rotation and
+floor lift without descendant velocity compensation, then records A/B/C/D and
+64 frozen-pose full-skeleton forward/reverse local impulse sweeps. C and D each
+contain one solve; each subsequent joint visit uses four inner anchor/limit solves.
+It logs the input state and checks exact preservation of geometry versus the
+legacy wrapper, exact A-to-B linear/angular velocities and linear momentum,
+floor clearance, fixed replay poses, impulse energy/momentum roundoff, and a
+1 mm/s all-anchor convergence target. This isolated replay does not alter the
+application or establish live stability. It automatically enables the legacy
+compensation on its snapshot-generating trajectory so the copied event remains
+reproducible. Its projected copy has compensation disabled.
+
+
+The application now projects elbow/knee geometry without descendant velocity
+compensation. `--local-angular-limits --hand-geometry-momentum --live-velocity-metrics`
+measures the current ten-second configuration: finite, no gap/limit failures,
+minimum Y=-7.75e-7, max gap=9.56e-7, max position distance=8.30, peak KE=961.5 J.
+The `geometryPoseProjection` and angular-limit momentum rows are exactly zero;
+local anchor momentum changes are roundoff. Net horizontal momentum comes from
+floor responses. Peak linear/angular speeds increased versus the compensated
+baseline (27.46 m/s and 75.38 rad/s), so this is a conservation checkpoint rather
+than general physical stability. Pose projections can still change rotational
+energy through orientation changes at fixed world angular velocity.
+
 
 In reviews, identify what works and distinguish **must fix**, **should improve**,
 and **optional** findings. Explain their observable consequences. Preserve the
@@ -239,9 +277,24 @@ may require `--config Debug` for the build and `-C Debug` for CTest.
 Run the application or headless diagnostic explicitly as needed:
 
 ```sh
+# macOS (Finder launch):
+open build/AURA.app
+# macOS (Terminal launch, with diagnostics visible):
+./build/AURA.app/Contents/MacOS/AURA
+# Other platforms:
 ./build/aura
+# Headless diagnostic on all platforms:
 ./build/aura_full_body_diagnostics
 ```
+
+On macOS, target `aura` builds `AURA.app` using the configured architecture
+(`arm64` on the current Apple Silicon build). CMake bundles the `assets/` tree
+under `Contents/Resources/assets`; `src/AssetPath.cpp` resolves it through the
+main bundle, independent of the working directory or checkout location. Rebuild
+with `cmake --build build --target aura --parallel` after code or asset changes.
+Finder launches do not display terminal diagnostics. Other platforms retain the
+plain executable and source asset directory. This is a local development bundle;
+distribution signing/notarization is not configured.
 
 - Tests use small standalone executables registered with CTest. Follow the existing
   style instead of adding a test framework without a demonstrated need.

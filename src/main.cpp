@@ -29,6 +29,7 @@
 #include "aura/render/Window.hpp"
 
 #include "BodyDiagnostics.hpp"
+#include "AssetPath.hpp"
 
 using aura::app::BodyJoint;
 using aura::app::BodyDiagnosticHistory;
@@ -112,17 +113,17 @@ int main() {
     aura::render::ShadowMap shadowMap{2048, 2048};
 
     auto litShader =
-            aura::render::Shader::fromFiles(AURA_ASSET_DIR "/shaders/basic.vert", AURA_ASSET_DIR "/shaders/basic.frag");
+            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/basic.vert"), aura::app::assetPath("shaders/basic.frag"));
 
     auto unlitShader =
-            aura::render::Shader::fromFiles(AURA_ASSET_DIR "/shaders/unlit.vert", AURA_ASSET_DIR "/shaders/unlit.frag");
+            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/unlit.vert"), aura::app::assetPath("shaders/unlit.frag"));
 
     auto shadowShader =
-            aura::render::Shader::fromFiles(AURA_ASSET_DIR "/shaders/shadow.vert",
-                                            AURA_ASSET_DIR "/shaders/shadow.frag");
+            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/shadow.vert"),
+                                            aura::app::assetPath("shaders/shadow.frag"));
 
     auto outlineShader = aura::render::Shader::fromFiles(
-        AURA_ASSET_DIR "/shaders/outline.vert", AURA_ASSET_DIR "/shaders/unlit.frag");
+        aura::app::assetPath("shaders/outline.vert"), aura::app::assetPath("shaders/unlit.frag"));
     aura::render::Mesh sphereLines{aura::render::MeshFactory::createSphereLines(), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh topSphereLines{
         aura::render::MeshFactory::createSphereLines(48, 1), aura::render::MeshPrimitive::Lines
@@ -140,8 +141,8 @@ int main() {
     };
     aura::render::Mesh soleLines{aura::render::MeshFactory::createSoleLines(), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh noLines{std::vector<float>{}, aura::render::MeshPrimitive::Lines};
-    auto skinShader = aura::render::Shader::fromFiles(AURA_ASSET_DIR "/shaders/skin.vert",
-                                                      AURA_ASSET_DIR "/shaders/skin.frag");
+    auto skinShader = aura::render::Shader::fromFiles(aura::app::assetPath("shaders/skin.vert"),
+                                                      aura::app::assetPath("shaders/skin.frag"));
 
     glEnable(GL_DEPTH_TEST);
 
@@ -429,12 +430,12 @@ int main() {
         auto &b = *connection.partB;
         const auto &joint = connection.constraint;
         for (int i = 0; i < aura::body::jointVelocityIterations; ++i) {
-            const double before = aura::app::bodyEnergy(parts);
+            // const double before = aura::app::bodyEnergy(parts);
             aura::body::correctLocalJointVelocity(a, b, joint);
-            const double after = aura::app::bodyEnergy(parts);
-            if (std::isfinite(before) && std::isfinite(after) && after - before > std::max(0.001, std::abs(before) * 1e-5))
-                std::cerr << "Anchor energy injection joint=" << connection.name << " time=" << simulatedTime
-                          << " before=" << before << " after=" << after << '\n';
+            // const double after = aura::app::bodyEnergy(parts);
+            // if (std::isfinite(before) && std::isfinite(after) && after - before > std::max(0.001, std::abs(before) * 1e-5))
+                // std::cerr << "Anchor energy injection joint=" << connection.name << " time=" << simulatedTime
+                          // << " before=" << before << " after=" << after << '\n';
             aura::body::correctLocalJointAngularLimitVelocity(a, b, joint);
         }
     };

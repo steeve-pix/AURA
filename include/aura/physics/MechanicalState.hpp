@@ -15,6 +15,6 @@ namespace aura::physics {
     // Potential is zero at world origin. Angular momentum is about worldReference,
     // including both intrinsic spin and orbital r x (m v).
     MechanicalState mechanicalState(const RigidBody3D &body,
-                                   const math::Vec3 &worldReference = {},
-                                   const math::Vec3 &gravity = {0.0f, -9.81f, 0.0f});
+                                    const math::Vec3 &worldReference = {},
+                                    const math::Vec3 &gravity = {0.0f, -9.81f, 0.0f});
 }

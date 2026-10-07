@@ -88,6 +88,9 @@ int main(int argc, char **argv) {
     bool componentPositions = false;
     bool localAngularLimits = false;
     bool angularMomentumDiagnostic = false;
+    bool geometryMomentumDiagnostic = false;
+    bool kneeProjectionReplay = false;
+    bool legacyGeometryCompensation = false;
     bool handGeometryMomentumDiagnostic = false;
     bool floorFailureDiagnostic = false;
     bool allLocalAnchors = false;
@@ -130,6 +133,9 @@ int main(int argc, char **argv) {
         else if (argument == "--component-position-replay") { componentPositionReplay = true; allLocalAnchors = true; }
         else if (argument == "--component-positions") { componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--local-angular-limits") { localAngularLimits = true; angularMomentumDiagnostic = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--legacy-geometry-compensation") legacyGeometryCompensation = true;
+        else if (argument == "--knee-projection-replay") { legacyGeometryCompensation = true; kneeProjectionReplay = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
+        else if (argument == "--geometry-momentum-diagnostic") { geometryMomentumDiagnostic = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--angular-momentum-diagnostic") { angularMomentumDiagnostic = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--hand-geometry-momentum") { handGeometryMomentumDiagnostic = true; allLocalAnchors = true; }
         else if (argument == "--floor-failure-diagnostic") { floorFailureDiagnostic = true; allLocalAnchors = true; }
@@ -159,7 +165,7 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
     }
@@ -663,6 +669,7 @@ int main(int argc, char **argv) {
     struct MomentumOperation { int iteration; std::string sweep, object, operation; WholeMomentum before, after; };
     std::vector<MomentumOperation> momentumOperations;
     bool firstAngularMomentumReported = false;
+    bool firstGeometryMomentumReported = false;
     bool firstMomentumReported = false;
     WholeMomentum stepMomentumBefore{};
     // Significant completed-step horizontal change: 0.1 kg m/s. Individual
@@ -674,10 +681,160 @@ int main(int argc, char **argv) {
         if (handGeometryMomentumDiagnostic && !firstMomentumReported)
             momentumStages.push_back({iteration, stage, before, wholeMomentum()});
     };
+    bool kneeProjectionDone = false;
+    bool kneeProjectionPassed = false;
+    // Copy immediately before the audited knee operation. Nothing in this replay
+    // is fed back into the live trajectory used to obtain the snapshot.
+    const auto replayKneeProjection = [&] {
+        kneeProjectionDone = true;
+        auto copy = auraBody;
+        auto legacy = auraBody;
+        const std::array<aura::body::BodyPart3D *, 16> copiedParts{
+            &copy.head, &copy.neck, &copy.torso, &copy.pelvis,
+            &copy.leftUpperArm, &copy.leftForearm, &copy.leftHand,
+            &copy.rightUpperArm, &copy.rightForearm, &copy.rightHand,
+            &copy.leftThigh, &copy.leftShin, &copy.leftFoot,
+            &copy.rightThigh, &copy.rightShin, &copy.rightFoot
+        };
+        const std::array<aura::body::BodyPart3D *, 16> legacyParts{
+            &legacy.head, &legacy.neck, &legacy.torso, &legacy.pelvis,
+            &legacy.leftUpperArm, &legacy.leftForearm, &legacy.leftHand,
+            &legacy.rightUpperArm, &legacy.rightForearm, &legacy.rightHand,
+            &legacy.leftThigh, &legacy.leftShin, &legacy.leftFoot,
+            &legacy.rightThigh, &legacy.rightShin, &legacy.rightFoot
+        };
+        auto copiedJoints = joints;
+        for (auto &c : copiedJoints) {
+            const auto indexA = std::find(parts.begin(), parts.end(), c.partA) - parts.begin();
+            const auto indexB = std::find(parts.begin(), parts.end(), c.partB) - parts.begin();
+            c.partA = copiedParts[indexA]; c.partB = copiedParts[indexB];
+        }
+        const auto equalVec = [](const auto &a, const auto &b) { return a.x == b.x && a.y == b.y && a.z == b.z; };
+        const auto equalPose = [&](const auto &a, const auto &b) {
+            return equalVec(a.position, b.position) && a.orientation.w == b.orientation.w &&
+                a.orientation.x == b.orientation.x && a.orientation.y == b.orientation.y && a.orientation.z == b.orientation.z;
+        };
+        const auto momentum = [&] {
+            WholeMomentum result{};
+            for (const auto *p : copiedParts) {
+                result[0] += static_cast<double>(p->body.mass) * p->body.velocity.x;
+                result[1] += static_cast<double>(p->body.mass) * p->body.velocity.y;
+                result[2] += static_cast<double>(p->body.mass) * p->body.velocity.z;
+            }
+            return result;
+        };
+        const auto energy = [&] { double result=0; for (const auto *p : copiedParts) result += kineticEnergy(p->body); return result; };
+        const auto anchorSpeed = [&](const auto &c) {
+            const auto a = aura::body::localToWorldPoint(*c.partA, c.constraint.localAnchorA);
+            const auto b = aura::body::localToWorldPoint(*c.partB, c.constraint.localAnchorB);
+            return speed(aura::physics::velocityAtWorldPoint(c.partB->body, b) - aura::physics::velocityAtWorldPoint(c.partA->body, a));
+        };
+        const auto gap = [&](const auto &c) {
+            return speed(aura::body::localToWorldPoint(*c.partB, c.constraint.localAnchorB) -
+                aura::body::localToWorldPoint(*c.partA, c.constraint.localAnchorA));
+        };
+        const auto maxAnchorSpeed = [&] { double result=0; for (const auto &c : copiedJoints) result=std::max(result,anchorSpeed(c)); return result; };
+        const auto footY = [&] { return aura::physics::lowestPoint(copy.rightFoot.body,copy.rightFoot.size).y; };
+        const auto sample = [&](const std::string &stage) {
+            const auto p = momentum(); double maxGap=0;
+            for (const auto &c : copiedJoints) maxGap=std::max(maxGap,gap(c));
+            std::cout << "kneeProjection," << stage << ',' << p[0] << ',' << p[1] << ',' << p[2] << ',' << energy()
+                << ',' << anchorSpeed(copiedJoints[13]) << ',' << anchorSpeed(copiedJoints[14])
+                << ',' << aura::body::relativeJointAngle(copy.rightThigh,copy.rightShin,skeleton.rightKnee)
+                << ',' << gap(copiedJoints[13]) << ',' << gap(copiedJoints[14]) << ',' << maxGap
+                << ',' << footY() << ',' << maxAnchorSpeed() << '\n';
+        };
+        std::cout << std::scientific << std::setprecision(9)
+            << "Copied knee projection replay: time=" << diagnosticTime << ", iteration=1, sweep=forward\n"
+            << "kneeProjection,stage,Px,Py,Pz,kineticEnergy,kneeAnchorSpeed,ankleAnchorSpeed,kneeAngle,kneeGap,ankleGap,maxGap,lowestRightFootY,maxAnchorSpeed\n";
+        std::cout << "kneeProjectionInput,part,mass,px,py,pz,qw,qx,qy,qz,vx,vy,vz,wx,wy,wz,Ix,Iy,Iz\n";
+        for (const auto *part : copiedParts) {
+            const auto &b=part->body;
+            std::cout << "kneeProjectionInput," << part->name << ',' << b.mass
+                << ',' << b.position.x << ',' << b.position.y << ',' << b.position.z
+                << ',' << b.orientation.w << ',' << b.orientation.x << ',' << b.orientation.y << ',' << b.orientation.z
+                << ',' << b.velocity.x << ',' << b.velocity.y << ',' << b.velocity.z
+                << ',' << b.angularVelocity.x << ',' << b.angularVelocity.y << ',' << b.angularVelocity.z
+                << ',' << b.momentOfInertia.x << ',' << b.momentOfInertia.y << ',' << b.momentOfInertia.z << '\n';
+        }
+        const auto initialMomentum = momentum();
+        sample("A");
+        const auto legacyAnkleVelocity = aura::physics::velocityAtWorldPoint(legacy.rightFoot.body,
+            aura::body::localToWorldPoint(legacy.rightFoot,skeleton.rightAnkle.localAnchorB)) -
+            aura::physics::velocityAtWorldPoint(legacy.rightShin.body,aura::body::localToWorldPoint(legacy.rightShin,skeleton.rightAnkle.localAnchorA));
+        aura::body::correctRightKneeAngleAroundPivot(legacy,skeleton,skeleton.rightKnee,skeleton.rightAnkle);
+        legacy.rightFoot.body.velocity += legacyAnkleVelocity - (
+            aura::physics::velocityAtWorldPoint(legacy.rightFoot.body,aura::body::localToWorldPoint(legacy.rightFoot,skeleton.rightAnkle.localAnchorB)) -
+            aura::physics::velocityAtWorldPoint(legacy.rightShin.body,aura::body::localToWorldPoint(legacy.rightShin,skeleton.rightAnkle.localAnchorA)));
+        aura::body::correctBranchAngleAroundPivot(copy,skeleton,skeleton.rightKnee,aura::body::MajorBodyBranch3D::RightKnee);
+        sample("B");
+        bool velocitiesUnchanged=true, sameGeometry=true;
+        for (std::size_t i=0;i<parts.size();++i) {
+            velocitiesUnchanged &= equalVec(copiedParts[i]->body.velocity,parts[i]->body.velocity) &&
+                equalVec(copiedParts[i]->body.angularVelocity,parts[i]->body.angularVelocity);
+            sameGeometry &= equalPose(copiedParts[i]->body,legacyParts[i]->body);
+        }
+        const bool projectionPassed = velocitiesUnchanged && sameGeometry && momentum()==initialMomentum && footY()>=-1e-6f &&
+            std::abs(aura::body::relativeJointAngle(copy.rightThigh,copy.rightShin,skeleton.rightKnee)-skeleton.rightKnee.maxAngle)<1e-6f;
+        std::cout << "kneeProjectionChecks,velocitiesExactlyUnchanged=" << velocitiesUnchanged
+            << ",momentumExactlyUnchanged=" << (momentum()==initialMomentum) << ",geometryExactlyMatchesLegacy=" << sameGeometry
+            << ",wholeBodyLift=" << copy.torso.body.position.y-auraBody.torso.body.position.y << '\n';
+        double maxMomentumDrift=0, maxEnergyIncrease=0;
+        const auto auditImpulse = [&](const auto &operation) {
+            const double before=energy();
+            operation();
+            maxEnergyIncrease=std::max(maxEnergyIncrease,energy()-before);
+            const auto p=momentum();
+            for (int axis=0;axis<3;++axis) maxMomentumDrift=std::max(maxMomentumDrift,std::abs(p[axis]-initialMomentum[axis]));
+        };
+        // C and D each contain ONE solve, rather than silently iterating to convergence.
+        auditImpulse([&] { aura::body::correctLocalJointVelocity(copy.rightThigh,copy.rightShin,skeleton.rightKnee); });
+        sample("C-one-anchor-solve");
+        const auto hingeAxis=copy.rightThigh.body.orientation.rotate(skeleton.rightKnee.hingeAxis.normalized()).normalized();
+        std::cout << "kneeProjectionAngularLimit,hingeOmegaBefore="
+            << (copy.rightShin.body.angularVelocity-copy.rightThigh.body.angularVelocity).dot(hingeAxis) << '\n';
+        auditImpulse([&] { aura::body::correctLocalJointAngularLimitVelocity(copy.rightThigh,copy.rightShin,skeleton.rightKnee); });
+        sample("D-one-angular-limit-solve");
+        std::array<aura::physics::RigidBody3D,16> projected{};
+        for (std::size_t i=0;i<copiedParts.size();++i) projected[i]=copiedParts[i]->body;
+        // Frozen poses, all 15 joints: four existing inner iterations per joint,
+        // forward then reverse. No geometry, integration, motors, or contacts.
+        for (int sweep=1;sweep<=64;++sweep) {
+            const auto solve = [&](auto &c) {
+                for (int k=0;k<aura::body::jointVelocityIterations;++k) {
+                    for (bool angular : {false,true}) {
+                        auditImpulse([&] {
+                            if (angular) aura::body::correctLocalJointAngularLimitVelocity(*c.partA,*c.partB,c.constraint);
+                            else aura::body::correctLocalJointVelocity(*c.partA,*c.partB,c.constraint);
+                        });
+                    }
+                }
+            };
+            for (auto &c : copiedJoints) solve(c);
+            for (auto it=copiedJoints.rbegin();it!=copiedJoints.rend();++it) solve(*it);
+            if (sweep<=8 || sweep==16 || sweep==32 || sweep==64) sample("frozen-sweep-"+std::to_string(sweep));
+        }
+        bool posesFrozen=true;
+        for (std::size_t i=0;i<copiedParts.size();++i) posesFrozen &= equalPose(copiedParts[i]->body,projected[i]);
+        // 1 mm/s is a stated replay convergence target, not a live stability tolerance.
+        kneeProjectionPassed=projectionPassed && posesFrozen && maxAnchorSpeed()<1e-3 && maxMomentumDrift<1e-5 && maxEnergyIncrease<1e-5;
+        std::cout << "kneeProjectionResult,projectionPassed=" << projectionPassed << ",posesFrozen=" << posesFrozen
+            << ",maxMomentumDrift=" << maxMomentumDrift << ",maxImpulseEnergyIncrease=" << maxEnergyIncrease
+            << ",convergedBelow1mmPerSecond=" << (maxAnchorSpeed()<1e-3) << ",passed=" << kneeProjectionPassed << '\n';
+    };
     const auto auditOperation = [&](const char *operationName, const auto &operation) {
         const auto measuredOperation = [&] {
             const std::string op = operationName;
-            const auto momentumBefore = (handGeometryMomentumDiagnostic || angularMomentumDiagnostic) ? wholeMomentum() : WholeMomentum{};
+            if (kneeProjectionReplay && !kneeProjectionDone && std::abs(diagnosticTime-152*FIXED_DT)<1e-9 &&
+                diagnosticIteration==1 && std::string(diagnosticSweep)=="forward" &&
+                std::string(energyObject)=="rightKnee" && op=="correctRightKneeAngleAroundPivot") replayKneeProjection();
+            const auto momentumBefore = (handGeometryMomentumDiagnostic || angularMomentumDiagnostic || geometryMomentumDiagnostic) ? wholeMomentum() : WholeMomentum{};
+            const bool compensationTrace = geometryMomentumDiagnostic && !firstGeometryMomentumReported &&
+                (op.find("Position") != std::string::npos || op.find("Angle") != std::string::npos) &&
+                op.find("Velocity") == std::string::npos;
+            std::array<aura::physics::RigidBody3D, 16> compensationBefore{};
+            if (compensationTrace)
+                for (std::size_t i = 0; i < parts.size(); ++i) compensationBefore[i] = parts[i]->body;
             const bool angularTrace = angularMomentumDiagnostic && !firstAngularMomentumReported &&
                 (op.find("Angular") != std::string::npos && op.find("Velocity") != std::string::npos);
             auto angularJoint = joints.end();
@@ -703,7 +860,56 @@ int main(int argc, char **argv) {
             const bool anchor = std::string(operationName).find("Angular") == std::string::npos &&
                                 std::string(operationName).find("Velocity") != std::string::npos;
             const double before = liveVelocityMetrics && anchor ? currentKinetic() : 0;
+            // Explicit comparison path only: reproduce the removed leaf compensation.
+            auto descendant = joints.end();
+            if (legacyGeometryCompensation && op.find("Angle") != std::string::npos && op.find("Velocity") == std::string::npos) {
+                const std::string jointName = energyObject;
+                const char *leafJoint = jointName=="rightKnee" ? "rightAnkle" : jointName=="leftKnee" ? "leftAnkle" :
+                    jointName=="rightElbow" ? "rightWrist" : jointName=="leftElbow" ? "leftWrist" : nullptr;
+                if (leafJoint) descendant=std::find_if(joints.begin(),joints.end(),[&](const auto &c){return std::string(c.name)==leafJoint;});
+            }
+            const auto descendantVelocity = [&](const auto &c) {
+                return aura::physics::velocityAtWorldPoint(c.partB->body,aura::body::localToWorldPoint(*c.partB,c.constraint.localAnchorB)) -
+                    aura::physics::velocityAtWorldPoint(c.partA->body,aura::body::localToWorldPoint(*c.partA,c.constraint.localAnchorA));
+            };
+            const auto oldDescendantVelocity = descendant!=joints.end() ? descendantVelocity(*descendant) : aura::math::Vec3{};
             operation();
+            if (descendant!=joints.end()) descendant->partB->body.velocity += oldDescendantVelocity-descendantVelocity(*descendant);
+            if (compensationTrace) {
+                const auto after = wholeMomentum();
+                if (std::hypot(after[0]-momentumBefore[0], after[2]-momentumBefore[2]) > 0.01) {
+                    firstGeometryMomentumReported = true;
+                    const auto connection = std::find_if(joints.begin(), joints.end(), [&](const auto &c) { return std::string(c.name) == energyObject; });
+                    std::cout << std::scientific << std::setprecision(9)
+                              << "firstGeometryMomentumEvent," << diagnosticTime << ',' << diagnosticIteration << ',' << diagnosticSweep
+                              << ',' << energyObject << ',' << operationName
+                              << ',' << momentumBefore[0] << ',' << momentumBefore[2] << ',' << after[0] << ',' << after[2] << '\n';
+                    if (connection != joints.end()) {
+                        const auto indexA = std::find(parts.begin(), parts.end(), connection->partA) - parts.begin();
+                        const auto indexB = std::find(parts.begin(), parts.end(), connection->partB) - parts.begin();
+                        auto oldA = *connection->partA; auto oldB = *connection->partB;
+                        oldA.body = compensationBefore[indexA]; oldB.body = compensationBefore[indexB];
+                        const auto pivot = aura::body::localToWorldPoint(oldB, connection->constraint.localAnchorB);
+                        std::cout << "geometryMomentumCorrection," << aura::body::relativeJointAngle(oldA,oldB,connection->constraint)
+                                  << ',' << aura::body::relativeJointAngle(*connection->partA,*connection->partB,connection->constraint)
+                                  << ',' << connection->constraint.minAngle << ',' << connection->constraint.maxAngle
+                                  << ',' << pivot.x << ',' << pivot.y << ',' << pivot.z << '\n';
+                    }
+                    const auto vector = [&](const auto &v) { std::cout << ',' << v.x << ',' << v.y << ',' << v.z; };
+                    const auto quaternion = [&](const auto &q) { std::cout << ',' << q.w << ',' << q.x << ',' << q.y << ',' << q.z; };
+                    for (std::size_t i = 0; i < parts.size(); ++i) {
+                        const auto &old = compensationBefore[i]; const auto &now = parts[i]->body;
+                        // All members are included to account for the complete momentum budget.
+                        std::cout << "geometryMomentumBody," << parts[i]->name << ',' << now.mass;
+                        vector(old.position); vector(now.position); vector(now.position-old.position);
+                        quaternion(old.orientation); quaternion(now.orientation);
+                        quaternion((now.orientation*old.orientation.conjugate()).normalized());
+                        vector(old.velocity); vector(now.velocity); vector(now.velocity-old.velocity);
+                        vector(old.angularVelocity); vector(now.angularVelocity); vector(now.angularVelocity-old.angularVelocity);
+                        std::cout << '\n';
+                    }
+                }
+            }
             if (angularTrace && angularJoint != joints.end()) {
                 const auto after = wholeMomentum();
                 if (std::hypot(after[0]-momentumBefore[0],after[2]-momentumBefore[2]) > 0.01) {
@@ -1421,7 +1627,7 @@ int main(int argc, char **argv) {
     constexpr float gapThreshold = 0.001f;
     // Numerical tolerance, not an allowed anatomical range extension.
     constexpr float limitTolerance = 0.00001f;
-    const int steps = contactWindow ? 48 : headWindow ? 98 : ankleWindow ? 156 : wristWindow ? 172 : energyWindow ? 532 : 1200;
+    const int steps = kneeProjectionReplay ? 152 : contactWindow ? 48 : headWindow ? 98 : ankleWindow ? 156 : wristWindow ? 172 : energyWindow ? 532 : 1200;
     std::array<JointMeasurements, 15> measurements{};
     bool finite = true;
     float maxDistance = 0.0f;
@@ -2024,6 +2230,10 @@ int main(int argc, char **argv) {
         }
     }
 
+    if (kneeProjectionReplay) {
+        std::cout << "Copied knee experiment complete: captured=" << kneeProjectionDone << ", passed=" << kneeProjectionPassed << '\n';
+        return finite && kneeProjectionDone && kneeProjectionPassed ? 0 : 1;
+    }
     if (contactWindow || headWindow || ankleWindow || wristWindow) {
         std::cout << "Window complete: finite=" << (finite ? "yes" : "NO") << '\n';
         return finite ? 0 : 1;
@@ -2083,14 +2293,16 @@ int main(int argc, char **argv) {
                   << " suspiciousLocalImpulses=" << suspiciousLocalImpulses << " worstAnchorEnergyRise=" << worstAnchorEnergyRise << '\n';
     }
     if (handGeometryMomentumDiagnostic) {
-        const std::array categories{"integrationGravity", "floor", "localAnchor", "angularLimitVelocity", "geometryVelocityCompensation"};
+        const std::array categories{"integrationGravity", "floor", "localAnchor", "angularLimitVelocity", legacyGeometryCompensation ? "geometryVelocityCompensation" : "geometryPoseProjection"};
         for (std::size_t i = 0; i < categories.size(); ++i)
             std::cout << "momentumCumulative," << categories[i] << ',' << cumulativeMomentum[i][0] << ','
                       << cumulativeMomentum[i][1] << ',' << cumulativeMomentum[i][2] << ',' << cumulativeAbsoluteHorizontal[i] << '\n';
     }
+    if (geometryMomentumDiagnostic && !firstGeometryMomentumReported)
+        std::cout << "geometryMomentumDiagnostic,no operation exceeded 0.01 kg m/s horizontal momentum change\n";
     if (angularMomentumDiagnostic && !firstAngularMomentumReported)
         std::cout << "angularMomentumDiagnostic,no operation exceeded 0.01 kg m/s horizontal momentum change\n";
-    std::cout << "Position/angular policy: componentPositions=" << componentPositions << " localAngularLimits=" << localAngularLimits << '\n';
+    std::cout << "Position/angular policy: componentPositions=" << componentPositions << " localAngularLimits=" << localAngularLimits << " legacyGeometryCompensation=" << legacyGeometryCompensation << '\n';
     // This diagnostic reports threshold violations without declaring the baseline stable.
     return finite ? 0 : 1;
 }

@@ -15,22 +15,21 @@ namespace aura::body {
     void correctBranchAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
     void correctBranchPositionAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
     // Legacy anchor propagation retained for baseline diagnostics. The application
-    // uses correctLocalJointVelocity; angular-limit propagation remains active.
+    // uses local two-body anchor and angular-limit impulses.
     void correctBranchAnchorVelocityAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
     void correctBranchAngularVelocityAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
     void solveBranchSubtreeVelocityConstraints(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
 
-    // Elbow/knee geometry: preserve the wrist/ankle's existing world relative
-    // anchor velocity while rotating the graph-derived forearm-hand/shin-foot component.
+    // Elbow/knee geometry rotates the graph-derived component without changing
+    // linear or angular velocities. Local impulses subsequently repair anchor motion.
     void correctLimbAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton,
                                     const Joint3D &joint, const Joint3D &descendantJoint,
                                     MajorBodyBranch3D branch);
 
-    // Geometry projection changes anchor offsets in moving bodies. Preserve the
-    // ankle's world relative anchor velocity as well as its relative angular velocity.
+    // Pose-only knee projection; includes the existing flat-floor geometric lift.
     void correctRightKneeAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &knee, const Joint3D &ankle);
 
-    // Preserve wrist motion while projecting only the forearm-hand subtree.
+    // Pose-only projection of the forearm-hand component.
     void correctRightElbowAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &elbow, const Joint3D &wrist);
 
     // Y=0 experiment: keep the ordinary shin floor impulses, but propagate its

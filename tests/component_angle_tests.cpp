@@ -39,11 +39,7 @@ namespace {
         auto &parent = b.*f.parent;
         auto &child = b.*f.child;
         const auto &joint = s.*f.joint;
-        const bool elbow = f.joint == &AuraSkeleton3D::rightElbow;
         const bool knee = f.joint == &AuraSkeleton3D::rightKnee;
-        const auto &descJoint = elbow ? s.rightWrist : s.rightAnkle;
-        auto &leaf = elbow ? b.rightHand : b.rightFoot;
-        const auto beforeVelocity = relativeVelocity(child, leaf, descJoint);
         const float error = jointAngleError(parent, child, joint);
         if (std::abs(error) >= 0.000001f) {
             const auto axis = parent.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
@@ -55,7 +51,6 @@ namespace {
                 if (y < 0.0f) for (auto *part : allParts(b)) part->body.position.y -= y;
             }
         }
-        if (elbow || knee) leaf.body.velocity += beforeVelocity - relativeVelocity(child, leaf, descJoint);
     }
     void migratedCorrection(AuraBody3D &b, const AuraSkeleton3D &s, const Fixture &f) {
         const auto &joint = s.*f.joint;

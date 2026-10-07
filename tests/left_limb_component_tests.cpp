@@ -67,7 +67,7 @@ int main() {
         const auto rightBranch = knee ? MajorBodyBranch3D::RightKnee : MajorBodyBranch3D::RightElbow;
         const auto initialGap = gap(root, leaf, descendant).length();
         const auto initialAngle = relativeJointAngle(root, leaf, descendant);
-        const auto initialV = relativeVelocity(root, leaf, descendant);
+        const auto oldRoot = root.body; const auto oldLeaf = leaf.body;
         const auto initialOmega = leaf.body.angularVelocity - root.body.angularVelocity;
         const auto solveRight = [&] {
             if (knee) correctRightKneeAngleAroundPivot(reference, skeleton, rightJoint, rightDescendant);
@@ -78,8 +78,12 @@ int main() {
         correctLimbAngleAroundPivot(body, skeleton, joint, descendant, branch);
         check(std::abs(relativeJointAngle(parent, root, joint) - std::clamp(angle, joint.minAngle, joint.maxAngle)) < tolerance,
               "left limb enforces both angular limits with tilted parent");
-        check((relativeVelocity(root, leaf, descendant) - initialV).length() < tolerance,
-              "left limb angle projection preserves descendant anchor velocity");
+        check((root.body.velocity-oldRoot.velocity).lengthSquared()==0 &&
+              (leaf.body.velocity-oldLeaf.velocity).lengthSquared()==0 &&
+              (root.body.angularVelocity-oldRoot.angularVelocity).lengthSquared()==0 &&
+              (leaf.body.angularVelocity-oldLeaf.angularVelocity).lengthSquared()==0,
+              "left limb projection leaves linear/angular velocities exactly unchanged");
+        const auto initialV = relativeVelocity(root, leaf, descendant);
         correctBranchPositionAsSubtree(body, skeleton, joint, branch);
         solveBranchSubtreeVelocityConstraints(body, skeleton, joint, branch);
         check(gap(parent, root, joint).length() < tolerance &&
@@ -119,13 +123,15 @@ int main() {
     body.leftShin.body.position.y -= lowest;
     body.leftFoot.body.position.y -= lowest;
     const auto hipGap = gap(body.pelvis, body.leftThigh, skeleton.leftHip);
-    const auto ankleV = relativeVelocity(body.leftShin, body.leftFoot, skeleton.leftAnkle);
+    const auto footVelocity = body.leftFoot.body.velocity;
+    const auto shinVelocity = body.leftShin.body.velocity;
     correctLimbAngleAroundPivot(body, skeleton, skeleton.leftKnee, skeleton.leftAnkle, MajorBodyBranch3D::LeftKnee);
     check(physics::lowestPoint(body.leftFoot.body, body.leftFoot.size).y >= -tolerance &&
           gap(body.leftShin, body.leftFoot, skeleton.leftAnkle).length() < tolerance &&
           gap(body.leftThigh, body.leftShin, skeleton.leftKnee).length() < tolerance &&
           (gap(body.pelvis, body.leftThigh, skeleton.leftHip) - hipGap).length() < tolerance &&
-          (relativeVelocity(body.leftShin, body.leftFoot, skeleton.leftAnkle) - ankleV).length() < tolerance,
-          "left knee angular floor policy preserves attachments and ankle velocity");
+          (body.leftFoot.body.velocity-footVelocity).lengthSquared()==0 &&
+          (body.leftShin.body.velocity-shinVelocity).lengthSquared()==0,
+          "left knee floor projection preserves attachments and body velocities");
     return passed ? 0 : 1;
 }

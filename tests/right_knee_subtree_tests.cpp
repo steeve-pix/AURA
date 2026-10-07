@@ -42,15 +42,20 @@ int main() {
         body.rightFoot.body.velocity = {-0.2f, 0.4f, 0.1f};
         body.rightShin.body.angularVelocity = {0.2f, 0.3f, 0.4f};
         body.rightFoot.body.angularVelocity = {0.25f, 0.28f, 0.41f};
-        const auto beforeV = relativeVelocity(body, skeleton.rightAnkle);
+        const auto beforeRoot = body.rightShin.body;
+        const auto beforeLeaf = body.rightFoot.body;
         const auto beforeOmega = body.rightFoot.body.angularVelocity - body.rightShin.body.angularVelocity;
         const auto thighPosition = body.rightThigh.body.position;
         const auto leftShin = body.leftShin.body;
         correctRightKneeAngleAroundPivot(body, skeleton, skeleton.rightKnee, skeleton.rightAnkle);
         check(std::abs(relativeJointAngle(body.rightThigh, body.rightShin, skeleton.rightKnee) -
                        std::clamp(angle, 0.0f, 2.2f)) < tolerance, "knee enforces both limits with a rotated parent");
-        check((relativeVelocity(body, skeleton.rightAnkle) - beforeV).length() < tolerance,
-              "angle correction preserves existing ankle anchor-relative velocity");
+        check((body.rightShin.body.velocity-beforeRoot.velocity).lengthSquared()==0 &&
+              (body.rightFoot.body.velocity-beforeLeaf.velocity).lengthSquared()==0 &&
+              (body.rightShin.body.angularVelocity-beforeRoot.angularVelocity).lengthSquared()==0 &&
+              (body.rightFoot.body.angularVelocity-beforeLeaf.angularVelocity).lengthSquared()==0,
+              "angle projection leaves linear and angular velocities exactly unchanged");
+        const auto beforeV = relativeVelocity(body, skeleton.rightAnkle);
         correctBranchPositionAsSubtree(body, skeleton, skeleton.rightKnee, branch);
         solveBranchSubtreeVelocityConstraints(body, skeleton, skeleton.rightKnee, branch);
         check(gap(body.rightThigh, body.rightShin, skeleton.rightKnee).length() < tolerance &&
