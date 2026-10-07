@@ -12,7 +12,10 @@ namespace aura::body {
     // Floor-blocked translation moves the complementary group; hip/knee rotation
     // that penetrates the floor lifts the whole body without splitting anchors.
     enum class MajorBodyBranch3D { RightShoulder, LeftHip, RightHip, RightKnee, RightElbow, LeftKnee, LeftElbow };
-    void correctBranchAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
+    // enforceSwingLimits enables pose-only Y/Z hip projection; false retains
+    // historical twist-only diagnostics. Existing whole-body floor lift applies.
+    void correctBranchAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint,
+                                      MajorBodyBranch3D branch, bool enforceSwingLimits = false);
     void correctBranchPositionAsSubtree(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch);
     // Legacy anchor propagation retained for baseline diagnostics. The application
     // uses local two-body anchor and angular-limit impulses.

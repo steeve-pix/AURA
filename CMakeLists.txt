@@ -102,6 +102,11 @@ endif ()
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_hip_swing_limits_tests tests/hip_swing_limits_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/AuraBodyConstraint.cpp
+        src/body/JointGeometry.cpp src/body/JointConstraint.cpp)
+    target_link_libraries(aura_hip_swing_limits_tests PRIVATE aura_physics)
+    add_test(NAME hip_swing_limits COMMAND aura_hip_swing_limits_tests)
     add_executable(aura_joint_swing_twist_tests tests/joint_swing_twist_tests.cpp src/body/JointGeometry.cpp)
     target_link_libraries(aura_joint_swing_twist_tests PRIVATE aura_physics)
     add_test(NAME joint_swing_twist COMMAND aura_joint_swing_twist_tests)

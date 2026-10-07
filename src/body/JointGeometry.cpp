@@ -3,6 +3,7 @@
 #include <cmath>
 #include <numbers>
 #include <stdexcept>
+#include <algorithm>
 
 namespace aura::body {
     namespace {
@@ -18,6 +19,22 @@ namespace aura::body {
             const auto twist = math::Quaternion{q.w, axis.x*projection,
                                                axis.y*projection, axis.z*projection}.normalized();
             return {(q*twist.conjugate()).normalized(), twist, true};
+        }
+
+        void validateSwingComponent(const BodyPart3D &parent, const BodyPart3D &child,
+                                    const Joint3D &joint, std::span<BodyPart3D *const> component) {
+            const auto axis=joint.hingeAxis.normalized();
+            if (!std::isfinite(axis.lengthSquared()) || (axis-math::Vec3{1,0,0}).lengthSquared()>1e-12f ||
+                !std::isfinite(joint.minSwingY) || !std::isfinite(joint.maxSwingY) ||
+                !std::isfinite(joint.minSwingZ) || !std::isfinite(joint.maxSwingZ) ||
+                joint.minSwingY>joint.maxSwingY || joint.minSwingZ>joint.maxSwingZ)
+                throw std::invalid_argument("Swing projection requires an X twist axis and ordered finite Y/Z bounds");
+            bool containsChild=false;
+            for(const auto* part:component) {
+                if(part==&parent) throw std::invalid_argument("Swing component must exclude parent");
+                containsChild |= part==&child;
+            }
+            if(!containsChild) throw std::invalid_argument("Swing component must contain child");
         }
     }
 
@@ -44,33 +61,53 @@ namespace aura::body {
     }
 
     float relativeJointSwingZ(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint) {
-        return jointSwingRotationVector(relativeJointSwing(partA,partB,joint)).z;
+        return relativeJointSwingAngles(partA,partB,joint).z;
+    }
+
+    SwingAngles relativeJointSwingAngles(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint) {
+        const auto vector=jointSwingRotationVector(relativeJointSwing(partA,partB,joint));
+        return {vector.y,vector.z};
+    }
+
+    float relativeJointSwingY(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint) {
+        return relativeJointSwingAngles(partA,partB,joint).y;
+    }
+
+    bool correctJointSwingWithComponent(const BodyPart3D &partA, BodyPart3D &partB,
+                                        const Joint3D &joint, std::span<BodyPart3D *const> component) {
+        if(joint.type!=JointType::SwingTwist) return false;
+        validateSwingComponent(partA,partB,joint,component);
+        const auto original=relativeJointSwingTwist(partA,partB,joint);
+        if(!original.twistDefined) return false;
+        const auto vector=jointSwingRotationVector(original.swing);
+        const math::Vec3 clamped{0,std::clamp(vector.y,joint.minSwingY,joint.maxSwingY),
+                                  std::clamp(vector.z,joint.minSwingZ,joint.maxSwingZ)};
+        if(clamped.y==vector.y && clamped.z==vector.z) return false;
+        const float angle=clamped.length();
+        const auto swing=angle==0?math::Quaternion{}:math::Quaternion::fromAxisAngle(clamped,angle);
+        const auto target=(partA.body.orientation.normalized()*swing*original.twist).normalized();
+        const auto rotation=(target*partB.body.orientation.normalized().conjugate()).normalized();
+        rotateSubtreeAroundWorldPoint(component,localToWorldPoint(partA,joint.localAnchorA),rotation);
+        return true;
     }
 
     bool applyJointSwingWithComponent(const BodyPart3D &partA, BodyPart3D &partB,
                                       const Joint3D &joint, std::span<BodyPart3D *const> component,
                                       const math::Vec3 &localProbeAxis, float probeAngle) {
         if (joint.type != JointType::SwingTwist) return false;
+        validateSwingComponent(partA,partB,joint,component);
         const auto axis = joint.hingeAxis.normalized();
-        if ((axis-math::Vec3{1,0,0}).lengthSquared()>1e-12f ||
-            localProbeAxis.lengthSquared()==0 || !std::isfinite(localProbeAxis.lengthSquared()) ||
-            !std::isfinite(probeAngle) || !std::isfinite(joint.minSwingZ) || !std::isfinite(joint.maxSwingZ) ||
-            joint.minSwingZ>joint.maxSwingZ)
-            throw std::invalid_argument("Swing probe requires an X twist axis, nonzero probe axis and ordered Z bounds");
-        bool containsChild=false;
-        for (const auto* part:component) {
-            if (part == &partA) throw std::invalid_argument("Swing component must exclude parent");
-            containsChild |= part == &partB;
-        }
-        if (!containsChild) throw std::invalid_argument("Swing component must contain child");
+        if(localProbeAxis.lengthSquared()==0 || !std::isfinite(localProbeAxis.lengthSquared()) || !std::isfinite(probeAngle))
+            throw std::invalid_argument("Swing probe requires a finite angle and nonzero finite axis");
         const auto parent = partA.body.orientation.normalized();
         const auto oldWorld = partB.body.orientation.normalized();
         const auto relative = (parent.conjugate()*oldWorld).normalized();
         const auto original = decompose(relative,axis);
         const auto candidate = decompose(math::Quaternion::fromAxisAngle(localProbeAxis,probeAngle)*relative,axis);
         if (!original.twistDefined || !candidate.twistDefined) return false;
-        const float swingZ = jointSwingRotationVector(candidate.swing).z;
-        if (swingZ<joint.minSwingZ || swingZ>joint.maxSwingZ) return false;
+        const auto swingVector = jointSwingRotationVector(candidate.swing);
+        if (swingVector.z<joint.minSwingZ || swingVector.z>joint.maxSwingZ ||
+            swingVector.y<joint.minSwingY || swingVector.y>joint.maxSwingY) return false;
         const auto target = (parent*candidate.swing*original.twist).normalized();
         const auto worldRotation = (target*oldWorld.conjugate()).normalized();
         rotateSubtreeAroundWorldPoint(component,localToWorldPoint(partA,joint.localAnchorA),worldRotation);

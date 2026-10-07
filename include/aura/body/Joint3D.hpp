@@ -22,11 +22,14 @@ namespace aura::body {
         float motorDamping = 2.0f;
 
         // Appended to retain existing aggregate initialization of anchors/gains.
-        // Metadata for now: legacy solving still enforces only axial twist.
+        // Hip geometry opts into bounded swing; legacy Hinge solving retains
+        // its axial twist handling (transverse locking is not implemented).
         JointType type = JointType::Hinge;
-        // First SwingTwist model: Z component of log(swing), in part A's
-        // local frame (radians). Used for X-axis hips; Y swing is unbounded.
+        // Independent Y/Z components of the shortest swing rotation vector,
+        // in part A's local frame (radians). Used for X-axis hips.
         float minSwingZ = -0.4f;
         float maxSwingZ = 0.4f;
+        float minSwingY = -0.4f;
+        float maxSwingY = 0.4f;
     };
 }

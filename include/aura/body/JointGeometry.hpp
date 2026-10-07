@@ -20,16 +20,25 @@ namespace aura::body {
                                         const Joint3D &joint);
     // Shortest swing rotation vector, not Euler angles; expressed in A's frame.
     math::Vec3 jointSwingRotationVector(const math::Quaternion &swing);
+    struct SwingAngles { float y{}, z{}; };
+    SwingAngles relativeJointSwingAngles(const BodyPart3D &partA, const BodyPart3D &partB,
+                                         const Joint3D &joint);
+    float relativeJointSwingY(const BodyPart3D &partA, const BodyPart3D &partB,
+                              const Joint3D &joint);
     float relativeJointSwingZ(const BodyPart3D &partA, const BodyPart3D &partB,
                               const Joint3D &joint);
 
     // Pose-only swing probe about an A-local axis. Retains original twist and
-    // rejects undefined twist or a Z swing-limit violation. Component must
+    // rejects undefined twist or a Y/Z swing-limit violation. Component must
     // contain B and exclude A; caller handles floor/self-collision feasibility.
     // This first bounded API supports an X main axis only.
     bool applyJointSwingWithComponent(const BodyPart3D &partA, BodyPart3D &partB,
                                       const Joint3D &joint, std::span<BodyPart3D *const> component,
                                       const math::Vec3 &localProbeAxis, float probeAngle);
+    // Independently clamp swing rotation-vector Y/Z; preserve original twist
+    // and the already-in-range coordinate. No velocity or floor response.
+    bool correctJointSwingWithComponent(const BodyPart3D &partA, BodyPart3D &partB,
+                                        const Joint3D &joint, std::span<BodyPart3D *const> component);
     math::Vec3 localToWorldPoint(const BodyPart3D &part, const math::Vec3 &localPoint);
 
     // The rotation is in world space; update position and orientation together.

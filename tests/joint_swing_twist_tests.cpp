@@ -1,4 +1,5 @@
 #include <array>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <numbers>
@@ -35,6 +36,37 @@ int main() {
         check(std::abs(body::relativeJointTwistAngle(parent,child,joint)-twistAngle)<1e-6f,"quaternion sign and scale do not change twist");
         check((body::jointSwingRotationVector(body::relativeJointSwing(parent,child,joint))-oldVector).length()<1e-6f,
               "quaternion sign and scale do not change swing coordinates");
+    }
+    // Rotation-vector coordinates are independent, unlike Euler Y/Z angles.
+    for(const auto& angles:std::array<math::Vec3,6>{{{0,0,0},{0,0.2f,0},{0,0,0.3f},
+                                                   {0.8f,0.2f,0},{0.8f,0,0.3f},{0.8f,0.2f,0.3f}}}) {
+        const math::Vec3 swingVector{0,angles.y,angles.z};
+        const auto swing=swingVector.length()==0?math::Quaternion{}:
+            math::Quaternion::fromAxisAngle(swingVector,swingVector.length());
+        child.body.orientation=parent.body.orientation*swing*math::Quaternion::fromAxisAngle({1,0,0},angles.x);
+        const auto measured=body::relativeJointSwingAngles(parent,child,joint);
+        check(std::abs(measured.y-angles.y)<1e-6f && std::abs(measured.z-angles.z)<1e-6f,
+              "pure and mixed X/Y/Z coordinates are recovered independently");
+        check(std::abs(body::relativeJointTwistAngle(parent,child,joint)-angles.x)<1e-6f,"pure and mixed cases retain twist");
+    }
+    for(const auto& requested:std::array<math::Vec3,3>{{{0,0.6f,0.2f},{0,0.2f,-0.6f},{0,-0.6f,0.6f}}}) {
+        const auto swing=math::Quaternion::fromAxisAngle(requested,requested.length());
+        child.body.orientation=parent.body.orientation*swing*math::Quaternion::fromAxisAngle({1,0,0},0.8f);
+        child.body.position={0,-1,0};child.body.velocity={1,2,3};child.body.angularVelocity={4,5,6};
+        joint.localAnchorB=child.body.orientation.conjugate().rotate(-child.body.position);
+        std::array childComponent{&child};
+        check(body::correctJointSwingWithComponent(parent,child,joint,childComponent),"out-of-range swing is projected");
+        const auto clamped=body::relativeJointSwingAngles(parent,child,joint);
+        check(std::abs(clamped.y-std::clamp(requested.y,-0.4f,0.4f))<1e-6f &&
+              std::abs(clamped.z-std::clamp(requested.z,-0.4f,0.4f))<1e-6f,"clamp changes only out-of-range swing coordinates");
+        check(std::abs(body::relativeJointTwistAngle(parent,child,joint)-0.8f)<1e-6f,"Y/Z clamping preserves X twist");
+        check(body::localToWorldPoint(child,joint.localAnchorB).length()<1e-6f,"Y/Z clamping preserves the world anchor");
+        check((child.body.velocity-math::Vec3{1,2,3}).lengthSquared()==0 &&
+              (child.body.angularVelocity-math::Vec3{4,5,6}).lengthSquared()==0,"clamping is pose-only");
+        const auto second=body::relativeJointSwingAngles(parent,child,joint);
+        body::correctJointSwingWithComponent(parent,child,joint,childComponent);
+        const auto third=body::relativeJointSwingAngles(parent,child,joint);
+        check(std::abs(second.y-third.y)<1e-6f && std::abs(second.z-third.z)<1e-6f,"clamp is idempotent to numerical tolerance");
     }
     parent.body.orientation={};
     child.body.orientation=math::Quaternion::fromAxisAngle({0,0,1},0.3f)*math::Quaternion::fromAxisAngle({1,0,0},0.8f);

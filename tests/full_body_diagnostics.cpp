@@ -105,6 +105,8 @@ int main(int argc, char **argv) {
     bool thighKneeReplay=false, thighKneeRescued=false, thighKneeCompensation=false;
     int thighHipOnlyAccepted=0,thighCoupledAccepted=0;float maxKneeCompensation=0;
     bool sharedHipReplay=false;
+    bool hipSwingLimits=false;
+    float maximumHipSwingError=0;
     int classACalls=0,classBCalls=0,classBothCalls=0,classACandidates=0,classBCandidates=0;
     int classBHipLimitOnlyCandidates=0, kneeReplayAttempts=0;
     int thighCorrections = 0, thighBlocked = 0;
@@ -205,6 +207,7 @@ int main(int argc, char **argv) {
         else if (argument == "--self-collision-window") { selfCollisionWindow = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--no-sphere-self-collision") noSphereSelfCollision = true;
         else if (argument == "--shared-hip-replay") {sharedHipReplay=true;thighKneeCompensation=true;thighSelfCollision=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--hip-swing-limits") {hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
         else if (argument == "--thigh-knee-compensation") {thighKneeCompensation=true;thighSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;}
         else if (argument == "--thigh-knee-replay") { thighKneeReplay=true; thighSelfCollision=true; roomBounds=true; noSphereSelfCollision=true; localAngularLimits=true; componentPositions=true; allLocalAnchors=true; liveVelocityMetrics=true; }
         else if (argument == "--strict-thigh-floor") strictThighFloor = true;
@@ -244,7 +247,7 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--hip-capsule-rotation-replay] [--room-bounds] [--no-sphere-self-collision] [--thigh-self-collision] [--strict-thigh-floor] [--thigh-floor-policy-replay] [--thigh-knee-replay] [--thigh-knee-compensation] [--shared-hip-replay] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--hip-capsule-rotation-replay] [--room-bounds] [--no-sphere-self-collision] [--thigh-self-collision] [--strict-thigh-floor] [--thigh-floor-policy-replay] [--thigh-knee-replay] [--thigh-knee-compensation] [--shared-hip-replay] [--hip-swing-limits] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
     }
@@ -2009,7 +2012,7 @@ int main(int argc, char **argv) {
                 ? aura::body::MajorBodyBranch3D::RightShoulder
                 : &connection.constraint == &skeleton.leftHip
                     ? aura::body::MajorBodyBranch3D::LeftHip : aura::body::MajorBodyBranch3D::RightHip;
-            auditOperation("correctBranchAngleAroundPivot", [&] { aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch); });
+            auditOperation("correctBranchAngleAroundPivot", [&] { aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch, hipSwingLimits); });
             positionOperation("correctBranchPositionAsSubtree", [&] { aura::body::correctBranchPositionAsSubtree(auraBody, skeleton, connection.constraint, branch); });
             for (int k = 0; k < aura::body::jointVelocityIterations; ++k) {
                 if (!(rightLegLocalAnchors && (branch == aura::body::MajorBodyBranch3D::RightHip || branch == aura::body::MajorBodyBranch3D::RightKnee)))
@@ -2900,6 +2903,13 @@ int main(int argc, char **argv) {
         maxThighPenetration = std::max(maxThighPenetration,thighMetrics.penetration);
         maxLegGap = std::max(maxLegGap,*std::max_element(thighMetrics.gaps.begin(),thighMetrics.gaps.end()));
         minFootY = std::min({minFootY,thighMetrics.feetY[0],thighMetrics.feetY[1]});
+        for(bool left:{true,false}) {
+            const auto& hip=left?skeleton.leftHip:skeleton.rightHip;
+            const auto& thigh=left?auraBody.leftThigh:auraBody.rightThigh;
+            const auto swing=aura::body::relativeJointSwingAngles(auraBody.pelvis,thigh,hip);
+            maximumHipSwingError=std::max({maximumHipSwingError,hip.minSwingY-swing.y,swing.y-hip.maxSwingY,
+                                           hip.minSwingZ-swing.z,swing.z-hip.maxSwingZ});
+        }
         maxSelfPenetration = std::max(maxSelfPenetration,
             aura::physics::maximumSelfCollisionPenetration(auraBody, skeleton));
         for (const auto *part: parts) {
@@ -3097,6 +3107,7 @@ int main(int argc, char **argv) {
     if (angularMomentumDiagnostic && !firstAngularMomentumReported)
         std::cout << "angularMomentumDiagnostic,no operation exceeded 0.01 kg m/s horizontal momentum change\n";
     std::cout << "Position/angular policy: componentPositions=" << componentPositions << " localAngularLimits=" << localAngularLimits << " legacyGeometryCompensation=" << legacyGeometryCompensation << '\n';
+    std::cout << "hipSwingSummary,enabled=" << hipSwingLimits << ",maximumCompletedStepLimitError=" << maximumHipSwingError << '\n';
     std::cout << "thighCollisionSummary,enabled=" << thighSelfCollision
               << ",floorPolicy=" << (strictThighFloor?"strictClearance":"noWorsening")
               << ",maximumCompletedStepPenetration=" << maxThighPenetration << ",maxLegGap=" << maxLegGap

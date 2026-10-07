@@ -82,21 +82,27 @@ namespace aura::body {
         }
     }
 
-    void correctBranchAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint, MajorBodyBranch3D branch) {
+    void correctBranchAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &joint,
+                                      MajorBodyBranch3D branch, bool enforceSwingLimits) {
         const auto parts = branchParts(body, skeleton, branch);
         auto &root = *parts.subtree.front();
         const float error = jointAngleError(*parts.parent, root, joint);
-        if (std::abs(error) < 0.000001f) return;
-        if (branch == MajorBodyBranch3D::RightShoulder || branch == MajorBodyBranch3D::RightElbow ||
-            branch == MajorBodyBranch3D::RightKnee || branch == MajorBodyBranch3D::LeftElbow ||
-            branch == MajorBodyBranch3D::LeftKnee) {
-            correctJointAngleWithComponent(*parts.parent, root, joint, parts.childParts());
-        } else {
-            // Hip angular corrections are deliberately outside this migration.
-            const auto axis = parts.parent->body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
-            const auto pivot = localToWorldPoint(root, joint.localAnchorB);
-            rotateSubtreeAroundWorldPoint(parts.childParts(), pivot, math::Quaternion::fromAxisAngle(axis, -error));
+        bool changed = std::abs(error) >= 0.000001f;
+        if (changed) {
+            if (branch == MajorBodyBranch3D::RightShoulder || branch == MajorBodyBranch3D::RightElbow ||
+                branch == MajorBodyBranch3D::RightKnee || branch == MajorBodyBranch3D::LeftElbow ||
+                branch == MajorBodyBranch3D::LeftKnee) {
+                correctJointAngleWithComponent(*parts.parent, root, joint, parts.childParts());
+            } else {
+                // Retain the existing hip twist projection and its child pivot.
+                const auto axis = parts.parent->body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
+                const auto pivot = localToWorldPoint(root, joint.localAnchorB);
+                rotateSubtreeAroundWorldPoint(parts.childParts(), pivot, math::Quaternion::fromAxisAngle(axis, -error));
+            }
         }
+        if(enforceSwingLimits && (branch==MajorBodyBranch3D::LeftHip || branch==MajorBodyBranch3D::RightHip))
+            changed |= correctJointSwingWithComponent(*parts.parent,root,joint,parts.childParts());
+        if(!changed) return;
         if (parts.foot != nullptr) {
             const float lowestY = physics::lowestPoint(parts.foot->body, parts.foot->size).y;
             if (lowestY < 0.0f) {

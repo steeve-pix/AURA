@@ -137,7 +137,9 @@ cause. Keep diagnostic output focused enough to interpret.
 headless investigation, with documented configuration differences. If changing
 simulation ordering or setup, check both paths and keep intended differences
 explicit. Do not extract a new simulation framework solely to remove duplication.
-Use `--local-angular-limits` for the current application configuration (full humanoid
+Use `--hip-swing-limits` for the current application configuration (bounded Y/Z
+hip swing projection plus the room pass, self-collision off). Use
+`--local-angular-limits` for the earlier twist-only configuration (full humanoid
 hierarchy, contact-aware component positions, local two-body anchor and angular-limit
 impulses, hip/knee motors only). `--all-local-anchors` retains the earlier configuration
 with legacy position and angular-limit handling. Add
@@ -912,3 +914,58 @@ repeats the same room-inclusive hip+knee opt-in run: its 38,400 velocity-sweep
 rows, thigh correction/block summaries and room summary exactly match
 build/live_class_a_hip_knee_10s.csv. This verifies unchanged live behavior, not
 new stability or live swing-limit enforcement.
+
+### Independent Y/Z swing limits and live hip pose projection
+
+The previous checkpoint was committed as 75a4b4f (`Add swing twist hip joints`).
+Joint3D now also appends minSwingY/maxSwingY=-0.4/+0.4 rad. Both hips use these
+and their existing -0.4/+0.4 Z bounds. SwingAngles, relativeJointSwingAngles and
+relativeJointSwingY expose the independent Y/Z components of the shortest swing
+rotation vector in A's frame. These are log-quaternion coordinates, not Euler
+angles or anatomical calibration. Twist remains the existing X scalar.
+
+applyJointSwingWithComponent now validates BOTH absolute swing coordinates.
+correctJointSwingWithComponent clamps rotation-vector Y and Z independently,
+reconstructs swing from that vector, reattaches the original twist and rotates
+the supplied child component about the parent world anchor. An in-range
+coordinate is retained while the other is clamped. Hinge mode and undefined
+twist do not project; neither operation changes velocity. Existing component
+and X-axis validation remain. A 180-degree undefined-twist state is still not
+a generally supported runtime correction case.
+
+The historical 1.433333 s fixture has Y swing about -0.652/-1.388 rad and is
+therefore outside the new model. hip_z_replay first checks that the strict API
+rejects its old right-hip probe. Its historical Z-only comparison then explicitly
+restores unbounded Y on a test skeleton copy; this does not weaken the live hip
+bounds or claim that the historical pose is valid under them.
+
+The application's existing hip angular branch now enables swing projection
+after twist repair and before its existing whole-body foot-floor lift. Positions
+and orientations change together; no geometric velocity compensation or new
+angular impulse is introduced. Y/Z angular-limit velocity impulses are not yet
+implemented: this milestone is pose-only. Legacy branch callers default to
+twist-only behavior so historical diagnostics remain reproducible. The headless
+flag --hip-swing-limits selects the same current room-inclusive/local-impulse
+configuration, enabling this projection and keeping sphere self-collision off.
+Old flags retain historical twist-only stepping unless this flag is added.
+No thigh/thigh collision pass is enabled; older opt-in collision experiments
+have NOT been reconnected to legal swing requests in this task.
+
+The joint_swing_twist tests cover pure X/Y/Z, X+Y, X+Z, mixed X+Y+Z, independent
+Y/Z clamps, unchanged twist and in-range coordinate, pivot/velocity preservation,
+and repeat projection roundoff. hip_swing_limits additionally exercises both
+hip branches, all descendant anchors and orientations, pose-only state and the
+existing floor lift. All 34 runnable tests pass after rebuilding; the two
+pre-existing outdated floor-signature tests remain excluded. App/diagnostic build.
+
+Matching ten-second runs: build/hip_swing_baseline_10s.csv uses --room-bounds
+--no-sphere-self-collision --live-velocity-metrics; build/hip_swing_limits_10s.csv
+uses --hip-swing-limits. Both keep the same timestep, motors, damping, 16 outer
+and four inner velocity iterations. Both finite, no attachment/twist-limit
+failures, no suspicious anchor impulses, minimum body/foot Y=0, room penetration
+and group-fit failures=0. OFF -> ON: maximum completed-step hip swing error
+2.713886 -> 1.788139e-7 rad; max anchor gap 9.537907e-7 -> 1.072884e-6;
+position distance 8.224778 -> 11.176637; peak KE 801.5656 -> 806.2115 J;
+peak angular speed 53.86615 -> 48.48655 rad/s. New Y/Z pose bounds work in the
+measured run, but movement remains energetic and self-overlap remains. This is
+not general physical stability or a complete ball-joint dynamics solver.

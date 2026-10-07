@@ -505,7 +505,7 @@ int main(int argc, char **argv) {
                                     : &connection.constraint == &skeleton.leftHip
                                           ? aura::body::MajorBodyBranch3D::LeftHip
                                           : aura::body::MajorBodyBranch3D::RightHip;
-            aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch);
+            aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch, true);
             aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
             solveVelocityLocally(connection);
             return;

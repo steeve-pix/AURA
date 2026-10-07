@@ -1,4 +1,5 @@
 #include <fstream>
+#include <numbers>
 #include <iostream>
 #include <set>
 #include <sstream>
@@ -8,7 +9,7 @@ int main(int argc, char** argv) {
     using namespace aura;
     if (argc != 2) return 2;
     auto input = body::createAuraBody3D();
-    const auto skeleton = body::createAuraSkeleton3D(input);
+    auto skeleton = body::createAuraSkeleton3D(input);
     auto parts = skeleton.collectComponent(input, input.torso, skeleton.head);
     parts.push_back(&input.head);
     std::ifstream file(argv[1]);
@@ -39,6 +40,14 @@ int main(int argc, char** argv) {
     check(skeleton.leftHip.type==body::JointType::SwingTwist && skeleton.rightHip.type==body::JointType::SwingTwist &&
           skeleton.leftKnee.type==body::JointType::Hinge && skeleton.leftElbow.type==body::JointType::Hinge,
           "hips advertise swing/twist while knees and elbows retain hinge mode");
+    auto boundedPose=input;
+    check(!body::applyJointSwingWithComponent(boundedPose.pelvis,boundedPose.rightThigh,skeleton.rightHip,
+          skeleton.collectComponent(boundedPose,boundedPose.rightThigh,skeleton.rightHip),{0,0,1},0.160193f),
+          "historical fixture exceeds the new Y swing bounds and cannot bypass them");
+    // Historical Z-only checkpoint predates Y limits: retain it explicitly as
+    // an isolated comparison, rather than claiming this old pose is legal now.
+    skeleton.leftHip.minSwingY=skeleton.rightHip.minSwingY=-std::numbers::pi_v<float>;
+    skeleton.leftHip.maxSwingY=skeleton.rightHip.maxSwingY=std::numbers::pi_v<float>;
     auto apiPose=input;
     const auto apiComponent=skeleton.collectComponent(apiPose,apiPose.rightThigh,skeleton.rightHip);
     check(body::applyJointSwingWithComponent(apiPose.pelvis,apiPose.rightThigh,skeleton.rightHip,
