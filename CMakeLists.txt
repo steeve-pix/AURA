@@ -104,6 +104,11 @@ if (BUILD_TESTING)
     add_executable(aura_room_collision_tests tests/room_collision_tests.cpp)
     target_link_libraries(aura_room_collision_tests PRIVATE aura_physics)
     add_test(NAME room_collision COMMAND aura_room_collision_tests)
+    add_executable(aura_hip_capsule_rotation_tests tests/hip_capsule_rotation_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp)
+    target_link_libraries(aura_hip_capsule_rotation_tests PRIVATE aura_physics)
+    add_test(NAME hip_capsule_rotation COMMAND aura_hip_capsule_rotation_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/thigh_hip_rotation_1_650.csv")
     add_executable(aura_capsule_collision_tests tests/capsule_collision_tests.cpp
         src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp)
     target_link_libraries(aura_capsule_collision_tests PRIVATE aura_physics)

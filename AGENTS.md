@@ -434,6 +434,36 @@ saved pose tests/fixtures/attached_thigh_capsules_1_650.csv. The closest connect
 in that fixture is perpendicular to both interior segment axes. Runtime
 self-collision remains disabled. Do not add capsule response until requested.
 
+`--hip-capsule-rotation-replay` captures the same 1.650 s final-iteration pose,
+attaches both hips on a copy at fixed orientations, and emits all 16 pose/velocity
+inputs. tests/fixtures/thigh_hip_rotation_1_650.csv saves this state. The source
+already has ~0.007032 knee gaps introduced by the preceding sphere pass; do not
+misreport them as rotation-induced or assume this snapshot is fully attached.
+The test-only HipCapsuleRotationReplay.hpp searches world-space axes from
+(closest point - fixed hip pivot) cross separation direction. Opposite separation
+forces are already encoded in the two axes; a second right-angle sign inversion
+is not needed. Each candidate uses signed 0, 0.005, 0.01, or 0.02 rad steps on
+both sides, preserving each leg component rigidly around its pelvis hip pivot.
+Candidates must reduce capsule penetration, keep all six leg bodies out of the
+floor (1e-6 roundoff), preserve baseline attachment gaps (1e-5 roundoff), and
+satisfy existing hinge-twist limits (1e-5 rad). The axes/step signs are recomputed
+from the current copied contact at each accepted step; the search budget is 128
+steps, not a change to runtime solver iterations. Coincident closest points stop
+with a diagnostic rather than inventing an arbitrary collision normal.
+Source copy: 23 steps remove 0.5297266 penetration, preserving pre-existing knee
+gaps and velocities. A separately labelled reference translates shin+foot during
+setup to align each knee without changing thigh geometry/orientation, then uses
+rotations only: 24 steps remove the same overlap, all six gaps remain below
+1.824e-6, descendant hinge-angle drift below 1.04e-6, and feet remain above floor.
+The search is greedy and addresses this thigh pair only; other self-collision
+pairs, room walls, global energy, strict hinge swing constraints and live dynamics
+are not solved. Current joint limits constrain twist, so compliance here is not
+a claim of full anatomical 3D angular validity. No velocities/impulses change.
+The hip_capsule_rotation CTest uses the saved full-body input and checks monotonic
+accepted penetration, gaps, descendant full relative orientations, floor/limits,
+fixed pelvis, and untouched velocities for both input configurations. Runtime
+self-collision remains OFF; the live chooser/solver were not changed.
+
 
 
 In reviews, identify what works and distinguish **must fix**, **should improve**,

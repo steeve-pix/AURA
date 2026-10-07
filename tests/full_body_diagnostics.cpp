@@ -1,3 +1,4 @@
+#include "HipCapsuleRotationReplay.hpp"
 #include "aura/physics/SelfCollision.hpp"
 // Headless measurement tool, not a passing stability regression.
 // Keep setup and step ordering aligned with src/main.cpp; only upper-body motor flags differ.
@@ -107,6 +108,8 @@ int main(int argc, char **argv) {
     bool neutralSphereCompatibility = false;
     bool hipSphereCompatibilityReplay = false;
     bool hipSphereCompatibilityReplayDone = false;
+    bool hipCapsuleRotationReplay = false;
+    bool hipCapsuleRotationReplayDone = false;
     float maxSelfPenetration = 0.0f;
     bool kneeProjectionReplay = false;
     bool legacyGeometryCompensation = false;
@@ -155,6 +158,7 @@ int main(int argc, char **argv) {
         else if (argument == "--legacy-geometry-compensation") legacyGeometryCompensation = true;
         else if (argument == "--knee-projection-replay") { legacyGeometryCompensation = true; kneeProjectionReplay = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--neutral-sphere-compatibility") neutralSphereCompatibility = true;
+        else if (argument == "--hip-capsule-rotation-replay") { hipCapsuleRotationReplay = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--hip-sphere-compatibility-replay") { hipSphereCompatibilityReplay = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--self-fraction-replay") { selfFractionReplay = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
         else if (argument == "--self-translation-replay") { selfTranslationReplay = true; selfCollision = true; localAngularLimits = true; componentPositions = true; allLocalAnchors = true; }
@@ -193,7 +197,7 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--room-bounds] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--hip-capsule-rotation-replay] [--room-bounds] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
     }
@@ -1788,6 +1792,51 @@ int main(int argc, char **argv) {
             else auditOperation(legacyName, legacy);
         };
         const auto positionOperation = [&](const char *legacyName, const auto &legacy) {
+            if (hipCapsuleRotationReplay && !hipCapsuleRotationReplayDone && diagnosticIteration==jointIterations &&
+                std::string(diagnosticSweep)=="forward" && &connection.constraint==&skeleton.leftHip &&
+                std::abs(diagnosticTime-1.65)<1e-9) {
+                auto copy=auraBody;
+                // Match the saved attached-hip capsule fixture, without changing
+                // orientations or invoking self-collision in this copied state.
+                for (bool left : {true,false}) {
+                    const auto &joint=left?skeleton.leftHip:skeleton.rightHip;
+                    auto &thigh=left?copy.leftThigh:copy.rightThigh;
+                    const auto component=skeleton.collectComponent(copy,thigh,joint);
+                    const auto correction=aura::body::localToWorldPoint(copy.pelvis,joint.localAnchorA)-
+                                          aura::body::localToWorldPoint(thigh,joint.localAnchorB);
+                    aura::body::translateSubtree(component,correction);
+                }
+                auto savedParts=skeleton.collectComponent(copy,copy.torso,skeleton.head);
+                savedParts.push_back(&copy.head);
+                std::cout << std::scientific << std::setprecision(9)
+                    << "hipRotationInput,part,sx,sy,sz,mass,px,py,pz,qw,qx,qy,qz,vx,vy,vz,wx,wy,wz,Ix,Iy,Iz\n";
+                for (const auto *part:savedParts) {
+                    const auto &b=part->body;
+                    std::cout << "hipRotationInput," << part->name << ',' << part->size.x << ',' << part->size.y << ',' << part->size.z
+                        << ',' << b.mass << ',' << b.position.x << ',' << b.position.y << ',' << b.position.z
+                        << ',' << b.orientation.w << ',' << b.orientation.x << ',' << b.orientation.y << ',' << b.orientation.z
+                        << ',' << b.velocity.x << ',' << b.velocity.y << ',' << b.velocity.z
+                        << ',' << b.angularVelocity.x << ',' << b.angularVelocity.y << ',' << b.angularVelocity.z
+                        << ',' << b.momentOfInertia.x << ',' << b.momentOfInertia.y << ',' << b.momentOfInertia.z << '\n';
+                }
+                std::cout << "hipRotationExperiment,sourceCopiedPose\n";
+                aura::test::runHipCapsuleRotationReplay(copy,skeleton,std::cout);
+                // The sphere pass moved thighs without their descendants. Build
+                // a separately labelled fully attached reference without changing
+                // thigh poses, orientations, or the thigh collision itself.
+                auto attached=copy;
+                for (bool left:{true,false}) {
+                    const auto &knee=left?skeleton.leftKnee:skeleton.rightKnee;
+                    auto &thigh=left?attached.leftThigh:attached.rightThigh;
+                    auto &shin=left?attached.leftShin:attached.rightShin;
+                    const auto child=skeleton.collectComponent(attached,shin,knee);
+                    aura::body::translateSubtree(child,aura::body::localToWorldPoint(thigh,knee.localAnchorA)-
+                                                       aura::body::localToWorldPoint(shin,knee.localAnchorB));
+                }
+                std::cout << "hipRotationExperiment,fullyAttachedReference,kneeSetupTranslationsOnly=1\n";
+                aura::test::runHipCapsuleRotationReplay(attached,skeleton,std::cout);
+                hipCapsuleRotationReplayDone=true;
+            }
             if (hipSphereCompatibilityReplay && !hipSphereCompatibilityReplayDone && diagnosticIteration==jointIterations &&
                 std::string(diagnosticSweep)=="forward" && &connection.constraint==&skeleton.leftHip &&
                 std::abs(diagnosticTime-1.65)<1e-9) {
@@ -2535,6 +2584,7 @@ int main(int argc, char **argv) {
 
         energyStage("E_endStep");
         selfCheckpoint("E_endStep");
+        if (hipCapsuleRotationReplay && hipCapsuleRotationReplayDone) return 0;
         if (hipSphereCompatibilityReplay && hipSphereCompatibilityReplayDone) return 0;
         if (selfFractionReplay && selfFractionReplayDone) return 0;
         if (selfTranslationReplay && selfTranslationReplayDone) {
