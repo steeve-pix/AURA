@@ -1429,3 +1429,89 @@ Report: build/two_hip_projection_replay.csv. App/diagnostic/all runnable test
 targets build; 39/40 runnable CTests pass, with the same separate legacy `joint`
 ankle-gap failure. Two older collision-signature targets remain excluded;
 git diff --check is clean.
+
+The coupled proof above was committed as `7dadaa0` ("Add coupled hip collision
+projection replay"). `aura_two_hip_projection_replay_tests <fixture> --local`
+now runs a separate copied local experiment, registered as
+`local_two_hip_projection_replay`. It bypasses the exhaustive search. After
+mandatory hip limit reconstruction, each of 32 iterations evaluates exactly
+eight neighbors: +/-0.01 rad on one of the four hip swing coordinates. Both
+hip anchors are repaired before candidate evaluation. Feasible candidates are
+ranked by penetration, total hip gap, then angular movement, with at most one
+accepted neighbor per iteration. A no-op wins ties once no improvement remains.
+Twists stay fixed at their repaired legal values, velocities remain exactly
+unchanged, and the floor no-worsening and descendant-preservation checks remain.
+Foot-only floor failures may use the existing minimal knee compensation search;
+no accepted candidate in this fixture needs it.
+
+Local candidates reconstruct from a fixed mandatory component reference, rather
+than accumulating float pose transforms. An initial false stall was traced to
+float world-anchor addition/subtraction: a candidate measured 1.034699e-6 gap
+drift with float intermediate points but 4.340413e-7 with double intermediates.
+The local test now computes descendant gap changes with double quaternion/point
+intermediates while retaining the same 1e-6 preservation tolerance. Stored body
+positions remain floats; production joint math and tolerances are unchanged.
+
+For the saved 4.691667 s fixture, penetration decreases from 0.243079096 after
+mandatory repair to 0.186496615 at iteration 6, 0.131252617 at 12, 0.094592214 at
+16, 0.022376776 at 24, and zero at 27. All 256 neighbors are evaluated; 27 moves
+are accepted, and iterations 28-32 retain the resolved pose. Final hip gaps are
+0 and 1.192093e-7, minimum foot Y is 0.005753338, maximum precise descendant gap
+drift is 5.257474e-7, and each accepted hip-coordinate change is at most 0.01 rad.
+Final swings: left (Y=0.400000036,Z=-0.144531682), right
+(Y=0.248990938,Z=-0.343793839). Limits, fixed twists, descendant relationships
+and exact velocity preservation pass. This proves copied local convergence,
+not live stability or a general multi-contact/self-collision solver. Existing
+descendant gaps are preserved, not repaired. Runtime wiring is unchanged.
+Report: `build/local_hip_projection_32.csv`. App, diagnostic and runnable test
+targets build; 40/41 runnable CTests pass, with the separate legacy `joint`
+failure unchanged. The older `physics` and `body_geometry` targets remain
+excluded because of outdated floor signatures.
+
+`--coupled-thigh-projection` now enables an opt-in live two-hip pose search in
+both the application and full-body diagnostic. Default self-collision remains
+OFF. The new mode replaces `correctThighOverlapWithSwing` with
+`correctThighOverlapCoupled`, then retains the same local zero-restitution,
+frictionless thigh normal impulse. No timestep, solver iteration, motor, damping,
+contact impulse or threshold changes accompany it. Knee compensation is not part
+of these eight neighbors: each changes only one hip Y/Z coordinate by +/-0.01.
+
+For overlap above 0.001, the helper reconstructs both mandatory bounded hip poses
+and repairs both hip anchors, then evaluates eight neighbors from the same input
+reference geometry. It rejects floor worsening, hip-bound failures or descendant
+anchor drift above 1e-6 (double intermediate anchor measurement). Whole leg
+components rotate about their pelvis hip pivots and translate to close the hip
+anchors; the pelvis and all other parts stay fixed. These rigid operations
+preserve descendant relative orientations by construction. Velocities are never
+modified. Candidates rank lexicographically by penetration, total hip gap and
+angular movement with 1e-7 measurement roundoff. The mandatory legal base is the
+no-op search candidate; at most one improving neighbor is accepted per outer
+iteration. An infeasible mandatory base leaves the input unchanged and reports
+its blocker; this is not a general coupled all-contact solve. No overlap skips
+all reconstruction/search. Searches do not check other self-collision pairs.
+
+The production helper independently resolves the saved 4.691667 s fixture in
+27 of 32 calls, with penetration zero, maximum hip gap 1.192093e-7 and minimum
+foot Y 0.005753398. The local replay checks eight-candidate budgets, one-coordinate
+step bounds, all hip limits, floor no-worsening, descendant gaps and full relative
+orientations, exact unchanged velocities, convergence and exact no-overlap pose
+preservation. Report: `build/coupled_production_replay.csv`.
+
+The controlled 10-second comparison (120 Hz, 16 outer/four inner iterations,
+hip/knee motors, bounded hip swing, room pass) records:
+- existing swing+knee+impulse: maximum thigh penetration 0.155861825, 51 overlap
+  steps, 29 closing-overlap steps, max leg gap 9.536743e-7, minimum foot Y 0,
+  position radius 10.441753, peak KE 1157.588 J;
+- coupled search+same impulse: penetration 0.029897988, 34 overlap steps,
+  18 closing-overlap steps, 589 accepted neighbors (311 left/278 right), no
+  fully blocked or no-improvement calls, 1274 limit-rejected and 339 floor-rejected
+  candidates, max leg gap 9.615579e-7, minimum foot Y 0, position radius 8.327415,
+  peak KE 1080.954 J.
+Both remain finite with no completed-step gap/twist failures; max hip swing error
+is 5.960464e-8. Coupled-mode 188 thigh impulses have maximum momentum drift
+4.910641e-7 kg m/s and maximum positive KE delta 4.242622e-6 J (roundoff scale).
+All 2,227,200 audited local anchor impulses have no suspicious energy injection.
+Pose-only projection creates no linear momentum by construction. Residual
+0.0299 thigh penetration remains; this is an opt-in single-pair improvement,
+not a claim of general humanoid nonintersection or physical stability.
+Reports: `build/thigh_current_live_10s.csv` and `build/thigh_coupled_live_10s.csv`.

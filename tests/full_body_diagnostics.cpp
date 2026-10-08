@@ -106,6 +106,8 @@ int main(int argc, char **argv) {
     int thighHipOnlyAccepted=0,thighCoupledAccepted=0;float maxKneeCompensation=0;
     bool sharedHipReplay=false;
     bool hipSwingLimits=false;
+    bool coupledThighProjection=false;
+    int coupledNoImprovement=0;
     bool thighSwingCollision=false,thighSwingBlocks=false,swingKneeReplay=false,thighSwingKneeCompensation=false;
     bool thighJointGeometryTrace=false;
     float largestThighGeometryIncrease=-1;
@@ -237,6 +239,7 @@ int main(int argc, char **argv) {
         else if (argument == "--thigh-swing-collision") {thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
         else if (argument == "--thigh-joint-geometry-trace") {thighJointGeometryTrace=true;thighContactImpulses=true;thighContactReplay=true;thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
         else if (argument == "--thigh-worst-event") {thighWorstEvent=true;thighContactImpulses=true;thighContactReplay=true;thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--coupled-thigh-projection") {thighContactImpulses=true;thighContactReplay=true;coupledThighProjection=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
         else if (argument == "--thigh-swing-contact-impulses") {thighContactImpulses=true;thighContactReplay=true;thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
         else if (argument == "--thigh-contact-replay") {thighContactReplay=true;thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
         else if (argument == "--thigh-swing-knee-compensation") {thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
@@ -282,7 +285,7 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--hip-capsule-rotation-replay] [--room-bounds] [--no-sphere-self-collision] [--thigh-self-collision] [--strict-thigh-floor] [--thigh-floor-policy-replay] [--thigh-knee-replay] [--thigh-knee-compensation] [--shared-hip-replay] [--hip-swing-limits] [--thigh-swing-collision] [--thigh-swing-knee-compensation] [--thigh-contact-replay] [--thigh-swing-contact-impulses] [--thigh-worst-event] [--thigh-joint-geometry-trace] [--thigh-swing-blocks] [--swing-knee-replay] [--knee-swing-window] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--hip-capsule-rotation-replay] [--room-bounds] [--no-sphere-self-collision] [--thigh-self-collision] [--strict-thigh-floor] [--thigh-floor-policy-replay] [--thigh-knee-replay] [--thigh-knee-compensation] [--shared-hip-replay] [--hip-swing-limits] [--thigh-swing-collision] [--thigh-swing-knee-compensation] [--thigh-contact-replay] [--thigh-swing-contact-impulses] [--coupled-thigh-projection] [--thigh-worst-event] [--thigh-joint-geometry-trace] [--thigh-swing-blocks] [--swing-knee-replay] [--knee-swing-window] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
     }
@@ -2789,7 +2792,9 @@ int main(int argc, char **argv) {
                 aura::body::ThighSwingCollisionAudit audit;
                 aura::body::ThighSwingCollisionStep step;
                 auditOperation("thighSwingPoseProjection",[&] {
-                    step=aura::body::correctThighOverlapWithSwing(auraBody,skeleton,0.01f,0.001f,&audit,thighSwingBlocks,thighSwingKneeCompensation);
+                    step=coupledThighProjection ? aura::body::correctThighOverlapCoupled(auraBody,skeleton,0.01f,0.001f,&audit) :
+                        aura::body::correctThighOverlapWithSwing(auraBody,skeleton,0.01f,0.001f,&audit,thighSwingBlocks,thighSwingKneeCompensation);
+                    coupledNoImprovement+=coupledThighProjection && !step.corrected && step.penetrationBefore>0.001f && audit.noImprovement>0;
                 });
                 thighEventSample("afterThighGeometry",&audit,&step);
                 if(thighContactImpulses) {
@@ -3407,6 +3412,7 @@ int main(int argc, char **argv) {
         << ",totalDeltaPy=" << totalThighImpulseMomentum[1] << ",totalDeltaPz=" << totalThighImpulseMomentum[2] << '\n';
     if(thighSwingCollision) std::cout << "thighSwingSummary,acceptedCalls=" << swingAcceptedCalls
         << ",leftAccepted=" << swingLeftAccepted << ",rightAccepted=" << swingRightAccepted
+        << ",coupledProjection=" << coupledThighProjection << ",noImprovementCalls=" << coupledNoImprovement
         << ",kneeCompensation=" << thighSwingKneeCompensation << ",hipOnlyAccepted=" << swingHipOnly << ",hipKneeAccepted=" << swingHipKnee
         << ",footOnlyCandidates=" << swingFootOnlyCandidates << ",footOnlyRemaining=" << swingFootOnlyRemaining
         << ",kneeRecoveredCandidates=" << swingKneeRecovered << ",kneeFailedCandidates=" << swingKneeFailed << ",maxKneeRequest=" << maximumSwingKneeRequest

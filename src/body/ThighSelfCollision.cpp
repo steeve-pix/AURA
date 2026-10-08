@@ -191,6 +191,108 @@ namespace aura::body {
             return found;
         }
     }
+    ThighSwingCollisionStep correctThighOverlapCoupled(AuraBody3D& b,const AuraSkeleton3D& s,
+        float stepSize,float tolerance,ThighSwingCollisionAudit* audit) {
+        ThighSwingCollisionAudit stats;
+        ThighSwingCollisionStep result;
+        result.penetrationBefore=result.penetrationAfter=penetration(b);
+        if(result.penetrationBefore<=tolerance || stepSize<=0) {if(audit)*audit=stats;return result;}
+        const auto input=b;
+        struct Pose {float twist,y,z;};
+        const auto pose=[&](const BodyPart3D& thigh,const Joint3D& hip) {
+            const auto swing=relativeJointSwingAngles(input.pelvis,thigh,hip);
+            return Pose{std::clamp(relativeJointTwistAngle(input.pelvis,thigh,hip),hip.minAngle,hip.maxAngle),
+                std::clamp(swing.y,hip.minSwingY,hip.maxSwingY),std::clamp(swing.z,hip.minSwingZ,hip.maxSwingZ)};
+        };
+        const auto left=pose(input.leftThigh,s.leftHip),right=pose(input.rightThigh,s.rightHip);
+        const auto preciseGaps=[&](const AuraBody3D& body) {
+            const auto world=[](const BodyPart3D& part,const math::Vec3& anchor) {
+                const auto q=part.body.orientation.normalized();
+                const auto p=q*math::Quaternion{0,anchor.x,anchor.y,anchor.z}*q.conjugate();
+                return std::array<double,3>{double(part.body.position.x)+p.x,double(part.body.position.y)+p.y,double(part.body.position.z)+p.z};
+            };
+            const std::array<const BodyPart3D*,4> a{&body.leftThigh,&body.leftShin,&body.rightThigh,&body.rightShin};
+            const std::array<const BodyPart3D*,4> c{&body.leftShin,&body.leftFoot,&body.rightShin,&body.rightFoot};
+            const std::array<const Joint3D*,4> joints{&s.leftKnee,&s.leftAnkle,&s.rightKnee,&s.rightAnkle};
+            std::array<double,4> values{};
+            for(size_t i=0;i<4;++i) {
+                const auto pa=world(*a[i],joints[i]->localAnchorA),pc=world(*c[i],joints[i]->localAnchorB);
+                for(size_t k=0;k<3;++k)values[i]+=(pc[k]-pa[k])*(pc[k]-pa[k]);
+                values[i]=std::sqrt(values[i]);
+            }
+            return values;
+        };
+        const auto originalGaps=preciseGaps(input);
+        const auto rebuild=[&](Pose lp,Pose rp) {
+            auto candidate=input;
+            const auto parent=input.pelvis.body.orientation.normalized();
+            const auto target=[&](Pose p) {
+                const math::Vec3 vector{0,p.y,p.z};const float angle=vector.length();
+                const auto swing=angle==0?math::Quaternion{}:math::Quaternion::fromAxisAngle(vector,angle);
+                return (parent*swing*math::Quaternion::fromAxisAngle({1,0,0},p.twist)).normalized();
+            };
+            const auto lt=target(lp),rt=target(rp);
+            for(bool isLeft:{true,false}) {
+                auto& thigh=isLeft?candidate.leftThigh:candidate.rightThigh;
+                const auto& hip=isLeft?s.leftHip:s.rightHip;
+                const auto component=s.collectComponent(candidate,thigh,hip);
+                rotateSubtreeAroundWorldPoint(component,localToWorldPoint(candidate.pelvis,hip.localAnchorA),
+                    ((isLeft?lt:rt)*thigh.body.orientation.normalized().conjugate()).normalized());
+                translateSubtree(component,localToWorldPoint(candidate.pelvis,hip.localAnchorA)-localToWorldPoint(thigh,hip.localAnchorB));
+            }
+            return candidate;
+        };
+        const auto feasible=[&](const AuraBody3D& candidate) {
+            for(bool isLeft:{true,false}) {
+                const auto& hip=isLeft?s.leftHip:s.rightHip;
+                const auto& thigh=isLeft?candidate.leftThigh:candidate.rightThigh;
+                const auto swing=relativeJointSwingAngles(candidate.pelvis,thigh,hip);
+                const auto twist=relativeJointTwistAngle(candidate.pelvis,thigh,hip);
+                if(!std::isfinite(twist) || !std::isfinite(swing.y) || !std::isfinite(swing.z) ||
+                    twist<hip.minAngle-1e-6f || twist>hip.maxAngle+1e-6f ||
+                    swing.y<hip.minSwingY-1e-6f || swing.y>hip.maxSwingY+1e-6f ||
+                    swing.z<hip.minSwingZ-1e-6f || swing.z>hip.maxSwingZ+1e-6f) {++stats.blockedBySwingLimit;return false;}
+            }
+            const std::array<const BodyPart3D*,6> old{&input.leftThigh,&input.leftShin,&input.leftFoot,&input.rightThigh,&input.rightShin,&input.rightFoot};
+            const std::array<const BodyPart3D*,6> moved{&candidate.leftThigh,&candidate.leftShin,&candidate.leftFoot,&candidate.rightThigh,&candidate.rightShin,&candidate.rightFoot};
+            for(size_t i=0;i<6;++i)if(!floorMoveIsNoWorse(physics::lowestPoint(old[i]->body,old[i]->size).y,
+                physics::lowestPoint(moved[i]->body,moved[i]->size).y)) {++stats.blockedByFloor;return false;}
+            const auto g=preciseGaps(candidate);
+            for(size_t i=0;i<4;++i)if(std::abs(g[i]-originalGaps[i])>1e-6) {++stats.blockedByTwistOrAnchor;return false;}
+            return true;
+        };
+        const auto hipGap=[&](const AuraBody3D& body) {
+            return (localToWorldPoint(body.pelvis,s.leftHip.localAnchorA)-localToWorldPoint(body.leftThigh,s.leftHip.localAnchorB)).length()+
+                (localToWorldPoint(body.pelvis,s.rightHip.localAnchorA)-localToWorldPoint(body.rightThigh,s.rightHip.localAnchorB)).length();
+        };
+        // Hard repairs precede the neighborhood search. If this projection cannot
+        // preserve floor/descendants, leave the live pose unchanged and report it.
+        auto base=rebuild(left,right);
+        if(!feasible(base)) {if(audit)*audit=stats;return result;}
+        auto best=base;float bestPen=penetration(base),bestGap=hipGap(base),bestMotion=0;
+        for(int coordinate=0;coordinate<4;++coordinate)for(float sign:{-1.0f,1.0f}) {
+            ++stats.candidates;
+            auto lp=left,rp=right;
+            float& x=coordinate==0?lp.y:coordinate==1?lp.z:coordinate==2?rp.y:rp.z;x+=sign*stepSize;
+            const auto& hip=coordinate<2?s.leftHip:s.rightHip;
+            const float lower=coordinate%2==0?hip.minSwingY:hip.minSwingZ;
+            const float upper=coordinate%2==0?hip.maxSwingY:hip.maxSwingZ;
+            if(x<lower || x>upper) {++stats.blockedBySwingLimit;continue;}
+            auto candidate=rebuild(lp,rp);
+            if(!feasible(candidate))continue;
+            const float pen=penetration(candidate),gap=hipGap(candidate);
+            const bool samePen=std::abs(pen-bestPen)<=1e-7f,sameGap=std::abs(gap-bestGap)<=1e-7f;
+            if(pen<bestPen-1e-7f || (samePen && (gap<bestGap-1e-7f || (sameGap && stepSize<bestMotion)))) {
+                best=candidate;bestPen=pen;bestGap=gap;bestMotion=stepSize;
+                result.leftRequest=coordinate<2?sign*stepSize:0;
+                result.rightRequest=coordinate>=2?sign*stepSize:0;
+            } else ++stats.noImprovement;
+        }
+        b=best;result.penetrationAfter=bestPen;
+        result.corrected=bestMotion>0;
+        if(audit)*audit=stats;
+        return result;
+    }
     ThighSwingCollisionStep correctThighOverlapWithSwing(AuraBody3D& b,const AuraSkeleton3D& s,
         float maxRequest,float tolerance,ThighSwingCollisionAudit* audit,bool detailCandidates,bool compensateKnees) {
         ThighSwingCollisionAudit stats;

@@ -40,6 +40,8 @@ using aura::app::printBodyDiagnostics;
 
 int main(int argc, char **argv) {
     bool thighSelfCollision = false, thighKneeCompensation = false;
+    bool coupledThighProjection=false;
+    int coupledNoImprovement=0;
     bool thighSwingCollision=false,thighSwingKneeCompensation=false,thighContactImpulses=false;
     int thighImpulseCount=0;
     double largestThighImpulse=0,maximumThighImpulseEnergyGain=0;
@@ -47,6 +49,7 @@ int main(int argc, char **argv) {
     float maximumSwingKneeRequest=0;
     int swingLeftAccepted=0,swingRightAccepted=0,swingFloorBlocked=0,swingLimitBlocked=0;
     for (int i=1;i<argc;++i) {
+        if (std::string(argv[i]) == "--coupled-thigh-projection") {coupledThighProjection=true;thighSwingCollision=true;thighContactImpulses=true;}
         if (std::string(argv[i]) == "--thigh-self-collision") thighSelfCollision = true;
         if (std::string(argv[i]) == "--thigh-swing-collision") thighSwingCollision=true;
         if (std::string(argv[i]) == "--thigh-swing-contact-impulses") {thighSwingCollision=true;thighSwingKneeCompensation=true;thighContactImpulses=true;}
@@ -603,7 +606,9 @@ int main(int argc, char **argv) {
                 for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i) solveConnection(joints[i]);
                 if(thighSwingCollision) {
                     aura::body::ThighSwingCollisionAudit audit;
-                    const auto step=aura::body::correctThighOverlapWithSwing(auraBody,skeleton,0.01f,0.001f,&audit,false,thighSwingKneeCompensation);
+                    const auto step=coupledThighProjection ? aura::body::correctThighOverlapCoupled(auraBody,skeleton,0.01f,0.001f,&audit) :
+                        aura::body::correctThighOverlapWithSwing(auraBody,skeleton,0.01f,0.001f,&audit,false,thighSwingKneeCompensation);
+                    coupledNoImprovement+=coupledThighProjection && !step.corrected && step.penetrationBefore>0.001f && audit.noImprovement>0;
                     if(thighContactImpulses) {
                         const auto response=aura::body::resolveThighNormalVelocity(auraBody);
                         thighImpulseCount+=response.applied;
@@ -666,7 +671,8 @@ int main(int argc, char **argv) {
                 if(thighContactImpulses) std::cout << "thighNormalImpulse count=" << thighImpulseCount
                     << " largest=" << largestThighImpulse << " maximumPositiveDeltaKE=" << maximumThighImpulseEnergyGain << '\n';
                 if(thighSwingCollision) std::cout << "thighSwingCollision leftAccepted=" << swingLeftAccepted
-                    << " rightAccepted=" << swingRightAccepted << " blockedCallsWithSwingLimit=" << swingLimitBlocked
+                    << " rightAccepted=" << swingRightAccepted << " coupledProjection=" << coupledThighProjection
+                    << " noImprovementCalls=" << coupledNoImprovement << " blockedCallsWithSwingLimit=" << swingLimitBlocked
                     << " blockedCallsWithFloor=" << swingFloorBlocked << " kneeCompensation=" << thighSwingKneeCompensation
                     << " hipOnly=" << swingHipOnly << " hipPlusKnee=" << swingHipKnee
                     << " footOnlyCandidates=" << swingFootOnlyCandidates << " footOnlyRemaining=" << swingFootOnlyRemaining

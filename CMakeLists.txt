@@ -108,6 +108,8 @@ if (BUILD_TESTING)
     target_link_libraries(aura_two_hip_projection_replay_tests PRIVATE aura_physics)
     add_test(NAME two_hip_projection_replay COMMAND aura_two_hip_projection_replay_tests
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/left_hip_swing_projection_4_691667.csv")
+    add_test(NAME local_two_hip_projection_replay COMMAND aura_two_hip_projection_replay_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/left_hip_swing_projection_4_691667.csv" --local)
     add_executable(aura_thigh_joint_projection_replay_tests tests/thigh_joint_projection_replay_tests.cpp
         src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp
         src/body/JointConstraint.cpp src/body/AuraBodyConstraint.cpp src/body/ComponentPosition.cpp src/body/ThighSelfCollision.cpp)

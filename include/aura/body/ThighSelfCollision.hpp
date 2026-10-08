@@ -34,6 +34,12 @@ namespace aura::body {
         AuraBody3D& body, const AuraSkeleton3D& skeleton,
         float maxRequest = 0.01f, float penetrationTolerance = 0.001f,
         ThighSwingCollisionAudit* audit = nullptr, bool detailCandidates = false, bool compensateKnees = false);
+    // Opt-in two-hip pose projection: mandatory limits/anchors, then at most
+    // one of eight bounded swing-coordinate neighbors. No velocity changes.
+    ThighSwingCollisionStep correctThighOverlapCoupled(
+        AuraBody3D& body, const AuraSkeleton3D& skeleton,
+        float stepSize = 0.01f, float penetrationTolerance = 0.001f,
+        ThighSwingCollisionAudit* audit = nullptr);
     struct ThighNormalImpulseStep {
         float penetration{}, normalSpeedBefore{}, normalSpeedAfter{}, impulseMagnitude{};
         double kineticEnergyChange{}, predictedWork{};
