@@ -28,6 +28,17 @@ namespace aura::body {
     float relativeJointSwingZ(const BodyPart3D &partA, const BodyPart3D &partB,
                               const Joint3D &joint);
 
+    enum SwingBound : unsigned { SwingYMin=1u, SwingYMax=2u, SwingZMin=4u, SwingZMax=8u };
+    struct JointSwingProbe {
+        math::Quaternion worldRotation;
+        SwingAngles angles;
+        unsigned blockedBounds{};
+        bool twistDefined{};
+    };
+    // Read-only request preview. A blocked rotation is for diagnostics only;
+    // applying it would bypass joint limits.
+    JointSwingProbe previewJointSwing(const BodyPart3D& parent, const BodyPart3D& child,
+        const Joint3D& joint, const math::Vec3& localAxis, float angle);
     // Pose-only swing probe about an A-local axis. Retains original twist and
     // rejects undefined twist or a Y/Z swing-limit violation. Component must
     // contain B and exclude A; caller handles floor/self-collision feasibility.

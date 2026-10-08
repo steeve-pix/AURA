@@ -153,7 +153,7 @@ namespace aura::app {
 
     // Shortest orientation angle from identity, not accumulated revolutions or Euler angles.
     inline float rotationAngle(const aura::math::Quaternion &q) {
-        return 2.0f * std::acos(std::clamp(std::abs(q.w) / q.length(), 0.0f, 1.0f));
+        return 2.0f * std::acos(std::clamp(std::abs(q.w) / q.length(), 0.0, 1.0));
     }
 
     struct DiagnosticPeak {

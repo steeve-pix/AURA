@@ -40,9 +40,22 @@ using aura::app::printBodyDiagnostics;
 
 int main(int argc, char **argv) {
     bool thighSelfCollision = false, thighKneeCompensation = false;
+    bool thighSwingCollision=false,thighSwingKneeCompensation=false,thighContactImpulses=false;
+    int thighImpulseCount=0;
+    double largestThighImpulse=0,maximumThighImpulseEnergyGain=0;
+    int swingHipOnly=0,swingHipKnee=0,swingFootOnlyCandidates=0,swingFootOnlyRemaining=0,swingKneeFailed=0;
+    float maximumSwingKneeRequest=0;
+    int swingLeftAccepted=0,swingRightAccepted=0,swingFloorBlocked=0,swingLimitBlocked=0;
     for (int i=1;i<argc;++i) {
         if (std::string(argv[i]) == "--thigh-self-collision") thighSelfCollision = true;
+        if (std::string(argv[i]) == "--thigh-swing-collision") thighSwingCollision=true;
+        if (std::string(argv[i]) == "--thigh-swing-contact-impulses") {thighSwingCollision=true;thighSwingKneeCompensation=true;thighContactImpulses=true;}
+        if (std::string(argv[i]) == "--thigh-swing-knee-compensation") {thighSwingCollision=true;thighSwingKneeCompensation=true;}
         if (std::string(argv[i]) == "--thigh-knee-compensation") {thighSelfCollision=true;thighKneeCompensation=true;}
+    }
+    if(thighSwingCollision && thighSelfCollision) {
+        std::cerr << "Choose either legal thigh swing collision or the legacy thigh experiment.\n";
+        return 2;
     }
     int thighCorrections = 0, thighHipOnlyCorrections = 0, thighCoupledCorrections = 0;
     float maximumThighPenetration = 0, maximumLegGap = 0, minimumFootY = 1e30f, maximumThighAngle = 0;
@@ -443,6 +456,8 @@ int main(int argc, char **argv) {
             physicsStepsSinceLog = 0;
             diagnosticHistory = {};
             thighCorrections = thighHipOnlyCorrections = thighCoupledCorrections = 0;
+            swingLeftAccepted=swingRightAccepted=swingFloorBlocked=swingLimitBlocked=0;
+            swingHipOnly=swingHipKnee=swingFootOnlyCandidates=swingFootOnlyRemaining=swingKneeFailed=0;maximumSwingKneeRequest=0;
             maximumThighPenetration = maximumLegGap = maximumThighAngle = 0;
             minimumFootY = 1e30f;
             diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
@@ -586,7 +601,27 @@ int main(int argc, char **argv) {
                 diagnosticHistory.floorEnergy += afterFloor - stageEnergy;
                 for (auto &joint: joints) solveConnection(joint);
                 for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i) solveConnection(joints[i]);
-                if (thighSelfCollision) {
+                if(thighSwingCollision) {
+                    aura::body::ThighSwingCollisionAudit audit;
+                    const auto step=aura::body::correctThighOverlapWithSwing(auraBody,skeleton,0.01f,0.001f,&audit,false,thighSwingKneeCompensation);
+                    if(thighContactImpulses) {
+                        const auto response=aura::body::resolveThighNormalVelocity(auraBody);
+                        thighImpulseCount+=response.applied;
+                        largestThighImpulse=std::max(largestThighImpulse,double(response.impulseMagnitude));
+                        maximumThighImpulseEnergyGain=std::max(maximumThighImpulseEnergyGain,response.kineticEnergyChange);
+                    }
+                    const bool coupled=step.leftKneeRequest!=0 || step.rightKneeRequest!=0;
+                    swingHipOnly+=step.corrected && !coupled;swingHipKnee+=step.corrected && coupled;
+                    swingFootOnlyCandidates+=audit.footOnlyCandidates;swingFootOnlyRemaining+=audit.footOnlyRemaining;
+                    swingKneeFailed+=audit.kneeFailedCandidates;
+                    maximumSwingKneeRequest=std::max({maximumSwingKneeRequest,std::abs(step.leftKneeRequest),std::abs(step.rightKneeRequest)});
+                    swingLeftAccepted+=step.corrected && step.leftRequest!=0;
+                    swingRightAccepted+=step.corrected && step.rightRequest!=0;
+                    swingFloorBlocked+=!step.corrected && audit.blockedByFloor>0;
+                    swingLimitBlocked+=!step.corrected && audit.blockedBySwingLimit>0;
+                    maximumThighAngle=std::max({maximumThighAngle,std::abs(step.leftRequest),std::abs(step.rightRequest)});
+                }
+                else if (thighSelfCollision) {
                     const auto correction = aura::body::correctThighCapsuleOverlap(auraBody, skeleton,0.01f,0.001f,nullptr,
                         aura::body::ThighFloorPolicy::NoWorsening,thighKneeCompensation);
                     thighCorrections += correction.corrected;
@@ -628,6 +663,14 @@ int main(int argc, char **argv) {
                 std::cout << "thighCollision enabled=" << thighSelfCollision << " maxPenetration=" << maximumThighPenetration
                           << " maxLegGap=" << maximumLegGap << " minFootY=" << minimumFootY
                           << " corrections=" << thighCorrections << " hipOnly=" << thighHipOnlyCorrections << " hipPlusKnee=" << thighCoupledCorrections << " maxAnglePerIteration=" << maximumThighAngle << '\n';
+                if(thighContactImpulses) std::cout << "thighNormalImpulse count=" << thighImpulseCount
+                    << " largest=" << largestThighImpulse << " maximumPositiveDeltaKE=" << maximumThighImpulseEnergyGain << '\n';
+                if(thighSwingCollision) std::cout << "thighSwingCollision leftAccepted=" << swingLeftAccepted
+                    << " rightAccepted=" << swingRightAccepted << " blockedCallsWithSwingLimit=" << swingLimitBlocked
+                    << " blockedCallsWithFloor=" << swingFloorBlocked << " kneeCompensation=" << thighSwingKneeCompensation
+                    << " hipOnly=" << swingHipOnly << " hipPlusKnee=" << swingHipKnee
+                    << " footOnlyCandidates=" << swingFootOnlyCandidates << " footOnlyRemaining=" << swingFootOnlyRemaining
+                    << " kneeSearchFailed=" << swingKneeFailed << " maxKneeRequest=" << maximumSwingKneeRequest << '\n';
                 if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulatedTime);
             }
             accumulator -= FIXED_DT;

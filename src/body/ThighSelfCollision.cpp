@@ -2,11 +2,56 @@
 #include "aura/body/JointGeometry.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/SelfCollision.hpp"
+#include "aura/physics/Impulse.hpp"
+#include "aura/physics/Inertia.hpp"
+#include "aura/physics/MechanicalState.hpp"
 #include <array>
 #include <algorithm>
 #include <cmath>
 
 namespace aura::body {
+    ThighNormalImpulseStep resolveThighNormalVelocity(AuraBody3D& b,float tolerance) {
+        ThighNormalImpulseStep result;
+        const auto left=physics::bodyPartCollisionCapsule(b.leftThigh);
+        const auto right=physics::bodyPartCollisionCapsule(b.rightThigh);
+        result.penetration=physics::capsulePenetration(left,right);
+        if(result.penetration<=tolerance)return result;
+        const auto points=physics::closestPointsBetweenSegments(left.pointA,left.pointB,right.pointA,right.pointB);
+        const auto connector=points.pointB-points.pointA;
+        if(connector.lengthSquared()<1e-12f) {result.degenerateNormal=true;return result;}
+        const auto normal=connector.normalized();
+        auto& a=b.leftThigh.body;auto& c=b.rightThigh.body;
+        const auto speed=[&] {return (physics::velocityAtWorldPoint(c,points.pointB)-
+            physics::velocityAtWorldPoint(a,points.pointA)).dot(normal);};
+        result.normalSpeedBefore=result.normalSpeedAfter=speed();
+        if(result.normalSpeedBefore>=0)return result;
+        const auto rotational=[&](const auto& rb,const auto& point) {
+            const auto r=point-rb.position;
+            return physics::applyInverseInertiaWorld(rb,r.cross(normal)).cross(r).dot(normal);
+        };
+        const float inverseMass=1.0f/a.mass+1.0f/c.mass+rotational(a,points.pointA)+rotational(c,points.pointB);
+        if(!(inverseMass>0) || !std::isfinite(inverseMass))return result;
+        const auto energy=[&] {
+            const auto x=physics::mechanicalState(a),y=physics::mechanicalState(c);
+            return double(x.linearKinetic)+x.rotationalKinetic+double(y.linearKinetic)+y.rotationalKinetic;
+        };
+        const auto momentum=[&] {return std::array<double,3>{
+            double(a.mass)*a.velocity.x+double(c.mass)*c.velocity.x,
+            double(a.mass)*a.velocity.y+double(c.mass)*c.velocity.y,
+            double(a.mass)*a.velocity.z+double(c.mass)*c.velocity.z};};
+        const double beforeEnergy=energy();const auto beforeMomentum=momentum();
+        result.impulseMagnitude=-result.normalSpeedBefore/inverseMass;
+        const auto impulse=normal*result.impulseMagnitude;
+        physics::applyImpulseAtPoint(a,-impulse,points.pointA);
+        physics::applyImpulseAtPoint(c,impulse,points.pointB);
+        result.applied=true;result.normalSpeedAfter=speed();
+        result.kineticEnergyChange=energy()-beforeEnergy;
+        result.predictedWork=double(result.normalSpeedBefore)*result.impulseMagnitude+
+            0.5*inverseMass*double(result.impulseMagnitude)*result.impulseMagnitude;
+        const auto afterMomentum=momentum();
+        for(size_t i=0;i<3;++i)result.momentumChange[i]=afterMomentum[i]-beforeMomentum[i];
+        return result;
+    }
     bool floorMoveIsNoWorse(float beforeY,float afterY,float tolerance) {
         return beforeY >= -tolerance ? afterY >= -tolerance : afterY >= beforeY - tolerance;
     }
@@ -49,6 +94,49 @@ namespace aura::body {
                 if (std::abs(candidateGaps[i]-originalGaps[i])>1e-5f) result.rejections |= AnchorGapDrift;
             }
             return result;
+        }
+        // Bounded SwingTwist experiment: reuse the copied replay's knee search.
+        // The thigh/hip stay fixed; every trial starts from the same shin/foot pose.
+        bool compensateSwingFoot(AuraBody3D& candidate,const AuraSkeleton3D& s,bool left,
+            const ThighCandidateAudit& initial,const std::array<float,6>& originalGaps,float& appliedAngle) {
+            const auto input=candidate;
+            const auto& thigh=left?input.leftThigh:input.rightThigh;
+            const auto& knee=left?s.leftKnee:s.rightKnee;
+            const int first=left?0:3,foot=first+2;
+            const auto pivot=localToWorldPoint(thigh,knee.localAnchorA);
+            const auto axis=thigh.body.orientation.normalized().rotate(knee.hingeAxis.normalized()).normalized();
+            const auto evaluate=[&](double angle,AuraBody3D& copy) {
+                copy=input;auto& shin=left?copy.leftShin:copy.rightShin;
+                rotateSubtreeAroundWorldPoint(s.collectComponent(copy,shin,knee),pivot,
+                    math::Quaternion::fromAxisAngle(axis,static_cast<float>(angle)));
+                return inspect(copy,s,originalGaps,&initial.lowestY);
+            };
+            const auto feasible=[&](const ThighCandidateAudit& m) {
+                for(int i=first;i<first+3;++i)
+                    if(!floorMoveIsNoWorse(initial.lowestY[i],m.lowestY[i]) || m.jointLimitErrors[i]>1e-5f)return false;
+                return (m.rejections&AnchorGapDrift)==0;
+            };
+            constexpr double probe=0.001;
+            AuraBody3D copy;
+            const auto positive=evaluate(probe,copy),negative=evaluate(-probe,copy);
+            const double direction=positive.lowestY[foot]>=negative.lowestY[foot]?1.0:-1.0;
+            const float oldFootY=physics::lowestPoint((left?input.leftFoot:input.rightFoot).body,
+                (left?input.leftFoot:input.rightFoot).size).y;
+            if(std::max(positive.lowestY[foot],negative.lowestY[foot])<=oldFootY)return false;
+            const float angle=relativeJointAngle(thigh,left?input.leftShin:input.rightShin,knee);
+            const double available=direction>0?knee.maxAngle-angle:angle-knee.minAngle;
+            double low=0,high=std::min(probe,available);auto best=input;bool found=false;
+            while(high>0) {
+                if(feasible(evaluate(direction*high,copy))) {best=copy;found=true;break;}
+                if(high>=available)break;
+                low=high;high=std::min(high*2.0,available);
+            }
+            if(!found)return false;
+            for(int i=0;i<40;++i) {
+                const double mid=(low+high)*0.5;
+                if(feasible(evaluate(direction*mid,copy))) {high=mid;best=copy;} else low=mid;
+            }
+            candidate=best;appliedAngle=static_cast<float>(direction*high);return true;
         }
         // Work on a copy of the already hip-rotated pose. Knee motion leaves both
         // thighs untouched. Probe both hinge directions and retain a feasible
@@ -102,6 +190,96 @@ namespace aura::body {
             if (found) {candidate=best;appliedAngle=bestAngle;}
             return found;
         }
+    }
+    ThighSwingCollisionStep correctThighOverlapWithSwing(AuraBody3D& b,const AuraSkeleton3D& s,
+        float maxRequest,float tolerance,ThighSwingCollisionAudit* audit,bool detailCandidates,bool compensateKnees) {
+        ThighSwingCollisionAudit stats;
+        ThighSwingCollisionStep result;
+        result.penetrationBefore=result.penetrationAfter=penetration(b);
+        if(result.penetrationBefore<=tolerance || maxRequest<=0) {if(audit)*audit=stats;return result;}
+        const auto l=physics::bodyPartCollisionCapsule(b.leftThigh),r=physics::bodyPartCollisionCapsule(b.rightThigh);
+        const auto contact=physics::closestPointsBetweenSegments(l.pointA,l.pointB,r.pointA,r.pointB);
+        const auto difference=contact.pointB-contact.pointA;
+        if(difference.lengthSquared()<1e-12f) {stats.degenerate=true;if(audit)*audit=stats;return result;}
+        const auto normal=difference.normalized();
+        const auto inverseParent=b.pelvis.body.orientation.normalized().conjugate();
+        auto leftAxis=inverseParent.rotate((contact.pointA-localToWorldPoint(b.pelvis,s.leftHip.localAnchorA)).cross(-normal));
+        auto rightAxis=inverseParent.rotate((contact.pointB-localToWorldPoint(b.pelvis,s.rightHip.localAnchorA)).cross(normal));
+        // Collision asks for swing only. The API then explicitly retains twist.
+        leftAxis.x=rightAxis.x=0;
+        leftAxis=leftAxis.normalized();rightAxis=rightAxis.normalized();
+        const auto originalGaps=gaps(b,s);
+        const auto initial=inspect(b,s,originalGaps);
+        const float oldLeftTwist=relativeJointTwistAngle(b.pelvis,b.leftThigh,s.leftHip);
+        const float oldRightTwist=relativeJointTwistAngle(b.pelvis,b.rightThigh,s.rightHip);
+        const std::array steps{-maxRequest,-maxRequest*0.5f,0.0f,maxRequest*0.5f,maxRequest};
+        auto best=b;
+        for(float dl:steps) for(float dr:steps) {
+            if(dl==0 && dr==0) continue;
+            ++stats.candidates;
+            if((dl!=0 && leftAxis.lengthSquared()==0) || (dr!=0 && rightAxis.lengthSquared()==0)) {stats.degenerate=true;continue;}
+            if(detailCandidates && audit) {
+                const auto lp=previewJointSwing(b.pelvis,b.leftThigh,s.leftHip,dl==0?math::Vec3{0,1,0}:leftAxis,dl);
+                const auto rp=previewJointSwing(b.pelvis,b.rightThigh,s.rightHip,dr==0?math::Vec3{0,1,0}:rightAxis,dr);
+                auto hypothetical=b;
+                if(dl!=0 && lp.twistDefined) rotateSubtreeAroundWorldPoint(s.collectComponent(hypothetical,hypothetical.leftThigh,s.leftHip),
+                    localToWorldPoint(b.pelvis,s.leftHip.localAnchorA),lp.worldRotation);
+                if(dr!=0 && rp.twistDefined) rotateSubtreeAroundWorldPoint(s.collectComponent(hypothetical,hypothetical.rightThigh,s.rightHip),
+                    localToWorldPoint(b.pelvis,s.rightHip.localAnchorA),rp.worldRotation);
+                const auto geometry=inspect(hypothetical,s,originalGaps,&initial.lowestY);
+                stats.trials[stats.trialCount++]={dl,dr,penetration(hypothetical),lp.angles,rp.angles,
+                    dl!=0?lp.blockedBounds:0u,dr!=0?rp.blockedBounds:0u,(geometry.rejections&15u)==0,
+                    penetration(hypothetical)<result.penetrationBefore-1e-7f,lp.twistDefined && rp.twistDefined};
+            }
+            auto candidate=b;
+            bool accepted=true;
+            if(dl!=0) accepted=applyJointSwingWithComponent(candidate.pelvis,candidate.leftThigh,s.leftHip,
+                s.collectComponent(candidate,candidate.leftThigh,s.leftHip),leftAxis,dl);
+            if(dr!=0) accepted=applyJointSwingWithComponent(candidate.pelvis,candidate.rightThigh,s.rightHip,
+                s.collectComponent(candidate,candidate.rightThigh,s.rightHip),rightAxis,dr) && accepted;
+            if(!accepted) {++stats.blockedBySwingLimit;continue;}
+            const float overlap=penetration(candidate);
+            if(overlap>=result.penetrationBefore-1e-7f) {++stats.noImprovement;continue;}
+            auto trial=inspect(candidate,s,originalGaps,&initial.lowestY);
+            bool swingSafe=true;
+            for(bool left:{true,false}) {
+                const auto& hip=left?s.leftHip:s.rightHip;
+                const auto angles=relativeJointSwingAngles(candidate.pelvis,left?candidate.leftThigh:candidate.rightThigh,hip);
+                swingSafe &= angles.y>=hip.minSwingY-1e-6f && angles.y<=hip.maxSwingY+1e-6f &&
+                             angles.z>=hip.minSwingZ-1e-6f && angles.z<=hip.maxSwingZ+1e-6f;
+            }
+            if(!swingSafe) {++stats.blockedBySwingLimit;continue;}
+            bool floorBlocked=(trial.rejections&15u)!=0;
+            const bool constraintBlocked=(trial.rejections&~15u)!=0 ||
+                std::abs(relativeJointTwistAngle(candidate.pelvis,candidate.leftThigh,s.leftHip)-oldLeftTwist)>1e-5f ||
+                std::abs(relativeJointTwistAngle(candidate.pelvis,candidate.rightThigh,s.rightHip)-oldRightTwist)>1e-5f;
+            float leftKnee=0,rightKnee=0;
+            const bool footOnly=floorBlocked && !constraintBlocked &&
+                (trial.rejections&~(LeftFootFloor|RightFootFloor))==0 &&
+                (!(trial.rejections&LeftFootFloor) || dl!=0) && (!(trial.rejections&RightFootFloor) || dr!=0);
+            stats.footOnlyCandidates+=footOnly;
+            if(compensateKnees && footOnly) {
+                ++stats.kneeSearchCandidates;
+                auto coupled=candidate;bool restored=true;
+                if(trial.rejections&LeftFootFloor) restored=compensateSwingFoot(coupled,s,true,initial,originalGaps,leftKnee);
+                if(restored && (trial.rejections&RightFootFloor)) restored=compensateSwingFoot(coupled,s,false,initial,originalGaps,rightKnee);
+                if(restored) {
+                    const auto checked=inspect(coupled,s,originalGaps,&initial.lowestY);
+                    restored=checked.rejections==0 && penetration(coupled)==overlap;
+                    if(restored) {candidate=coupled;trial=checked;floorBlocked=false;}
+                }
+                stats.kneeRecoveredCandidates+=restored;stats.kneeFailedCandidates+=!restored;
+            }
+            stats.footOnlyRemaining+=footOnly && floorBlocked;
+            stats.blockedByFloor+=floorBlocked;stats.blockedByTwistOrAnchor+=constraintBlocked;
+            if(floorBlocked || constraintBlocked) continue;
+            if(overlap<result.penetrationAfter-1e-7f) {
+                best=candidate;result.penetrationAfter=overlap;result.leftRequest=dl;result.rightRequest=dr;result.leftKneeRequest=leftKnee;result.rightKneeRequest=rightKnee;result.corrected=true;
+            }
+        }
+        if(result.corrected) b=best;
+        if(audit)*audit=stats;
+        return result;
     }
     ThighCollisionStep correctThighCapsuleOverlap(AuraBody3D& b,const AuraSkeleton3D& s,float maxAngleStep,float tolerance,ThighCollisionAudit* audit,ThighFloorPolicy floorPolicy,bool compensateKnees) {
         if (audit) *audit={};

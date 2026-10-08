@@ -2,15 +2,17 @@
 #include "Vec3.hpp"
 
 namespace aura::math {
+    // Double storage avoids magnifying float orientation roundoff in joint twist
+    // extraction near a perpendicular 180-degree swing. Vec3/render matrices stay float.
     struct Quaternion {
-        float w = 1.0f;
-        float x = 0.0f;
-        float y = 0.0f;
-        float z = 0.0f;
+        double w = 1.0f;
+        double x = 0.0f;
+        double y = 0.0f;
+        double z = 0.0f;
 
         Quaternion() = default;
 
-        Quaternion(float w, float x, float y, float z);
+        Quaternion(double w, double x, double y, double z);
 
         static Quaternion fromAxisAngle(const Vec3 &axis, float angleRadians);
 
@@ -20,9 +22,9 @@ namespace aura::math {
 
         [[nodiscard]] Vec3 rotate(const Vec3 &vec) const;
 
-        [[nodiscard]] float lengthSquared() const;
+        [[nodiscard]] double lengthSquared() const;
 
-        [[nodiscard]] float length() const;
+        [[nodiscard]] double length() const;
 
         [[nodiscard]] Quaternion normalized()const;
     };

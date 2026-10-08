@@ -106,6 +106,32 @@ int main(int argc, char **argv) {
     int thighHipOnlyAccepted=0,thighCoupledAccepted=0;float maxKneeCompensation=0;
     bool sharedHipReplay=false;
     bool hipSwingLimits=false;
+    bool thighSwingCollision=false,thighSwingBlocks=false,swingKneeReplay=false,thighSwingKneeCompensation=false;
+    bool thighJointGeometryTrace=false;
+    float largestThighGeometryIncrease=-1;
+    std::string largestThighGeometryJoint,largestThighGeometryOperation;
+    aura::body::AuraBody3D largestThighGeometryBefore,largestThighGeometryAfter;
+    bool thighWorstEvent=false;
+    std::vector<std::string> thighEventSamples,worstThighEventSamples,thighEventHistory;
+    int worstThighEventFrame=0;
+    bool thighContactImpulses=false;
+    int thighImpulseCount=0,thighImpulseDegenerate=0;
+    double largestThighImpulse=0,maxThighImpulseEnergyGain=0,maxThighImpulseWorkResidual=0,maxThighImpulseMomentumDrift=0;
+    std::array<double,3> totalThighImpulseMomentum{};
+    bool thighContactReplay=false;double worstThighContactTime=0;
+    aura::body::AuraBody3D worstThighContactBody;
+    int overlappingThighSteps=0,closingThighSteps=0,degenerateThighSteps=0;
+    float minimumThighNormalSpeed=0;
+    int swingHipOnly=0,swingHipKnee=0,swingFootOnlyCandidates=0,swingFootOnlyRemaining=0,swingKneeFailed=0,swingKneeRecovered=0;
+    float maximumSwingKneeRequest=0;
+    float worstSwingBlockedPenetration=0;double worstSwingBlockedTime=0;int worstSwingBlockedIteration=0;
+    aura::body::ThighSwingCollisionAudit worstSwingBlockedAudit;
+    std::array<float,6> worstSwingHipCoordinates{};
+    std::array<int,8> improvingSwingBoundCounts{};
+    bool kneeSwingWindow=false,kneeWindowFixturePrinted=false;
+    int swingLeftAccepted=0,swingRightAccepted=0,swingAcceptedCalls=0,swingBlockedCalls=0;
+    int swingFloorBlocked=0,swingLimitBlocked=0,swingFloorRejectedTrials=0,swingLimitRejectedTrials=0;
+    float maximumSwingCollisionRequest=0;
     float maximumHipSwingError=0;
     int classACalls=0,classBCalls=0,classBothCalls=0,classACandidates=0,classBCandidates=0;
     int classBHipLimitOnlyCandidates=0, kneeReplayAttempts=0;
@@ -208,6 +234,15 @@ int main(int argc, char **argv) {
         else if (argument == "--no-sphere-self-collision") noSphereSelfCollision = true;
         else if (argument == "--shared-hip-replay") {sharedHipReplay=true;thighKneeCompensation=true;thighSelfCollision=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
         else if (argument == "--hip-swing-limits") {hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--thigh-swing-collision") {thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--thigh-joint-geometry-trace") {thighJointGeometryTrace=true;thighContactImpulses=true;thighContactReplay=true;thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--thigh-worst-event") {thighWorstEvent=true;thighContactImpulses=true;thighContactReplay=true;thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--thigh-swing-contact-impulses") {thighContactImpulses=true;thighContactReplay=true;thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--thigh-contact-replay") {thighContactReplay=true;thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--thigh-swing-knee-compensation") {thighSwingKneeCompensation=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--swing-knee-replay") {swingKneeReplay=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--thigh-swing-blocks") {thighSwingBlocks=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
+        else if (argument == "--knee-swing-window") {kneeSwingWindow=true;thighSwingCollision=true;hipSwingLimits=true;roomBounds=true;noSphereSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;liveVelocityMetrics=true;}
         else if (argument == "--thigh-knee-compensation") {thighKneeCompensation=true;thighSelfCollision=true;localAngularLimits=true;componentPositions=true;allLocalAnchors=true;}
         else if (argument == "--thigh-knee-replay") { thighKneeReplay=true; thighSelfCollision=true; roomBounds=true; noSphereSelfCollision=true; localAngularLimits=true; componentPositions=true; allLocalAnchors=true; liveVelocityMetrics=true; }
         else if (argument == "--strict-thigh-floor") strictThighFloor = true;
@@ -247,9 +282,13 @@ int main(int argc, char **argv) {
         else if (argument == "--left-shoulder-subtree") leftShoulderSubtree = true;
         else if (argument == "--major-branches") majorBranches = true;
         else {
-            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--hip-capsule-rotation-replay] [--room-bounds] [--no-sphere-self-collision] [--thigh-self-collision] [--strict-thigh-floor] [--thigh-floor-policy-replay] [--thigh-knee-replay] [--thigh-knee-compensation] [--shared-hip-replay] [--hip-swing-limits] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
+            std::cerr << "Usage: aura_full_body_diagnostics [--contact-window | --head-window | --ankle-window | --wrist-window] [--waist-groups] [--head-pivot] [--head-leaf-position] [--neck-subtree] [--left-shoulder-subtree] [--major-branches] [--right-knee-subtree] [--right-elbow-subtree] [--left-limb-components] [--energy-window] [--linear-mass-replay] [--leg-velocity-replay] [--local-leg-velocity-replay] [--component-position-replay] [--component-positions] [--local-angular-limits] [--angular-momentum-diagnostic] [--geometry-momentum-diagnostic] [--floor-momentum-diagnostic] [--floor-energy-diagnostic] [--self-collision] [--self-collision-window] [--self-translation-replay] [--self-fraction-replay] [--neutral-sphere-compatibility] [--hip-sphere-compatibility-replay] [--hip-capsule-rotation-replay] [--room-bounds] [--no-sphere-self-collision] [--thigh-self-collision] [--strict-thigh-floor] [--thigh-floor-policy-replay] [--thigh-knee-replay] [--thigh-knee-compensation] [--shared-hip-replay] [--hip-swing-limits] [--thigh-swing-collision] [--thigh-swing-knee-compensation] [--thigh-contact-replay] [--thigh-swing-contact-impulses] [--thigh-worst-event] [--thigh-joint-geometry-trace] [--thigh-swing-blocks] [--swing-knee-replay] [--knee-swing-window] [--knee-projection-replay] [--legacy-geometry-compensation] [--hand-geometry-momentum] [--floor-failure-diagnostic] [--all-local-anchors] [--skeleton-velocity-replay] [--right-leg-local-anchors] [--live-velocity-metrics] [--energy-start=SECONDS] [--right-shin-floor-subtree] [--right-shin-floor-motion] [--shin-floor-replay] [--shin-contact-audit] [--hand-floor-replay] [--hand-contact-cycles] [--hand-position-stages] [--pinned-wrist-replay] [--pinned-elbow-replay] [--pinned-shoulder-replay] [--shoulder-component-replay] [--shoulder-component-rotation-replay] [--shoulder-rotation-feasibility] [--shoulder-capacity-comparison] [--shoulder-limit-replay]\n";
             return 2;
         }
+    }
+    if(thighSwingCollision && thighSelfCollision) {
+        std::cerr << "Choose either --thigh-swing-collision or a legacy thigh collision mode.\n";
+        return 2;
     }
     if (noSphereSelfCollision) selfCollision = false;
     if (shinFloorReplay) ankleWindow = true;
@@ -1012,6 +1051,10 @@ int main(int argc, char **argv) {
     const auto auditOperation = [&](const char *operationName, const auto &operation) {
         const auto measuredOperation = [&] {
             const std::string op = operationName;
+            const bool kneeTrace=kneeSwingWindow && diagnosticTime>=9.225-1e-9 && diagnosticTime<=9.241667 &&
+                (op.find("Angle")!=std::string::npos || op.find("Position")!=std::string::npos || op=="thighSwingPoseProjection");
+            const float kneeAngleBefore=kneeTrace?aura::body::relativeJointAngle(auraBody.leftThigh,auraBody.leftShin,skeleton.leftKnee):0;
+            const auto kneeCopy=kneeTrace && std::string(energyObject)=="leftKnee" && op.find("Angle")!=std::string::npos?auraBody:aura::body::AuraBody3D{};
             if (kneeProjectionReplay && !kneeProjectionDone && std::abs(diagnosticTime-152*FIXED_DT)<1e-9 &&
                 diagnosticIteration==1 && std::string(diagnosticSweep)=="forward" &&
                 std::string(energyObject)=="rightKnee" && op=="correctRightKneeAngleAroundPivot") replayKneeProjection();
@@ -1072,7 +1115,82 @@ int main(int argc, char **argv) {
                 (op.find("Position") != std::string::npos || op.find("Angle") != std::string::npos) &&
                 op.find("Velocity") == std::string::npos;
             const auto selfBefore = selfGeometryTrace ? selfPoses() : SelfPoses{};
+            const bool thighGeometryTrace=thighJointGeometryTrace && diagnosticIteration==1 &&
+                std::abs(diagnosticTime-563*FIXED_DT)<1e-9 && std::string(diagnosticSweep)=="forward" &&
+                (op.find("Angle")!=std::string::npos || op.find("Position")!=std::string::npos) &&
+                op.find("Velocity")==std::string::npos;
+            const auto thighBefore=thighGeometryTrace?auraBody:aura::body::AuraBody3D{};
             operation();
+            if(thighGeometryTrace) {
+                const float before=aura::physics::capsulePenetration(aura::physics::bodyPartCollisionCapsule(thighBefore.leftThigh),
+                    aura::physics::bodyPartCollisionCapsule(thighBefore.rightThigh));
+                const float after=aura::physics::capsulePenetration(aura::physics::bodyPartCollisionCapsule(auraBody.leftThigh),
+                    aura::physics::bodyPartCollisionCapsule(auraBody.rightThigh));
+                const auto connection=std::find_if(joints.begin(),joints.end(),[&](const auto& j){return std::string(j.name)==energyObject;});
+                auto copy=thighBefore;auto beforeParts=skeleton.collectComponent(copy,copy.torso,skeleton.head);beforeParts.push_back(&copy.head);
+                const auto prior=[&](const auto* p) {return *std::find_if(beforeParts.begin(),beforeParts.end(),[&](const auto* old){return old->name==p->name;});};
+                float gapBefore=0,gapAfter=0;std::string moved,scope="none",kind="none";bool translated=false,rotated=false;
+                if(connection!=joints.end()) {
+                    gapBefore=(aura::body::localToWorldPoint(*prior(connection->partB),connection->constraint.localAnchorB)-
+                        aura::body::localToWorldPoint(*prior(connection->partA),connection->constraint.localAnchorA)).length();
+                    gapAfter=(aura::body::localToWorldPoint(*connection->partB,connection->constraint.localAnchorB)-
+                        aura::body::localToWorldPoint(*connection->partA,connection->constraint.localAnchorA)).length();
+                }
+                std::vector<aura::body::BodyPart3D*> movedParts;
+                for(auto* p:parts) {
+                    const auto& old=prior(p)->body;const auto& now=p->body;
+                    const bool dp=(old.position-now.position).lengthSquared()>0;
+                    const bool dq=old.orientation.w!=now.orientation.w || old.orientation.x!=now.orientation.x ||
+                        old.orientation.y!=now.orientation.y || old.orientation.z!=now.orientation.z;
+                    translated|=dp;rotated|=dq;
+                    if(dp || dq) {if(!moved.empty())moved+=';';moved+=p->name;movedParts.push_back(p);}
+                }
+                if(connection!=joints.end()) {
+                    const auto coverage=[&](auto& root) {
+                        const auto component=skeleton.collectComponent(auraBody,root,connection->constraint);int count=0;
+                        for(auto* p:component)count+=std::find(movedParts.begin(),movedParts.end(),p)!=movedParts.end();
+                        return count==0?"none":count==int(component.size())?"full":"partial";
+                    };
+                    scope=std::string("A=")+coverage(*connection->partA)+";B="+coverage(*connection->partB);
+                }
+                kind=rotated?(translated?"rotation_and_translation":"rotation"):translated?"translation":"none";
+                const auto coordinates=[&](const auto& b) {
+                    const auto l=aura::body::relativeJointSwingAngles(b.pelvis,b.leftThigh,skeleton.leftHip);
+                    const auto r=aura::body::relativeJointSwingAngles(b.pelvis,b.rightThigh,skeleton.rightHip);
+                    std::cout<<','<<aura::body::relativeJointTwistAngle(b.pelvis,b.leftThigh,skeleton.leftHip)<<','<<l.y<<','<<l.z
+                        <<','<<aura::body::relativeJointTwistAngle(b.pelvis,b.rightThigh,skeleton.rightHip)<<','<<r.y<<','<<r.z;
+                };
+                std::cout<<std::scientific<<std::setprecision(9)<<"thighJointGeometry,"<<diagnosticTime<<','<<energyObject<<','<<op
+                    <<','<<before<<','<<after<<','<<after-before<<','<<gapBefore<<','<<gapAfter;
+                coordinates(thighBefore);coordinates(auraBody);
+                std::cout<<','<<scope<<','<<kind<<','<<(moved.empty()?"none":moved)<<'\n';
+                if(after-before>largestThighGeometryIncrease) {
+                    largestThighGeometryIncrease=after-before;largestThighGeometryJoint=energyObject;
+                    largestThighGeometryOperation=op;largestThighGeometryBefore=thighBefore;largestThighGeometryAfter=auraBody;
+                }
+            }
+            if(kneeTrace) {
+                const float after=aura::body::relativeJointAngle(auraBody.leftThigh,auraBody.leftShin,skeleton.leftKnee);
+                const auto flags=std::cout.flags();const auto precision=std::cout.precision();
+                std::cout << std::scientific << std::setprecision(9) << "kneeSwingStage,time=" << diagnosticTime
+                    << ",iteration=" << diagnosticIteration << ",sweep=" << diagnosticSweep << ",joint=" << energyObject
+                    << ",operation=" << op << ",before=" << kneeAngleBefore << ",after=" << after << '\n';
+                if(!kneeWindowFixturePrinted && std::string(energyObject)=="leftKnee" && op.find("Angle")!=std::string::npos &&
+                    std::abs(aura::body::jointAngleError(auraBody.leftThigh,auraBody.leftShin,skeleton.leftKnee))>1e-5f) {
+                    auto copy=kneeCopy;auto fixtureParts=skeleton.collectComponent(copy,copy.torso,skeleton.head);fixtureParts.push_back(&copy.head);
+                    for(const auto* p:fixtureParts) {
+                        const auto& b=p->body;
+                        std::cout << "kneeSwingInput," << p->name << ',' << p->size.x << ',' << p->size.y << ',' << p->size.z << ',' << b.mass
+                            << ',' << b.position.x << ',' << b.position.y << ',' << b.position.z
+                            << ',' << b.orientation.w << ',' << b.orientation.x << ',' << b.orientation.y << ',' << b.orientation.z
+                            << ',' << b.velocity.x << ',' << b.velocity.y << ',' << b.velocity.z
+                            << ',' << b.angularVelocity.x << ',' << b.angularVelocity.y << ',' << b.angularVelocity.z
+                            << ',' << b.momentOfInertia.x << ',' << b.momentOfInertia.y << ',' << b.momentOfInertia.z << '\n';
+                    }
+                    kneeWindowFixturePrinted=true;
+                }
+                std::cout.flags(flags);std::cout.precision(precision);
+            }
             if (selfGeometryTrace)
                 selfGeometrySamples.push_back({diagnosticSweep, energyObject, operationName, selfBefore, selfPoses()});
 
@@ -2305,12 +2423,35 @@ int main(int argc, char **argv) {
             << "floorEnergy,time,outerIteration,part,contacts,KEbefore,KEafterDamping,KEafterNormal,deltaDamping,deltaNormal,normalImpulseSum,vBefore,vDamped,vFinal,wBefore,wDamped,wFinal\n"
             << "floorNormalImpulse,time,outerIteration,part,contactIteration,contactIndex,x,y,z,J,vnBefore,vnAfter,KEbefore,KEafter,deltaKE,vBefore,vAfter,wBefore,wAfter\n";
     }
+    // Buffer only one step, then retain the step owning the largest completed
+    // overlap. Sampling is read-only and does not alter candidate selection.
+    const auto thighEventSample=[&](const char* stage,const aura::body::ThighSwingCollisionAudit* poseAudit=nullptr,
+                                    const aura::body::ThighSwingCollisionStep* pose=nullptr,
+                                    const aura::body::ThighNormalImpulseStep* response=nullptr) {
+        if(!thighWorstEvent)return;
+        const auto l=aura::physics::bodyPartCollisionCapsule(auraBody.leftThigh);
+        const auto r=aura::physics::bodyPartCollisionCapsule(auraBody.rightThigh);
+        const auto points=aura::physics::closestPointsBetweenSegments(l.pointA,l.pointB,r.pointA,r.pointB);
+        const auto delta=points.pointB-points.pointA;
+        const bool defined=delta.lengthSquared()>=1e-12f;
+        const float vn=defined?(aura::physics::velocityAtWorldPoint(auraBody.rightThigh.body,points.pointB)-
+            aura::physics::velocityAtWorldPoint(auraBody.leftThigh.body,points.pointA)).dot(delta.normalized()):0;
+        std::ostringstream row;row<<std::scientific<<std::setprecision(9)
+            << "thighWorstStage," << diagnosticTime << ',' << diagnosticIteration << ',' << stage
+            << ',' << aura::physics::capsulePenetration(l,r) << ',' << vn << ',' << defined
+            << ',' << (pose?int(pose->corrected):-1) << ',' << (poseAudit?poseAudit->blockedBySwingLimit:0)
+            << ',' << (poseAudit?poseAudit->blockedByFloor:0) << ',' << (poseAudit?poseAudit->blockedByTwistOrAnchor:0)
+            << ',' << (poseAudit?poseAudit->noImprovement:0) << ',' << (response?int(response->applied):-1)
+            << ',' << (response?response->impulseMagnitude:0);
+        thighEventSamples.push_back(row.str());
+    };
     for (int frame = 0; frame < steps; ++frame) {
         selfGeometrySamples.clear();
         diagnosticTime = (frame + 1) * FIXED_DT;
         const auto dt = static_cast<float>(FIXED_DT);
         diagnosticIteration = 0;
         diagnosticSweep = "integration";
+        thighEventSamples.clear();thighEventSample("beginStep");
         energyStage("stepStart");
         if (handGeometryMomentumDiagnostic) {
             momentumStages.clear(); momentumOperations.clear(); stepMomentumBefore = wholeMomentum();
@@ -2331,6 +2472,7 @@ int main(int argc, char **argv) {
             auditOperation("integrateAngularMotion", [&] { aura::physics::integrateAngularMotion(part->body, dt); });
         }
         momentumStage(0, "integrationGravity", beforeIntegrationMomentum);
+        thighEventSample("afterIntegration");
         const double stepTime = (frame + 1) * FIXED_DT;
         const bool trace = contactWindow && stepTime >= 0.35 - 1e-9 && stepTime <= 0.40 + 1e-9;
         for (int iteration = 0; iteration < jointIterations; ++iteration) {
@@ -2561,10 +2703,16 @@ int main(int argc, char **argv) {
             const auto lowB = trace ? lowestPoints() : std::array<float, 16>{};
             const auto countB = trace ? contactCounts() : std::array<std::size_t, 16>{};
             energyStage("B_afterFloor");
+            thighEventSample("afterFloor");
             selfCheckpoint("A_beforeSelfCollision");
             if (selfCollision) aura::physics::resolveBodySelfCollisions(auraBody, skeleton);
             selfCheckpoint("B_afterSelfCollision");
             diagnosticSweep = "forward";
+            if(thighJointGeometryTrace && diagnosticIteration==1 && std::abs(diagnosticTime-563*FIXED_DT)<1e-9) {
+                std::cout<<"thighJointGeometry,time,joint,operation,penetrationBefore,penetrationAfter,deltaPenetration,gapBefore,gapAfter,leftTwistBefore,leftSwingYBefore,leftSwingZBefore,rightTwistBefore,rightSwingYBefore,rightSwingZBefore,leftTwistAfter,leftSwingYAfter,leftSwingZAfter,rightTwistAfter,rightSwingYAfter,rightSwingZAfter,componentScope,motion,movedParts\n";
+                std::cout<<std::scientific<<std::setprecision(9)<<"thighJointGeometryStart,"<<diagnosticTime<<','
+                    <<aura::test::hipRotationMetrics(auraBody,skeleton).penetration<<'\n';
+            }
             for (auto &joint: joints) {
                 if (tracingAnkle() && &joint.constraint == &skeleton.rightHip) ankleSample("Cbefore");
                 solveConnection(joint);
@@ -2572,6 +2720,18 @@ int main(int argc, char **argv) {
                 if (tracingAnkle() && &joint.constraint == &skeleton.rightKnee) ankleSample("D");
             }
             momentumStage(iteration + 1, "jointForwardGeometryVelocity", beforeForwardMomentum);
+            if(thighJointGeometryTrace && diagnosticIteration==1 && std::abs(diagnosticTime-563*FIXED_DT)<1e-9) {
+                std::cout<<"thighJointGeometryLargest,"<<largestThighGeometryJoint<<','<<largestThighGeometryOperation<<','<<largestThighGeometryIncrease<<'\n';
+                auto copy=largestThighGeometryBefore;auto saved=skeleton.collectComponent(copy,copy.torso,skeleton.head);saved.push_back(&copy.head);
+                for(const auto* p:saved) {
+                    const auto& b=p->body;
+                    std::cout<<std::setprecision(17)<<"thighJointGeometryInput,"<<p->name<<','<<p->size.x<<','<<p->size.y<<','<<p->size.z<<','<<b.mass
+                        <<','<<b.position.x<<','<<b.position.y<<','<<b.position.z<<','<<b.orientation.w<<','<<b.orientation.x<<','<<b.orientation.y<<','<<b.orientation.z
+                        <<','<<b.velocity.x<<','<<b.velocity.y<<','<<b.velocity.z<<','<<b.angularVelocity.x<<','<<b.angularVelocity.y<<','<<b.angularVelocity.z
+                        <<','<<b.momentOfInertia.x<<','<<b.momentOfInertia.y<<','<<b.momentOfInertia.z<<'\n';
+                }
+                return 0; // Read-only diagnostic ends after the requested forward sweep.
+            }
             const auto beforeBackwardMomentum = handGeometryMomentumDiagnostic ? wholeMomentum() : WholeMomentum{};
             const auto gapsC = trace ? anchorGaps() : std::array<float, 15>{};
             const auto lowC = trace ? lowestPoints() : std::array<float, 16>{};
@@ -2603,7 +2763,82 @@ int main(int argc, char **argv) {
             if (floorFailureDiagnostic && !floorFailureReported)
                 floorFailureIterations[iteration].afterBackward = floorFailureCheckpoint();
             momentumStage(iteration + 1, "jointBackwardGeometryVelocity", beforeBackwardMomentum);
-            if (thighSelfCollision) {
+            if(thighSwingCollision) {
+                thighEventSample("afterJointGeometryVelocity");
+                if(swingKneeReplay && diagnosticIteration==2 && std::abs(diagnosticTime-2.516666666666667)<1e-9) {
+                    const auto l=aura::physics::bodyPartCollisionCapsule(auraBody.leftThigh);
+                    const auto r=aura::physics::bodyPartCollisionCapsule(auraBody.rightThigh);
+                    const auto contact=aura::physics::closestPointsBetweenSegments(l.pointA,l.pointB,r.pointA,r.pointB);
+                    const auto normal=(contact.pointB-contact.pointA).normalized();
+                    auto axis=auraBody.pelvis.body.orientation.normalized().conjugate().rotate(
+                        (contact.pointB-aura::body::localToWorldPoint(auraBody.pelvis,skeleton.rightHip.localAnchorA)).cross(normal));
+                    axis.x=0;axis=axis.normalized();
+                    std::cout << std::scientific << std::setprecision(17)
+                        << "swingKneeRequest," << axis.x << ',' << axis.y << ',' << axis.z << ',' << 0.01f << '\n';
+                    for(const auto* p:parts) {
+                        const auto& b=p->body;
+                        std::cout << "swingKneeInput," << p->name << ',' << p->size.x << ',' << p->size.y << ',' << p->size.z << ',' << b.mass
+                            << ',' << b.position.x << ',' << b.position.y << ',' << b.position.z
+                            << ',' << b.orientation.w << ',' << b.orientation.x << ',' << b.orientation.y << ',' << b.orientation.z
+                            << ',' << b.velocity.x << ',' << b.velocity.y << ',' << b.velocity.z
+                            << ',' << b.angularVelocity.x << ',' << b.angularVelocity.y << ',' << b.angularVelocity.z
+                            << ',' << b.momentOfInertia.x << ',' << b.momentOfInertia.y << ',' << b.momentOfInertia.z << '\n';
+                    }
+                    return 0; // Snapshot only: no new correction is applied live.
+                }
+                aura::body::ThighSwingCollisionAudit audit;
+                aura::body::ThighSwingCollisionStep step;
+                auditOperation("thighSwingPoseProjection",[&] {
+                    step=aura::body::correctThighOverlapWithSwing(auraBody,skeleton,0.01f,0.001f,&audit,thighSwingBlocks,thighSwingKneeCompensation);
+                });
+                thighEventSample("afterThighGeometry",&audit,&step);
+                if(thighContactImpulses) {
+                    aura::body::ThighNormalImpulseStep response;
+                    auditOperation("thighNormalImpulse",[&] {response=aura::body::resolveThighNormalVelocity(auraBody);});
+                    thighEventSample("afterThighImpulse",nullptr,nullptr,&response);
+                    thighImpulseCount+=response.applied;thighImpulseDegenerate+=response.degenerateNormal;
+                    largestThighImpulse=std::max(largestThighImpulse,double(response.impulseMagnitude));
+                    maxThighImpulseEnergyGain=std::max(maxThighImpulseEnergyGain,response.kineticEnergyChange);
+                    maxThighImpulseWorkResidual=std::max(maxThighImpulseWorkResidual,std::abs(response.kineticEnergyChange-response.predictedWork));
+                    double driftSquared=0;
+                    for(size_t i=0;i<3;++i) {totalThighImpulseMomentum[i]+=response.momentumChange[i];driftSquared+=response.momentumChange[i]*response.momentumChange[i];}
+                    maxThighImpulseMomentumDrift=std::max(maxThighImpulseMomentumDrift,std::sqrt(driftSquared));
+                }
+                const bool coupled=step.leftKneeRequest!=0 || step.rightKneeRequest!=0;
+                swingHipOnly+=step.corrected && !coupled;swingHipKnee+=step.corrected && coupled;
+                swingFootOnlyCandidates+=audit.footOnlyCandidates;swingFootOnlyRemaining+=audit.footOnlyRemaining;
+                swingKneeFailed+=audit.kneeFailedCandidates;swingKneeRecovered+=audit.kneeRecoveredCandidates;
+                maximumSwingKneeRequest=std::max({maximumSwingKneeRequest,std::abs(step.leftKneeRequest),std::abs(step.rightKneeRequest)});
+                swingAcceptedCalls+=step.corrected;
+                swingLeftAccepted+=step.corrected && step.leftRequest!=0;
+                swingRightAccepted+=step.corrected && step.rightRequest!=0;
+                const bool blocked=!step.corrected && step.penetrationBefore>0.001f;
+                if(thighSwingBlocks) {
+                    for(int i=0;i<audit.trialCount;++i) {
+                        const auto& trial=audit.trials[i];
+                        if(!trial.improves || !trial.twistDefined)continue;
+                        for(unsigned bit=0;bit<4;++bit) {
+                            improvingSwingBoundCounts[bit]+=(trial.leftBounds&(1u<<bit))!=0;
+                            improvingSwingBoundCounts[bit+4]+=(trial.rightBounds&(1u<<bit))!=0;
+                        }
+                    }
+                    if(blocked && step.penetrationBefore>worstSwingBlockedPenetration) {
+                        worstSwingBlockedPenetration=step.penetrationBefore;worstSwingBlockedTime=diagnosticTime;
+                        worstSwingBlockedIteration=diagnosticIteration;worstSwingBlockedAudit=audit;
+                        const auto left=aura::body::relativeJointSwingAngles(auraBody.pelvis,auraBody.leftThigh,skeleton.leftHip);
+                        const auto right=aura::body::relativeJointSwingAngles(auraBody.pelvis,auraBody.rightThigh,skeleton.rightHip);
+                        worstSwingHipCoordinates={aura::body::relativeJointTwistAngle(auraBody.pelvis,auraBody.leftThigh,skeleton.leftHip),left.y,left.z,
+                            aura::body::relativeJointTwistAngle(auraBody.pelvis,auraBody.rightThigh,skeleton.rightHip),right.y,right.z};
+                    }
+                }
+                swingBlockedCalls+=blocked;
+                swingFloorBlocked+=blocked && audit.blockedByFloor>0;
+                swingLimitBlocked+=blocked && audit.blockedBySwingLimit>0;
+                swingFloorRejectedTrials+=audit.blockedByFloor;
+                swingLimitRejectedTrials+=audit.blockedBySwingLimit;
+                maximumSwingCollisionRequest=std::max({maximumSwingCollisionRequest,std::abs(step.leftRequest),std::abs(step.rightRequest)});
+            }
+            else if (thighSelfCollision) {
                 if (thighFloorPolicyReplay && diagnosticIteration==1 && std::abs(diagnosticTime-1.5083333333333333)<1e-9) {
                     auto strictCopy=auraBody, noWorseCopy=auraBody;
                     aura::body::ThighCollisionAudit strictAudit,noWorseAudit;
@@ -2754,6 +2989,11 @@ int main(int argc, char **argv) {
                 maxThighAngleStep = std::max({maxThighAngleStep,std::abs(correction.leftAngle),std::abs(correction.rightAngle)});
             }
             if (roomBounds && !aura::physics::resolveRoomCollisions(roomBodies,room)) ++roomFitFailures;
+            thighEventSample("afterRoom");
+            if(kneeSwingWindow && diagnosticTime>=9.225-1e-9 && diagnosticTime<=9.241667)
+                std::cout << std::scientific << std::setprecision(9) << "kneeSwingEnd,time=" << diagnosticTime
+                    << ",iteration=" << diagnosticIteration << ",angle="
+                    << aura::body::relativeJointAngle(auraBody.leftThigh,auraBody.leftShin,skeleton.leftKnee) << '\n';
             energyStage("D_afterBackward");
             velocitySweepSample("afterBackwardGeometryVelocity");
             if (tracingAnkle()) ankleSample("J");
@@ -2845,6 +3085,9 @@ int main(int argc, char **argv) {
         }
         observeVelocityMetrics();
         const double time = (frame + 1) * FIXED_DT;
+        if(kneeSwingWindow && time>=9.225-1e-9 && time<=9.241667)
+            std::cout << std::scientific << std::setprecision(9) << "kneeSwingStep,time=" << time << ",angle="
+                << aura::body::relativeJointAngle(auraBody.leftThigh,auraBody.leftShin,skeleton.leftKnee) << '\n';
         if (handGeometryMomentumDiagnostic && !firstMomentumReported) {
             const auto after = wholeMomentum();
             const double change = std::hypot(after[0] - stepMomentumBefore[0], after[2] - stepMomentumBefore[2]);
@@ -2894,6 +3137,25 @@ int main(int argc, char **argv) {
             }
         }
         const auto thighMetrics = aura::test::hipRotationMetrics(auraBody,skeleton);
+        if(thighWorstEvent) {
+            thighEventSample("endStep");thighEventHistory.push_back(thighEventSamples.back());
+            if(thighMetrics.penetration>maxThighPenetration) {worstThighEventSamples=thighEventSamples;worstThighEventFrame=frame;}
+        }
+        if(thighContactReplay && thighMetrics.penetration>0) {
+            ++overlappingThighSteps;
+            const auto l=aura::physics::bodyPartCollisionCapsule(auraBody.leftThigh);
+            const auto r=aura::physics::bodyPartCollisionCapsule(auraBody.rightThigh);
+            const auto closest=aura::physics::closestPointsBetweenSegments(l.pointA,l.pointB,r.pointA,r.pointB);
+            const auto delta=closest.pointB-closest.pointA;
+            if(delta.lengthSquared()<1e-12f) ++degenerateThighSteps;
+            else {
+                const auto relative=aura::physics::velocityAtWorldPoint(auraBody.rightThigh.body,closest.pointB)-
+                    aura::physics::velocityAtWorldPoint(auraBody.leftThigh.body,closest.pointA);
+                const float speed=relative.dot(delta.normalized());
+                closingThighSteps+=speed<0;minimumThighNormalSpeed=std::min(minimumThighNormalSpeed,speed);
+            }
+            if(thighMetrics.penetration>maxThighPenetration) {worstThighContactTime=time;worstThighContactBody=auraBody;}
+        }
         if (thighSelfCollision && thighMetrics.penetration>maxThighPenetration) {
             worstThighTime=time;worstThighMetrics=thighMetrics;
             auto replay=auraBody;
@@ -3108,6 +3370,66 @@ int main(int argc, char **argv) {
         std::cout << "angularMomentumDiagnostic,no operation exceeded 0.01 kg m/s horizontal momentum change\n";
     std::cout << "Position/angular policy: componentPositions=" << componentPositions << " localAngularLimits=" << localAngularLimits << " legacyGeometryCompensation=" << legacyGeometryCompensation << '\n';
     std::cout << "hipSwingSummary,enabled=" << hipSwingLimits << ",maximumCompletedStepLimitError=" << maximumHipSwingError << '\n';
+    if(thighWorstEvent) {
+        std::cout << "thighWorstStage,time,iteration,stage,penetration,normalSpeed,normalDefined,poseAccepted,swingRejectedCandidates,floorRejectedCandidates,twistAnchorRejectedCandidates,noImprovementCandidates,impulseApplied,impulseMagnitude\n";
+        for(const auto& sample:worstThighEventSamples)std::cout<<sample<<'\n';
+        std::cout << "thighWorstNeighborhood,completed steps surrounding the worst event\n";
+        for(int i=std::max(0,worstThighEventFrame-4);i<=std::min(int(thighEventHistory.size())-1,worstThighEventFrame+4);++i)
+            std::cout<<thighEventHistory[i]<<'\n';
+    }
+    if(thighContactReplay) {
+        const auto l=aura::physics::bodyPartCollisionCapsule(worstThighContactBody.leftThigh);
+        const auto r=aura::physics::bodyPartCollisionCapsule(worstThighContactBody.rightThigh);
+        const auto closest=aura::physics::closestPointsBetweenSegments(l.pointA,l.pointB,r.pointA,r.pointB);
+        const auto normal=(closest.pointB-closest.pointA).normalized();
+        const auto relative=aura::physics::velocityAtWorldPoint(worstThighContactBody.rightThigh.body,closest.pointB)-
+            aura::physics::velocityAtWorldPoint(worstThighContactBody.leftThigh.body,closest.pointA);
+        std::cout << std::scientific << std::setprecision(17)
+            << "thighContactSnapshot," << worstThighContactTime << ',' << maxThighPenetration << ',' << relative.dot(normal) << '\n'
+            << "thighContactSummary,overlappingSteps=" << overlappingThighSteps << ",closingSteps=" << closingThighSteps
+            << ",degenerateSteps=" << degenerateThighSteps << ",minimumNormalSpeed=" << minimumThighNormalSpeed << '\n';
+        auto copied=worstThighContactBody;
+        auto copiedParts=skeleton.collectComponent(copied,copied.torso,skeleton.head);copiedParts.push_back(&copied.head);
+        for(const auto* p:copiedParts) {
+            const auto& b=p->body;
+            std::cout << "thighContactInput," << p->name << ',' << p->size.x << ',' << p->size.y << ',' << p->size.z << ',' << b.mass
+                << ',' << b.position.x << ',' << b.position.y << ',' << b.position.z
+                << ',' << b.orientation.w << ',' << b.orientation.x << ',' << b.orientation.y << ',' << b.orientation.z
+                << ',' << b.velocity.x << ',' << b.velocity.y << ',' << b.velocity.z
+                << ',' << b.angularVelocity.x << ',' << b.angularVelocity.y << ',' << b.angularVelocity.z
+                << ',' << b.momentOfInertia.x << ',' << b.momentOfInertia.y << ',' << b.momentOfInertia.z << '\n';
+        }
+    }
+    std::cout << "thighImpulseSummary,enabled=" << thighContactImpulses << ",impulses=" << thighImpulseCount
+        << ",degenerate=" << thighImpulseDegenerate << ",largestImpulse=" << largestThighImpulse
+        << ",maximumPositiveDeltaKE=" << maxThighImpulseEnergyGain << ",maximumWorkResidual=" << maxThighImpulseWorkResidual
+        << ",maximumMomentumDrift=" << maxThighImpulseMomentumDrift << ",totalDeltaPx=" << totalThighImpulseMomentum[0]
+        << ",totalDeltaPy=" << totalThighImpulseMomentum[1] << ",totalDeltaPz=" << totalThighImpulseMomentum[2] << '\n';
+    if(thighSwingCollision) std::cout << "thighSwingSummary,acceptedCalls=" << swingAcceptedCalls
+        << ",leftAccepted=" << swingLeftAccepted << ",rightAccepted=" << swingRightAccepted
+        << ",kneeCompensation=" << thighSwingKneeCompensation << ",hipOnlyAccepted=" << swingHipOnly << ",hipKneeAccepted=" << swingHipKnee
+        << ",footOnlyCandidates=" << swingFootOnlyCandidates << ",footOnlyRemaining=" << swingFootOnlyRemaining
+        << ",kneeRecoveredCandidates=" << swingKneeRecovered << ",kneeFailedCandidates=" << swingKneeFailed << ",maxKneeRequest=" << maximumSwingKneeRequest
+        << ",blockedCalls=" << swingBlockedCalls << ",blockedCallsWithSwingLimit=" << swingLimitBlocked
+        << ",blockedCallsWithFloor=" << swingFloorBlocked << ",swingLimitRejectedTrials=" << swingLimitRejectedTrials
+        << ",floorRejectedTrials=" << swingFloorRejectedTrials << ",maximumRequest=" << maximumSwingCollisionRequest
+        << ",maxPenetration=" << maxThighPenetration << ",maxLegGap=" << maxLegGap << ",minFootY=" << minFootY
+        << ",maxPositionDistance=" << maxDistance << ",finite=" << finite << '\n';
+    if(thighSwingBlocks) {
+        std::cout << "swingBlockedWorst,time=" << worstSwingBlockedTime << ",iteration=" << worstSwingBlockedIteration
+            << ",penetration=" << worstSwingBlockedPenetration;
+        for(float coordinate:worstSwingHipCoordinates)std::cout << ',' << coordinate;
+        std::cout << "\nswingBoundLegend,Ymin=1,Ymax=2,Zmin=4,Zmax=8\n";
+        std::cout << "swingImprovingBoundCounts,leftYmin,leftYmax,leftZmin,leftZmax,rightYmin,rightYmax,rightZmin,rightZmax\nswingImprovingBoundCounts";
+        for(int count:improvingSwingBoundCounts)std::cout << ',' << count;
+        std::cout << "\nswingBlockedTrial,leftRequest,rightRequest,leftY,leftZ,rightY,rightZ,leftBoundMask,rightBoundMask,penetration,floorSafe,improves,twistDefined\n";
+        for(int i=0;i<worstSwingBlockedAudit.trialCount;++i) {
+            const auto& t=worstSwingBlockedAudit.trials[i];
+            std::cout << "swingBlockedTrial," << t.leftRequest << ',' << t.rightRequest << ',' << t.leftSwing.y << ',' << t.leftSwing.z
+                << ',' << t.rightSwing.y << ',' << t.rightSwing.z << ',' << t.leftBounds << ',' << t.rightBounds
+                << ',' << t.penetration << ',' << t.floorSafe << ',' << t.improves << ',' << t.twistDefined << '\n';
+        }
+    }
     std::cout << "thighCollisionSummary,enabled=" << thighSelfCollision
               << ",floorPolicy=" << (strictThighFloor?"strictClearance":"noWorsening")
               << ",maximumCompletedStepPenetration=" << maxThighPenetration << ",maxLegGap=" << maxLegGap

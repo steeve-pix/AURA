@@ -102,6 +102,38 @@ endif ()
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_two_hip_projection_replay_tests tests/two_hip_projection_replay_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp
+        src/body/JointConstraint.cpp src/body/AuraBodyConstraint.cpp src/body/ComponentPosition.cpp src/body/ThighSelfCollision.cpp)
+    target_link_libraries(aura_two_hip_projection_replay_tests PRIVATE aura_physics)
+    add_test(NAME two_hip_projection_replay COMMAND aura_two_hip_projection_replay_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/left_hip_swing_projection_4_691667.csv")
+    add_executable(aura_thigh_joint_projection_replay_tests tests/thigh_joint_projection_replay_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp
+        src/body/JointConstraint.cpp src/body/AuraBodyConstraint.cpp src/body/ComponentPosition.cpp src/body/ThighSelfCollision.cpp)
+    target_link_libraries(aura_thigh_joint_projection_replay_tests PRIVATE aura_physics)
+    add_test(NAME thigh_joint_projection_replay COMMAND aura_thigh_joint_projection_replay_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/left_hip_swing_projection_4_691667.csv")
+    add_executable(aura_thigh_contact_velocity_replay_tests tests/thigh_contact_velocity_replay_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp src/body/ThighSelfCollision.cpp)
+    target_link_libraries(aura_thigh_contact_velocity_replay_tests PRIVATE aura_physics)
+    add_test(NAME thigh_contact_velocity_replay COMMAND aura_thigh_contact_velocity_replay_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/thigh_contact_worst_on_10s.csv")
+    add_executable(aura_hip_swing_knee_replay_tests tests/hip_swing_knee_replay_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp src/body/ThighSelfCollision.cpp)
+    target_link_libraries(aura_hip_swing_knee_replay_tests PRIVATE aura_physics)
+    add_test(NAME hip_swing_knee_replay COMMAND aura_hip_swing_knee_replay_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/right_hip_swing_knee_2_516667.csv")
+    add_executable(aura_knee_precision_tests tests/knee_precision_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/AuraBodyConstraint.cpp
+        src/body/JointGeometry.cpp src/body/JointConstraint.cpp)
+    target_link_libraries(aura_knee_precision_tests PRIVATE aura_physics)
+    add_test(NAME knee_precision COMMAND aura_knee_precision_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/knee_swing_roundoff_9_225000.csv")
+    add_executable(aura_thigh_swing_collision_tests tests/thigh_swing_collision_tests.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp src/body/ThighSelfCollision.cpp)
+    target_link_libraries(aura_thigh_swing_collision_tests PRIVATE aura_physics)
+    add_test(NAME thigh_swing_collision COMMAND aura_thigh_swing_collision_tests)
     add_executable(aura_hip_swing_limits_tests tests/hip_swing_limits_tests.cpp
         src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/AuraBodyConstraint.cpp
         src/body/JointGeometry.cpp src/body/JointConstraint.cpp)

@@ -9,23 +9,29 @@ namespace aura::body {
     namespace {
         template<class Body, class Part>
         auto connectionsFor(const AuraSkeleton3D &skeleton, Body &body) {
-            struct Connection { const Joint3D *joint; Part *a; Part *b; };
-            return std::array<Connection, 15>{{
-                {&skeleton.waist, &body.torso, &body.pelvis},
-                {&skeleton.neck, &body.torso, &body.neck}, {&skeleton.head, &body.neck, &body.head},
-                {&skeleton.leftShoulder, &body.torso, &body.leftUpperArm},
-                {&skeleton.leftElbow, &body.leftUpperArm, &body.leftForearm},
-                {&skeleton.leftWrist, &body.leftForearm, &body.leftHand},
-                {&skeleton.rightShoulder, &body.torso, &body.rightUpperArm},
-                {&skeleton.rightElbow, &body.rightUpperArm, &body.rightForearm},
-                {&skeleton.rightWrist, &body.rightForearm, &body.rightHand},
-                {&skeleton.leftHip, &body.pelvis, &body.leftThigh},
-                {&skeleton.leftKnee, &body.leftThigh, &body.leftShin},
-                {&skeleton.leftAnkle, &body.leftShin, &body.leftFoot},
-                {&skeleton.rightHip, &body.pelvis, &body.rightThigh},
-                {&skeleton.rightKnee, &body.rightThigh, &body.rightShin},
-                {&skeleton.rightAnkle, &body.rightShin, &body.rightFoot}
-            }};
+            struct Connection {
+                const Joint3D *joint;
+                Part *a;
+                Part *b;
+            };
+            return std::array<Connection, 15>{
+                {
+                    {&skeleton.waist, &body.torso, &body.pelvis},
+                    {&skeleton.neck, &body.torso, &body.neck}, {&skeleton.head, &body.neck, &body.head},
+                    {&skeleton.leftShoulder, &body.torso, &body.leftUpperArm},
+                    {&skeleton.leftElbow, &body.leftUpperArm, &body.leftForearm},
+                    {&skeleton.leftWrist, &body.leftForearm, &body.leftHand},
+                    {&skeleton.rightShoulder, &body.torso, &body.rightUpperArm},
+                    {&skeleton.rightElbow, &body.rightUpperArm, &body.rightForearm},
+                    {&skeleton.rightWrist, &body.rightForearm, &body.rightHand},
+                    {&skeleton.leftHip, &body.pelvis, &body.leftThigh},
+                    {&skeleton.leftKnee, &body.leftThigh, &body.leftShin},
+                    {&skeleton.leftAnkle, &body.leftShin, &body.leftFoot},
+                    {&skeleton.rightHip, &body.pelvis, &body.rightThigh},
+                    {&skeleton.rightKnee, &body.rightThigh, &body.rightShin},
+                    {&skeleton.rightAnkle, &body.rightShin, &body.rightFoot}
+                }
+            };
         }
     }
 
@@ -33,19 +39,20 @@ namespace aura::body {
         AuraBody3D &body, BodyPart3D &start, const Joint3D &jointToCut) const {
         const auto connections = connectionsFor<AuraBody3D, BodyPart3D>(*this, body);
         if (std::none_of(connections.begin(), connections.end(), [&](const auto &edge) {
-                return edge.joint == &jointToCut;
-            })) throw std::invalid_argument("Cut joint does not belong to this skeleton");
+            return edge.joint == &jointToCut;
+        }))
+            throw std::invalid_argument("Cut joint does not belong to this skeleton");
         if (std::none_of(connections.begin(), connections.end(), [&](const auto &edge) {
-                return edge.a == &start || edge.b == &start;
-            })) throw std::invalid_argument("Starting part does not belong to supplied body");
+            return edge.a == &start || edge.b == &start;
+        }))
+            throw std::invalid_argument("Starting part does not belong to supplied body");
 
         std::vector<BodyPart3D *> component{&start};
         // Breadth-first traversal: skip the cut edge and visit each part once.
         for (std::size_t i = 0; i < component.size(); ++i) {
-            for (const auto &edge : connections) {
+            for (const auto &edge: connections) {
                 if (edge.joint == &jointToCut) continue;
-                auto *neighbor = edge.a == component[i] ? edge.b :
-                                 edge.b == component[i] ? edge.a : nullptr;
+                auto *neighbor = edge.a == component[i] ? edge.b : edge.b == component[i] ? edge.a : nullptr;
                 if (neighbor && std::find(component.begin(), component.end(), neighbor) == component.end())
                     component.push_back(neighbor);
             }
@@ -54,7 +61,7 @@ namespace aura::body {
     }
 
     bool AuraSkeleton3D::areDirectlyConnected(const AuraBody3D &body,
-        const BodyPart3D &a, const BodyPart3D &b) const {
+                                              const BodyPart3D &a, const BodyPart3D &b) const {
         const auto connections = connectionsFor<const AuraBody3D, const BodyPart3D>(*this, body);
         return std::any_of(connections.begin(), connections.end(), [&](const auto &edge) {
             return (edge.a == &a && edge.b == &b) || (edge.a == &b && edge.b == &a);

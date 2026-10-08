@@ -2,7 +2,7 @@
 #include <cmath>
 
 namespace aura::math {
-    Quaternion::Quaternion(float w, float x, float y, float z)
+    Quaternion::Quaternion(double w, double x, double y, double z)
         : w(w), x(x), y(y), z(z) {
     }
 
@@ -25,27 +25,14 @@ namespace aura::math {
     }
 
     Quaternion Quaternion::operator*(const Quaternion &other) const {
-        return Quaternion{
-            w * other.w
-            - x * other.x
-            - y * other.y
-            - z * other.z,
-
-            w * other.x
-            + x * other.w
-            + y * other.z
-            - z * other.y,
-
-            w * other.y
-            - x * other.z
-            + y * other.w
-            + z * other.x,
-
-            w * other.z
-            + x * other.y
-            - y * other.x
-            + z * other.w
-        };
+        // Orientations retain double precision: common component rotations must
+        // preserve descendant twists even near the swing/twist singularity.
+        const double aw=w, ax=x, ay=y, az=z;
+        const double bw=other.w, bx=other.x, by=other.y, bz=other.z;
+        return {(aw*bw-ax*bx-ay*by-az*bz),
+                (aw*bx+ax*bw+ay*bz-az*by),
+                (aw*by-ax*bz+ay*bw+az*bx),
+                (aw*bz+ax*by-ay*bx+az*bw)};
     }
 
     Quaternion Quaternion::conjugate() const {
@@ -58,22 +45,22 @@ namespace aura::math {
         const Quaternion result = *this * vectorQuaternion * conjugate();
 
         return Vec3{
-            result.x, result.y, result.z
+            static_cast<float>(result.x), static_cast<float>(result.y), static_cast<float>(result.z)
         };
     }
 
-    float Quaternion::lengthSquared() const {
+    double Quaternion::lengthSquared() const {
         return w * w + x * x + y * y + z * z;
     }
 
-    float Quaternion::length() const {
+    double Quaternion::length() const {
         return std::sqrt(lengthSquared());
     }
 
     Quaternion Quaternion::normalized() const {
-        const float len = length();
+        const double len = length();
 
-        return len == 0.0f
+        return len == 0.0
                    ? Quaternion{}
                    : Quaternion{
                        w / len,
