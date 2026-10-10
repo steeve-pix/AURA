@@ -86,5 +86,28 @@ int main() {
         check((a.body.angularVelocity-insideA).lengthSquared()==0 && (b.body.angularVelocity-insideB).lengthSquared()==0,
               "inside-range hinge is not braked");
     }
+    {
+        body::BodyPart3D a,b;body::Joint3D joint;joint.enforceHingeAxis=true;
+        a.body.orientation=math::Quaternion::fromAxisAngle({1,2,3},.73f);
+        b.body.orientation=(a.body.orientation*math::Quaternion::fromAxisAngle({1,0,0},.4f)).normalized();
+        a.body.momentOfInertia={.13f,.31f,.72f};b.body.momentOfInertia={.21f,.56f,.19f};
+        a.body.angularVelocity={1,2,3};b.body.angularVelocity={-4,5,-2};
+        a.body.velocity={2,3,4};b.body.velocity={-1,2,-3};
+        const auto oldA=a.body,oldB=b.body;
+        const auto beforeA=physics::mechanicalState(a.body,{},{}),beforeB=physics::mechanicalState(b.body,{},{});
+        const auto audit=body::correctLocalJointHingeAngularVelocity(a,b,joint);
+        const auto afterA=physics::mechanicalState(a.body,{},{}),afterB=physics::mechanicalState(b.body,{},{});
+        check(audit.projectedSpeedBefore>1 && audit.projectedSpeedAfter<1e-5f,"coupled transverse hinge velocity repaired");
+        check((a.body.velocity-oldA.velocity).lengthSquared()==0 && (b.body.velocity-oldB.velocity).lengthSquared()==0,
+              "hinge axis impulse preserves linear velocities exactly");
+        check((afterA.angularMomentum+afterB.angularMomentum-beforeA.angularMomentum-beforeB.angularMomentum).length()<1e-5f,
+              "hinge axis impulse conserves angular momentum");
+        check(std::abs(audit.predictedWork-audit.measuredAngularWork)<1e-5,"hinge axis work prediction closes");
+        check(std::abs(afterA.energy()+afterB.energy()-beforeA.energy()-beforeB.energy()-audit.measuredAngularWork-audit.quadraticEnergy)<1e-5,
+              "hinge axis energy audit closes");
+        check(afterA.energy()+afterB.energy()<=beforeA.energy()+beforeB.energy()+1e-5,"hinge axis impulse dissipates energy");
+        check((a.body.position-oldA.position).lengthSquared()==0 && a.body.orientation.w==oldA.orientation.w &&
+              b.body.orientation.w==oldB.orientation.w,"hinge axis impulse preserves pose");
+    }
     return passed ? 0 : 1;
 }

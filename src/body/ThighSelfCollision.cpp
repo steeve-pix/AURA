@@ -293,6 +293,35 @@ namespace aura::body {
         if(audit)*audit=stats;
         return result;
     }
+    ThighSwingCollisionStep correctThighOverlapCoupledBudget(AuraBody3D& b,const AuraSkeleton3D& s,
+        int projectionIterations,float stepSize,float tolerance,ThighSwingCollisionAudit* audit) {
+        ThighSwingCollisionAudit total;
+        ThighSwingCollisionStep result;
+        result.penetrationBefore=result.penetrationAfter=penetration(b);
+        for(int i=0;i<projectionIterations && result.penetrationAfter>tolerance;++i) {
+            ThighSwingCollisionAudit search;
+            const auto step=correctThighOverlapCoupled(b,s,stepSize,tolerance,&search);
+            ++total.projectionCalls;
+            total.acceptedProjections+=step.corrected;
+            total.leftAcceptedProjections+=step.corrected && step.leftRequest!=0;
+            total.rightAcceptedProjections+=step.corrected && step.rightRequest!=0;
+            total.noImprovementProjections+=!step.corrected && search.noImprovement>0;
+            total.candidates+=search.candidates;
+            total.blockedBySwingLimit+=search.blockedBySwingLimit;
+            total.blockedByFloor+=search.blockedByFloor;
+            total.blockedByTwistOrAnchor+=search.blockedByTwistOrAnchor;
+            total.noImprovement+=search.noImprovement;
+            total.degenerate|=search.degenerate;
+            result.penetrationAfter=step.penetrationAfter;
+            result.corrected|=step.corrected;
+            // Report the largest single accepted step, not cumulative motion.
+            if(std::abs(step.leftRequest)>std::abs(result.leftRequest))result.leftRequest=step.leftRequest;
+            if(std::abs(step.rightRequest)>std::abs(result.rightRequest))result.rightRequest=step.rightRequest;
+            if(!step.corrected)break;
+        }
+        if(audit)*audit=total;
+        return result;
+    }
     ThighSwingCollisionStep correctThighOverlapWithSwing(AuraBody3D& b,const AuraSkeleton3D& s,
         float maxRequest,float tolerance,ThighSwingCollisionAudit* audit,bool detailCandidates,bool compensateKnees) {
         ThighSwingCollisionAudit stats;

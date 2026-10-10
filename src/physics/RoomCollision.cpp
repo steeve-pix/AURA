@@ -51,7 +51,7 @@ namespace aura::physics {
     }
     }
 
-    bool resolveRoomCollisions(std::span<const RoomBody> bodies, const RoomBounds &room) {
+    bool projectRoomGeometry(std::span<const RoomBody> bodies, const RoomBounds &room) {
         if (bodies.empty()) return true;
         const float infinity = std::numeric_limits<float>::infinity();
         math::Vec3 low{infinity,infinity,infinity}, high{-infinity,-infinity,-infinity};
@@ -70,6 +70,11 @@ namespace aura::physics {
             shift(low.y,high.y,room.minimum.y,room.maximum.y), shift(low.z,high.z,room.minimum.z,room.maximum.z)};
         // Projection only: no changes to orientation, linear or angular velocity.
         for (const auto &entry : bodies) entry.body->position += translation;
+        return true;
+    }
+
+    bool resolveRoomCollisions(std::span<const RoomBody> bodies, const RoomBounds &room) {
+        if(!projectRoomGeometry(bodies,room))return false;
         for (const auto &entry : bodies) resolveRoomVelocity(*entry.body,entry.size,room);
         return true;
     }

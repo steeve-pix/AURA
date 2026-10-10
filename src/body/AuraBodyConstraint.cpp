@@ -10,6 +10,50 @@
 #include <array>
 
 namespace aura::body {
+    namespace {
+        template<class Body>
+        auto recenterParts(Body &b) {
+            return std::array{&b.head,&b.neck,&b.torso,&b.pelvis,&b.leftUpperArm,&b.leftForearm,&b.leftHand,
+                &b.rightUpperArm,&b.rightForearm,&b.rightHand,&b.leftThigh,&b.leftShin,&b.leftFoot,&b.rightThigh,&b.rightShin,&b.rightFoot};
+        }
+    }
+    std::array<double,3> wholeBodyCenterOfMass(const AuraBody3D &body) {
+        const auto p=recenterParts(body);
+        std::array<double,3> com{};double mass=0;
+        for(const auto* part:p) {
+            const double m=part->body.mass;mass+=m;
+            com[0]+=m*part->body.position.x;com[1]+=m*part->body.position.y;com[2]+=m*part->body.position.z;
+        }
+        for(auto& x:com)x/=mass;return com;
+    }
+    HorizontalRecenterResult recenterHorizontallyWithinRoom(
+        AuraBody3D &body,const std::array<double,3> &before,const physics::RoomBounds &room) {
+        HorizontalRecenterResult result;
+        const auto after=wholeBodyCenterOfMass(body);
+        result.desired={float(before[0]-after[0]),0,float(before[2]-after[2])};
+        if(result.desired.lengthSquared()==0){result.alpha=1;return result;}
+        const auto parts=recenterParts(body);
+        const auto safe=[&](float alpha) {
+            const auto delta=result.desired*alpha;
+            for(const auto* part:parts) {
+                auto candidate=part->body;candidate.position+=delta;
+                for(const auto& corner:physics::cubeCorners(candidate,part->size))
+                    if(corner.x<room.minimum.x||corner.x>room.maximum.x||corner.z<room.minimum.z||corner.z>room.maximum.z)return false;
+            }
+            return true;
+        };
+        if(!safe(0)){result.initiallyWallValid=false;return result;}
+        float alpha=1;
+        if(!safe(1)) {
+            float lo=0,hi=1;
+            for(int i=0;i<24;++i) {const float mid=(lo+hi)*.5f;if(safe(mid))lo=mid;else hi=mid;}
+            alpha=lo;
+        }
+        result.alpha=alpha;result.applied=result.desired*alpha;
+        translateSubtree(parts,result.applied);
+        return result;
+    }
+
     void resolveRightShinFloorWithFootTranslation(AuraBody3D &body, float dt) {
         const auto before = body.rightShin.body.position;
         physics::resolveFloorCollision(body.rightShin.body, body.rightShin.size, 0.0f, dt);

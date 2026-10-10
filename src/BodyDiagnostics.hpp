@@ -95,7 +95,7 @@ namespace aura::app {
         if (first) out << " none";
         out << "\n  Solver   integration -> [floor -> joints forward/backward] x iterations\n"
             << "  Setup    initial height +0.600; component limbs; floor-aware waist/ankles\n"
-            << "           right-shin floor correction carries foot position/velocity\n"
+            << "           right-shin floor correction carries foot position only\n"
             << "  Units    simulation units | flags 1/0 | ~ means estimate (see H)\n";
         std::cout << out.str() << std::flush;
     }

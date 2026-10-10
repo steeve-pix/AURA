@@ -41,6 +41,7 @@ add_library(aura_physics
         src/physics/Impulse.cpp
         src/physics/BodyGeometry.cpp
         src/physics/SelfCollision.cpp
+        src/physics/CollisionShape.cpp
 )
 target_link_libraries(aura_physics PUBLIC aura_math)
 
@@ -51,6 +52,7 @@ add_executable(aura
         src/body/BodyPart3D.cpp
         src/body/ComponentMass.cpp
         src/body/ThighSelfCollision.cpp
+        src/body/BodySelfCollision.cpp
         src/body/ComponentPosition.cpp
         src/body/ComponentVelocity.cpp
         src/body/LocalJointVelocity.cpp
@@ -102,6 +104,31 @@ endif ()
 # Tests (disable with -DBUILD_TESTING=OFF)
 include(CTest)
 if (BUILD_TESTING)
+    add_executable(aura_body_contact_tests tests/body_contact_tests.cpp
+        src/body/BodySelfCollision.cpp src/body/ThighSelfCollision.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp
+        src/body/JointGeometry.cpp src/body/JointConstraint.cpp)
+    target_link_libraries(aura_body_contact_tests PRIVATE aura_physics)
+    add_test(NAME body_contacts COMMAND aura_body_contact_tests)
+    add_test(NAME body_contact_folded_hinges_replay COMMAND aura_body_contact_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/body_contact_folded_hinges.csv")
+    add_test(NAME body_contact_floor_coupling_replay COMMAND aura_body_contact_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/body_contact_hinge_residual.csv")
+    add_test(NAME body_contact_environment_coupling_replay COMMAND aura_body_contact_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/body_contact_environment_coupling.csv")
+    add_executable(aura_angular_com_projection_replay tests/angular_com_projection_replay.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp src/body/JointConstraint.cpp src/body/AuraBodyConstraint.cpp)
+    target_link_libraries(aura_angular_com_projection_replay PRIVATE aura_physics)
+    add_test(NAME angular_com_projection_replay COMMAND aura_angular_com_projection_replay
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/angular_com_worst_directional.csv")
+    add_test(NAME angular_com_recenter_replay COMMAND aura_angular_com_projection_replay
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/angular_com_worst_directional.csv" --recenter)
+    add_executable(aura_directional_joint_projection_replay tests/directional_joint_projection_replay.cpp
+        src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp
+        src/body/ComponentPosition.cpp)
+    target_link_libraries(aura_directional_joint_projection_replay PRIVATE aura_physics)
+    add_test(NAME directional_joint_projection_replay COMMAND aura_directional_joint_projection_replay
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/right_ankle_com_projection_4_775.csv")
     add_executable(aura_two_hip_projection_replay_tests tests/two_hip_projection_replay_tests.cpp
         src/body/AuraBody3D.cpp src/body/AuraSkeleton3D.cpp src/body/JointGeometry.cpp
         src/body/JointConstraint.cpp src/body/AuraBodyConstraint.cpp src/body/ComponentPosition.cpp src/body/ThighSelfCollision.cpp)
@@ -347,6 +374,7 @@ if (BUILD_TESTING)
     # Explicit headless diagnostic; reports the unstable baseline, so it is not a CTest gate.
     add_executable(aura_full_body_diagnostics
             src/body/ThighSelfCollision.cpp
+        src/body/BodySelfCollision.cpp
             tests/full_body_diagnostics.cpp
             src/body/ComponentMass.cpp
             src/body/ComponentPosition.cpp

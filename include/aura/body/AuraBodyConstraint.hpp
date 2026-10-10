@@ -1,10 +1,26 @@
 #pragma once
+#include <array>
+#include "aura/physics/RoomCollision.hpp"
 
 #include "aura/body/AuraBody3D.hpp"
 #include "aura/body/Joint3D.hpp"
 #include "aura/body/AuraSkeleton3D.hpp"
 
 namespace aura::body {
+    // Double accumulation over stored float positions; no state changes.
+    std::array<double,3> wholeBodyCenterOfMass(const AuraBody3D &body);
+    struct HorizontalRecenterResult {
+        math::Vec3 desired{}, applied{};
+        float alpha = 0;
+        bool initiallyWallValid = true;
+    };
+    // Pose-only common X/Z translation. Tests actual physical box corners
+    // against the room's four walls. Y/orientations/velocities are untouched.
+    // If already outside a wall, leave this operation to the room solver.
+    HorizontalRecenterResult recenterHorizontallyWithinRoom(
+        AuraBody3D &body, const std::array<double,3> &comBefore,
+        const physics::RoomBounds &room = {});
+
     // Head, neck, both shoulders and both elbows/knees derive their angle
     // components from the skeleton graph. Elbow/knee position and velocity
     // corrections use the same components and retain descendant motion/floor policies.

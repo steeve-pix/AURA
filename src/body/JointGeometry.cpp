@@ -70,6 +70,17 @@ namespace aura::body {
         return relativeJointSwingAngles(partA,partB,joint).z;
     }
 
+    bool correctHingeAxisWithComponent(const BodyPart3D& parent, BodyPart3D& child,
+        const Joint3D& joint, std::span<BodyPart3D *const> component) {
+        if(joint.type!=JointType::Hinge || !joint.enforceHingeAxis)return false;
+        const auto relative=relativeJointSwingTwist(parent,child,joint);
+        if(jointSwingRotationVector(relative.swing).lengthSquared()<1e-14f)return false;
+        const auto target=(parent.body.orientation.normalized()*relative.twist).normalized();
+        const auto rotation=(target*child.body.orientation.normalized().conjugate()).normalized();
+        rotateSubtreeAroundWorldPoint(component,localToWorldPoint(child,joint.localAnchorB),rotation);
+        return true;
+    }
+
     SwingAngles relativeJointSwingAngles(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint) {
         const auto vector=jointSwingRotationVector(relativeJointSwing(partA,partB,joint));
         return {vector.y,vector.z};

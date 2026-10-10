@@ -24,6 +24,8 @@ namespace aura::body {
         int trialCount{};
         int candidates{}, blockedBySwingLimit{}, blockedByFloor{}, blockedByTwistOrAnchor{}, noImprovement{};
         int footOnlyCandidates{}, footOnlyRemaining{}, kneeSearchCandidates{}, kneeRecoveredCandidates{}, kneeFailedCandidates{};
+        int projectionCalls{}, acceptedProjections{}, leftAcceptedProjections{}, rightAcceptedProjections{};
+        int noImprovementProjections{};
         bool degenerate{};
     };
     // One pair only. Torque-derived A-local Y/Z probes go through the bounded
@@ -38,6 +40,12 @@ namespace aura::body {
     // one of eight bounded swing-coordinate neighbors. No velocity changes.
     ThighSwingCollisionStep correctThighOverlapCoupled(
         AuraBody3D& body, const AuraSkeleton3D& skeleton,
+        float stepSize = 0.01f, float penetrationTolerance = 0.001f,
+        ThighSwingCollisionAudit* audit = nullptr);
+    // Fixed budget (1, 2 or 4). Stops at contact tolerance or the first search
+    // without an improving neighbor. The caller applies one contact impulse after.
+    ThighSwingCollisionStep correctThighOverlapCoupledBudget(
+        AuraBody3D& body, const AuraSkeleton3D& skeleton, int projectionIterations,
         float stepSize = 0.01f, float penetrationTolerance = 0.001f,
         ThighSwingCollisionAudit* audit = nullptr);
     struct ThighNormalImpulseStep {

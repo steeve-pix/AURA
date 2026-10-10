@@ -20,6 +20,10 @@ namespace aura::body {
                                         const Joint3D &joint);
     // Shortest swing rotation vector, not Euler angles; expressed in A's frame.
     math::Vec3 jointSwingRotationVector(const math::Quaternion &swing);
+    // Remove transverse swing from an actual hinge, retaining twist. Pose only;
+    // rotate the child cut-component about its own joint anchor.
+    bool correctHingeAxisWithComponent(const BodyPart3D& parent, BodyPart3D& child,
+        const Joint3D& joint, std::span<BodyPart3D *const> component);
     struct SwingAngles { float y{}, z{}; };
     SwingAngles relativeJointSwingAngles(const BodyPart3D &partA, const BodyPart3D &partB,
                                          const Joint3D &joint);

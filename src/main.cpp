@@ -15,11 +15,10 @@
 #include "aura/body/JointGeometry.hpp"
 #include "aura/body/LocalJointVelocity.hpp"
 #include "aura/body/ComponentPosition.hpp"
-#include "aura/body/ThighSelfCollision.hpp"
+#include "aura/body/BodySelfCollision.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Collision.hpp"
 #include "aura/physics/RoomCollision.hpp"
-#include "aura/physics/SelfCollision.hpp"
 #include "aura/physics/Forces.hpp"
 #include "aura/physics/Motion.hpp"
 #include "aura/render/Camera.hpp"
@@ -38,30 +37,7 @@ using aura::app::BodyJoint;
 using aura::app::BodyDiagnosticHistory;
 using aura::app::printBodyDiagnostics;
 
-int main(int argc, char **argv) {
-    bool thighSelfCollision = false, thighKneeCompensation = false;
-    bool coupledThighProjection=false;
-    int coupledNoImprovement=0;
-    bool thighSwingCollision=false,thighSwingKneeCompensation=false,thighContactImpulses=false;
-    int thighImpulseCount=0;
-    double largestThighImpulse=0,maximumThighImpulseEnergyGain=0;
-    int swingHipOnly=0,swingHipKnee=0,swingFootOnlyCandidates=0,swingFootOnlyRemaining=0,swingKneeFailed=0;
-    float maximumSwingKneeRequest=0;
-    int swingLeftAccepted=0,swingRightAccepted=0,swingFloorBlocked=0,swingLimitBlocked=0;
-    for (int i=1;i<argc;++i) {
-        if (std::string(argv[i]) == "--coupled-thigh-projection") {coupledThighProjection=true;thighSwingCollision=true;thighContactImpulses=true;}
-        if (std::string(argv[i]) == "--thigh-self-collision") thighSelfCollision = true;
-        if (std::string(argv[i]) == "--thigh-swing-collision") thighSwingCollision=true;
-        if (std::string(argv[i]) == "--thigh-swing-contact-impulses") {thighSwingCollision=true;thighSwingKneeCompensation=true;thighContactImpulses=true;}
-        if (std::string(argv[i]) == "--thigh-swing-knee-compensation") {thighSwingCollision=true;thighSwingKneeCompensation=true;}
-        if (std::string(argv[i]) == "--thigh-knee-compensation") {thighSelfCollision=true;thighKneeCompensation=true;}
-    }
-    if(thighSwingCollision && thighSelfCollision) {
-        std::cerr << "Choose either legal thigh swing collision or the legacy thigh experiment.\n";
-        return 2;
-    }
-    int thighCorrections = 0, thighHipOnlyCorrections = 0, thighCoupledCorrections = 0;
-    float maximumThighPenetration = 0, maximumLegGap = 0, minimumFootY = 1e30f, maximumThighAngle = 0;
+int main() {
     bool orbiting = false;
     bool panning = false;
     bool followBody = false;
@@ -85,6 +61,8 @@ int main(int argc, char **argv) {
     for (auto *part: parts) part->body.position.y += 0.6f;
 
     auto skeleton = aura::body::createAuraSkeleton3D(auraBody);
+    aura::body::configureBodyCollisionJoints(skeleton);
+    const auto bodyPairs = aura::body::bodyCollisionPairs(auraBody, skeleton, 3);
 
     // Ordered connections refer to the skeleton's joints; flags and radii belong to this demo.
     // Root outward: spine/head, left arm, right arm, left leg, right leg.
@@ -415,6 +393,8 @@ int main(int argc, char **argv) {
     double accumulator = 0.0;
     double simulatedTime = 0.0;
     int physicsStepsSinceLog = 0;
+    float visualMaximumBodyPenetration=0;
+    size_t visualOverlapSteps=0;
     BodyDiagnosticHistory diagnosticHistory;
     diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
     bool detailedDiagnostics = false;
@@ -457,12 +437,9 @@ int main(int argc, char **argv) {
             if (!paused) for (auto *part: parts) part->body.position.y += 0.6f;
             simulatedTime = 0.0;
             physicsStepsSinceLog = 0;
+            visualMaximumBodyPenetration=0;
+            visualOverlapSteps=0;
             diagnosticHistory = {};
-            thighCorrections = thighHipOnlyCorrections = thighCoupledCorrections = 0;
-            swingLeftAccepted=swingRightAccepted=swingFloorBlocked=swingLimitBlocked=0;
-            swingHipOnly=swingHipKnee=swingFootOnlyCandidates=swingFootOnlyRemaining=swingKneeFailed=0;maximumSwingKneeRequest=0;
-            maximumThighPenetration = maximumLegGap = maximumThighAngle = 0;
-            minimumFootY = 1e30f;
             diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
         }
         const char *actionName = key == GLFW_KEY_P ? "pose" : key == GLFW_KEY_R ? "restart" : "pause/run";
@@ -474,6 +451,8 @@ int main(int argc, char **argv) {
     constexpr int jointIterations = 16;
     constexpr double FIXED_DT = 1.0 / 120.0;
     aura::app::printStartup(joints, FIXED_DT, jointIterations);
+    std::cout << "  Self-collision enabled | eligible pairs=" << bodyPairs.size()
+              << '\n' << std::flush;
     const auto solveVelocityLocally = [&](BodyJoint &connection) {
         auto &a = *connection.partA;
         auto &b = *connection.partB;
@@ -481,6 +460,7 @@ int main(int argc, char **argv) {
         for (int i = 0; i < aura::body::jointVelocityIterations; ++i) {
             // const double before = aura::app::bodyEnergy(parts);
             aura::body::correctLocalJointVelocity(a, b, joint);
+            aura::body::correctLocalJointHingeAngularVelocity(a,b,joint);
             // const double after = aura::app::bodyEnergy(parts);
             // if (std::isfinite(before) && std::isfinite(after) && after - before > std::max(0.001, std::abs(before) * 1e-5))
             // std::cerr << "Anchor energy injection joint=" << connection.name << " time=" << simulatedTime
@@ -491,27 +471,31 @@ int main(int argc, char **argv) {
     const auto solveConnection = [&](BodyJoint &connection) {
         auto &a = *connection.partA;
         auto &b = *connection.partB;
+        aura::body::projectBodyHingeAxis(auraBody, skeleton, a, b, connection.constraint);
+        const auto projectPosition = [&] {
+            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+        };
         if (&connection.constraint == &skeleton.waist) {
             aura::body::correctJointAngle(a, b, connection.constraint);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.neck) {
             aura::body::correctNeckAngleAroundPivot(auraBody, skeleton, connection.constraint);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.head) {
             aura::body::correctHeadAngleAroundPivot(auraBody, skeleton, connection.constraint);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
         if (&connection.constraint == &skeleton.leftShoulder) {
             aura::body::correctLeftShoulderAngleAroundPivot(auraBody, skeleton, connection.constraint);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
@@ -524,7 +508,7 @@ int main(int argc, char **argv) {
                                           ? aura::body::MajorBodyBranch3D::LeftHip
                                           : aura::body::MajorBodyBranch3D::RightHip;
             aura::body::correctBranchAngleAroundPivot(auraBody, skeleton, connection.constraint, branch, true);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
@@ -532,7 +516,7 @@ int main(int argc, char **argv) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightKnee;
             aura::body::correctRightKneeAngleAroundPivot(auraBody, skeleton, connection.constraint,
                                                          skeleton.rightAnkle);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
@@ -540,7 +524,7 @@ int main(int argc, char **argv) {
             constexpr auto branch = aura::body::MajorBodyBranch3D::RightElbow;
             aura::body::correctRightElbowAngleAroundPivot(auraBody, skeleton, connection.constraint,
                                                           skeleton.rightWrist);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
@@ -551,18 +535,18 @@ int main(int argc, char **argv) {
                                     : aura::body::MajorBodyBranch3D::LeftKnee;
             const auto &descendant = elbow ? skeleton.leftWrist : skeleton.leftAnkle;
             aura::body::correctLimbAngleAroundPivot(auraBody, skeleton, connection.constraint, descendant, branch);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
         if (!connection.floorAware) {
             aura::body::correctJointAngle(a, b, connection.constraint);
-            aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+            projectPosition();
             solveVelocityLocally(connection);
             return;
         }
         aura::body::correctJointAngle(a, b, connection.constraint);
-        aura::body::correctJointPositionWithComponents(auraBody, skeleton, a, b, connection.constraint);
+        projectPosition();
         solveVelocityLocally(connection);
     };
 
@@ -604,37 +588,7 @@ int main(int argc, char **argv) {
                 diagnosticHistory.floorEnergy += afterFloor - stageEnergy;
                 for (auto &joint: joints) solveConnection(joint);
                 for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i) solveConnection(joints[i]);
-                if(thighSwingCollision) {
-                    aura::body::ThighSwingCollisionAudit audit;
-                    const auto step=coupledThighProjection ? aura::body::correctThighOverlapCoupled(auraBody,skeleton,0.01f,0.001f,&audit) :
-                        aura::body::correctThighOverlapWithSwing(auraBody,skeleton,0.01f,0.001f,&audit,false,thighSwingKneeCompensation);
-                    coupledNoImprovement+=coupledThighProjection && !step.corrected && step.penetrationBefore>0.001f && audit.noImprovement>0;
-                    if(thighContactImpulses) {
-                        const auto response=aura::body::resolveThighNormalVelocity(auraBody);
-                        thighImpulseCount+=response.applied;
-                        largestThighImpulse=std::max(largestThighImpulse,double(response.impulseMagnitude));
-                        maximumThighImpulseEnergyGain=std::max(maximumThighImpulseEnergyGain,response.kineticEnergyChange);
-                    }
-                    const bool coupled=step.leftKneeRequest!=0 || step.rightKneeRequest!=0;
-                    swingHipOnly+=step.corrected && !coupled;swingHipKnee+=step.corrected && coupled;
-                    swingFootOnlyCandidates+=audit.footOnlyCandidates;swingFootOnlyRemaining+=audit.footOnlyRemaining;
-                    swingKneeFailed+=audit.kneeFailedCandidates;
-                    maximumSwingKneeRequest=std::max({maximumSwingKneeRequest,std::abs(step.leftKneeRequest),std::abs(step.rightKneeRequest)});
-                    swingLeftAccepted+=step.corrected && step.leftRequest!=0;
-                    swingRightAccepted+=step.corrected && step.rightRequest!=0;
-                    swingFloorBlocked+=!step.corrected && audit.blockedByFloor>0;
-                    swingLimitBlocked+=!step.corrected && audit.blockedBySwingLimit>0;
-                    maximumThighAngle=std::max({maximumThighAngle,std::abs(step.leftRequest),std::abs(step.rightRequest)});
-                }
-                else if (thighSelfCollision) {
-                    const auto correction = aura::body::correctThighCapsuleOverlap(auraBody, skeleton,0.01f,0.001f,nullptr,
-                        aura::body::ThighFloorPolicy::NoWorsening,thighKneeCompensation);
-                    thighCorrections += correction.corrected;
-                    const bool coupled=correction.leftKneeAngle!=0 || correction.rightKneeAngle!=0;
-                    thighHipOnlyCorrections+=correction.corrected && !coupled;
-                    thighCoupledCorrections+=correction.corrected && coupled;
-                    maximumThighAngle = std::max({maximumThighAngle,std::abs(correction.leftAngle),std::abs(correction.rightAngle)});
-                }
+                aura::body::solveBodySelfCollisions(auraBody, skeleton, bodyPairs, room);
                 stageEnergy = aura::app::bodyEnergy(parts);
                 diagnosticHistory.jointEnergy += stageEnergy - afterFloor;
                 // Room contacts have the last word on containment; later joint
@@ -648,35 +602,28 @@ int main(int argc, char **argv) {
                 aura::physics::clearForce(part->body);
                 aura::physics::clearTorque(part->body);
             }
-            maximumThighPenetration = std::max(maximumThighPenetration,
-                aura::physics::capsulePenetration(aura::physics::bodyPartCollisionCapsule(auraBody.leftThigh),
-                                                aura::physics::bodyPartCollisionCapsule(auraBody.rightThigh)));
-            minimumFootY = std::min({minimumFootY,
-                aura::physics::lowestPoint(auraBody.leftFoot.body,auraBody.leftFoot.size).y,
-                aura::physics::lowestPoint(auraBody.rightFoot.body,auraBody.rightFoot.size).y});
-            for (const auto& connection : joints) {
-                if (std::string(connection.name).find("Hip") != std::string::npos || std::string(connection.name).find("Knee") != std::string::npos || std::string(connection.name).find("Ankle") != std::string::npos)
-                    maximumLegGap = std::max(maximumLegGap,
-                        (aura::body::localToWorldPoint(*connection.partB,connection.constraint.localAnchorB)-
-                         aura::body::localToWorldPoint(*connection.partA,connection.constraint.localAnchorA)).length());
-            }
             simulatedTime += FIXED_DT;
+            {
+                const auto collision=aura::body::bodyCollisionMetrics(auraBody,bodyPairs);
+                visualMaximumBodyPenetration=std::max(visualMaximumBodyPenetration,collision.maximumPenetration);
+                visualOverlapSteps+=collision.overlappingPairs>0;
+            }
             diagnosticHistory.observe(parts, joints, simulatedTime);
             if (++physicsStepsSinceLog == 120) {
                 physicsStepsSinceLog = 0;
                 diagnosticHistory.printSummary(parts, joints, simulatedTime, paused, detailedDiagnostics, followBody);
-                std::cout << "thighCollision enabled=" << thighSelfCollision << " maxPenetration=" << maximumThighPenetration
-                          << " maxLegGap=" << maximumLegGap << " minFootY=" << minimumFootY
-                          << " corrections=" << thighCorrections << " hipOnly=" << thighHipOnlyCorrections << " hipPlusKnee=" << thighCoupledCorrections << " maxAnglePerIteration=" << maximumThighAngle << '\n';
-                if(thighContactImpulses) std::cout << "thighNormalImpulse count=" << thighImpulseCount
-                    << " largest=" << largestThighImpulse << " maximumPositiveDeltaKE=" << maximumThighImpulseEnergyGain << '\n';
-                if(thighSwingCollision) std::cout << "thighSwingCollision leftAccepted=" << swingLeftAccepted
-                    << " rightAccepted=" << swingRightAccepted << " coupledProjection=" << coupledThighProjection
-                    << " noImprovementCalls=" << coupledNoImprovement << " blockedCallsWithSwingLimit=" << swingLimitBlocked
-                    << " blockedCallsWithFloor=" << swingFloorBlocked << " kneeCompensation=" << thighSwingKneeCompensation
-                    << " hipOnly=" << swingHipOnly << " hipPlusKnee=" << swingHipKnee
-                    << " footOnlyCandidates=" << swingFootOnlyCandidates << " footOnlyRemaining=" << swingFootOnlyRemaining
-                    << " kneeSearchFailed=" << swingKneeFailed << " maxKneeRequest=" << maximumSwingKneeRequest << '\n';
+                {
+                    const auto collision=aura::body::bodyCollisionMetrics(auraBody,bodyPairs);
+                    const auto collisionParts=aura::body::collisionParts(auraBody);
+                    std::cout << "bodyCollisionLive pairs=" << bodyPairs.size()
+                        << " penetration=" << collision.maximumPenetration
+                        << " maximumPenetration=" << visualMaximumBodyPenetration
+                        << " overlapSteps=" << visualOverlapSteps << " worstPair=";
+                    if(collision.maximumPenetration>0)
+                        std::cout << collisionParts[collision.pairA]->name << '/' << collisionParts[collision.pairB]->name;
+                    else std::cout << "none";
+                    std::cout << '\n';
+                }
                 if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulatedTime);
             }
             accumulator -= FIXED_DT;

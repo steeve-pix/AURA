@@ -49,6 +49,11 @@ namespace aura::body {
         setPart(result.rightThigh, "right_thigh", {0.58f, 1.8f, 0.58f}, {0.34f, 2.92f, 0.0f});
         setPart(result.rightShin, "right_shin", {0.52f, 1.6f, 0.52f}, {0.34f, 1.22f, 0.0f});
         setPart(result.rightFoot, "right_foot", {0.65f, 0.3f, 1.05f}, {0.34f, 0.15f, 0.25f});
+        for(auto* part:{&result.neck,&result.leftUpperArm,&result.leftForearm,
+                       &result.rightUpperArm,&result.rightForearm,&result.leftThigh,
+                       &result.leftShin,&result.rightThigh,&result.rightShin})
+            part->collisionShape.type=physics::CollisionShapeType::Capsule;
+        result.head.collisionShape.type=physics::CollisionShapeType::Sphere;
         return result;
     }
 }

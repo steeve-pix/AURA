@@ -21,4 +21,8 @@ namespace aura::body {
     // are hinge angular velocities (rad/s) for this function.
     LocalJointVelocityAudit correctLocalJointAngularLimitVelocity(
         BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
+    // Two coupled transverse angular constraints for a true hinge. Equal/opposite
+    // angular impulses, endpoint bodies only. Speeds are transverse magnitudes.
+    LocalJointVelocityAudit correctLocalJointHingeAngularVelocity(
+        BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
 }

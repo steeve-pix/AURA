@@ -20,5 +20,8 @@ namespace aura::physics {
     // A common translation keeps connected bodies' geometry intact. Returns
     // false without changing state if the group's bounding box cannot fit.
     bool resolveRoomCollisions(std::span<const RoomBody> bodies, const RoomBounds &room);
+    // The same common containment translation without any contact impulses.
+    // Allows a coupled pose candidate to include its floor/room projection.
+    bool projectRoomGeometry(std::span<const RoomBody> bodies, const RoomBounds &room);
     float roomPenetration(const RigidBody3D &body, const math::Vec3 &size, const RoomBounds &room);
 }

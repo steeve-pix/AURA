@@ -331,9 +331,39 @@ int main(int argc,char** argv) {
             for(size_t k=0;k<a.size();++k)check((a[k]->body.velocity-c[k]->body.velocity).lengthSquared()==0 &&
                 (a[k]->body.angularVelocity-c[k]->body.angularVelocity).lengthSquared()==0,"production geometry leaves velocities untouched");
         }
+        for(int budget:{1,2,4}) {
+            auto budgetCopy=input,manualCopy=input;
+            body::ThighSwingCollisionAudit budgetAudit;
+            const auto bounded=body::correctThighOverlapCoupledBudget(budgetCopy,s,budget,0.01f,0.001f,&budgetAudit);
+            int manualCalls=0,manualAccepted=0;
+            for(int i=0;i<budget;++i) {
+                if(test::hipRotationMetrics(manualCopy,s).penetration<=0.001f)break;
+                const auto single=body::correctThighOverlapCoupled(manualCopy,s);
+                ++manualCalls;manualAccepted+=single.corrected;
+                if(!single.corrected)break;
+            }
+            check(budgetAudit.projectionCalls==manualCalls && budgetAudit.acceptedProjections==manualAccepted,
+                "fixed budget exactly matches bounded single-step sequencing");
+            check(budgetAudit.projectionCalls<=budget && budgetAudit.candidates<=8*budget,
+                "projection and candidate budgets cannot be exceeded");
+            check(std::abs(bounded.leftRequest)<=0.010001f && std::abs(bounded.rightRequest)<=0.010001f,
+                "budget reporting retains the single-step cap");
+            const auto bp=parts(budgetCopy,s),mp=parts(manualCopy,s);
+            for(size_t k=0;k<bp.size();++k) {
+                const auto& a=bp[k]->body;const auto& c=mp[k]->body;
+                check((a.position-c.position).lengthSquared()==0 && a.orientation.w==c.orientation.w &&
+                    a.orientation.x==c.orientation.x && a.orientation.y==c.orientation.y && a.orientation.z==c.orientation.z,
+                    "fixed budget changes no mechanics versus identical single-step calls");
+                check((a.velocity-ip[k]->body.velocity).lengthSquared()==0 &&
+                    (a.angularVelocity-ip[k]->body.angularVelocity).lengthSquared()==0,"all budget modes remain pose-only");
+            }
+        }
         auto neutral=body::createAuraBody3D();auto untouched=neutral;
         body::ThighSwingCollisionAudit neutralAudit;
         const auto inactive=body::correctThighOverlapCoupled(neutral,s,0.01f,0.001f,&neutralAudit);
+        body::ThighSwingCollisionAudit emptyBudgetAudit;
+        body::correctThighOverlapCoupledBudget(neutral,s,4,0.01f,0.001f,&emptyBudgetAudit);
+        check(emptyBudgetAudit.projectionCalls==0,"budget wrapper skips all searches for separated thighs");
         check(!inactive.corrected && neutralAudit.candidates==0,"separated thighs skip the coupled search");
         const auto np=parts(neutral,s),up=parts(untouched,s);
         for(size_t k=0;k<np.size();++k)check((np[k]->body.position-up[k]->body.position).lengthSquared()==0 &&

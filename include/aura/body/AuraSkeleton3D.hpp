@@ -2,8 +2,10 @@
 #include "AuraBody3D.hpp"
 #include "Joint3D.hpp"
 #include <vector>
+#include <array>
 
 namespace aura::body {
+    struct JointConnection3D { const Joint3D* joint; BodyPart3D* a; BodyPart3D* b; };
     struct AuraSkeleton3D {
         Joint3D waist;
         Joint3D neck;
@@ -24,6 +26,8 @@ namespace aura::body {
         Joint3D rightHip;
         Joint3D rightKnee;
         Joint3D rightAnkle;
+
+        std::array<JointConnection3D,15> connections(AuraBody3D& body) const;
 
         bool areDirectlyConnected(const AuraBody3D &body, const BodyPart3D &a,
                                   const BodyPart3D &b) const;

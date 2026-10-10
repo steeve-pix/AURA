@@ -81,5 +81,21 @@ int main() {
     check((parent.position-parentBefore.position).length()==0 && (child.position-childBefore.position).length()==0 &&
           (parent.velocity-parentBefore.velocity).length()==0 && (child.velocity-childBefore.velocity).length()==0,
           "failed group fit leaves state untouched");
+    parent=makeBody();child=makeBody();
+    parent.position={15,-1,0};child.position={13,1,0};
+    parent.velocity={40,-5,3};child.velocity={-3,2,1};
+    parent.angularVelocity={1,2,3};child.angularVelocity={-2,1,4};
+    const auto poseParent=parent,poseChild=child;
+    check(physics::projectRoomGeometry(connected,room),"pose-only room projection fits group");
+    check((parent.velocity-poseParent.velocity).lengthSquared()==0 &&
+          (child.velocity-poseChild.velocity).lengthSquared()==0 &&
+          (parent.angularVelocity-poseParent.angularVelocity).lengthSquared()==0 &&
+          (child.angularVelocity-poseChild.angularVelocity).lengthSquared()==0,
+          "pose-only room projection does not respond to closing velocities");
+    check((child.position-parent.position-(poseChild.position-poseParent.position)).length()<1e-6f &&
+          parent.orientation.w==poseParent.orientation.w && child.orientation.w==poseChild.orientation.w,
+          "pose-only room projection preserves group geometry and orientation");
+    check(physics::roomPenetration(parent,size,room)<2e-6f && physics::roomPenetration(child,size,room)<2e-6f,
+          "pose-only room projection contains group at wall and floor simultaneously");
     return passed ? 0 : 1;
 }
