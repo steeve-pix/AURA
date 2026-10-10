@@ -1,4 +1,5 @@
 #pragma once
+#include "BodyJoint.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -61,16 +62,6 @@ namespace aura::app {
             "  A zero peak has no owner/step; events report the first breach per run.\n"
             << std::flush;
     }
-
-    struct BodyJoint {
-        const char *name{};
-        aura::body::BodyPart3D *partA{};
-        aura::body::BodyPart3D *partB{};
-        aura::body::Joint3D &constraint;
-        bool motor = false;
-        bool floorAware = false;
-        float markerRadius = 0.0f;
-    };
 
     constexpr float gapThreshold = 0.001f;
     constexpr float limitTolerance = 0.00001f;

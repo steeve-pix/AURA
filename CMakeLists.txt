@@ -45,10 +45,12 @@ add_library(aura_physics
 )
 target_link_libraries(aura_physics PUBLIC aura_math)
 
-# Application
-add_executable(aura
-        src/main.cpp
-        src/AssetPath.cpp
+# Current simulation code is shared by the visual app and its headless gate.
+# Historical diagnostics keep their explicit sources/configurations below.
+add_library(aura_simulation STATIC
+        src/app/BodyJoint.cpp
+        src/app/SimulationStep.cpp
+        src/body/JointSolver.cpp
         src/body/BodyPart3D.cpp
         src/body/ComponentMass.cpp
         src/body/ThighSelfCollision.cpp
@@ -57,6 +59,20 @@ add_executable(aura
         src/body/ComponentVelocity.cpp
         src/body/LocalJointVelocity.cpp
         src/body/AuraBody3D.cpp
+        src/body/BodyPartTransform.cpp
+        src/body/Joint3D.cpp
+        src/body/JointGeometry.cpp
+        src/body/JointConstraint.cpp
+        src/body/AuraSkeleton3D.cpp
+        src/body/AuraBodyConstraint.cpp
+)
+target_link_libraries(aura_simulation PUBLIC aura_physics)
+
+# Application
+add_executable(aura
+        src/main.cpp
+        src/render/BodyRenderer.cpp
+        src/AssetPath.cpp
         src/render/Window.cpp
         src/render/Renderer3D.cpp
         src/render/Shader.cpp
@@ -66,14 +82,8 @@ add_executable(aura
         src/render/MeshFactory.cpp
         src/render/DirectionalLight.cpp
         src/render/ShadowMap.cpp
-        src/body/BodyPartTransform.cpp
-        src/body/Joint3D.cpp
-        src/body/JointGeometry.cpp
-        src/body/JointConstraint.cpp
-        src/body/AuraSkeleton3D.cpp
-        src/body/AuraBodyConstraint.cpp
 )
-target_link_libraries(aura PRIVATE aura_physics glfw OpenGL::GL)
+target_link_libraries(aura PRIVATE aura_simulation glfw OpenGL::GL)
 if (APPLE)
     set_target_properties(aura PROPERTIES
             MACOSX_BUNDLE TRUE
@@ -371,7 +381,12 @@ if (BUILD_TESTING)
     target_link_libraries(aura_waist_group_tests PRIVATE aura_physics)
     add_test(NAME waist_group COMMAND aura_waist_group_tests)
 
-    # Explicit headless diagnostic; reports the unstable baseline, so it is not a CTest gate.
+    # Current application baseline is tested separately from historical replays.
+    add_executable(aura_runtime_baseline_tests tests/runtime_baseline_tests.cpp)
+    target_link_libraries(aura_runtime_baseline_tests PRIVATE aura_simulation)
+    add_test(NAME runtime_baseline COMMAND aura_runtime_baseline_tests)
+
+    # Explicit historical measurement tool; defaults are not a stability gate.
     add_executable(aura_full_body_diagnostics
             src/body/ThighSelfCollision.cpp
         src/body/BodySelfCollision.cpp

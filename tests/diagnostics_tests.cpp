@@ -1,6 +1,6 @@
 #include <iostream>
 #include <limits>
-#include "../src/BodyDiagnostics.hpp"
+#include "../src/app/BodyDiagnostics.hpp"
 
 int main() {
     bool passed = true;
