@@ -20,6 +20,7 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
 
 find_package(OpenGL REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
 
 # Project libraries
 add_library(aura_math
@@ -85,6 +86,12 @@ add_executable(aura
         src/render/ShadowMap.cpp
 )
 target_link_libraries(aura PRIVATE aura_simulation glfw OpenGL::GL)
+
+# Python extension module for AURA.
+pybind11_add_module(aura_python
+        src/python/AuraPython.cpp
+)
+target_link_libraries(aura_python PRIVATE aura_simulation)
 if (APPLE)
     set_target_properties(aura PROPERTIES
             MACOSX_BUNDLE TRUE

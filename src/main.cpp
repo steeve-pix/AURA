@@ -5,7 +5,6 @@
 #include <vector>
 #include <GLFW/glfw3.h>
 
-#include "aura/body/AuraBody3D.hpp"
 #include "aura/body/BodyPart3D.hpp"
 #include "aura/body/BodySelfCollision.hpp"
 #include "aura/physics/RoomCollision.hpp"
@@ -40,7 +39,6 @@ int main() {
 
     aura::sim::AuraSimulation simulation;
     auto &auraBody = simulation.body();
-    const auto assembledBody = auraBody;
     bool paused = false;
     auto &parts = simulation.getParts();
 
@@ -245,7 +243,6 @@ int main() {
 
 
     double accumulator = 0.0;
-    double simulatedTime = 0.0;
     int physicsStepsSinceLog = 0;
     float visualMaximumBodyPenetration = 0;
     size_t visualOverlapSteps = 0;
@@ -255,8 +252,8 @@ int main() {
         if (action != GLFW_PRESS) return;
         if (key == GLFW_KEY_D) {
             detailedDiagnostics = !detailedDiagnostics;
-            aura::app::printControl("detail", simulatedTime, paused, detailedDiagnostics, followBody);
-            if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulatedTime);
+            aura::app::printControl("detail", simulation.time(), paused, detailedDiagnostics, followBody);
+            if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulation.time());
             return;
         }
         if (key == GLFW_KEY_H) {
@@ -271,7 +268,7 @@ int main() {
             followBody = !followBody;
             if (followBody) focusBody();
             updateTitle();
-            aura::app::printControl("follow", simulatedTime, paused, detailedDiagnostics, followBody);
+            aura::app::printControl("follow", simulation.time(), paused, detailedDiagnostics, followBody);
             return;
         }
         // Absolute view angles preserve the current target and zoom.
@@ -285,18 +282,14 @@ int main() {
         if (key != GLFW_KEY_SPACE && key != GLFW_KEY_P && key != GLFW_KEY_R) return;
         if (key == GLFW_KEY_SPACE) paused = !paused;
         if (key == GLFW_KEY_P || key == GLFW_KEY_R) {
-            auraBody = assembledBody;
+            simulation.reset();
             paused = key == GLFW_KEY_P;
-            if (!paused) for (auto *part: parts) part->body.position.y += 0.6f;
-            simulatedTime = 0.0;
             physicsStepsSinceLog = 0;
             visualMaximumBodyPenetration = 0;
             visualOverlapSteps = 0;
-            diagnosticHistory = {};
-            diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
         }
         const char *actionName = key == GLFW_KEY_P ? "pose" : key == GLFW_KEY_R ? "restart" : "pause/run";
-        aura::app::printControl(actionName, simulatedTime, paused, detailedDiagnostics, followBody);
+        aura::app::printControl(actionName, simulation.time(), paused, detailedDiagnostics, followBody);
         updateTitle();
         accumulator = 0.0;
         previousTime = glfwGetTime();

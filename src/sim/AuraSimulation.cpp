@@ -73,5 +73,44 @@ namespace aura::sim {
         diagnosticHistory = app::BodyDiagnosticHistory{};
         diagnosticHistory.initialEnergy = app::bodyEnergy(parts);
         simulatedTime = 0.0;
+        currentAction = AuraAction{};
+    }
+
+    math::Vec3 AuraSimulation::pelvisPosition() const {
+        return auraBody.pelvis.body.position;
+    }
+
+    math::Vec3 AuraSimulation::pelvisVelocity() const {
+        return auraBody.pelvis.body.velocity;
+    }
+
+    math::Quaternion AuraSimulation::pelvisOrientation() const {
+        return auraBody.pelvis.body.orientation;
+    }
+
+    math::Vec3 AuraSimulation::pelvisAngularVelocity() const {
+        return auraBody.pelvis.body.angularVelocity;
+    }
+
+    AuraObservation AuraSimulation::observation() const {
+        return {
+            pelvisPosition(),
+            pelvisVelocity(),
+            pelvisOrientation(),
+            pelvisAngularVelocity()
+        };
+    }
+
+    void AuraSimulation::setAction(const AuraAction &action) {
+        currentAction = action;
+    }
+
+    void AuraSimulation::step(const AuraAction &action) {
+        setAction(action);
+        step();
+    }
+
+    const AuraAction &AuraSimulation::action() const {
+        return currentAction;
     }
 }

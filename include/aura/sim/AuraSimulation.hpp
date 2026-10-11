@@ -8,6 +8,17 @@
 #include "aura/body/BodySelfCollision.hpp"
 
 namespace aura::sim {
+    struct AuraObservation {
+        math::Vec3 pelvisPosition;
+        math::Vec3 pelvisVelocity;
+        math::Quaternion pelvisOrientation;
+        math::Vec3 pelvisAngularVelocity;
+    };
+
+    struct AuraAction {
+        float leftHipTarget = 0.0f;
+    };
+
     class AuraSimulation {
     public:
         AuraSimulation();
@@ -34,6 +45,23 @@ namespace aura::sim {
 
         void reset();
 
+        [[nodiscard]] math::Vec3 pelvisPosition() const;
+
+        [[nodiscard]] math::Vec3 pelvisVelocity() const;
+
+        [[nodiscard]] math::Quaternion pelvisOrientation() const;
+
+        [[nodiscard]] math::Vec3 pelvisAngularVelocity() const;
+
+        [[nodiscard]] AuraObservation observation() const;
+
+        void setAction(const AuraAction &action);
+
+
+        void step(const AuraAction &action);
+
+        [[nodiscard]] const AuraAction &action() const;
+
     private:
         body::AuraBody3D auraBody;
         body::AuraSkeleton3D skeleton;
@@ -44,5 +72,6 @@ namespace aura::sim {
         std::array<physics::RoomBody, 16> roomBodies;
         app::BodyDiagnosticHistory diagnosticHistory;
         double simulatedTime = 0.0;
+        AuraAction currentAction;
     };
 }
