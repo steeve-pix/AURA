@@ -33,7 +33,7 @@ int main() {
     const auto initial = gaps();
     bool passed = std::all_of(initial.begin(), initial.end(), [](float value) { return value > 0.1f; });
     std::cout << "iterations hip_gap knee_gap ankle_gap\n"
-              << "0 " << initial[0] << ' ' << initial[1] << ' ' << initial[2] << '\n';
+            << "0 " << initial[0] << ' ' << initial[1] << ' ' << initial[2] << '\n';
 
     // No forces, contacts, motors, or integration: only the current joint sweep.
     float previousMax = *std::max_element(initial.begin(), initial.end());

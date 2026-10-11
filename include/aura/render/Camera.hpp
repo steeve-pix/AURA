@@ -19,8 +19,11 @@ namespace aura::render {
         void zoom(float delta);
 
         void setOrbit(float yaw, float pitch);
+
         void setTarget(const math::Vec3 &worldTarget);
+
         [[nodiscard]] math::Vec3 position() const;
+
         [[nodiscard]] float distance() const;
 
         const math::Vec3 &target() const;

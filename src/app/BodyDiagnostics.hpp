@@ -1,5 +1,5 @@
 #pragma once
-#include "BodyJoint.hpp"
+#include "aura/app/BodyJoint.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -35,32 +35,32 @@ namespace aura::app {
     inline void printControl(const char *action, double time, bool paused, bool detail, bool follow) {
         std::ostringstream out;
         out << "[aura/control] t=" << logNumber(time) << "s " << action
-            << " | paused=" << static_cast<int>(paused) << " detail=" << static_cast<int>(detail)
-            << " follow=" << static_cast<int>(follow) << '\n';
+                << " | paused=" << static_cast<int>(paused) << " detail=" << static_cast<int>(detail)
+                << " follow=" << static_cast<int>(follow) << '\n';
         std::cout << out.str() << std::flush;
     }
 
     inline void printLoggingHelp() {
         std::cout <<
-            "\nAURA HELP\n"
-            "  Mouse  left-drag: orbit | right-drag: pan | scroll: zoom\n"
-            "  Views  1: front | 2: side | 3: three-quarter | 4: above | 5: below\n"
-            "  Camera F: focus COM | G: follow (pan disables follow)\n"
-            "  Run    Space: pause/run | P: assembled pose | R: restart fall\n"
-            "  Logs   D: detail tables | H: this help | flags: 1=true, 0=false\n"
-            "\n  Units use simulation mass, length and seconds.\n"
-            "  Energy/work: mass*length^2/s^2; torque: mass*length^2/s^2.\n"
-            "  P: mass*length/s; L: mass*length^2/s, spin+orbital about COM.\n"
-            "  U is gravitational potential relative to Y=0; E = linear K + spin K + U.\n"
-            "  Work~ estimates motor work from pre-step torque*hinge speed*dt.\n"
-            "  Motor absorbed is negative. PD torque~ is the current snapshot estimate.\n"
-            "  Stage dE measures K+U changes, including numerical corrections.\n"
-            "  Work and stage dE cover the interval unless labeled 'run'.\n"
-            "  Peaks/OK flags use complete steps within the interval, not solver stages.\n"
-            "  Contact counts corners at Y<=0.01, not resolved contact impulses.\n"
-            "  Rotation is the shortest angle from identity [0,pi], not revolutions.\n"
-            "  A zero peak has no owner/step; events report the first breach per run.\n"
-            << std::flush;
+                "\nAURA HELP\n"
+                "  Mouse  left-drag: orbit | right-drag: pan | scroll: zoom\n"
+                "  Views  1: front | 2: side | 3: three-quarter | 4: above | 5: below\n"
+                "  Camera F: focus COM | G: follow (pan disables follow)\n"
+                "  Run    Space: pause/run | P: assembled pose | R: restart fall\n"
+                "  Logs   D: detail tables | H: this help | flags: 1=true, 0=false\n"
+                "\n  Units use simulation mass, length and seconds.\n"
+                "  Energy/work: mass*length^2/s^2; torque: mass*length^2/s^2.\n"
+                "  P: mass*length/s; L: mass*length^2/s, spin+orbital about COM.\n"
+                "  U is gravitational potential relative to Y=0; E = linear K + spin K + U.\n"
+                "  Work~ estimates motor work from pre-step torque*hinge speed*dt.\n"
+                "  Motor absorbed is negative. PD torque~ is the current snapshot estimate.\n"
+                "  Stage dE measures K+U changes, including numerical corrections.\n"
+                "  Work and stage dE cover the interval unless labeled 'run'.\n"
+                "  Peaks/OK flags use complete steps within the interval, not solver stages.\n"
+                "  Contact counts corners at Y<=0.01, not resolved contact impulses.\n"
+                "  Rotation is the shortest angle from identity [0,pi], not revolutions.\n"
+                "  A zero peak has no owner/step; events report the first breach per run.\n"
+                << std::flush;
     }
 
     constexpr float gapThreshold = 0.001f;
@@ -70,13 +70,13 @@ namespace aura::app {
     inline void printStartup(std::span<const BodyJoint> joints, double dt, int iterations) {
         std::ostringstream out;
         out << "\nAURA | body simulation\n"
-            << "  Physics  dt=" << logNumber(dt * 1000) << "ms | rate=" << std::lround(1.0 / dt)
-            << "Hz | iterations=" << iterations << "\n"
-            << "  World    gravity Y=-9.810 | floor Y=0\n"
-            << "  Logging  every 120 steps | D: details | H: controls and metric guide\n"
-            << "  Alerts   gap>" << logNumber(gapThreshold) << " | limit>" << logNumber(limitTolerance)
-            << " rad | penetration>" << logNumber(penetrationTolerance) << '\n'
-            << "  Motors  ";
+                << "  Physics  dt=" << logNumber(dt * 1000) << "ms | rate=" << std::lround(1.0 / dt)
+                << "Hz | iterations=" << iterations << "\n"
+                << "  World    gravity Y=-9.810 | floor Y=0\n"
+                << "  Logging  every 120 steps | D: details | H: controls and metric guide\n"
+                << "  Alerts   gap>" << logNumber(gapThreshold) << " | limit>" << logNumber(limitTolerance)
+                << " rad | penetration>" << logNumber(penetrationTolerance) << '\n'
+                << "  Motors  ";
         bool first = true;
         for (const auto &joint: joints) {
             if (!joint.motor) continue;
@@ -85,9 +85,9 @@ namespace aura::app {
         }
         if (first) out << " none";
         out << "\n  Solver   integration -> [floor -> joints forward/backward] x iterations\n"
-            << "  Setup    initial height +0.600; component limbs; floor-aware waist/ankles\n"
-            << "           right-shin floor correction carries foot position only\n"
-            << "  Units    simulation units | flags 1/0 | ~ means estimate (see H)\n";
+                << "  Setup    initial height +0.600; component limbs; floor-aware waist/ankles\n"
+                << "           right-shin floor correction carries foot position only\n"
+                << "  Units    simulation units | flags 1/0 | ~ means estimate (see H)\n";
         std::cout << out.str() << std::flush;
     }
 
@@ -125,7 +125,7 @@ namespace aura::app {
             result.rotationalKinetic += state.rotationalKinetic;
             result.potential += state.potential;
             result.momentum += state.linearMomentum;
-            if (finiteBody(b) && !aura::physics::floorContactPoints(b, part->size, 0, 0.01f).empty())
+            if (finiteBody(b) && !aura::physics::floorContactPoints(b, part->size, part->floorShape, 0, 0.01f).empty())
                 ++result.floorParts;
         }
         result.center = result.center * static_cast<float>(1.0 / result.mass);
@@ -177,12 +177,14 @@ namespace aura::app {
                 const auto axis = c.partA->body.orientation.rotate(c.constraint.hingeAxis.normalized()).normalized();
                 const float omega = (c.partB->body.angularVelocity - c.partA->body.angularVelocity).dot(axis);
                 // Power of equal/opposite torques: tau . (omegaB - omegaA), before integration.
-                const double work = static_cast<double>(aura::body::jointMotorTorque(*c.partA, *c.partB, c.constraint)) * omega * dt;
+                const double work = static_cast<double>(aura::body::jointMotorTorque(*c.partA, *c.partB, c.constraint))
+                                    * omega * dt;
                 motorAdded += std::max(0.0, work);
                 motorRemoved += std::min(0.0, work);
                 totalMotorWork += work;
             }
         }
+
         std::array<bool, 16> invalidPart{}, penetratingPart{};
         std::array<bool, 15> invalidJoint{}, gapFailure{}, limitFailure{};
 
@@ -195,7 +197,7 @@ namespace aura::app {
                 reported = true;
                 std::ostringstream out;
                 out << "[aura/failure] t=" << logNumber(time) << "s step=" << step
-                    << " | " << name << " | " << metric << "=" << logNumber(value);
+                        << " | " << name << " | " << metric << "=" << logNumber(value);
                 if (unit[0] != '\0') out << ' ' << unit;
                 out << '\n';
                 std::cout << out.str() << std::flush;
@@ -206,7 +208,8 @@ namespace aura::app {
                     event(invalidPart[i], part.name, "finite", 0.0f, "(invalid body state)");
                     continue;
                 }
-                const float depth = std::max(0.0f, -aura::physics::lowestPoint(part.body, part.size).y);
+                const float depth =
+                        std::max(0.0f, -aura::physics::lowestPoint(part.body, part.size, part.floorShape).y);
                 penetration.observe(depth, part.name, step);
                 angularSpeed.observe(part.body.angularVelocity.length(), part.name, step);
                 linearSpeed.observe(part.body.velocity.length(), part.name, step);
@@ -242,16 +245,18 @@ namespace aura::app {
             const auto state = bodyMechanics(parts);
             std::ostringstream out;
             out << "\nAURA | t=" << logNumber(time) << "s | step=" << step
-                << " | interval=" << logNumber(intervalStart) << ".." << logNumber(time) << "s\n"
-                << "  finite=" << static_cast<int>(state.finite) << " paused=" << static_cast<int>(paused)
-                << " detail=" << static_cast<int>(detailed) << " follow=" << static_cast<int>(follow)
-                << " floorContact=" << static_cast<int>(state.floorParts > 0) << '\n'
-                << "  gapOK=" << static_cast<int>(state.finite && gap.value <= gapThreshold)
-                << " limitsOK=" << static_cast<int>(state.finite && limit.value <= limitTolerance)
-                << " floorOK=" << static_cast<int>(state.finite && penetration.value <= penetrationTolerance) << '\n';
+                    << " | interval=" << logNumber(intervalStart) << ".." << logNumber(time) << "s\n"
+                    << "  finite=" << static_cast<int>(state.finite) << " paused=" << static_cast<int>(paused)
+                    << " detail=" << static_cast<int>(detailed) << " follow=" << static_cast<int>(follow)
+                    << " floorContact=" << static_cast<int>(state.floorParts > 0) << '\n'
+                    << "  gapOK=" << static_cast<int>(state.finite && gap.value <= gapThreshold)
+                    << " limitsOK=" << static_cast<int>(state.finite && limit.value <= limitTolerance)
+                    << " floorOK=" << static_cast<int>(state.finite && penetration.value <= penetrationTolerance) <<
+                    '\n';
             const auto pair = [&](const char *a, double av, const char *b, double bv) {
                 out << "  " << std::left << std::setw(23) << a << std::right << std::setw(13) << logNumber(av)
-                    << "  " << std::left << std::setw(23) << b << std::right << std::setw(13) << logNumber(bv) << '\n';
+                        << "  " << std::left << std::setw(23) << b << std::right << std::setw(13) << logNumber(bv) <<
+                        '\n';
             };
             logSection(out, "ENERGY / WORK");
             pair("Linear kinetic", state.linearKinetic, "Rotational kinetic", state.rotationalKinetic);
@@ -264,13 +269,15 @@ namespace aura::app {
             logSection(out, "BODY / MOMENTUM");
             pair("Total mass", state.mass, "Speed RMS (mass weight)", state.rmsSpeed);
             out << "  " << std::left << std::setw(23) << "Floor-band parts" << std::right << std::setw(13)
-                << std::to_string(state.floorParts) + "/" + std::to_string(parts.size()) << '\n'
-                << "  " << std::left << std::setw(23) << "World vector" << std::right
-                << std::setw(13) << "X" << std::setw(13) << "Y" << std::setw(13) << "Z" << std::setw(13) << "Magnitude" << '\n';
+                    << std::to_string(state.floorParts) + "/" + std::to_string(parts.size()) << '\n'
+                    << "  " << std::left << std::setw(23) << "World vector" << std::right
+                    << std::setw(13) << "X" << std::setw(13) << "Y" << std::setw(13) << "Z" << std::setw(13) <<
+                    "Magnitude" << '\n';
             const auto vectorRow = [&](const char *label, const aura::math::Vec3 &v, bool magnitude) {
                 out << "  " << std::left << std::setw(23) << label << std::right
-                    << std::setw(13) << logNumber(v.x) << std::setw(13) << logNumber(v.y)
-                    << std::setw(13) << logNumber(v.z) << std::setw(13) << (magnitude ? logNumber(v.length()) : "-") << '\n';
+                        << std::setw(13) << logNumber(v.x) << std::setw(13) << logNumber(v.y)
+                        << std::setw(13) << logNumber(v.z) << std::setw(13) << (magnitude ? logNumber(v.length()) : "-")
+                        << '\n';
             };
             vectorRow("Center of mass", state.center, false);
             vectorRow("COM velocity", state.momentum * static_cast<float>(1.0 / state.mass), true);
@@ -278,11 +285,13 @@ namespace aura::app {
             vectorRow("Angular momentum L(COM)", state.angularMomentum, true);
             logSection(out, "INTERVAL PEAKS");
             out << "  " << std::left << std::setw(23) << "Metric" << std::right << std::setw(13) << "Value"
-                << "  " << std::left << std::setw(12) << "Unit" << std::setw(18) << "Part / joint" << std::right << std::setw(8) << "Step" << '\n';
+                    << "  " << std::left << std::setw(12) << "Unit" << std::setw(18) << "Part / joint" << std::right <<
+                    std::setw(8) << "Step" << '\n';
             const auto peakRow = [&](const char *label, const DiagnosticPeak &peak, const char *unit) {
-                out << "  " << std::left << std::setw(23) << label << std::right << std::setw(13) << logNumber(peak.value)
-                    << "  " << std::left << std::setw(12) << unit << std::setw(18) << (peak.step ? peak.owner : "-")
-                    << std::right << std::setw(8) << (peak.step ? std::to_string(peak.step) : "-") << '\n';
+                out << "  " << std::left << std::setw(23) << label << std::right << std::setw(13) << logNumber(
+                            peak.value)
+                        << "  " << std::left << std::setw(12) << unit << std::setw(18) << (peak.step ? peak.owner : "-")
+                        << std::right << std::setw(8) << (peak.step ? std::to_string(peak.step) : "-") << '\n';
             };
             peakRow("Linear speed", linearSpeed, "length/s");
             peakRow("Angular speed", angularSpeed, "rad/s");
@@ -294,19 +303,27 @@ namespace aura::app {
             peakRow("Floor penetration", penetration, "length");
             logSection(out, "ENABLED MOTORS | angles in rad");
             out << "  " << std::left << std::setw(18) << "Joint" << std::right << std::setw(8) << "Enabled"
-                << std::setw(12) << "Angle" << std::setw(12) << "Target" << std::setw(12) << "Error"
-                << std::setw(14) << "PD torque~" << '\n';
+                    << std::setw(12) << "Angle" << std::setw(12) << "Target" << std::setw(12) << "Error"
+                    << std::setw(14) << "PD torque~" << '\n';
             for (const auto &c: joints) {
                 if (!c.motor) continue;
                 const float angle = aura::body::relativeJointAngle(*c.partA, *c.partB, c.constraint);
-                out << "  " << std::left << std::setw(18) << c.name << std::right << std::setw(8) << static_cast<int>(c.motor)
-                    << std::setw(12) << logNumber(angle) << std::setw(12) << logNumber(c.constraint.targetAngle)
-                    << std::setw(12) << logNumber(c.constraint.targetAngle - angle)
-                    << std::setw(14) << logNumber(aura::body::jointMotorTorque(*c.partA, *c.partB, c.constraint)) << '\n';
+                out << "  " << std::left << std::setw(18) << c.name << std::right << std::setw(8) << static_cast<int>(c.
+                            motor)
+                        << std::setw(12) << logNumber(angle) << std::setw(12) << logNumber(c.constraint.targetAngle)
+                        << std::setw(12) << logNumber(c.constraint.targetAngle - angle)
+                        << std::setw(14) << logNumber(aura::body::jointMotorTorque(*c.partA, *c.partB, c.constraint)) <<
+                        '\n';
             }
             std::cout << out.str() << std::flush;
-            gap = {}; limit = {}; penetration = {}; angularSpeed = {}; anchorSpeed = {};
-            linearSpeed = {}; rotation = {}; quaternionError = {};
+            gap = {};
+            limit = {};
+            penetration = {};
+            angularSpeed = {};
+            anchorSpeed = {};
+            linearSpeed = {};
+            rotation = {};
+            quaternionError = {};
             motorAdded = motorRemoved = gravityWork = integrationEnergy = floorEnergy = jointEnergy = roomEnergy = 0.0;
             intervalStart = time;
         }
@@ -318,58 +335,92 @@ namespace aura::app {
         std::ostringstream out;
         const auto cell = [&](double v, int width = 10) { out << std::right << std::setw(width) << logNumber(v); };
         const auto name = [&](const std::string &v) { out << "  " << std::left << std::setw(18) << v; };
-        const auto vector = [&](const aura::math::Vec3 &v) { cell(v.x); cell(v.y); cell(v.z); };
+        const auto vector = [&](const aura::math::Vec3 &v) {
+            cell(v.x);
+            cell(v.y);
+            cell(v.z);
+        };
         out << "\nAURA DETAILS | t=" << logNumber(simulatedTime) << "s | world-space vectors\n";
         logSection(out, "PART MOTION | position: length, velocity: length/s");
         name("Part");
-        for (const char *label : {"Pos X", "Pos Y", "Pos Z", "Vel X", "Vel Y", "Vel Z"}) out << std::right << std::setw(10) << label;
+        for (const char *label: {"Pos X", "Pos Y", "Pos Z", "Vel X", "Vel Y", "Vel Z"})
+            out << std::right << std::setw(10) << label;
         out << '\n';
         for (const auto *part: parts) {
-            name(part->name); vector(part->body.position); vector(part->body.velocity); out << '\n';
+            name(part->name);
+            vector(part->body.position);
+            vector(part->body.velocity);
+            out << '\n';
         }
         logSection(out, "PART CONTACT | floor band Y<=0.01");
         name("Part");
-        for (const char *label : {"Speed", "Omega", "Lowest Y", "Corners", "Finite"}) out << std::right << std::setw(12) << label;
+        for (const char *label: {"Speed", "Omega", "Lowest Y", "Corners", "Finite"})
+            out << std::right << std::setw(12) << label;
         out << '\n';
         for (const auto *part: parts) {
             const auto &b = part->body;
             const bool finite = finiteBody(b);
-            name(part->name); cell(b.velocity.length(), 12); cell(b.angularVelocity.length(), 12);
-            out << std::right << std::setw(12) << (finite ? logNumber(aura::physics::lowestPoint(b, part->size).y) : "-")
-                << std::setw(12) << (finite ? std::to_string(aura::physics::floorContactPoints(b, part->size, 0, 0.01f).size()) : "-")
-                << std::setw(12) << static_cast<int>(finite) << '\n';
+            name(part->name);
+            cell(b.velocity.length(), 12);
+            cell(b.angularVelocity.length(), 12);
+            out << std::right << std::setw(12) << (finite
+                                                       ? logNumber(
+                                                           aura::physics::lowestPoint(b, part->size, part->floorShape).
+                                                           y)
+                                                       : "-")
+                    << std::setw(12) << (finite
+                                             ? std::to_string(
+                                                 aura::physics::floorContactPoints(
+                                                     b, part->size, part->floorShape, 0, 0.01f).size())
+                                             : "-")
+                    << std::setw(12) << static_cast<int>(finite) << '\n';
         }
         logSection(out, "JOINT GEOMETRY | angle: rad, gap: length");
         name("Joint");
-        for (const char *label : {"Angle", "Min", "Max", "Limit err", "Gap", "Motor"}) out << std::right << std::setw(10) << label;
+        for (const char *label: {"Angle", "Min", "Max", "Limit err", "Gap", "Motor"})
+            out << std::right << std::setw(10) << label;
         out << '\n';
         for (const auto &c: joints) {
             const auto &j = c.constraint;
             const float angle = aura::body::relativeJointAngle(*c.partA, *c.partB, j);
             const float gap = (aura::body::localToWorldPoint(*c.partB, j.localAnchorB) -
                                aura::body::localToWorldPoint(*c.partA, j.localAnchorA)).length();
-            name(c.name); cell(angle); cell(j.minAngle); cell(j.maxAngle);
-            cell(std::max({0.0f, j.minAngle - angle, angle - j.maxAngle})); cell(gap);
+            name(c.name);
+            cell(angle);
+            cell(j.minAngle);
+            cell(j.maxAngle);
+            cell(std::max({0.0f, j.minAngle - angle, angle - j.maxAngle}));
+            cell(gap);
             out << std::right << std::setw(10) << static_cast<int>(c.motor) << '\n';
         }
         logSection(out, "JOINT MOTION | hinge: rad/s, anchor: length/s");
-        name("Joint"); out << std::right << std::setw(14) << "Hinge omega" << std::setw(14) << "Anchor speed" << '\n';
+        name("Joint");
+        out << std::right << std::setw(14) << "Hinge omega" << std::setw(14) << "Anchor speed" << '\n';
         for (const auto &c: joints) {
             const auto &j = c.constraint;
             const auto axis = c.partA->body.orientation.rotate(j.hingeAxis.normalized()).normalized();
             const auto a = aura::body::localToWorldPoint(*c.partA, j.localAnchorA);
             const auto b = aura::body::localToWorldPoint(*c.partB, j.localAnchorB);
-            name(c.name); cell((c.partB->body.angularVelocity - c.partA->body.angularVelocity).dot(axis), 14);
-            cell((aura::physics::velocityAtWorldPoint(c.partB->body, b) - aura::physics::velocityAtWorldPoint(c.partA->body, a)).length(), 14);
+            name(c.name);
+            cell((c.partB->body.angularVelocity - c.partA->body.angularVelocity).dot(axis), 14);
+            cell((aura::physics::velocityAtWorldPoint(c.partB->body, b) -
+                  aura::physics::velocityAtWorldPoint(c.partA->body, a)).length(), 14);
             out << '\n';
         }
         logSection(out, "PART ROTATION | quaternion: unitless, omega: rad/s");
         name("Part");
-        for (const char *label : {"qw", "qx", "qy", "qz", "Omega X", "Omega Y", "Omega Z"}) out << std::right << std::setw(10) << label;
+        for (const char *label: {"qw", "qx", "qy", "qz", "Omega X", "Omega Y", "Omega Z"})
+            out << std::right << std::setw(10) << label;
         out << '\n';
         for (const auto *part: parts) {
             const auto &q = part->body.orientation;
-            name(part->name); cell(q.w); cell(q.x); cell(q.y); cell(q.z); vector(part->body.angularVelocity); out << '\n';
+            name(part->name);
+            cell(q.w);
+            cell(q.x);
+            cell(q.y);
+            cell(q.z);
+            vector(part->body.angularVelocity);
+            out << '\n';
         }
         std::cout << out.str() << std::flush;
     }

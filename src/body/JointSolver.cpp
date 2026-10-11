@@ -10,8 +10,8 @@ namespace aura::body {
     namespace {
         // Keep body-specific pivot/floor policies here, outside application input
         // and rendering. Historical correction helpers remain available to replays.
-        void projectAngle(AuraBody3D& body, const AuraSkeleton3D& skeleton,
-                          BodyPart3D& parent, BodyPart3D& child, const Joint3D& joint) {
+        void projectAngle(AuraBody3D &body, const AuraSkeleton3D &skeleton,
+                          BodyPart3D &parent, BodyPart3D &child, const Joint3D &joint) {
             if (&joint == &skeleton.neck) {
                 correctNeckAngleAroundPivot(body, skeleton, joint);
             } else if (&joint == &skeleton.head) {
@@ -28,7 +28,7 @@ namespace aura::body {
                     std::pair{&skeleton.leftElbow, MajorBodyBranch3D::LeftElbow},
                     std::pair{&skeleton.leftKnee, MajorBodyBranch3D::LeftKnee}
                 };
-                for (const auto& [connection, branch] : branches) {
+                for (const auto &[connection, branch]: branches) {
                     if (&joint != connection) continue;
                     // Swing bounds apply only to hips; other branches retain their
                     // existing hinge projection and floor policy.
@@ -40,8 +40,8 @@ namespace aura::body {
         }
     }
 
-    void solveBodyJoint(AuraBody3D& body, const AuraSkeleton3D& skeleton,
-                        BodyPart3D& parent, BodyPart3D& child, const Joint3D& joint) {
+    void solveBodyJoint(AuraBody3D &body, const AuraSkeleton3D &skeleton,
+                        BodyPart3D &parent, BodyPart3D &child, const Joint3D &joint) {
         projectBodyHingeAxis(body, skeleton, parent, child, joint);
         projectAngle(body, skeleton, parent, child, joint);
         correctJointPositionWithComponents(body, skeleton, parent, child, joint);

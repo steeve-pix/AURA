@@ -11,7 +11,10 @@
 int main() {
     bool passed = true;
     const auto check = [&](bool condition, const char *message) {
-        if (!condition) { std::cerr << "FAIL " << message << '\n'; passed = false; }
+        if (!condition) {
+            std::cerr << "FAIL " << message << '\n';
+            passed = false;
+        }
     };
     constexpr float tolerance = 1e-5f;
     for (bool tiltedParent: {false, true}) {
@@ -25,7 +28,7 @@ int main() {
             auto &hand = body.leftHand;
             const auto assemble = [](auto &parent, auto &child, const auto &joint, float childAngle) {
                 child.body.orientation = parent.body.orientation *
-                    aura::math::Quaternion::fromAxisAngle({1, 0, 0}, childAngle);
+                                         aura::math::Quaternion::fromAxisAngle({1, 0, 0}, childAngle);
                 child.body.position = aura::body::localToWorldPoint(parent, joint.localAnchorA) -
                                       child.body.orientation.rotate(joint.localAnchorB);
             };
@@ -39,8 +42,10 @@ int main() {
                        aura::body::localToWorldPoint(a, joint.localAnchorA);
             };
             const auto relativeV = [](const auto &a, const auto &b, const auto &joint) {
-                return aura::physics::velocityAtWorldPoint(b.body, aura::body::localToWorldPoint(b, joint.localAnchorB)) -
-                       aura::physics::velocityAtWorldPoint(a.body, aura::body::localToWorldPoint(a, joint.localAnchorA));
+                return aura::physics::velocityAtWorldPoint(b.body, aura::body::localToWorldPoint(b, joint.localAnchorB))
+                       -
+                       aura::physics::velocityAtWorldPoint(
+                           a.body, aura::body::localToWorldPoint(a, joint.localAnchorA));
             };
             const auto beforeTorso = body.torso.body;
             const auto beforeRightArm = body.rightUpperArm.body;
@@ -51,7 +56,8 @@ int main() {
             check(std::abs(aura::body::relativeJointAngle(body.torso, upper, skeleton.leftShoulder) -
                            std::clamp(angle, -1.5f, 1.5f)) < tolerance,
                   "shoulder subtree rotation enforces both limits with a rotated torso");
-            check((aura::body::localToWorldPoint(upper, skeleton.leftShoulder.localAnchorB) - pivot).length() < tolerance &&
+            check((aura::body::localToWorldPoint(upper, skeleton.leftShoulder.localAnchorB) - pivot).length() <
+                  tolerance &&
                   std::abs(gap(upper, forearm, skeleton.leftElbow).length() - elbowGap) < tolerance &&
                   std::abs(gap(forearm, hand, skeleton.leftWrist).length() - wristGap) < tolerance,
                   "rotation preserves the shoulder pivot and descendant anchor relationships");

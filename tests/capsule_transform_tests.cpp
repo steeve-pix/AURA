@@ -8,9 +8,11 @@ int main() {
     bool passed = true;
     const auto point = [](const aura::math::Mat4 &matrix, const aura::math::Vec3 &local) {
         const auto *m = matrix.data();
-        return aura::math::Vec3{m[0] * local.x + m[4] * local.y + m[8] * local.z + m[12],
-                               m[1] * local.x + m[5] * local.y + m[9] * local.z + m[13],
-                               m[2] * local.x + m[6] * local.y + m[10] * local.z + m[14]};
+        return aura::math::Vec3{
+            m[0] * local.x + m[4] * local.y + m[8] * local.z + m[12],
+            m[1] * local.x + m[5] * local.y + m[9] * local.z + m[13],
+            m[2] * local.x + m[6] * local.y + m[10] * local.z + m[14]
+        };
     };
     const auto checkPoint = [&](const auto &matrix, const auto &local, const auto &expected, const char *name) {
         if ((point(matrix, local) - expected).length() > 1e-5f) {
@@ -31,7 +33,8 @@ int main() {
     const auto insetThigh = aura::render::capsuleTransforms(thigh, 0.12f, 0.12f);
     checkPoint(insetThigh.cylinder, origin, origin, "equal insets keep capsule centred");
     checkPoint(insetThigh.topSphere, top, aura::math::Vec3{0.0f, 0.78f, 0.0f}, "top inset shortens upper extent");
-    checkPoint(insetThigh.bottomSphere, bottom, aura::math::Vec3{0.0f, -0.78f, 0.0f}, "bottom inset shortens lower extent");
+    checkPoint(insetThigh.bottomSphere, bottom, aura::math::Vec3{0.0f, -0.78f, 0.0f},
+               "bottom inset shortens lower extent");
 
     aura::body::BodyPart3D shin;
     shin.size = {0.45f, 1.6f, 0.45f};
@@ -44,7 +47,8 @@ int main() {
     checkPoint(shinCapsule.bottomSphere, bottom, aura::math::Vec3{2.8f, 3.0f, 4.0f}, "rotated lower extent");
 
     const auto insetShin = aura::render::capsuleTransforms(shin, 0.1f, 0.2f);
-    checkPoint(insetShin.cylinder, origin, aura::math::Vec3{1.95f, 3.0f, 4.0f}, "asymmetric centre shift follows rotation");
+    checkPoint(insetShin.cylinder, origin, aura::math::Vec3{1.95f, 3.0f, 4.0f},
+               "asymmetric centre shift follows rotation");
     checkPoint(insetShin.topSphere, top, aura::math::Vec3{1.3f, 3.0f, 4.0f}, "rotated asymmetric upper extent");
     checkPoint(insetShin.bottomSphere, bottom, aura::math::Vec3{2.6f, 3.0f, 4.0f}, "rotated asymmetric lower extent");
 

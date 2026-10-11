@@ -10,5 +10,7 @@ namespace aura::body {
         physics::RigidBody3D body;
         math::Vec3 size{1.0f, 1.0f, 1.0f};
         physics::CollisionShape collisionShape{};
+        // Floor support has a separate shape; Box preserves the prior default.
+        physics::CollisionShape floorShape{};
     };
 }

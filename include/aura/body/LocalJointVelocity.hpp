@@ -11,16 +11,19 @@ namespace aura::body {
         float projectedSpeedBefore = 0.0f;
         float projectedSpeedAfter = 0.0f;
     };
+
     // Experimental scalar anchor projection. Equal/opposite impulses affect only
     // these two bodies. Uses world-space inverse inertia obtained from local
     // principal moments. No geometry, descendant propagation, contacts or limits.
     LocalJointVelocityAudit correctLocalJointVelocity(
         BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
+
     // Unilateral hinge-limit impulse: equal/opposite world angular impulses.
     // Linear velocities and descendants are untouched. Audit projected speeds
     // are hinge angular velocities (rad/s) for this function.
     LocalJointVelocityAudit correctLocalJointAngularLimitVelocity(
         BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
+
     // Two coupled transverse angular constraints for a true hinge. Equal/opposite
     // angular impulses, endpoint bodies only. Speeds are transverse magnitudes.
     LocalJointVelocityAudit correctLocalJointHingeAngularVelocity(

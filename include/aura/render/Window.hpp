@@ -35,6 +35,7 @@ namespace aura::render {
 
         // Logical pixels, matching GLFW cursor coordinates on Retina displays.
         [[nodiscard]] int height() const;
+
         [[nodiscard]] std::pair<double, double> cursorPosition() const;
 
         void setResizeCallback(ResizeCallback callback);
@@ -44,7 +45,9 @@ namespace aura::render {
         void setMouseButtonCallback(MouseButtonCallback callback);
 
         void setScrollCallback(ScrollCallback callback);
+
         void setKeyCallback(KeyCallback callback);
+
         void setTitle(const char *title);
 
     private:

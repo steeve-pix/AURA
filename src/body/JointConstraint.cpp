@@ -9,7 +9,7 @@
 
 namespace aura::body {
     void correctJointAngleWithComponent(BodyPart3D &parent, BodyPart3D &child,
-        const Joint3D &joint, std::span<BodyPart3D *const> childComponent) {
+                                        const Joint3D &joint, std::span<BodyPart3D *const> childComponent) {
         const float error = jointAngleError(parent, child, joint);
         if (std::abs(error) < 0.000001f) return;
         const auto axis = parent.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
@@ -41,7 +41,7 @@ namespace aura::body {
     }
 
     void correctJointPositionWithFloorContact(BodyPart3D &partA, BodyPart3D &partB,
-                                             const Joint3D &joint, bool footIsTouchingFloor) {
+                                              const Joint3D &joint, bool footIsTouchingFloor) {
         const auto error = localToWorldPoint(partB, joint.localAnchorB) -
                            localToWorldPoint(partA, joint.localAnchorA);
         const float inverseMassA = 1.0f / partA.body.mass;

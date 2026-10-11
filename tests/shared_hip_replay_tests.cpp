@@ -4,7 +4,7 @@
 #include <sstream>
 #include "SharedHipReplay.hpp"
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     using namespace aura;
     if (argc != 2) return 2;
     auto input = body::createAuraBody3D();
@@ -20,21 +20,24 @@ int main(int argc, char** argv) {
         std::string tag, name;
         row >> tag >> name;
         if (tag != "sharedHipInput") continue;
-        const auto it = std::find_if(parts.begin(), parts.end(), [&](const auto* p) { return p->name == name; });
+        const auto it = std::find_if(parts.begin(), parts.end(), [&](const auto *p) { return p->name == name; });
         if (it == parts.end() || !loaded.insert(name).second) return 2;
-        auto& p = **it;
-        auto& b = p.body;
+        auto &p = **it;
+        auto &b = p.body;
         row >> p.size.x >> p.size.y >> p.size.z >> b.mass >> b.position.x >> b.position.y >> b.position.z
-            >> b.orientation.w >> b.orientation.x >> b.orientation.y >> b.orientation.z
-            >> b.velocity.x >> b.velocity.y >> b.velocity.z
-            >> b.angularVelocity.x >> b.angularVelocity.y >> b.angularVelocity.z
-            >> b.momentOfInertia.x >> b.momentOfInertia.y >> b.momentOfInertia.z;
+                >> b.orientation.w >> b.orientation.x >> b.orientation.y >> b.orientation.z
+                >> b.velocity.x >> b.velocity.y >> b.velocity.z
+                >> b.angularVelocity.x >> b.angularVelocity.y >> b.angularVelocity.z
+                >> b.momentOfInertia.x >> b.momentOfInertia.y >> b.momentOfInertia.z;
         if (!row) return 2;
     }
     if (loaded.size() != 16) return 2;
     bool passed = true;
-    const auto check = [&](bool condition, const char* message) {
-        if (!condition) { std::cerr << "FAIL " << message << '\n'; passed = false; }
+    const auto check = [&](bool condition, const char *message) {
+        if (!condition) {
+            std::cerr << "FAIL " << message << '\n';
+            passed = false;
+        }
     };
     std::ostringstream output;
     const auto replay = test::replaySharedHips(input, skeleton, output);
@@ -42,7 +45,7 @@ int main(int argc, char** argv) {
     check(std::abs(replay.initial.angles[0] - skeleton.leftHip.maxAngle) < 1e-5f &&
           std::abs(replay.initial.angles[3] - skeleton.rightHip.maxAngle) < 1e-5f,
           "both hips start at their upper limits");
-    for (const auto* trial : {&replay.leftOnly, &replay.rightOnly, &replay.symmetric}) {
+    for (const auto *trial: {&replay.leftOnly, &replay.rightOnly, &replay.symmetric}) {
         check(trial->improves, "separating hip rotations reduce overlap");
         check(!trial->limitsSafe && !trial->feasible, "separation violates hip limits");
         check(trial->gapsSafe, "component rotation preserves all six leg anchors");

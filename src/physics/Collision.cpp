@@ -14,6 +14,11 @@ namespace aura::physics {
 
     void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, float floorY, float dt,
                                FloorCollisionAudit *audit) {
+        resolveFloorCollision(body, size, CollisionShape{}, floorY, dt, audit);
+    }
+
+    void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, CollisionShape shape,
+                               float floorY, float dt, FloorCollisionAudit *audit) {
         constexpr int solverIterations = 4;
         if (audit) *audit = {};
         const auto kinetic = [&] {
@@ -22,12 +27,14 @@ namespace aura::physics {
         };
         if (audit) {
             audit->energyBefore = audit->energyAfterDamping = audit->energyAfterNormal = kinetic();
-            audit->linearSpeedBefore = audit->linearSpeedAfterDamping = audit->linearSpeedAfterNormal = body.velocity.length();
-            audit->angularSpeedBefore = audit->angularSpeedAfterDamping = audit->angularSpeedAfterNormal = body.angularVelocity.length();
+            audit->linearSpeedBefore = audit->linearSpeedAfterDamping =
+                                       audit->linearSpeedAfterNormal = body.velocity.length();
+            audit->angularSpeedBefore = audit->angularSpeedAfterDamping =
+                                        audit->angularSpeedAfterNormal = body.angularVelocity.length();
         }
 
         const auto lowest =
-                lowestPoint(body, size);
+                lowestPoint(body, size, shape);
 
         const float penetration =
                 floorY - lowest.y;
@@ -43,11 +50,12 @@ namespace aura::physics {
                 floorContactPoints(
                     body,
                     size,
+                    shape,
                     floorY,
                     contactTolerance
                 );
         if (audit) {
-            audit->lowestAfterPosition = lowestPoint(body, size).y;
+            audit->lowestAfterPosition = lowestPoint(body, size, shape).y;
             audit->contacts = contacts;
             audit->normalImpulses.resize(contacts.size());
         }

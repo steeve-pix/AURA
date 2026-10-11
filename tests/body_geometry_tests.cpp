@@ -19,7 +19,7 @@ int main() {
     body.position = {3.0f, 1.5f, 5.0f};
     auto contacts = aura::physics::floorContactPoints(body, size, 1.0f, 0.0f);
     check(contacts.size() == 4, "upright cube has four floor contacts");
-    for (const auto &contact : contacts) {
+    for (const auto &contact: contacts) {
         check(contact.y == 1.0f &&
               std::abs(contact.x - 3.0f) == 0.5f &&
               std::abs(contact.z - 5.0f) == 0.5f,
@@ -45,7 +45,7 @@ int main() {
     );
     contacts = aura::physics::floorContactPoints(body, size, 1.0f, 1e-5f);
     check(contacts.size() == 2, "cube tilted onto an edge has two contacts");
-    for (const auto &contact : contacts) {
+    for (const auto &contact: contacts) {
         check(std::abs(contact.x - 3.0f) < 1e-5f &&
               std::abs(contact.y - 1.0f) < 1e-5f,
               "edge contacts account for orientation");
@@ -62,15 +62,28 @@ int main() {
     aura::physics::RigidBody3D nearFloor;
     nearFloor.position = {0.0f, 0.505f, 0.0f};
     nearFloor.velocity = {2.0f, 0.0f, 0.0f};
-    aura::physics::resolveFloorCollision(nearFloor, 0.5f, 0.0f, 0.1f);
+    aura::physics::resolveFloorCollision(nearFloor, {1.0f, 1.0f, 1.0f}, 0.0f, 0.1f);
     check(std::abs(nearFloor.velocity.x - 0.8f) < 1e-5f,
           "resolver recognizes contact within 0.01 units");
     check(nearFloor.position.y == 0.505f, "contact tolerance does not pull body downward");
 
     nearFloor.position.y = 0.511f;
     nearFloor.velocity = {2.0f, 0.0f, 0.0f};
-    aura::physics::resolveFloorCollision(nearFloor, 0.5f, 0.0f, 0.1f);
+    aura::physics::resolveFloorCollision(nearFloor, {1.0f, 1.0f, 1.0f}, 0.0f, 0.1f);
     check(nearFloor.velocity.x == 2.0f, "resolver excludes contacts beyond tolerance");
+
+    aura::physics::RigidBody3D chest;
+    chest.position = {0.0f, 0.5f, 0.0f};
+    chest.orientation = aura::math::Quaternion::fromAxisAngle(
+        {1.0f, 0.0f, 0.0f}, std::numbers::pi_v<float> * 0.5f);
+    const aura::math::Vec3 torsoSize{1.5f, 1.45f, 0.8f};
+    const aura::physics::CollisionShape chestShape{aura::physics::CollisionShapeType::Sphere, 0.725f};
+    check(std::abs(aura::physics::lowestPoint(chest, torsoSize, chestShape).y + 0.225f) < 1e-5f,
+          "sphere floor support uses its radius after rotation");
+    aura::physics::resolveFloorCollision(chest, torsoSize, chestShape, 0.0f, 1.0f / 120.0f);
+    check(std::abs(chest.position.y - 0.725f) < 1e-5f &&
+          std::abs(aura::physics::lowestPoint(chest, torsoSize, chestShape).y) < 1e-5f,
+          "sphere floor correction keeps the visible sphere above ground");
 
     return passed ? 0 : 1;
 }

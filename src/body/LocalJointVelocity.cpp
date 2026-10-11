@@ -6,42 +6,44 @@
 
 namespace aura::body {
     LocalJointVelocityAudit correctLocalJointHingeAngularVelocity(
-        BodyPart3D& a, BodyPart3D& b, const Joint3D& joint) {
+        BodyPart3D &a, BodyPart3D &b, const Joint3D &joint) {
         LocalJointVelocityAudit audit;
-        if(joint.type!=JointType::Hinge || !joint.enforceHingeAxis)return audit;
-        const auto axis=a.body.orientation.normalized().rotate(joint.hingeAxis.normalized());
-        const auto seed=std::abs(axis.x)<.8f?math::Vec3{1,0,0}:math::Vec3{0,1,0};
-        const auto u=axis.cross(seed).normalized(),v=axis.cross(u).normalized();
-        const auto relative=b.body.angularVelocity-a.body.angularVelocity;
-        const double speedU=relative.dot(u),speedV=relative.dot(v);
-        audit.projectedSpeedBefore=std::hypot(speedU,speedV);
-        audit.projectedSpeedAfter=audit.projectedSpeedBefore;
-        if(audit.projectedSpeedBefore<1e-7f)return audit;
-        const auto response=[&](const math::Vec3& torque) {
-            return physics::applyInverseInertiaWorld(a.body,torque)+
-                   physics::applyInverseInertiaWorld(b.body,torque);
+        if (joint.type != JointType::Hinge || !joint.enforceHingeAxis)return audit;
+        const auto axis = a.body.orientation.normalized().rotate(joint.hingeAxis.normalized());
+        const auto seed = std::abs(axis.x) < .8f ? math::Vec3{1, 0, 0} : math::Vec3{0, 1, 0};
+        const auto u = axis.cross(seed).normalized(), v = axis.cross(u).normalized();
+        const auto relative = b.body.angularVelocity - a.body.angularVelocity;
+        const double speedU = relative.dot(u), speedV = relative.dot(v);
+        audit.projectedSpeedBefore = std::hypot(speedU, speedV);
+        audit.projectedSpeedAfter = audit.projectedSpeedBefore;
+        if (audit.projectedSpeedBefore < 1e-7f)return audit;
+        const auto response = [&](const math::Vec3 &torque) {
+            return physics::applyInverseInertiaWorld(a.body, torque) +
+                   physics::applyInverseInertiaWorld(b.body, torque);
         };
-        const auto ru=response(u),rv=response(v);
-        const double kuu=u.dot(ru),kuv=u.dot(rv),kvv=v.dot(rv);
-        const double determinant=kuu*kvv-kuv*kuv;
-        if(!(determinant>0))return audit;
-        const auto impulse=u*float((-kvv*speedU+kuv*speedV)/determinant)+
-                           v*float((kuv*speedU-kuu*speedV)/determinant);
-        audit.predictedWork=relative.dot(impulse);
-        const auto apply=[&](physics::RigidBody3D& rb,const math::Vec3& torque) {
-            const auto delta=physics::applyInverseInertiaWorld(rb,torque);
-            const auto inverse=rb.orientation.normalized().conjugate();
-            const auto old=inverse.rotate(rb.angularVelocity),dw=inverse.rotate(delta);
-            const auto& I=rb.momentOfInertia;
-            audit.measuredAngularWork+=I.x*old.x*dw.x+I.y*old.y*dw.y+I.z*old.z*dw.z;
-            audit.quadraticEnergy+=.5*(I.x*dw.x*dw.x+I.y*dw.y*dw.y+I.z*dw.z*dw.z);
-            rb.angularVelocity+=delta;
+        const auto ru = response(u), rv = response(v);
+        const double kuu = u.dot(ru), kuv = u.dot(rv), kvv = v.dot(rv);
+        const double determinant = kuu * kvv - kuv * kuv;
+        if (!(determinant > 0))return audit;
+        const auto impulse = u * float((-kvv * speedU + kuv * speedV) / determinant) +
+                             v * float((kuv * speedU - kuu * speedV) / determinant);
+        audit.predictedWork = relative.dot(impulse);
+        const auto apply = [&](physics::RigidBody3D &rb, const math::Vec3 &torque) {
+            const auto delta = physics::applyInverseInertiaWorld(rb, torque);
+            const auto inverse = rb.orientation.normalized().conjugate();
+            const auto old = inverse.rotate(rb.angularVelocity), dw = inverse.rotate(delta);
+            const auto &I = rb.momentOfInertia;
+            audit.measuredAngularWork += I.x * old.x * dw.x + I.y * old.y * dw.y + I.z * old.z * dw.z;
+            audit.quadraticEnergy += .5 * (I.x * dw.x * dw.x + I.y * dw.y * dw.y + I.z * dw.z * dw.z);
+            rb.angularVelocity += delta;
         };
-        apply(a.body,-impulse);apply(b.body,impulse);
-        const auto after=b.body.angularVelocity-a.body.angularVelocity;
-        audit.projectedSpeedAfter=std::hypot(after.dot(u),after.dot(v));
+        apply(a.body, -impulse);
+        apply(b.body, impulse);
+        const auto after = b.body.angularVelocity - a.body.angularVelocity;
+        audit.projectedSpeedAfter = std::hypot(after.dot(u), after.dot(v));
         return audit;
     }
+
     LocalJointVelocityAudit correctLocalJointVelocity(
         BodyPart3D &a, BodyPart3D &b, const Joint3D &joint) {
         LocalJointVelocityAudit audit;
@@ -59,7 +61,8 @@ namespace aura::body {
         };
         const auto crossA = rA.cross(direction), crossB = rB.cross(direction);
         const float denominator = 1.0f / a.body.mass + 1.0f / b.body.mass +
-            crossA.dot(inverseInertia(a.body, crossA)) + crossB.dot(inverseInertia(b.body, crossB));
+                                  crossA.dot(inverseInertia(a.body, crossA)) + crossB.dot(
+                                      inverseInertia(b.body, crossB));
         audit.projectedSpeedBefore = relative.dot(direction);
         const auto impulse = direction * (-audit.projectedSpeedBefore / denominator);
         audit.predictedWork = relative.dot(impulse);
@@ -71,18 +74,19 @@ namespace aura::body {
             const auto &I = body.momentOfInertia;
             audit.measuredLinearWork += body.mass * body.velocity.dot(dv);
             audit.measuredAngularWork += I.x * oldLocalW.x * localDw.x +
-                I.y * oldLocalW.y * localDw.y + I.z * oldLocalW.z * localDw.z;
+                    I.y * oldLocalW.y * localDw.y + I.z * oldLocalW.z * localDw.z;
             audit.quadraticEnergy += 0.5 * body.mass * dv.lengthSquared() +
-                0.5 * (I.x * localDw.x * localDw.x + I.y * localDw.y * localDw.y + I.z * localDw.z * localDw.z);
+                    0.5 * (I.x * localDw.x * localDw.x + I.y * localDw.y * localDw.y + I.z * localDw.z * localDw.z);
             body.velocity += dv;
             body.angularVelocity += dw;
         };
         apply(a.body, -impulse, rA);
         apply(b.body, impulse, rB);
         audit.projectedSpeedAfter = (physics::velocityAtWorldPoint(b.body, anchorB) -
-            physics::velocityAtWorldPoint(a.body, anchorA)).dot(direction);
+                                     physics::velocityAtWorldPoint(a.body, anchorA)).dot(direction);
         return audit;
     }
+
     LocalJointVelocityAudit correctLocalJointAngularLimitVelocity(
         BodyPart3D &a, BodyPart3D &b, const Joint3D &joint) {
         LocalJointVelocityAudit audit;
@@ -92,7 +96,8 @@ namespace aura::body {
         const float angle = relativeJointAngle(a, b, joint);
         constexpr float angleTolerance = 1e-5f; // Same activation tolerance as legacy limit solver.
         if (!((angle >= joint.maxAngle - angleTolerance && omega > 0.0f) ||
-              (angle <= joint.minAngle + angleTolerance && omega < 0.0f))) return audit;
+              (angle <= joint.minAngle + angleTolerance && omega < 0.0f)))
+            return audit;
         const auto inverseInertia = [](const physics::RigidBody3D &body, const math::Vec3 &v) {
             const auto local = body.orientation.conjugate().rotate(v);
             const auto &I = body.momentOfInertia;
@@ -107,9 +112,9 @@ namespace aura::body {
             const auto localDelta = body.orientation.conjugate().rotate(delta);
             const auto &I = body.momentOfInertia;
             audit.measuredAngularWork += I.x * localOld.x * localDelta.x +
-                I.y * localOld.y * localDelta.y + I.z * localOld.z * localDelta.z;
+                    I.y * localOld.y * localDelta.y + I.z * localOld.z * localDelta.z;
             audit.quadraticEnergy += 0.5 * (I.x * localDelta.x * localDelta.x +
-                I.y * localDelta.y * localDelta.y + I.z * localDelta.z * localDelta.z);
+                                            I.y * localDelta.y * localDelta.y + I.z * localDelta.z * localDelta.z);
             body.angularVelocity += delta;
         };
         apply(a.body, -angularImpulse);
@@ -117,5 +122,4 @@ namespace aura::body {
         audit.projectedSpeedAfter = (b.body.angularVelocity - a.body.angularVelocity).dot(axis);
         return audit;
     }
-
 }

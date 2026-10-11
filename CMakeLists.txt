@@ -48,6 +48,7 @@ target_link_libraries(aura_physics PUBLIC aura_math)
 # Current simulation code is shared by the visual app and its headless gate.
 # Historical diagnostics keep their explicit sources/configurations below.
 add_library(aura_simulation STATIC
+        src/sim/AuraSimulation.cpp
         src/app/BodyJoint.cpp
         src/app/SimulationStep.cpp
         src/body/JointSolver.cpp

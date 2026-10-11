@@ -16,12 +16,12 @@ int main() {
     aura::physics::integrateLinearMotion(body, 0.5f);
 
     std::cout << body.position.x << ", " << body.position.y
-              << ", " << body.position.z << '\n';
+            << ", " << body.position.z << '\n';
 
     constexpr float tolerance = 1e-6f;
     bool passed = std::abs(body.position.x - 1.0f) <= tolerance &&
-                        std::abs(body.position.y) <= tolerance &&
-                        std::abs(body.position.z) <= tolerance;
+                  std::abs(body.position.y) <= tolerance &&
+                  std::abs(body.position.z) <= tolerance;
     if (!passed) {
         std::cerr << "FAIL linear motion: expected (1, 0, 0)\n";
     }
@@ -38,7 +38,7 @@ int main() {
     };
 
     // The same force translates both bodies; only the offset force turns one.
-    for (const bool aboveCenter : {false, true}) {
+    for (const bool aboveCenter: {false, true}) {
         aura::physics::RigidBody3D pushed;
         pushed.position = {0.0f, 2.0f, 0.0f};
         pushed.mass = 2.0f;
@@ -101,8 +101,8 @@ int main() {
              "lowest corner accounts for orientation");
 
     // Isolate the normal impulse from friction by using dt = 0.
-    for (const float mass : {1.0f, 2.0f}) {
-        for (const float restitution : {0.0f, 0.5f, 1.0f}) {
+    for (const float mass: {1.0f, 2.0f}) {
+        for (const float restitution: {0.0f, 0.5f, 1.0f}) {
             aura::physics::RigidBody3D landing;
             landing.position = {2.0f, 0.4f, 3.0f};
             landing.velocity = {2.0f, -6.0f, 4.0f};

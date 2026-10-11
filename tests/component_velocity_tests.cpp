@@ -10,9 +10,12 @@ int main() {
     using namespace aura;
     bool passed = true;
     const auto check = [&](bool ok, const char *message) {
-        if (!ok) { passed = false; std::cerr << "FAIL " << message << '\n'; }
+        if (!ok) {
+            passed = false;
+            std::cerr << "FAIL " << message << '\n';
+        }
     };
-    for (int count : {1, 2, 3}) {
+    for (int count: {1, 2, 3}) {
         body::BodyPart3D parent;
         std::array<body::BodyPart3D, 3> children;
         parent.body.mass = 2;
@@ -36,12 +39,12 @@ int main() {
         const auto oldParent = parent;
         const auto energy = [&] {
             double sum = physics::mechanicalState(parent.body).energy();
-            for (auto *part : parts) sum += physics::mechanicalState(part->body).energy();
+            for (auto *part: parts) sum += physics::mechanicalState(part->body).energy();
             return sum;
         };
         const auto momentum = [&] {
             auto sum = parent.body.velocity * parent.body.mass;
-            for (auto *part : parts) sum += part->body.velocity * part->body.mass;
+            for (auto *part: parts) sum += part->body.velocity * part->body.mass;
             return sum;
         };
         const double before = energy();
@@ -65,13 +68,15 @@ int main() {
             check((deltaW - rootDeltaW).length() < 1e-5f, "common angular response preserves relative angular motion");
             const auto deltaV = children[i].body.velocity - oldChildren[i].body.velocity;
             const auto rootDeltaV = children[0].body.velocity - oldChildren[0].body.velocity;
-            check((deltaV - rootDeltaV - rootDeltaW.cross(children[i].body.position - children[0].body.position)).length() < 1e-5f,
+            check((deltaV - rootDeltaV - rootDeltaW.cross(children[i].body.position - children[0].body.position)).
+                  length() < 1e-5f,
                   "common rigid response preserves internal velocity residuals");
         }
     }
     // Pure translation endpoint: zero lever arm needs no angular axis/inertia.
     body::BodyPart3D a, b;
-    a.body.velocity = {1, 0, 0}; b.body.velocity = {-1, 0, 0};
+    a.body.velocity = {1, 0, 0};
+    b.body.velocity = {-1, 0, 0};
     a.body.momentOfInertia = b.body.momentOfInertia = {1, 1, 1};
     const std::vector<body::BodyPart3D *> single{&b};
     const auto translation = body::correctJointComponentModeVelocity(a, b, {}, single);

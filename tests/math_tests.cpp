@@ -97,7 +97,8 @@ int main() {
     checkFloat("normalized quaternion w", normalized.w, 1.0f, failures);
     std::cout << "Normalized quaternion length: " << normalized.length() << '\n';
 
-    const auto projection = aura::math::Mat4::perspective(std::numbers::pi_v<float> / 3.0f,1280.0f / 720.0f,0.1f,100.0f);
+    const auto projection = aura::math::Mat4::perspective(std::numbers::pi_v<float> / 3.0f, 1280.0f / 720.0f, 0.1f,
+                                                          100.0f);
     checkFloat("perspective horizontal scale", projection.data()[0], 0.974279f, failures);
     checkFloat("perspective vertical scale", projection.data()[5], 1.73205f, failures);
     std::cout << "Projection scales: " << projection.data()[0]

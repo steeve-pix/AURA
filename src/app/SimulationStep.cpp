@@ -7,11 +7,11 @@
 #include "aura/physics/Motion.hpp"
 
 namespace aura::app {
-    void stepSimulation(body::AuraBody3D& auraBody, const body::AuraSkeleton3D& skeleton,
-        std::span<BodyJoint> joints, std::span<body::BodyPart3D* const> parts,
-        const std::vector<body::BodyCollisionPair>& bodyPairs,
-        std::span<const physics::RoomBody> roomBodies, const physics::RoomBounds& room,
-        BodyDiagnosticHistory& diagnosticHistory) {
+    void stepSimulation(body::AuraBody3D &auraBody, const body::AuraSkeleton3D &skeleton,
+                        std::span<BodyJoint> joints, std::span<body::BodyPart3D * const> parts,
+                        const std::vector<body::BodyCollisionPair> &bodyPairs,
+                        std::span<const physics::RoomBody> roomBodies, const physics::RoomBounds &room,
+                        BodyDiagnosticHistory &diagnosticHistory) {
         const auto dt = static_cast<float>(FIXED_DT);
         const double energyBeforeIntegration = bodyEnergy(parts);
         diagnosticHistory.sampleMotorWork(joints, dt);
@@ -35,11 +35,12 @@ namespace aura::app {
                 if (part == &auraBody.rightShin)
                     body::resolveRightShinFloorWithFootTranslation(auraBody, dt / jointIterations);
                 else
-                    physics::resolveFloorCollision(part->body, part->size, 0.0f, dt / jointIterations);
+                    physics::resolveFloorCollision(part->body, part->size, part->floorShape,
+                                                   0.0f, dt / jointIterations);
             }
             const double afterFloor = bodyEnergy(parts);
             diagnosticHistory.floorEnergy += afterFloor - stageEnergy;
-            for (auto& joint : joints)
+            for (auto &joint: joints)
                 body::solveBodyJoint(auraBody, skeleton, *joint.partA, *joint.partB, joint.constraint);
             // The forward sweep already visited the last connection.
             for (int i = static_cast<int>(joints.size()) - 2; i >= 0; --i)

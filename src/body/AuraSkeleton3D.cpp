@@ -35,10 +35,10 @@ namespace aura::body {
         }
     }
 
-    std::array<JointConnection3D,15> AuraSkeleton3D::connections(AuraBody3D& body) const {
-        const auto source=connectionsFor<AuraBody3D,BodyPart3D>(*this,body);
-        std::array<JointConnection3D,15> result{};
-        for(size_t i=0;i<source.size();++i)result[i]={source[i].joint,source[i].a,source[i].b};
+    std::array<JointConnection3D, 15> AuraSkeleton3D::connections(AuraBody3D &body) const {
+        const auto source = connectionsFor<AuraBody3D, BodyPart3D>(*this, body);
+        std::array<JointConnection3D, 15> result{};
+        for (size_t i = 0; i < source.size(); ++i)result[i] = {source[i].joint, source[i].a, source[i].b};
         return result;
     }
 

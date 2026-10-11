@@ -5,7 +5,12 @@
 #include <array>
 
 namespace aura::body {
-    struct JointConnection3D { const Joint3D* joint; BodyPart3D* a; BodyPart3D* b; };
+    struct JointConnection3D {
+        const Joint3D *joint;
+        BodyPart3D *a;
+        BodyPart3D *b;
+    };
+
     struct AuraSkeleton3D {
         Joint3D waist;
         Joint3D neck;
@@ -27,7 +32,7 @@ namespace aura::body {
         Joint3D rightKnee;
         Joint3D rightAnkle;
 
-        std::array<JointConnection3D,15> connections(AuraBody3D& body) const;
+        std::array<JointConnection3D, 15> connections(AuraBody3D &body) const;
 
         bool areDirectlyConnected(const AuraBody3D &body, const BodyPart3D &a,
                                   const BodyPart3D &b) const;
@@ -36,7 +41,7 @@ namespace aura::body {
         // are retained, so copies of a body/skeleton can be queried independently.
         // jointToCut must be one of this skeleton's joint members.
         std::vector<BodyPart3D *> collectComponent(AuraBody3D &body, BodyPart3D &start,
-                                                  const Joint3D &jointToCut) const;
+                                                   const Joint3D &jointToCut) const;
     };
 
     // Create joints from an assembled body with identity orientations.

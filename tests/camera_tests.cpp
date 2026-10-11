@@ -19,14 +19,17 @@ int main() {
 
     constexpr float tolerance = 1e-4f;
     bool passed =
-        std::abs(view.data()[14] + std::sqrt(45.0f)) <= tolerance &&
-        std::abs(view.data()[15] - 1.0f) <= tolerance &&
-        std::abs(projection.data()[0] - 0.974279f) <= tolerance &&
-        std::abs(projection.data()[5] - 1.73205f) <= tolerance &&
-        std::abs(squareProjection.data()[0] - squareProjection.data()[5]) <= tolerance;
+            std::abs(view.data()[14] + std::sqrt(45.0f)) <= tolerance &&
+            std::abs(view.data()[15] - 1.0f) <= tolerance &&
+            std::abs(projection.data()[0] - 0.974279f) <= tolerance &&
+            std::abs(projection.data()[5] - 1.73205f) <= tolerance &&
+            std::abs(squareProjection.data()[0] - squareProjection.data()[5]) <= tolerance;
 
     const auto check = [&](bool condition, const char *message) {
-        if (!condition) { std::cerr << "FAIL " << message << '\n'; passed = false; }
+        if (!condition) {
+            std::cerr << "FAIL " << message << '\n';
+            passed = false;
+        }
     };
     check((camera.position() - aura::math::Vec3{0, 3, 6}).length() < tolerance,
           "constructor honors supplied world position");
@@ -55,7 +58,7 @@ int main() {
     camera.setOrbit(1.57079632679f, 0);
     check((camera.position() - camera.target() - aura::math::Vec3{30, 0, 0}).length() < tolerance,
           "side preset has absolute yaw");
-    for (float pitch : {-100.0f, 100.0f}) {
+    for (float pitch: {-100.0f, 100.0f}) {
         camera.setOrbit(0, pitch);
         const auto poleView = camera.viewMatrix();
         for (int i = 0; i < 16; ++i) check(std::isfinite(poleView.data()[i]), "pole-clamped view stays finite");
@@ -65,18 +68,17 @@ int main() {
     const auto verticalView = vertical.viewMatrix();
     for (int i = 0; i < 16; ++i) check(std::isfinite(verticalView.data()[i]), "vertical view stays finite");
     bool rejected = false;
-    try { aura::render::Camera invalid{{}, {}, 1}; }
-    catch (const std::invalid_argument &) { rejected = true; }
+    try { aura::render::Camera invalid{{}, {}, 1}; } catch (const std::invalid_argument &) { rejected = true; }
     check(rejected, "coincident eye and target rejected");
     const auto targetBeforeInvalid = camera.target();
     camera.setTarget({std::numeric_limits<float>::quiet_NaN(), 0, 0});
     check((camera.target() - targetBeforeInvalid).length() == 0, "invalid focus ignored");
     if (!passed) {
         std::cerr << "FAIL camera matrices: view Z=" << view.data()[14]
-                  << ", projection scales=" << projection.data()[0]
-                  << ", " << projection.data()[5]
-                  << ", square projection scales=" << squareProjection.data()[0]
-                  << ", " << squareProjection.data()[5] << '\n';
+                << ", projection scales=" << projection.data()[0]
+                << ", " << projection.data()[5]
+                << ", square projection scales=" << squareProjection.data()[0]
+                << ", " << squareProjection.data()[5] << '\n';
     }
     return passed ? 0 : 1;
 }

@@ -7,7 +7,7 @@
 
 namespace aura::body {
     math::Vec3 componentAnchorVelocity(std::span<BodyPart3D *const> component,
-                                      const math::Vec3 &anchor, const math::Vec3 &direction) {
+                                       const math::Vec3 &anchor, const math::Vec3 &direction) {
         const auto center = componentCenterOfMass(component);
         const auto r = anchor - center;
         const auto cross = r.cross(direction.normalized());
@@ -62,18 +62,19 @@ namespace aura::body {
             const auto &I = b.momentOfInertia;
             audit.linearWork += b.mass * b.velocity.dot(dv);
             audit.angularWork += I.x * localOld.x * localDelta.x +
-                                 I.y * localOld.y * localDelta.y + I.z * localOld.z * localDelta.z;
+                    I.y * localOld.y * localDelta.y + I.z * localOld.z * localDelta.z;
             audit.quadraticEnergy += 0.5 * b.mass * dv.lengthSquared() +
-                0.5 * (I.x * localDelta.x * localDelta.x + I.y * localDelta.y * localDelta.y + I.z * localDelta.z * localDelta.z);
+                    0.5 * (I.x * localDelta.x * localDelta.x + I.y * localDelta.y * localDelta.y + I.z * localDelta.z *
+                           localDelta.z);
             b.velocity += dv;
             b.angularVelocity += dw;
         };
         apply(parent.body, -impulse * (1.0f / parent.body.mass), inverseParentInertia(rA.cross(-impulse)));
         const auto deltaV = impulse * (1.0f / mass);
         const auto deltaW = inertiaB > 0.0f ? rB.cross(impulse) * (1.0f / inertiaB) : math::Vec3{};
-        for (auto *part : component) apply(part->body, deltaV + deltaW.cross(part->body.position - center), deltaW);
+        for (auto *part: component) apply(part->body, deltaV + deltaW.cross(part->body.position - center), deltaW);
         audit.modeSpeedAfter = (componentAnchorVelocity(component, anchorB, audit.direction) -
-            physics::velocityAtWorldPoint(parent.body, anchorA)).dot(audit.direction);
+                                physics::velocityAtWorldPoint(parent.body, anchorA)).dot(audit.direction);
         return audit;
     }
 }

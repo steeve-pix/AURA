@@ -16,6 +16,6 @@ namespace aura::app {
 
     // Root outward: spine/head, left arm, right arm, left leg, right leg.
     // References belong to the supplied body/skeleton; neither may be moved.
-    std::array<BodyJoint, 15> makeBodyJoints(body::AuraBody3D& body,
-                                          body::AuraSkeleton3D& skeleton);
+    std::array<BodyJoint, 15> makeBodyJoints(body::AuraBody3D &body,
+                                             body::AuraSkeleton3D &skeleton);
 }

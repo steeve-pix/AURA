@@ -3,17 +3,20 @@
 
 namespace aura::body {
     enum class ComponentPositionChoice { Child, Parent, MultipleContacts };
+
     struct ComponentPositionResult {
         ComponentPositionChoice choice = ComponentPositionChoice::Child;
         math::Vec3 translation{};
         float gapBefore = 0.0f;
         float gapAfter = 0.0f;
     };
+
     struct DirectionalPositionResult {
         math::Vec3 translationA{}, translationB{};
         float gapBefore{}, gapAfter{};
         bool applied = false;
     };
+
     // Flat-floor experiment: mass-balance X/Z; constrain Y by both components'
     // no-worsening floor bounds. Changes positions only. Does not evaluate
     // self-collision, walls or rotational limits; caller must handle those.

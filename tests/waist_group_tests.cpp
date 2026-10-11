@@ -48,7 +48,8 @@ int main() {
             const aura::math::Vec3 expectedLower{-0.12f, blocked ? 0.0f : -sign * 0.08f, 0.04f};
             for (std::size_t i = 0; i < parts.size(); ++i) {
                 const bool upper = i < 3 || (i >= 4 && i < 10);
-                check((parts[i]->body.position - before[i] - (upper ? expectedUpper : expectedLower)).length() < tolerance,
+                check((parts[i]->body.position - before[i] - (upper ? expectedUpper : expectedLower)).length() <
+                      tolerance,
                       "every group member translates equally, preserving internal anchor offsets");
                 check((parts[i]->body.velocity - aura::math::Vec3{1, 2, 3}).length() < tolerance &&
                       (parts[i]->body.angularVelocity - aura::math::Vec3{0.5f, 0, 0}).length() < tolerance,

@@ -5,13 +5,20 @@
 int main() {
     bool passed = true;
     const auto check = [&](bool condition, const char *message) {
-        if (!condition) { std::cerr << "FAIL " << message << '\n'; passed = false; }
+        if (!condition) {
+            std::cerr << "FAIL " << message << '\n';
+            passed = false;
+        }
     };
     aura::body::BodyPart3D a, b;
-    a.name = "a"; b.name = "b";
-    a.body.mass = 2; b.body.mass = 3;
-    a.body.position = {-3, 1, 0}; b.body.position = {2, 1, 0};
-    a.body.velocity = {0, -3, 0}; b.body.velocity = {0, 2, 0};
+    a.name = "a";
+    b.name = "b";
+    a.body.mass = 2;
+    b.body.mass = 3;
+    a.body.position = {-3, 1, 0};
+    b.body.position = {2, 1, 0};
+    a.body.velocity = {0, -3, 0};
+    b.body.velocity = {0, 2, 0};
     const std::array<aura::body::BodyPart3D *, 2> parts{&a, &b};
     const auto state = aura::app::bodyMechanics(parts);
     check(std::abs(state.mass - 5) < 1e-6, "total mass");
@@ -26,7 +33,8 @@ int main() {
     check(std::abs(aura::app::rotationAngle(q) - 0.7f) < 1e-6f &&
           std::abs(aura::app::rotationAngle(negative) - 0.7f) < 1e-6f, "orientation angle ignores quaternion sign");
     aura::app::DiagnosticPeak peak;
-    peak.observe(4, "a", 1); peak.observe(1, "b", 2);
+    peak.observe(4, "a", 1);
+    peak.observe(1, "b", 2);
     check(peak.value == 4 && peak.owner == "a" && peak.step == 1, "interval peak retains earlier transient");
     aura::body::Joint3D joint;
     joint.motorDamping = 0;
@@ -67,7 +75,8 @@ int main() {
     std::istringstream lines(text);
     std::string line;
     while (std::getline(lines, line)) check(line.size() <= 90, "summary and detail rows stay within 90 columns");
-    captured.str(""); captured.clear();
+    captured.str("");
+    captured.clear();
     previous = std::cout.rdbuf(captured.rdbuf());
     const auto precision = std::cout.precision();
     const auto flags = std::cout.flags();
@@ -75,7 +84,8 @@ int main() {
     aura::app::printControl("restart", 0, false, false, true);
     aura::app::printLoggingHelp();
     std::cout.rdbuf(previous);
-    check(std::cout.precision() == precision && std::cout.flags() == flags, "logging preserves terminal stream formatting");
+    check(std::cout.precision() == precision && std::cout.flags() == flags,
+          "logging preserves terminal stream formatting");
     check(captured.str().find("dt=8.333ms | rate=120Hz") != std::string::npos, "startup retains timestep precision");
     check(captured.str().find("[aura/control]") != std::string::npos &&
           captured.str().find("follow=1") != std::string::npos, "control events use one format with binary flags");

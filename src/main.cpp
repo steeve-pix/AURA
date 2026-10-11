@@ -6,9 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include "aura/body/AuraBody3D.hpp"
-#include "aura/body/AuraSkeleton3D.hpp"
 #include "aura/body/BodyPart3D.hpp"
-#include "aura/body/Joint3D.hpp"
 #include "aura/body/BodySelfCollision.hpp"
 #include "aura/physics/RoomCollision.hpp"
 #include "aura/render/Camera.hpp"
@@ -23,6 +21,7 @@
 #include "app/BodyDiagnostics.hpp"
 #include "app/SimulationStep.hpp"
 #include "AssetPath.hpp"
+#include "aura/sim/AuraSimulation.hpp"
 
 using aura::app::BodyDiagnosticHistory;
 using aura::app::printBodyDiagnostics;
@@ -39,25 +38,26 @@ int main() {
 
     aura::render::Window window{1024, 820, "AURA - Physics running | P: pose | Space: pause | R: restart"};
 
-    auto auraBody = aura::body::createAuraBody3D();
+    aura::sim::AuraSimulation simulation;
+    auto &auraBody = simulation.body();
     const auto assembledBody = auraBody;
     bool paused = false;
-    const auto parts = aura::body::collisionParts(auraBody);
-    // Start above the floor so gravity is visible immediately.
-    for (auto *part: parts) part->body.position.y += 0.6f;
+    auto &parts = simulation.getParts();
 
-    auto skeleton = aura::body::createAuraSkeleton3D(auraBody);
+    auto &skeleton = simulation.getSkeleton();
     aura::body::configureBodyCollisionJoints(skeleton);
-    const auto bodyPairs = aura::body::bodyCollisionPairs(auraBody, skeleton, 3);
+    const auto bodyPairs = simulation.getBodyPairs();
 
-    auto joints = aura::app::makeBodyJoints(auraBody, skeleton);
+    auto &joints = simulation.getJoints();
 
-    const aura::physics::RoomBounds room;
-    std::array<aura::physics::RoomBody, 16> roomBodies;
-    for (std::size_t i=0;i<parts.size();++i) roomBodies[i]={&parts[i]->body,parts[i]->size};
+    const auto &room = simulation.getRoom();
+    auto &roomBodies = simulation.getRoomBodies();
+    for (std::size_t i = 0; i < parts.size(); ++i) roomBodies[i] = {&parts[i]->body, parts[i]->size};
     const auto roomSize = room.maximum - room.minimum;
-    const auto roomOrigin = (room.minimum + room.maximum) * 0.5f - aura::math::Vec3{0,roomSize.y*0.5f,0};
-    aura::render::Mesh roomLines{aura::render::MeshFactory::createRoomLines(roomSize, 5.0f), aura::render::MeshPrimitive::Lines};
+    const auto roomOrigin = (room.minimum + room.maximum) * 0.5f - aura::math::Vec3{0, roomSize.y * 0.5f, 0};
+    aura::render::Mesh roomLines{
+        aura::render::MeshFactory::createRoomLines(roomSize, 5.0f), aura::render::MeshPrimitive::Lines
+    };
     aura::render::Mesh grid{aura::render::MeshFactory::createGrid(60, 1.0f), aura::render::MeshPrimitive::Lines};
     aura::render::Mesh floor{
         aura::render::MeshFactory::createFloor(roomSize.x), aura::render::MeshPrimitive::Triangles,
@@ -101,7 +101,8 @@ int main() {
 
     aura::render::BodyRenderer bodyRenderer;
     std::vector<aura::render::JointMarker> jointMarkers;
-    for (const auto& joint : joints)
+    jointMarkers.reserve(joints.size());
+    for (const auto &joint: joints)
         jointMarkers.push_back({joint.partA, joint.partB, joint.constraint, joint.markerRadius});
 
     auto renderFrame = [&] {
@@ -246,10 +247,9 @@ int main() {
     double accumulator = 0.0;
     double simulatedTime = 0.0;
     int physicsStepsSinceLog = 0;
-    float visualMaximumBodyPenetration=0;
-    size_t visualOverlapSteps=0;
-    BodyDiagnosticHistory diagnosticHistory;
-    diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
+    float visualMaximumBodyPenetration = 0;
+    size_t visualOverlapSteps = 0;
+    auto &diagnosticHistory = simulation.getDiagnosticHistory();
     bool detailedDiagnostics = false;
     window.setKeyCallback([&](int key, int action) {
         if (action != GLFW_PRESS) return;
@@ -290,8 +290,8 @@ int main() {
             if (!paused) for (auto *part: parts) part->body.position.y += 0.6f;
             simulatedTime = 0.0;
             physicsStepsSinceLog = 0;
-            visualMaximumBodyPenetration=0;
-            visualOverlapSteps=0;
+            visualMaximumBodyPenetration = 0;
+            visualOverlapSteps = 0;
             diagnosticHistory = {};
             diagnosticHistory.initialEnergy = aura::app::bodyEnergy(parts);
         }
@@ -303,7 +303,7 @@ int main() {
     });
     aura::app::printStartup(joints, FIXED_DT, jointIterations);
     std::cout << "  Self-collision enabled | eligible pairs=" << bodyPairs.size()
-              << '\n' << std::flush;
+            << '\n' << std::flush;
     while (!window.shouldClose()) {
         aura::render::Window::pollEvents();
         if (window.shouldClose()) break;
@@ -313,31 +313,31 @@ int main() {
         if (!paused) accumulator += frameTime;
 
         while (accumulator >= FIXED_DT) {
-            aura::app::stepSimulation(auraBody, skeleton, joints, parts, bodyPairs,
-                                      roomBodies, room, diagnosticHistory);
-            simulatedTime += FIXED_DT;
+            simulation.step();
+
             {
-                const auto collision=aura::body::bodyCollisionMetrics(auraBody,bodyPairs);
-                visualMaximumBodyPenetration=std::max(visualMaximumBodyPenetration,collision.maximumPenetration);
-                visualOverlapSteps+=collision.overlappingPairs>0;
+                const auto collision = aura::body::bodyCollisionMetrics(auraBody, bodyPairs);
+                visualMaximumBodyPenetration = std::max(visualMaximumBodyPenetration, collision.maximumPenetration);
+                visualOverlapSteps += collision.overlappingPairs > 0;
             }
-            diagnosticHistory.observe(parts, joints, simulatedTime);
+            diagnosticHistory.observe(parts, joints, simulation.time());
             if (++physicsStepsSinceLog == 120) {
                 physicsStepsSinceLog = 0;
-                diagnosticHistory.printSummary(parts, joints, simulatedTime, paused, detailedDiagnostics, followBody);
+                diagnosticHistory.printSummary(parts, joints, simulation.time(), paused, detailedDiagnostics, followBody);
                 {
-                    const auto collision=aura::body::bodyCollisionMetrics(auraBody,bodyPairs);
-                    const auto collisionParts=aura::body::collisionParts(auraBody);
+                    const auto collision = aura::body::bodyCollisionMetrics(auraBody, bodyPairs);
+                    const auto collisionParts = aura::body::collisionParts(auraBody);
                     std::cout << "bodyCollisionLive pairs=" << bodyPairs.size()
-                        << " penetration=" << collision.maximumPenetration
-                        << " maximumPenetration=" << visualMaximumBodyPenetration
-                        << " overlapSteps=" << visualOverlapSteps << " worstPair=";
-                    if(collision.maximumPenetration>0)
-                        std::cout << collisionParts[collision.pairA]->name << '/' << collisionParts[collision.pairB]->name;
+                            << " penetration=" << collision.maximumPenetration
+                            << " maximumPenetration=" << visualMaximumBodyPenetration
+                            << " overlapSteps=" << visualOverlapSteps << " worstPair=";
+                    if (collision.maximumPenetration > 0)
+                        std::cout << collisionParts[collision.pairA]->name << '/' << collisionParts[collision.pairB]->
+                                name;
                     else std::cout << "none";
                     std::cout << '\n';
                 }
-                if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulatedTime);
+                if (detailedDiagnostics) printBodyDiagnostics(parts, joints, simulation.time());
             }
             accumulator -= FIXED_DT;
         }

@@ -9,105 +9,148 @@ int main() {
     using namespace aura;
     bool passed = true;
     const auto check = [&](bool ok, const char *message) {
-        if (!ok) { std::cerr << "FAIL " << message << '\n'; passed = false; }
+        if (!ok) {
+            std::cerr << "FAIL " << message << '\n';
+            passed = false;
+        }
     };
     for (int fixture = 0; fixture < 4; ++fixture) {
         body::BodyPart3D a, b;
-        a.body.mass = 2; b.body.mass = 3;
+        a.body.mass = 2;
+        b.body.mass = 3;
         a.body.momentOfInertia = {0.4f, 0.7f, 1.3f};
         b.body.momentOfInertia = {0.8f, 1.1f, 0.5f};
         a.body.orientation = math::Quaternion::fromAxisAngle({0, 1, 0}, 0.6f);
         b.body.orientation = math::Quaternion::fromAxisAngle({1, 0, 0}, -0.7f);
-        a.body.position = {0, 1, 0}; b.body.position = {0, -1, 0};
-        a.body.velocity = {1, -2, 3}; b.body.velocity = {-4, 2, 1};
-        a.body.angularVelocity = {1, 3, -2}; b.body.angularVelocity = {-2, 1, 4};
+        a.body.position = {0, 1, 0};
+        b.body.position = {0, -1, 0};
+        a.body.velocity = {1, -2, 3};
+        b.body.velocity = {-4, 2, 1};
+        a.body.angularVelocity = {1, 3, -2};
+        b.body.angularVelocity = {-2, 1, 4};
         body::Joint3D joint;
         if (fixture > 0) {
             joint.localAnchorA = {0.2f, -0.5f, 0.3f};
             joint.localAnchorB = {-0.1f, 0.5f, -0.2f};
         }
-        if (fixture == 2) { a.body.velocity = b.body.velocity = {}; a.body.angularVelocity = b.body.angularVelocity = {}; }
+        if (fixture == 2) {
+            a.body.velocity = b.body.velocity = {};
+            a.body.angularVelocity = b.body.angularVelocity = {};
+        }
         if (fixture == 3) {
             // Matching world anchors permit vector angular momentum conservation.
             const auto anchor = body::localToWorldPoint(a, joint.localAnchorA);
             b.body.position = anchor - b.body.orientation.rotate(joint.localAnchorB);
         }
         const auto oldA = a, oldB = b;
-        const auto energy = [&] { return physics::mechanicalState(a.body, {}, {}).energy() + physics::mechanicalState(b.body, {}, {}).energy(); };
+        const auto energy = [&] {
+            return physics::mechanicalState(a.body, {}, {}).energy() + physics::mechanicalState(b.body, {}, {}).
+                   energy();
+        };
         const auto momentum = [&] { return a.body.velocity * a.body.mass + b.body.velocity * b.body.mass; };
-        const auto angularMomentum = [&] { return physics::mechanicalState(a.body).angularMomentum + physics::mechanicalState(b.body).angularMomentum; };
+        const auto angularMomentum = [&] {
+            return physics::mechanicalState(a.body).angularMomentum + physics::mechanicalState(b.body).angularMomentum;
+        };
         const double before = energy();
         const auto oldP = momentum(), oldL = angularMomentum();
         const auto audit = body::correctLocalJointVelocity(a, b, joint);
         const double work = audit.measuredLinearWork + audit.measuredAngularWork;
         check(std::abs(audit.predictedWork - work) < 1e-4, "work prediction matches actual two-body response");
-        check(std::abs(energy() - before - work - audit.quadraticEnergy) < 1e-4, "work audit matches kinetic energy change");
+        check(std::abs(energy() - before - work - audit.quadraticEnergy) < 1e-4,
+              "work audit matches kinetic energy change");
         check(energy() <= before + 1e-4, "local projection dissipates energy");
         check(std::abs(audit.projectedSpeedAfter) < 1e-5f, "selected anchor direction repaired");
         check((momentum() - oldP).length() < 1e-5f, "equal opposite impulses preserve linear momentum");
-        if (fixture == 3) check((angularMomentum() - oldL).length() < 1e-5f, "coincident anchors preserve angular momentum");
-        check((a.body.position - oldA.body.position).length() == 0 && (b.body.position - oldB.body.position).length() == 0,
+        if (fixture == 3) check((angularMomentum() - oldL).length() < 1e-5f,
+                                "coincident anchors preserve angular momentum");
+        check((a.body.position - oldA.body.position).length() == 0 && (b.body.position - oldB.body.position).length() ==
+              0,
               "velocity solver leaves positions unchanged");
         const auto oldAnchorOffsetA = oldA.body.orientation.rotate(joint.localAnchorA);
-        check((a.body.orientation.rotate(joint.localAnchorA) - oldAnchorOffsetA).length() == 0, "orientation unchanged");
+        check((a.body.orientation.rotate(joint.localAnchorA) - oldAnchorOffsetA).length() == 0,
+              "orientation unchanged");
     }
-    for (int sign : {-1, 1}) {
+    for (int sign: {-1, 1}) {
         body::BodyPart3D a, b;
-        a.body.orientation = math::Quaternion::fromAxisAngle({0,1,0},0.7f);
-        b.body.orientation = (a.body.orientation * math::Quaternion::fromAxisAngle({1,0,0},sign*1.0f)).normalized();
-        a.body.momentOfInertia = {1,2,3}; b.body.momentOfInertia = {2,3,4};
-        a.body.velocity = {1,2,3}; b.body.velocity = {3,2,1};
-        const auto axis = a.body.orientation.rotate({1,0,0});
-        b.body.angularVelocity = axis * (sign*3.0f);
+        a.body.orientation = math::Quaternion::fromAxisAngle({0, 1, 0}, 0.7f);
+        b.body.orientation = (a.body.orientation * math::Quaternion::fromAxisAngle({1, 0, 0}, sign * 1.0f)).
+                normalized();
+        a.body.momentOfInertia = {1, 2, 3};
+        b.body.momentOfInertia = {2, 3, 4};
+        a.body.velocity = {1, 2, 3};
+        b.body.velocity = {3, 2, 1};
+        const auto axis = a.body.orientation.rotate({1, 0, 0});
+        b.body.angularVelocity = axis * (sign * 3.0f);
         body::Joint3D joint;
-        joint.minAngle = -0.8f; joint.maxAngle = 0.8f;
+        joint.minAngle = -0.8f;
+        joint.maxAngle = 0.8f;
         const auto oldA = a.body, oldB = b.body;
-        const auto beforeA = physics::mechanicalState(a.body,{},{}), beforeB = physics::mechanicalState(b.body,{},{});
-        const auto result = body::correctLocalJointAngularLimitVelocity(a,b,joint);
-        const auto afterA = physics::mechanicalState(a.body,{},{}), afterB = physics::mechanicalState(b.body,{},{});
-        check(std::abs(result.projectedSpeedAfter)<1e-5f,"outward hinge omega removed at either limit");
-        check((a.body.velocity-oldA.velocity).lengthSquared()==0 && (b.body.velocity-oldB.velocity).lengthSquared()==0,
+        const auto beforeA = physics::mechanicalState(a.body, {}, {}), beforeB = physics::mechanicalState(
+            b.body, {}, {});
+        const auto result = body::correctLocalJointAngularLimitVelocity(a, b, joint);
+        const auto afterA = physics::mechanicalState(a.body, {}, {}), afterB = physics::mechanicalState(b.body, {}, {});
+        check(std::abs(result.projectedSpeedAfter) < 1e-5f, "outward hinge omega removed at either limit");
+        check((a.body.velocity - oldA.velocity).lengthSquared() == 0 && (b.body.velocity - oldB.velocity).
+              lengthSquared() == 0,
               "angular impulse leaves all linear velocities unchanged");
-        check((afterA.angularMomentum+afterB.angularMomentum-beforeA.angularMomentum-beforeB.angularMomentum).length()<1e-5f,
+        check((afterA.angularMomentum + afterB.angularMomentum - beforeA.angularMomentum - beforeB.angularMomentum).
+              length() < 1e-5f,
               "paired angular impulse preserves world angular momentum");
-        check(std::abs(result.predictedWork-result.measuredAngularWork)<1e-5,"angular work prediction agrees");
-        check(std::abs(afterA.energy()+afterB.energy()-beforeA.energy()-beforeB.energy()-result.measuredAngularWork-result.quadraticEnergy)<1e-5,
+        check(std::abs(result.predictedWork - result.measuredAngularWork) < 1e-5, "angular work prediction agrees");
+        check(std::abs(
+                  afterA.energy() + afterB.energy() - beforeA.energy() - beforeB.energy() - result.measuredAngularWork -
+                  result.quadraticEnergy) < 1e-5,
               "angular work audit closes energy change");
-        check(afterA.energy()+afterB.energy()<=beforeA.energy()+beforeB.energy()+1e-5,"limit impulse dissipates kinetic energy");
-        b.body.angularVelocity = a.body.angularVelocity - axis*(sign*2.0f);
-        const auto inwardA=a.body.angularVelocity, inwardB=b.body.angularVelocity;
-        body::correctLocalJointAngularLimitVelocity(a,b,joint);
-        check((a.body.angularVelocity-inwardA).lengthSquared()==0 && (b.body.angularVelocity-inwardB).lengthSquared()==0,
+        check(afterA.energy() + afterB.energy() <= beforeA.energy() + beforeB.energy() + 1e-5,
+              "limit impulse dissipates kinetic energy");
+        b.body.angularVelocity = a.body.angularVelocity - axis * (sign * 2.0f);
+        const auto inwardA = a.body.angularVelocity, inwardB = b.body.angularVelocity;
+        body::correctLocalJointAngularLimitVelocity(a, b, joint);
+        check((a.body.angularVelocity - inwardA).lengthSquared() == 0 && (b.body.angularVelocity - inwardB).
+              lengthSquared() == 0,
               "inward motion at limit remains free");
-        b.body.orientation=a.body.orientation;
-        b.body.angularVelocity=axis*3;
-        const auto insideA=a.body.angularVelocity, insideB=b.body.angularVelocity;
-        body::correctLocalJointAngularLimitVelocity(a,b,joint);
-        check((a.body.angularVelocity-insideA).lengthSquared()==0 && (b.body.angularVelocity-insideB).lengthSquared()==0,
+        b.body.orientation = a.body.orientation;
+        b.body.angularVelocity = axis * 3;
+        const auto insideA = a.body.angularVelocity, insideB = b.body.angularVelocity;
+        body::correctLocalJointAngularLimitVelocity(a, b, joint);
+        check((a.body.angularVelocity - insideA).lengthSquared() == 0 && (b.body.angularVelocity - insideB).
+              lengthSquared() == 0,
               "inside-range hinge is not braked");
     }
     {
-        body::BodyPart3D a,b;body::Joint3D joint;joint.enforceHingeAxis=true;
-        a.body.orientation=math::Quaternion::fromAxisAngle({1,2,3},.73f);
-        b.body.orientation=(a.body.orientation*math::Quaternion::fromAxisAngle({1,0,0},.4f)).normalized();
-        a.body.momentOfInertia={.13f,.31f,.72f};b.body.momentOfInertia={.21f,.56f,.19f};
-        a.body.angularVelocity={1,2,3};b.body.angularVelocity={-4,5,-2};
-        a.body.velocity={2,3,4};b.body.velocity={-1,2,-3};
-        const auto oldA=a.body,oldB=b.body;
-        const auto beforeA=physics::mechanicalState(a.body,{},{}),beforeB=physics::mechanicalState(b.body,{},{});
-        const auto audit=body::correctLocalJointHingeAngularVelocity(a,b,joint);
-        const auto afterA=physics::mechanicalState(a.body,{},{}),afterB=physics::mechanicalState(b.body,{},{});
-        check(audit.projectedSpeedBefore>1 && audit.projectedSpeedAfter<1e-5f,"coupled transverse hinge velocity repaired");
-        check((a.body.velocity-oldA.velocity).lengthSquared()==0 && (b.body.velocity-oldB.velocity).lengthSquared()==0,
+        body::BodyPart3D a, b;
+        body::Joint3D joint;
+        joint.enforceHingeAxis = true;
+        a.body.orientation = math::Quaternion::fromAxisAngle({1, 2, 3}, .73f);
+        b.body.orientation = (a.body.orientation * math::Quaternion::fromAxisAngle({1, 0, 0}, .4f)).normalized();
+        a.body.momentOfInertia = {.13f, .31f, .72f};
+        b.body.momentOfInertia = {.21f, .56f, .19f};
+        a.body.angularVelocity = {1, 2, 3};
+        b.body.angularVelocity = {-4, 5, -2};
+        a.body.velocity = {2, 3, 4};
+        b.body.velocity = {-1, 2, -3};
+        const auto oldA = a.body, oldB = b.body;
+        const auto beforeA = physics::mechanicalState(a.body, {}, {}), beforeB = physics::mechanicalState(
+            b.body, {}, {});
+        const auto audit = body::correctLocalJointHingeAngularVelocity(a, b, joint);
+        const auto afterA = physics::mechanicalState(a.body, {}, {}), afterB = physics::mechanicalState(b.body, {}, {});
+        check(audit.projectedSpeedBefore > 1 && audit.projectedSpeedAfter < 1e-5f,
+              "coupled transverse hinge velocity repaired");
+        check((a.body.velocity - oldA.velocity).lengthSquared() == 0 && (b.body.velocity - oldB.velocity).
+              lengthSquared() == 0,
               "hinge axis impulse preserves linear velocities exactly");
-        check((afterA.angularMomentum+afterB.angularMomentum-beforeA.angularMomentum-beforeB.angularMomentum).length()<1e-5f,
+        check((afterA.angularMomentum + afterB.angularMomentum - beforeA.angularMomentum - beforeB.angularMomentum).
+              length() < 1e-5f,
               "hinge axis impulse conserves angular momentum");
-        check(std::abs(audit.predictedWork-audit.measuredAngularWork)<1e-5,"hinge axis work prediction closes");
-        check(std::abs(afterA.energy()+afterB.energy()-beforeA.energy()-beforeB.energy()-audit.measuredAngularWork-audit.quadraticEnergy)<1e-5,
+        check(std::abs(audit.predictedWork - audit.measuredAngularWork) < 1e-5, "hinge axis work prediction closes");
+        check(std::abs(
+                  afterA.energy() + afterB.energy() - beforeA.energy() - beforeB.energy() - audit.measuredAngularWork -
+                  audit.quadraticEnergy) < 1e-5,
               "hinge axis energy audit closes");
-        check(afterA.energy()+afterB.energy()<=beforeA.energy()+beforeB.energy()+1e-5,"hinge axis impulse dissipates energy");
-        check((a.body.position-oldA.position).lengthSquared()==0 && a.body.orientation.w==oldA.orientation.w &&
-              b.body.orientation.w==oldB.orientation.w,"hinge axis impulse preserves pose");
+        check(afterA.energy() + afterB.energy() <= beforeA.energy() + beforeB.energy() + 1e-5,
+              "hinge axis impulse dissipates energy");
+        check((a.body.position - oldA.position).lengthSquared() == 0 && a.body.orientation.w == oldA.orientation.w &&
+              b.body.orientation.w == oldB.orientation.w, "hinge axis impulse preserves pose");
     }
     return passed ? 0 : 1;
 }

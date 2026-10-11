@@ -1,8 +1,8 @@
-#include "BodyJoint.hpp"
+#include "aura/app/BodyJoint.hpp"
 
 namespace aura::app {
-    std::array<BodyJoint, 15> makeBodyJoints(body::AuraBody3D& auraBody,
-                                           body::AuraSkeleton3D& skeleton) {
+    std::array<BodyJoint, 15> makeBodyJoints(body::AuraBody3D &auraBody,
+                                             body::AuraSkeleton3D &skeleton) {
         return {
             {
                 {"waist", &auraBody.torso, &auraBody.pelvis, skeleton.waist, false, 0.0f},
@@ -22,6 +22,5 @@ namespace aura::app {
                 {"rightAnkle", &auraBody.rightShin, &auraBody.rightFoot, skeleton.rightAnkle, false, 0.12f},
             }
         };
-
     }
 }

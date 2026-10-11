@@ -24,14 +24,18 @@ int main() {
             if (rotatedParent)
                 body.torso.body.orientation = aura::math::Quaternion::fromAxisAngle({1, 2, 3}, 0.7f);
             body.neck.body.orientation = body.torso.body.orientation *
-                aura::math::Quaternion::fromAxisAngle({1, 0, 0}, neckAngle) *
-                aura::math::Quaternion::fromAxisAngle({0, 1, 0}, 0.2f);
+                                         aura::math::Quaternion::fromAxisAngle({1, 0, 0}, neckAngle) *
+                                         aura::math::Quaternion::fromAxisAngle({0, 1, 0}, 0.2f);
             body.neck.body.position = aura::body::localToWorldPoint(body.torso, skeleton.neck.localAnchorA) -
-                body.neck.body.orientation.rotate(skeleton.neck.localAnchorB) + aura::math::Vec3{0.003f, -0.002f, 0.001f};
+                                      body.neck.body.orientation.rotate(skeleton.neck.localAnchorB) + aura::math::Vec3{
+                                          0.003f, -0.002f, 0.001f
+                                      };
             body.head.body.orientation = body.neck.body.orientation *
-                aura::math::Quaternion::fromAxisAngle({1, 0, 0}, 0.3f);
+                                         aura::math::Quaternion::fromAxisAngle({1, 0, 0}, 0.3f);
             body.head.body.position = aura::body::localToWorldPoint(body.neck, skeleton.head.localAnchorA) -
-                body.head.body.orientation.rotate(skeleton.head.localAnchorB) + aura::math::Vec3{0.002f, 0.001f, -0.001f};
+                                      body.head.body.orientation.rotate(skeleton.head.localAnchorB) + aura::math::Vec3{
+                                          0.002f, 0.001f, -0.001f
+                                      };
             body.neck.body.velocity = {1, 2, 3};
             body.head.body.velocity = {-1, 2, -3};
             body.neck.body.angularVelocity = {0.1f, 0.2f, 0.3f};
@@ -50,7 +54,8 @@ int main() {
             check(std::abs(aura::body::relativeJointAngle(body.torso, body.neck, skeleton.neck) -
                            std::clamp(neckAngle, -0.5f, 0.5f)) < tolerance,
                   "neck subtree rotation enforces either limit with a rotated parent");
-            check((aura::body::localToWorldPoint(body.neck, skeleton.neck.localAnchorB) - neckPivot).length() < tolerance,
+            check((aura::body::localToWorldPoint(body.neck, skeleton.neck.localAnchorB) - neckPivot).length() <
+                  tolerance,
                   "subtree rotation preserves the neck pivot");
             check(std::abs(headGap().length() - beforeHeadGap) < tolerance &&
                   std::abs(aura::body::relativeJointAngle(body.neck, body.head, skeleton.head) - 0.3f) < tolerance,
@@ -77,9 +82,11 @@ int main() {
 
             const auto relativeHeadVelocity = [&] {
                 return aura::physics::velocityAtWorldPoint(body.head.body,
-                           aura::body::localToWorldPoint(body.head, skeleton.head.localAnchorB)) -
+                                                           aura::body::localToWorldPoint(
+                                                               body.head, skeleton.head.localAnchorB)) -
                        aura::physics::velocityAtWorldPoint(body.neck.body,
-                           aura::body::localToWorldPoint(body.neck, skeleton.head.localAnchorA));
+                                                           aura::body::localToWorldPoint(
+                                                               body.neck, skeleton.head.localAnchorA));
             };
             const auto headVelocityBefore = relativeHeadVelocity();
             const auto relativeOmegaBefore = body.head.body.angularVelocity - body.neck.body.angularVelocity;
@@ -89,7 +96,8 @@ int main() {
             const auto internalGap = headGap();
             aura::body::solveNeckSubtreeVelocityConstraints(body, skeleton.neck);
             const auto deltaOmega = body.neck.body.angularVelocity - neckOmegaBefore;
-            check((body.head.body.angularVelocity - body.neck.body.angularVelocity - relativeOmegaBefore).length() < tolerance,
+            check((body.head.body.angularVelocity - body.neck.body.angularVelocity - relativeOmegaBefore).length() <
+                  tolerance,
                   "neck velocity corrections preserve descendant relative angular velocity");
             // Rigid velocity fields evaluated at separated anchor points differ by deltaOmega x gap.
             check((relativeHeadVelocity() - headVelocityBefore - deltaOmega.cross(internalGap)).length() < tolerance,

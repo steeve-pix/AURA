@@ -8,41 +8,47 @@
 namespace aura::render {
     BodyRenderer::BodyRenderer()
         : jointSphere{
-            MeshFactory::createSphere(48, 32),
-            MeshPrimitive::Triangles,
-            VertexLayout::PositionNormal
-        },
+              MeshFactory::createSphere(48, 32),
+              MeshPrimitive::Triangles,
+              VertexLayout::PositionNormal
+          },
           cylinder{
-            MeshFactory::createCylinder(48),
-            MeshPrimitive::Triangles,
-            VertexLayout::PositionNormal
-        },
+              MeshFactory::createCylinder(48),
+              MeshPrimitive::Triangles,
+              VertexLayout::PositionNormal
+          },
           sphereLines{MeshFactory::createSphereLines(), MeshPrimitive::Lines},
           topSphereLines{
-            MeshFactory::createSphereLines(48, 1), MeshPrimitive::Lines
-        },
+              MeshFactory::createSphereLines(48, 1), MeshPrimitive::Lines
+          },
           bottomSphereLines{
-            MeshFactory::createSphereLines(48, -1), MeshPrimitive::Lines
-        },
+              MeshFactory::createSphereLines(48, -1), MeshPrimitive::Lines
+          },
           cylinderLines{
-            MeshFactory::createCylinderLines(), MeshPrimitive::Lines
-        },
+              MeshFactory::createCylinderLines(), MeshPrimitive::Lines
+          },
           roundedBox{
-            MeshFactory::createRoundedBox(), MeshPrimitive::Triangles,
-            VertexLayout::PositionNormal
-        },
+              MeshFactory::createRoundedBox(), MeshPrimitive::Triangles,
+              VertexLayout::PositionNormal
+          },
           soleLines{MeshFactory::createSoleLines(), MeshPrimitive::Lines},
-          noLines{std::vector<float>{}, MeshPrimitive::Lines} {}
+          noLines{std::vector<float>{}, MeshPrimitive::Lines} {
+    }
 
-    void BodyRenderer::draw(const body::AuraBody3D& auraBody, std::span<const JointMarker> joints,
-                            const Shader& shader, bool colored, bool details) const {
+    void BodyRenderer::draw(const body::AuraBody3D &auraBody, std::span<const JointMarker> joints,
+                            const Shader &shader, bool colored, bool details) const {
         const auto drawPiece = [&](const math::Mat4 &model, const Mesh &solid,
                                    const Mesh &lines) {
             shader.setMat4("uModel", model);
             (details ? lines : solid).draw();
         };
         if (colored) shader.setVec3("uColor", {0.96f, 0.97f, 1.0f});
-        drawPiece(body::modelMatrix(auraBody.head), jointSphere, sphereLines);
+        const auto &head = auraBody.head;
+        const float headDiameter = std::min({head.size.x, head.size.y, head.size.z});
+        const auto headModel = math::Mat4::translation(head.body.position) *
+                               math::Mat4::rotation(head.body.orientation) *
+                               math::Mat4::scale({headDiameter, headDiameter, headDiameter});
+        drawPiece(headModel, jointSphere, sphereLines);
         const auto pelvisBase = math::Mat4::translation(auraBody.pelvis.body.position) *
                                 math::Mat4::rotation(auraBody.pelvis.body.orientation);
         drawPiece(pelvisBase * math::Mat4::scale({0.9f, 0.95f, 0.85f}), jointSphere, sphereLines);
@@ -50,7 +56,7 @@ namespace aura::render {
         const auto &chest = auraBody.torso.size;
         const auto torsoBase = math::Mat4::translation(auraBody.torso.body.position) *
                                math::Mat4::rotation(auraBody.torso.body.orientation);
-        // Equal dimensions make the chest spherical, so it stays round from every view.
+        // Preserve the original spherical chest size; floor support remains the torso box.
         constexpr float chestDiameter = 1.45f;
         drawPiece(torsoBase * math::Mat4::scale({chestDiameter, chestDiameter, chestDiameter}),
                   jointSphere, sphereLines);

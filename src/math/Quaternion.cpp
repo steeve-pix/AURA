@@ -27,12 +27,14 @@ namespace aura::math {
     Quaternion Quaternion::operator*(const Quaternion &other) const {
         // Orientations retain double precision: common component rotations must
         // preserve descendant twists even near the swing/twist singularity.
-        const double aw=w, ax=x, ay=y, az=z;
-        const double bw=other.w, bx=other.x, by=other.y, bz=other.z;
-        return {(aw*bw-ax*bx-ay*by-az*bz),
-                (aw*bx+ax*bw+ay*bz-az*by),
-                (aw*by-ax*bz+ay*bw+az*bx),
-                (aw*bz+ax*by-ay*bx+az*bw)};
+        const double aw = w, ax = x, ay = y, az = z;
+        const double bw = other.w, bx = other.x, by = other.y, bz = other.z;
+        return {
+            (aw * bw - ax * bx - ay * by - az * bz),
+            (aw * bx + ax * bw + ay * bz - az * by),
+            (aw * by - ax * bz + ay * bw + az * bx),
+            (aw * bz + ax * by - ay * bx + az * bw)
+        };
     }
 
     Quaternion Quaternion::conjugate() const {

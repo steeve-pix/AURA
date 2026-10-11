@@ -7,18 +7,22 @@ namespace aura::physics {
         math::Vec3 pointB;
         float radius;
     };
+
     struct SegmentClosestPoints {
         math::Vec3 pointA;
         math::Vec3 pointB;
         float fractionA;
         float fractionB;
     };
+
     // Local Y limb axis; uses physical dimensions, not rendered end insets.
     // Short parts collapse to a sphere. Positive dimensions are required.
     CollisionCapsule bodyPartCollisionCapsule(const body::BodyPart3D &part);
+
     SegmentClosestPoints closestPointsBetweenSegments(
         const math::Vec3 &a0, const math::Vec3 &a1,
         const math::Vec3 &b0, const math::Vec3 &b1);
+
     // Nonnegative overlap depth. Detection only: touching/separated return zero.
     float capsulePenetration(const CollisionCapsule &a, const CollisionCapsule &b);
 
@@ -30,13 +34,17 @@ namespace aura::physics {
     // Inscribed COM sphere prototype, not full box/capsule collision coverage.
     // Parts must have finite, positive dimensions and masses.
     CollisionSphere collisionSphere(const body::BodyPart3D &part);
+
     // a and b must belong to owner; identity is independent of mutable names.
     bool shouldSelfCollide(const body::BodyPart3D &a, const body::BodyPart3D &b,
                            const body::AuraBody3D &owner, const body::AuraSkeleton3D &skeleton);
+
     // Unfiltered pair projection: position only; coincident centers use world +X.
     void resolveSelfCollision(body::BodyPart3D &a, body::BodyPart3D &b);
+
     // One deterministic pair sweep. Joint repairs may reopen an overlap.
     void resolveBodySelfCollisions(body::AuraBody3D &body, const body::AuraSkeleton3D &skeleton);
+
     // Read-only candidate test, crossing pairs only. Existing overlap may remain,
     // but positive penetration must not increase by more than tolerance.
     // Component pointers must belong to owner; tolerance must be nonnegative.
@@ -44,6 +52,7 @@ namespace aura::physics {
         const body::AuraBody3D &owner, const body::AuraSkeleton3D &skeleton,
         const std::vector<body::BodyPart3D *> &component,
         const math::Vec3 &delta, float tolerance);
+
     float maximumSelfCollisionPenetration(const body::AuraBody3D &body,
                                           const body::AuraSkeleton3D &skeleton);
 }

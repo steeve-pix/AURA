@@ -1,4 +1,5 @@
 #pragma once
+#include "CollisionShape.hpp"
 #include "RigidBody3D.hpp"
 #include <vector>
 
@@ -29,6 +30,10 @@ namespace aura::physics {
         float angularSpeedBefore = 0.0f, angularSpeedAfterDamping = 0.0f, angularSpeedAfterNormal = 0.0f;
         std::vector<FloorNormalImpulseAudit> impulseEvents;
     };
+
     void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, float floorY, float dt,
                                FloorCollisionAudit *audit = nullptr);
+
+    void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, CollisionShape shape,
+                               float floorY, float dt, FloorCollisionAudit *audit = nullptr);
 }
