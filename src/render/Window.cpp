@@ -85,6 +85,19 @@ namespace aura::render {
         return glfwWindowShouldClose(window_);
     }
 
+    void Window::requestClose() {
+        glfwSetWindowShouldClose(window_, GLFW_TRUE);
+    }
+
+    void Window::show() {
+        glfwSetWindowShouldClose(window_, GLFW_FALSE);
+        glfwShowWindow(window_);
+    }
+
+    void Window::hide() {
+        glfwHideWindow(window_);
+    }
+
     void Window::pollEvents() {
         glfwPollEvents();
     }

@@ -1,18 +1,30 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <filesystem>
+#include <nlohmann/json.hpp>
 #include <GLFW/glfw3.h>
 
+#include "aura/render/AuraViewer.hpp"
+
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "aura/body/BodyPart3D.hpp"
+#include "aura/body/JointGeometry.hpp"
 #include "aura/body/BodySelfCollision.hpp"
 #include "aura/physics/RoomCollision.hpp"
 #include "aura/render/Camera.hpp"
 #include "aura/render/BodyRenderer.hpp"
 #include "aura/render/DirectionalLight.hpp"
 #include "aura/render/Mesh.hpp"
-#include "aura/render/MeshFactory.hpp"
 #include "aura/render/Shader.hpp"
 #include "aura/render/ShadowMap.hpp"
 #include "aura/render/Window.hpp"
@@ -27,6 +39,90 @@ using aura::app::printBodyDiagnostics;
 using aura::app::FIXED_DT;
 using aura::app::jointIterations;
 
+void loadViewerAction(aura::sim::AuraAction &action) {
+    const auto actionPath = aura::app::viewerActionPath();
+    std::ifstream file(actionPath);
+    if (!file.is_open()) {
+        std::cerr << "Could not open viewer action file: " << actionPath << '\n';
+        return;
+    }
+
+    const auto json = nlohmann::json::parse(file);
+    action.leftHipTarget = json.value("left_hip_target", action.leftHipTarget);
+    action.rightHipTarget = json.value("right_hip_target", action.rightHipTarget);
+
+    action.leftKneeTarget = json.value("left_knee_target", action.leftKneeTarget);
+    action.rightKneeTarget = json.value("right_knee_target", action.rightKneeTarget);
+}
+
+void writeViewerObservation(aura::sim::AuraSimulation &simulation, bool paused) {
+    const std::filesystem::path path = aura::app::viewerObservationPath();
+    auto temporaryPath = path;
+    static std::atomic<unsigned long long> nextWriteId{0};
+#ifdef _WIN32
+    const auto processId = _getpid();
+#else
+    const auto processId = getpid();
+#endif
+    temporaryPath += "." + std::to_string(processId) + "." +
+            std::to_string(nextWriteId.fetch_add(1, std::memory_order_relaxed)) + ".tmp";
+
+    const auto &joints = simulation.getJoints();
+    const auto jointAngle = [&](std::size_t index) {
+        const auto &joint = joints[index];
+        return aura::body::relativeJointAngle(*joint.partA, *joint.partB, joint.constraint);
+    };
+    const auto up = simulation.pelvisOrientation().rotate(aura::math::Vec3{0.0f, 1.0f, 0.0f});
+    const auto omega = simulation.pelvisAngularVelocity();
+
+    // Compact records for the terminal's schematic: position xyz,
+    // orientation wxyz, dimensions xyz. Physics remains owned by the viewer.
+    auto bodyPose = nlohmann::json::array();
+    for (const auto *part: simulation.getParts()) {
+        const auto &p = part->body.position;
+        const auto &q = part->body.orientation;
+        for (double value: std::array<double, 10>{
+                 p.x, p.y, p.z, q.w, q.x, q.y, q.z,
+                 part->size.x, part->size.y, part->size.z
+             })
+            bodyPose.push_back(value);
+    }
+    const nlohmann::json observation{
+        {"body_pose", bodyPose},
+        {"simulation_time", simulation.time()},
+        {"steps", simulation.steps()},
+        {"paused", paused},
+        {"pelvis_speed", simulation.pelvisVelocity().length()},
+        {"pelvis_angular_speed", simulation.pelvisAngularVelocity().length()},
+        {"pelvis_height", simulation.pelvisHeight()},
+        {"pelvis_uprightness", simulation.pelvisUprightness()},
+        {"pelvis_up", {up.x, up.y, up.z}},
+        {"pelvis_angular_velocity", {omega.x, omega.y, omega.z}},
+        {"is_standing", simulation.isStanding()},
+        {"left_hip_angle", jointAngle(9)},
+        {"left_knee_angle", jointAngle(10)},
+        {"right_hip_angle", jointAngle(12)},
+        {"right_knee_angle", jointAngle(13)}
+    };
+    {
+        std::ofstream output(temporaryPath, std::ios::trunc);
+        if (!output) return;
+        output << observation.dump(2) << '\n';
+        if (!output) return;
+    }
+
+    std::error_code error;
+    std::filesystem::rename(temporaryPath, path, error);
+    if (error) {
+        static bool reported = false;
+        if (!reported) {
+            std::cerr << "Could not update viewer observation file: " << error.message() << '\n';
+            reported = true;
+        }
+        std::filesystem::remove(temporaryPath);
+    }
+}
+
 int main() {
     bool orbiting = false;
     bool panning = false;
@@ -35,9 +131,11 @@ int main() {
     double lastMouseX = 0.0;
     double lastMouseY = 0.0;
 
-    aura::render::Window window{1024, 820, "AURA - Physics running | P: pose | Space: pause | R: restart"};
-
     aura::sim::AuraSimulation simulation;
+
+    aura::render::AuraViewer viewer{simulation.getRoom()};
+    auto &window = viewer.window();
+
     auto &auraBody = simulation.body();
     bool paused = false;
     auto &parts = simulation.getParts();
@@ -48,22 +146,9 @@ int main() {
 
     auto &joints = simulation.getJoints();
 
-    const auto &room = simulation.getRoom();
     auto &roomBodies = simulation.getRoomBodies();
     for (std::size_t i = 0; i < parts.size(); ++i) roomBodies[i] = {&parts[i]->body, parts[i]->size};
-    const auto roomSize = room.maximum - room.minimum;
-    const auto roomOrigin = (room.minimum + room.maximum) * 0.5f - aura::math::Vec3{0, roomSize.y * 0.5f, 0};
-    aura::render::Mesh roomLines{
-        aura::render::MeshFactory::createRoomLines(roomSize, 5.0f), aura::render::MeshPrimitive::Lines
-    };
-    aura::render::Mesh grid{aura::render::MeshFactory::createGrid(60, 1.0f), aura::render::MeshPrimitive::Lines};
-    aura::render::Mesh floor{
-        aura::render::MeshFactory::createFloor(roomSize.x), aura::render::MeshPrimitive::Triangles,
-        aura::render::VertexLayout::PositionNormal
-    };
-    aura::render::DirectionalLight light{{4.0f, 8.0f, 4.0f}, {0.0f, 0.0f, 0.0f}};
-    aura::render::Camera camera{{0.0f, 3.9f, 8.2f}, {0.0f, 3.9f, 0.0f}, 1280.0f / 720.0f};
-    camera.setOrbit(0.55f, 0.25f);
+    auto &camera = viewer.camera();
     const auto updateTitle = [&] {
         const std::string title = "AURA | paused=" + std::to_string(paused) +
                                   " follow=" + std::to_string(followBody) +
@@ -75,109 +160,13 @@ int main() {
         if (state.finite) camera.setTarget(state.center);
     };
     updateTitle();
-    aura::render::ShadowMap shadowMap{2048, 2048};
-
-    auto litShader =
-            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/basic.vert"),
-                                            aura::app::assetPath("shaders/basic.frag"));
-
-    auto unlitShader =
-            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/unlit.vert"),
-                                            aura::app::assetPath("shaders/unlit.frag"));
-
-    auto shadowShader =
-            aura::render::Shader::fromFiles(aura::app::assetPath("shaders/shadow.vert"),
-                                            aura::app::assetPath("shaders/shadow.frag"));
-
-    auto outlineShader = aura::render::Shader::fromFiles(
-        aura::app::assetPath("shaders/outline.vert"), aura::app::assetPath("shaders/unlit.frag"));
-
-    auto skinShader = aura::render::Shader::fromFiles(aura::app::assetPath("shaders/skin.vert"),
-                                                      aura::app::assetPath("shaders/skin.frag"));
 
     glEnable(GL_DEPTH_TEST);
 
-    aura::render::BodyRenderer bodyRenderer;
     std::vector<aura::render::JointMarker> jointMarkers;
     jointMarkers.reserve(joints.size());
     for (const auto &joint: joints)
         jointMarkers.push_back({joint.partA, joint.partB, joint.constraint, joint.markerRadius});
-
-    auto renderFrame = [&] {
-        shadowMap.bindForWriting();
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        shadowShader.use();
-        shadowShader.setMat4("uLightSpaceMatrix", light.lightSpaceMatrix());
-
-        shadowShader.setMat4("uModel", aura::math::Mat4::identity());
-        floor.draw();
-
-        bodyRenderer.draw(auraBody, jointMarkers, shadowShader, false);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        const int width = window.framebufferWidth();
-        const int height = window.framebufferHeight();
-        glViewport(0, 0, width, height);
-
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        const auto view = camera.viewMatrix();
-        const auto projection = camera.projectionMatrix();
-
-        litShader.use();
-        shadowMap.bindTexture(0);
-        litShader.setInt("uShadowMap", 0);
-
-        litShader.setMat4("uView", view);
-        litShader.setMat4("uProjection", projection);
-        litShader.setMat4("uLightSpaceMatrix", light.lightSpaceMatrix());
-        litShader.setVec3("uLightDirection", {-0.5, -1.0f, -0.3f});
-
-        // The solid floor is visible from above; its grid remains visible from below
-        // for underside inspection. This changes rendering only, not floor collision.
-        if (camera.position().y >= 0.0f) {
-            litShader.setVec3("uColor", {0.015f, 0.015f, 0.015f});
-            litShader.setMat4("uModel", aura::math::Mat4::identity());
-            floor.draw();
-        }
-
-        // Grid
-        unlitShader.use();
-        unlitShader.setMat4("uView", view);
-        unlitShader.setMat4("uProjection", projection);
-        unlitShader.setVec3("uColor", {0.38f, 0.38f, 0.4f});
-        unlitShader.setMat4("uModel", aura::math::Mat4::translation({0.0f, 0.02f, 0.0f}));
-        grid.draw();
-        unlitShader.setVec3("uColor", {0.23f, 0.38f, 0.46f});
-        unlitShader.setMat4("uModel", aura::math::Mat4::translation(roomOrigin));
-        roomLines.draw();
-
-        // Expanded back faces form a thin silhouette around the white surfaces.
-        outlineShader.use();
-        outlineShader.setMat4("uView", view);
-        outlineShader.setMat4("uProjection", projection);
-        outlineShader.setVec3("uColor", {0.12f, 0.13f, 0.15f});
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
-        bodyRenderer.draw(auraBody, jointMarkers, outlineShader, false);
-        glDisable(GL_CULL_FACE);
-
-        skinShader.use();
-        skinShader.setMat4("uView", view);
-        skinShader.setMat4("uProjection", projection);
-        glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(2.0f, 2.0f);
-        bodyRenderer.draw(auraBody, jointMarkers, skinShader, true);
-        glDisable(GL_POLYGON_OFFSET_FILL);
-        unlitShader.use();
-        unlitShader.setVec3("uColor", {0.18f, 0.19f, 0.22f});
-        bodyRenderer.draw(auraBody, jointMarkers, unlitShader, false, true);
-
-        window.swapBuffers();
-    };
 
     const int initialWidth = window.framebufferWidth();
     const int initialHeight = window.framebufferHeight();
@@ -196,7 +185,7 @@ int main() {
         glViewport(0, 0, width, height);
         camera.setAspectRatio(static_cast<float>(width) / static_cast<float>(height));
 
-        renderFrame();
+        viewer.render(simulation.body(), jointMarkers);
     });
 
     window.setMouseButtonCallback([&](int button, int action) {
@@ -243,6 +232,7 @@ int main() {
 
 
     double accumulator = 0.0;
+    double lastObservationWrite = -1.0;
     int physicsStepsSinceLog = 0;
     float visualMaximumBodyPenetration = 0;
     size_t visualOverlapSteps = 0;
@@ -283,6 +273,7 @@ int main() {
         if (key == GLFW_KEY_SPACE) paused = !paused;
         if (key == GLFW_KEY_P || key == GLFW_KEY_R) {
             simulation.reset();
+            lastObservationWrite = -1.0;
             paused = key == GLFW_KEY_P;
             physicsStepsSinceLog = 0;
             visualMaximumBodyPenetration = 0;
@@ -297,16 +288,29 @@ int main() {
     aura::app::printStartup(joints, FIXED_DT, jointIterations);
     std::cout << "  Self-collision enabled | eligible pairs=" << bodyPairs.size()
             << '\n' << std::flush;
+
+    aura::sim::AuraAction viewerAction;
+
     while (!window.shouldClose()) {
         aura::render::Window::pollEvents();
         if (window.shouldClose()) break;
         const double currentTime = glfwGetTime();
+        static double lastActionReload = 0.0;
+
+        if (currentTime - lastActionReload >= 0.05) {
+            loadViewerAction(viewerAction);
+            lastActionReload = currentTime;
+        }
+        if (currentTime - lastObservationWrite >= 0.05) {
+            writeViewerObservation(simulation, paused);
+            lastObservationWrite = currentTime;
+        }
         const double frameTime = std::min(currentTime - previousTime, 0.05);
         previousTime = currentTime;
         if (!paused) accumulator += frameTime;
 
         while (accumulator >= FIXED_DT) {
-            simulation.step();
+            simulation.step(viewerAction);
 
             {
                 const auto collision = aura::body::bodyCollisionMetrics(auraBody, bodyPairs);
@@ -316,7 +320,8 @@ int main() {
             diagnosticHistory.observe(parts, joints, simulation.time());
             if (++physicsStepsSinceLog == 120) {
                 physicsStepsSinceLog = 0;
-                diagnosticHistory.printSummary(parts, joints, simulation.time(), paused, detailedDiagnostics, followBody);
+                diagnosticHistory.printSummary(parts, joints, simulation.time(), paused, detailedDiagnostics,
+                                               followBody);
                 {
                     const auto collision = aura::body::bodyCollisionMetrics(auraBody, bodyPairs);
                     const auto collisionParts = aura::body::collisionParts(auraBody);
@@ -335,7 +340,7 @@ int main() {
             accumulator -= FIXED_DT;
         }
         if (followBody) focusBody();
-        renderFrame();
+        viewer.render(simulation.body(), jointMarkers);
     }
     return 0;
 }

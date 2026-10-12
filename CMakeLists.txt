@@ -19,6 +19,12 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(glfw)
 
+FetchContent_Declare(
+        nlohmann_json
+        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
 find_package(OpenGL REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 
@@ -84,14 +90,35 @@ add_executable(aura
         src/render/MeshFactory.cpp
         src/render/DirectionalLight.cpp
         src/render/ShadowMap.cpp
+        src/render/AuraViewer.cpp
 )
-target_link_libraries(aura PRIVATE aura_simulation glfw OpenGL::GL)
+target_link_libraries(aura PRIVATE aura_simulation glfw OpenGL::GL nlohmann_json::nlohmann_json)
+target_compile_definitions(aura PRIVATE AURA_PROJECT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Python extension module for AURA.
 pybind11_add_module(aura_python
         src/python/AuraPython.cpp
+        src/AssetPath.cpp
+        src/body/BodyPartTransform.cpp
+        src/render/AuraViewer.cpp
+        src/render/BodyRenderer.cpp
+        src/render/Camera.cpp
+        src/render/CapsuleTransform.cpp
+        src/render/DirectionalLight.cpp
+        src/render/Mesh.cpp
+        src/render/MeshFactory.cpp
+        src/render/Shader.cpp
+        src/render/ShadowMap.cpp
+        src/render/Window.cpp
 )
-target_link_libraries(aura_python PRIVATE aura_simulation)
+target_link_libraries(aura_python PRIVATE aura_simulation glfw OpenGL::GL)
+target_compile_definitions(aura_python PRIVATE
+        AURA_PROJECT_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+        AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets"
+)
+if (APPLE)
+    target_link_libraries(aura_python PRIVATE "${AURA_COREFOUNDATION}")
+endif ()
 if (APPLE)
     set_target_properties(aura PROPERTIES
             MACOSX_BUNDLE TRUE
@@ -115,6 +142,9 @@ if (APPLE)
         )
     endforeach ()
     target_sources(aura PRIVATE ${AURA_ASSETS})
+    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/viewer_action.json"
+            PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(aura PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/viewer_action.json")
 else ()
     target_compile_definitions(aura PRIVATE AURA_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
 endif ()

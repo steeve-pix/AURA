@@ -1,4 +1,5 @@
 #include "../src/app/SimulationStep.hpp"
+#include "aura/sim/AuraSimulation.hpp"
 #include "aura/physics/BodyGeometry.hpp"
 #include <algorithm>
 #include <cmath>
@@ -7,6 +8,22 @@
 // Executes the application's single configuration, including self-collision.
 // Historical experiment flags/stepping do not participate in this gate.
 int main() {
+    // The visual app and Python both construct this wrapper. A fresh instance
+    // must enable the same collision hinge policy as an explicitly reset one.
+    aura::sim::AuraSimulation simulation;
+    for (int initialization = 0; initialization < 2; ++initialization) {
+        if (simulation.getBodyPairs().size() != 105) return 1;
+        for (const auto& joint : simulation.getJoints()) {
+            const bool expected = joint.constraint.type == aura::body::JointType::Hinge;
+            if (joint.constraint.enforceHingeAxis != expected) {
+                std::cerr << "Collision joint setup missing for " << joint.name
+                          << (initialization == 0 ? " after construction" : " after reset") << '\n';
+                return 1;
+            }
+        }
+        simulation.reset();
+    }
+
     auto body = aura::body::createAuraBody3D();
     const auto parts = aura::body::collisionParts(body);
     for (auto *part: parts) part->body.position.y += 0.6f;

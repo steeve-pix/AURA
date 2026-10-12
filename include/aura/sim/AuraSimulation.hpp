@@ -13,10 +13,17 @@ namespace aura::sim {
         math::Vec3 pelvisVelocity;
         math::Quaternion pelvisOrientation;
         math::Vec3 pelvisAngularVelocity;
+        math::Vec3 leftFootPosition;
+        math::Vec3 rightFootPosition;
+        math::Vec3 pelvisUp;
     };
 
     struct AuraAction {
         float leftHipTarget = 0.0f;
+        float rightHipTarget = 0.0f;
+
+        float leftKneeTarget = 0.0f;
+        float rightKneeTarget = 0.0f;
     };
 
     class AuraSimulation {
@@ -62,7 +69,20 @@ namespace aura::sim {
 
         [[nodiscard]] const AuraAction &action() const;
 
+        [[nodiscard]] float pelvisHeight() const;
+
+        [[nodiscard]] bool isStanding() const;
+
+        [[nodiscard]] float pelvisUprightness() const;
+
+        [[nodiscard]] std::size_t steps() const;
+
+        [[nodiscard]] bool isTruncated() const;
+
+        [[nodiscard]] bool isDone() const;
+
     private:
+        static constexpr std::size_t MAX_EPISODE_STEPS = 1200;
         body::AuraBody3D auraBody;
         body::AuraSkeleton3D skeleton;
         std::array<app::BodyJoint, 15> joints;
@@ -73,5 +93,7 @@ namespace aura::sim {
         app::BodyDiagnosticHistory diagnosticHistory;
         double simulatedTime = 0.0;
         AuraAction currentAction;
+        float initialPelvisHeight = 0.0f;
+        std::size_t stepCount = 0;
     };
 }

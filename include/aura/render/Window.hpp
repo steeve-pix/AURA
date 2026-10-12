@@ -25,6 +25,12 @@ namespace aura::render {
 
         [[nodiscard]] bool shouldClose() const;
 
+        void requestClose();
+
+        void show();
+
+        void hide();
+
         static void pollEvents();
 
         void swapBuffers();
