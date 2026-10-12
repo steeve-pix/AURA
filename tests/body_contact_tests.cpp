@@ -116,6 +116,21 @@ namespace {
         const auto parts = body::collisionParts(b);
         for (const auto &p: p3)check(!s.areDirectlyConnected(b, *parts[p.a], *parts[p.b]), "adjacent pairs excluded");
         check(body::bodyCollisionMetrics(b, p3).maximumPenetration < 1e-6f, "neutral mixed shapes compatible");
+        // Shoulder neighbors are filtered out of runtime collision pairs, but
+        // their solid volumes still need clearance in the reference pose.
+        for (const auto* arm : {&b.leftUpperArm, &b.rightUpperArm}) {
+            const auto contact = physics::detectBodyContact(
+                b.torso.body, b.torso.size, b.torso.collisionShape,
+                arm->body, arm->size, arm->collisionShape);
+            check(contact.penetration <= 1e-6f, "neutral upper arm must not intersect torso");
+            const float clearance = std::abs(arm->body.position.x - b.torso.body.position.x)
+                - 0.5f * (b.torso.size.x + arm->size.x);
+            check(std::abs(clearance - 0.001f) < 1e-6f, "neutral shoulder has barely touching clearance");
+        }
+        for (const auto& edge : s.connections(b))
+            check((body::localToWorldPoint(*edge.a, edge.joint->localAnchorA) -
+                   body::localToWorldPoint(*edge.b, edge.joint->localAnchorB)).length() < 1e-6f,
+                  "reference pose keeps every joint attached");
         // Deliberately fold the left arm into the core without detaching any anchors.
         const auto arm = s.collectComponent(b, b.leftUpperArm, s.leftShoulder);
         body::rotateSubtreeAroundWorldPoint(arm, body::localToWorldPoint(b.torso, s.leftShoulder.localAnchorA),
@@ -169,6 +184,10 @@ namespace {
     void replay(const char *path) {
         auto b = body::createAuraBody3D();
         auto s = body::createAuraSkeleton3D(b);
+        // These snapshots predate the neutral shoulder-clearance change. Their
+        // poses retain the original torso-side shoulder mounts at X = +/-0.9.
+        s.leftShoulder.localAnchorA.x = -0.9f;
+        s.rightShoulder.localAnchorA.x = 0.9f;
         body::configureBodyCollisionJoints(s);
         const auto parts = body::collisionParts(b);
         std::set<std::string> loaded;

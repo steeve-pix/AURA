@@ -39,13 +39,19 @@ namespace aura::body {
         setPart(result.torso, "torso", {1.5f, 1.45f, 0.8f}, {0.0f, 6.0f, 0.0f});
         setPart(result.pelvis, "pelvis", {1.12f, 1.08f, 0.72f}, {0.0f, 4.17f, 0.0f});
 
+        // Adjacent shoulder parts are collision-filtered. Give their actual
+        // solid volumes clearance at rest rather than relying on that exclusion.
+        const math::Vec3 upperArmSize{0.5f, 1.35f, 0.5f};
+        constexpr float shoulderClearance = 0.001f;
+        const float armCenterX = 0.5f * (result.torso.size.x + upperArmSize.x) + shoulderClearance;
+
         // Mirrored limbs, with feet on Y=0 and toes pointing toward +Z.
-        setPart(result.leftUpperArm, "left_upper_arm", {0.5f, 1.35f, 0.5f}, {-0.9f, 5.725f, 0.0f});
-        setPart(result.leftForearm, "left_forearm", {0.44f, 1.25f, 0.44f}, {-0.9f, 4.425f, 0.0f});
-        setPart(result.leftHand, "left_hand", {0.32f, 0.55f, 0.26f}, {-0.9f, 3.525f, 0.0f});
-        setPart(result.rightUpperArm, "right_upper_arm", {0.5f, 1.35f, 0.5f}, {0.9f, 5.725f, 0.0f});
-        setPart(result.rightForearm, "right_forearm", {0.44f, 1.25f, 0.44f}, {0.9f, 4.425f, 0.0f});
-        setPart(result.rightHand, "right_hand", {0.32f, 0.55f, 0.26f}, {0.9f, 3.525f, 0.0f});
+        setPart(result.leftUpperArm, "left_upper_arm", upperArmSize, {-armCenterX, 5.725f, 0.0f});
+        setPart(result.leftForearm, "left_forearm", {0.44f, 1.25f, 0.44f}, {-armCenterX, 4.425f, 0.0f});
+        setPart(result.leftHand, "left_hand", {0.32f, 0.55f, 0.26f}, {-armCenterX, 3.525f, 0.0f});
+        setPart(result.rightUpperArm, "right_upper_arm", upperArmSize, {armCenterX, 5.725f, 0.0f});
+        setPart(result.rightForearm, "right_forearm", {0.44f, 1.25f, 0.44f}, {armCenterX, 4.425f, 0.0f});
+        setPart(result.rightHand, "right_hand", {0.32f, 0.55f, 0.26f}, {armCenterX, 3.525f, 0.0f});
 
         setPart(result.leftThigh, "left_thigh", {0.58f, 1.8f, 0.58f}, {-0.34f, 2.92f, 0.0f});
         setPart(result.leftShin, "left_shin", {0.52f, 1.6f, 0.52f}, {-0.34f, 1.22f, 0.0f});

@@ -94,12 +94,14 @@ namespace aura::body {
         configure(skeleton.head, body.neck, body.head, {0.0f, 0.09f, 0.0f}, -0.5f, 0.5f);
 
         // Left arm.
-        configure(skeleton.leftShoulder, body.torso, body.leftUpperArm, {-0.9f, 0.35f, 0.0f}, -1.5f, 1.5f);
+        configure(skeleton.leftShoulder, body.torso, body.leftUpperArm,
+                  {body.leftUpperArm.body.position.x - body.torso.body.position.x, 0.35f, 0.0f}, -1.5f, 1.5f);
         configure(skeleton.leftElbow, body.leftUpperArm, body.leftForearm, {0.0f, -0.675f, 0.0f}, 0.0f, 2.4f);
         configure(skeleton.leftWrist, body.leftForearm, body.leftHand, {0.0f, -0.625f, 0.0f}, -1.2f, 1.2f);
 
         // Right arm.
-        configure(skeleton.rightShoulder, body.torso, body.rightUpperArm, {0.9f, 0.35f, 0.0f}, -1.5f, 1.5f);
+        configure(skeleton.rightShoulder, body.torso, body.rightUpperArm,
+                  {body.rightUpperArm.body.position.x - body.torso.body.position.x, 0.35f, 0.0f}, -1.5f, 1.5f);
         configure(skeleton.rightElbow, body.rightUpperArm, body.rightForearm, {0.0f, -0.675f, 0.0f}, 0.0f, 2.4f);
         configure(skeleton.rightWrist, body.rightForearm, body.rightHand, {0.0f, -0.625f, 0.0f}, -1.2f, 1.2f);
 
