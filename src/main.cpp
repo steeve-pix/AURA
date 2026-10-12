@@ -43,7 +43,7 @@ void loadViewerAction(aura::sim::AuraAction &action) {
     const auto actionPath = aura::app::viewerActionPath();
     std::ifstream file(actionPath);
     if (!file.is_open()) {
-        std::cerr << "Could not open viewer action file: " << actionPath << '\n';
+        // The bridge file is runtime state; a clean checkout starts at neutral.
         return;
     }
 

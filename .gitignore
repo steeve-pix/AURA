@@ -11,6 +11,10 @@ build-*/
 __pycache__/
 *.pyc
 
+# Live viewer bridge state
+viewer_action.json
+viewer_observation.json
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -28,21 +28,7 @@ namespace aura::app {
     }
 
     std::string viewerActionPath() {
-        const auto projectAction = std::filesystem::path(AURA_PROJECT_DIR) / "viewer_action.json";
-        if (std::filesystem::exists(projectAction)) return projectAction.string();
-#ifdef __APPLE__
-        const auto bundle = CFBundleGetMainBundle();
-        const auto url = bundle
-                ? CFBundleCopyResourceURL(bundle, CFSTR("viewer_action"), CFSTR("json"), nullptr)
-                : nullptr;
-        if (url) {
-            std::array<UInt8, PATH_MAX> path{};
-            const bool converted = CFURLGetFileSystemRepresentation(url, true, path.data(), path.size());
-            CFRelease(url);
-            if (converted) return reinterpret_cast<const char *>(path.data());
-        }
-#endif
-        return projectAction.string();
+        return (std::filesystem::path(AURA_PROJECT_DIR) / "viewer_action.json").string();
     }
 
     std::string viewerObservationPath() {
