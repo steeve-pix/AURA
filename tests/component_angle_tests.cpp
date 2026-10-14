@@ -179,7 +179,7 @@ int main() {
                                                   ? joint.maxAngle + 0.2f
                                                   : (joint.minAngle + joint.maxAngle) * 0.5f;
                     child.body.orientation = parent.body.orientation *
-                                             math::Quaternion::fromAxisAngle({1, 0, 0}, angle);
+                                             math::Quaternion::fromAxisAngle(joint.hingeAxis, angle);
                     child.body.position = localToWorldPoint(parent, joint.localAnchorA) -
                                           child.body.orientation.rotate(joint.localAnchorB) + math::Vec3{
                                               0.002f, -0.003f, 0.001f

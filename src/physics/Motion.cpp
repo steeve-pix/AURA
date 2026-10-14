@@ -1,4 +1,5 @@
 #include "aura/physics/Motion.hpp"
+#include "aura/physics/Inertia.hpp"
 
 namespace aura::physics {
     void integrateLinearMotion(RigidBody3D &body, float dt) {
@@ -30,11 +31,7 @@ namespace aura::physics {
     }
 
     void updateAngularAcceleration(RigidBody3D &body) {
-        body.angularAcceleration = {
-            body.torque.x / body.momentOfInertia.x,
-            body.torque.y / body.momentOfInertia.y,
-            body.torque.z / body.momentOfInertia.z,
-        };
+        body.angularAcceleration = applyInverseInertiaWorld(body, body.torque);
     }
 
     void clearForce(RigidBody3D &body) {

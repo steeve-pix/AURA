@@ -170,6 +170,8 @@ namespace aura::app {
         double initialEnergy = 0.0;
         double motorAdded = 0.0, motorRemoved = 0.0, totalMotorWork = 0.0;
         double gravityWork = 0.0, integrationEnergy = 0.0, floorEnergy = 0.0, jointEnergy = 0.0, roomEnergy = 0.0;
+        float leftFootNormalImpulse = 0.0f;
+        float rightFootNormalImpulse = 0.0f;
 
         void sampleMotorWork(std::span<const BodyJoint> joints, double dt) {
             for (const auto &c: joints) {

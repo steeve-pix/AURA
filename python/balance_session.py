@@ -11,8 +11,12 @@ from collections.abc import Callable
 import aura_python
 
 EPISODE_LIMIT = 1200
-TRIALS = 20
+TRIALS = 30
 FIXED_TARGET_RECORD = 346  # Historical result, not reevaluated by this search.
+SEARCH_SEED = 44
+STARTING_KP = 0.329405
+STARTING_KD = 0.035556
+STARTING_BIAS = 0.0
 
 
 def run_search(evaluate: Callable) -> None:
@@ -31,15 +35,12 @@ def run_search(evaluate: Callable) -> None:
 
     simulation = aura_python.AuraSimulation()
     viewer = None
-    rng = random.Random(42)
-    candidates = [(0.0, 0.0),
-                  *((rng.uniform(-0.5, 0.5), rng.uniform(-0.15, 0.15))
-                    for _ in range(TRIALS))]
+    rng = random.Random(SEARCH_SEED)
 
-    event("start", len(candidates), EPISODE_LIMIT, FIXED_TARGET_RECORD)
+    event("start", TRIALS + 1, EPISODE_LIMIT, FIXED_TARGET_RECORD)
     text("AURA  /  BALANCE FEEDBACK SEARCH")
-    text("Method: search Kp/Kd feedback gains; symmetric hips, neutral knees; score = steps standing.")
-    text(f"Episodes: {len(candidates)}  |  Limit: {EPISODE_LIMIT} steps (10 simulated seconds)")
+    text("Method: seeded local search of Kp, Kd, and hip bias; symmetric hips, neutral knees.")
+    text(f"Episodes: {TRIALS + 1}  |  Limit: {EPISODE_LIMIT} steps (10 simulated seconds)")
     text("Search runs headlessly. Select a completed trial in the CLI to replay it in 3D.")
 
     # The CLI sends trial indices over stdin; gains remain at full Python precision.
@@ -69,14 +70,16 @@ def run_search(evaluate: Callable) -> None:
         command_buffer = remaining
         return [line]
 
-    scores: list[tuple[float, float, int]] = []
+    scores: list[tuple[float, float, float, int]] = []
+    best_kp, best_kd, best_bias = STARTING_KP, STARTING_KD, STARTING_BIAS
+    best_score = -1
 
     def replay(index: int) -> None:
         nonlocal viewer
         if not 0 <= index < len(scores):
             return
         replay_sim = aura_python.AuraSimulation()
-        kp, kd, _ = scores[index]
+        kp, kd, bias, _ = scores[index]
         event("replay_start", index + 1)
         stopped = False
         last_report = 0.0
@@ -102,9 +105,9 @@ def run_search(evaluate: Callable) -> None:
             if viewer is None:
                 viewer = aura_python.AuraViewer(replay_sim)
             viewer.show()
-            label = "Baseline" if index == 0 else f"Trial {index}"
+            label = "Starting best" if index == 0 else f"Trial {index}"
             viewer.set_title(f"AURA - Replay {label} - Esc returns to trials")
-            score = evaluate(replay_sim, kp, kd, show)
+            score = evaluate(replay_sim, kp, kd, show, bias=bias)
             if score is not None:
                 obs = replay_sim.observation()
                 event("replay_progress", obs["steps"], obs["time"], obs["pelvis_height"],
@@ -138,11 +141,18 @@ def run_search(evaluate: Callable) -> None:
                     pass
 
     try:
-        for index, (kp, kd) in enumerate(candidates, start=1):
+        for index in range(TRIALS + 1):
+            if index == 0:
+                kp, kd, bias = best_kp, best_kd, best_bias
+            else:
+                kp = best_kp + rng.uniform(-0.1, 0.1)
+                kd = best_kd + rng.uniform(-0.05, 0.05)
+                bias = best_bias + rng.uniform(-0.15, 0.15)
+
             def report(observation: dict, correction: float, clamped: bool) -> None:
-                event("progress", index, observation["steps"], observation["time"],
+                event("progress", index + 1, observation["steps"], observation["time"],
                       observation["pelvis_height"], observation["pelvis_uprightness"],
-                      kp, kd, correction, int(clamped))
+                      kp, kd, bias, correction, int(clamped))
 
             last_report = 0.0
 
@@ -159,15 +169,17 @@ def run_search(evaluate: Callable) -> None:
                     last_report = now
                 return True
 
-            score = evaluate(simulation, kp, kd, observe)
+            score = evaluate(simulation, kp, kd, observe, bias=bias)
             observation = simulation.observation()
-            scores.append((kp, kd, score))
-            best_score = max(value for _, _, value in scores)
-            label = "baseline" if index == 1 else f"trial {index - 1}/{TRIALS}"
-            event("result", index, score, observation["time"], kp, kd,
+            scores.append((kp, kd, bias, score))
+            is_new_best = index == 0 or score > best_score
+            if is_new_best:
+                best_score, best_kp, best_kd, best_bias = score, kp, kd, bias
+            label = "starting best" if index == 0 else f"trial {index}/{TRIALS}"
+            event("result", index + 1, score, observation["time"], kp, kd, bias,
                   observation["termination_reason"])
-            text(f"[{index:02}/{len(candidates):02}] {label:<12} "
-                 f"Kp {kp:+.3f}  Kd {kd:+.3f}   survived {score:4}/{EPISODE_LIMIT} steps "
+            text(f"[{index + 1:02}/{TRIALS + 1:02}] {label:<14} "
+                 f"Kp {kp:+.3f}  Kd {kd:+.3f}  bias {bias:+.3f}   survived {score:4}/{EPISODE_LIMIT} steps "
                  f"({observation['time']:.2f} s)   best {best_score:4}")
         else:
             event("finished")
@@ -177,10 +189,10 @@ def run_search(evaluate: Callable) -> None:
 
     searching = False
     if scores:
-        best_kp, best_kd, best_score = max(scores, key=lambda item: item[2])
+        best_kp, best_kd, best_bias, best_score = max(scores, key=lambda item: item[3])
         text()
-        text(f"Best: Kp {best_kp:+.6f}  Kd {best_kd:+.6f}  |  {best_score}/{EPISODE_LIMIT} steps")
-        text(f"Against neutral: {best_score - scores[0][2]:+d} steps  |  "
+        text(f"Best: Kp {best_kp:+.6f}  Kd {best_kd:+.6f}  bias {best_bias:+.6f}  |  {best_score}/{EPISODE_LIMIT} steps")
+        text(f"Against starting controller: {best_score - scores[0][3]:+d} steps  |  "
              f"Against historical fixed record ({FIXED_TARGET_RECORD}): "
              f"{best_score - FIXED_TARGET_RECORD:+d} steps")
 

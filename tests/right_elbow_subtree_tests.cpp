@@ -24,7 +24,7 @@ namespace {
     }
 
     void assemble(BodyPart3D &a, BodyPart3D &b, const Joint3D &joint, float angle) {
-        b.body.orientation = a.body.orientation * math::Quaternion::fromAxisAngle({1, 0, 0}, angle);
+        b.body.orientation = a.body.orientation * math::Quaternion::fromAxisAngle(joint.hingeAxis, angle);
         b.body.position = localToWorldPoint(a, joint.localAnchorA) - b.body.orientation.rotate(joint.localAnchorB);
     }
 }

@@ -9,7 +9,7 @@ namespace aura::cli {
 // Yaw orbits the preview camera; it never modifies the simulation.
 inline std::vector<std::string> body_preview(const ControlObservation& observation,
                                             int width, int height, double yaw, bool utf8) {
-    if (width < 4 || height < 4 || observation.body_pose.size() != 16) return {};
+    if (width < 4 || height < 4 || observation.body_pose.empty()) return {};
     struct Point { double x, y; };
     std::vector<Point> points;
     double minX=1e30, maxX=-1e30, minY=1e30, maxY=-1e30;

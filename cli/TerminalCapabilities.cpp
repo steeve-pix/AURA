@@ -58,12 +58,13 @@ const TerminalCapabilities& terminal_capabilities() {
                 const char* value = tparm(const_cast<char*>(foreground.c_str()), index);
                 return value ? std::string(value) : std::string{};
             };
-            // Main interface uses the terminal's own text color. Only the
-            // context line gets restrained warm, green, and lavender accents.
+            // Keep the interface neutral, with restrained context and syntax accents.
             result.muted_color = foreground_color(color_count >= 256 ? 245 : color_count >= 16 ? 8 : 7);
             result.context_mode = foreground_color(color_count >= 256 ? 180 : 3);
             result.context_path = foreground_color(color_count >= 256 ? 151 : 2);
             result.context_activity = foreground_color(color_count >= 256 ? 147 : 5);
+            result.syntax_command = foreground_color(color_count >= 256 ? 116 : 6);
+            result.syntax_operator = foreground_color(color_count >= 256 ? 109 : 6);
             const auto background = capability("setab");
             if (!background.empty() && color_count >= 16) {
                 const char* gray = tparm(const_cast<char*>(background.c_str()),

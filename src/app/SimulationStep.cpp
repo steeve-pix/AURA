@@ -13,6 +13,8 @@ namespace aura::app {
                         std::span<const physics::RoomBody> roomBodies, const physics::RoomBounds &room,
                         BodyDiagnosticHistory &diagnosticHistory) {
         const auto dt = static_cast<float>(FIXED_DT);
+        diagnosticHistory.leftFootNormalImpulse = 0.0f;
+        diagnosticHistory.rightFootNormalImpulse = 0.0f;
         const double energyBeforeIntegration = bodyEnergy(parts);
         diagnosticHistory.sampleMotorWork(joints, dt);
         for (auto &joint: joints) {
@@ -32,11 +34,24 @@ namespace aura::app {
         diagnosticHistory.integrationEnergy += stageEnergy - energyBeforeIntegration;
         for (int iteration = 0; iteration < jointIterations; ++iteration) {
             for (auto *part: parts) {
+                const bool isLeftFoot = part == &auraBody.leftFoot;
+                const bool isRightFoot = part == &auraBody.rightFoot;
+                physics::FloorCollisionAudit audit;
                 if (part == &auraBody.rightShin)
                     body::resolveRightShinFloorWithFootTranslation(auraBody, dt / jointIterations);
-                else
+                else {
                     physics::resolveFloorCollision(part->body, part->size, part->floorShape,
-                                                   0.0f, dt / jointIterations);
+                                                   0.0f, dt / jointIterations,
+                                                   (isLeftFoot || isRightFoot) ? &audit : nullptr);
+                    if (isLeftFoot) {
+                        for (const auto &impulse: audit.normalImpulses)
+                            diagnosticHistory.leftFootNormalImpulse += impulse.y;
+                    }
+                    if (isRightFoot) {
+                        for (const auto &impulse: audit.normalImpulses)
+                            diagnosticHistory.rightFootNormalImpulse += impulse.y;
+                    }
+                }
             }
             const double afterFloor = bodyEnergy(parts);
             diagnosticHistory.floorEnergy += afterFloor - stageEnergy;

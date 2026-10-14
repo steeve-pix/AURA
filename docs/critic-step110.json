@@ -1,0 +1,117 @@
+{
+  "actor_seed": 42,
+  "critic_seed": 43,
+  "training_exploration_seed": 4201,
+  "validation_exploration_seed": 4202,
+  "training_episodes": 32,
+  "validation_episodes": 16,
+  "training_timesteps": 11036,
+  "validation_timesteps": 5509,
+  "training_survival_steps": [
+    326,
+    364,
+    341,
+    323,
+    354,
+    318,
+    313,
+    334,
+    358,
+    327,
+    352,
+    328,
+    326,
+    324,
+    345,
+    348,
+    346,
+    335,
+    332,
+    365,
+    378,
+    347,
+    367,
+    346,
+    337,
+    340,
+    368,
+    341,
+    360,
+    364,
+    362,
+    367
+  ],
+  "validation_survival_steps": [
+    381,
+    327,
+    342,
+    337,
+    326,
+    349,
+    313,
+    335,
+    356,
+    343,
+    362,
+    367,
+    355,
+    313,
+    361,
+    342
+  ],
+  "training_raw_return_range": [
+    0.0,
+    166.60292148590088
+  ],
+  "validation_raw_return_range": [
+    0.0,
+    167.35327243804932
+  ],
+  "discount_factor": 0.995,
+  "return_scale": 100.0,
+  "optimizer": "Adam",
+  "learning_rate": 0.001,
+  "critic_updates": 20,
+  "observation_size": 205,
+  "action_count": 14,
+  "observation_schema": 2,
+  "action_schema": 3,
+  "device": "cpu",
+  "torch_version": "2.14.1",
+  "physics_extension_sha256": "9305677b58f00ed13b58eb84120642a70302bc4dc638427a58788bc2c32fedcb",
+  "constant_scaled_prediction": 0.9885217547416687,
+  "constant_validation_mse": 0.22066254913806915,
+  "measurements": [
+    {
+      "update": 0,
+      "training_mse": 1.325361728668213,
+      "validation_mse": 1.3213303089141846
+    },
+    {
+      "update": 1,
+      "training_mse": 1.1138811111450195,
+      "validation_mse": 1.1100186109542847
+    },
+    {
+      "update": 5,
+      "training_mse": 0.523687481880188,
+      "validation_mse": 0.5230426788330078
+    },
+    {
+      "update": 10,
+      "training_mse": 0.3076465129852295,
+      "validation_mse": 0.31233736872673035
+    },
+    {
+      "update": 20,
+      "training_mse": 0.11806824803352356,
+      "validation_mse": 0.1194710060954094
+    }
+  ],
+  "actor_optimizer_updates": 0,
+  "actor_max_parameter_change": 0.0,
+  "actor_has_no_gradients": true,
+  "critic_max_parameter_change": 0.02094903215765953,
+  "mse_units": "squared discounted-return units after division by 100; weighted by timestep",
+  "validation_used_for_optimization": false
+}
