@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <algorithm>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
@@ -20,10 +21,10 @@ static py::dict observationToDict(const aura::sim::AuraSimulation &sim, const au
     } else {
         result["termination_reason"] = "none";
     }
-    result["left_hip_target"] = sim.action().leftHipTarget;
-    result["right_hip_target"] = sim.action().rightHipTarget;
-    result["left_knee_target"] = sim.action().leftKneeTarget;
-    result["right_knee_target"] = sim.action().rightKneeTarget;
+    result[aura::sim::actionSpecs[0].key] = sim.action().leftHipTarget;
+    result[aura::sim::actionSpecs[1].key] = sim.action().rightHipTarget;
+    result[aura::sim::actionSpecs[2].key] = sim.action().leftKneeTarget;
+    result[aura::sim::actionSpecs[3].key] = sim.action().rightKneeTarget;
 
     result["pelvis_position"] =
             py::make_tuple(obs.pelvisPosition.x, obs.pelvisPosition.y, obs.pelvisPosition.z);
@@ -52,36 +53,124 @@ static py::dict observationToDict(const aura::sim::AuraSimulation &sim, const au
     result["right_foot_position"] = py::make_tuple(obs.rightFootPosition.x, obs.rightFootPosition.y,
                                                    obs.rightFootPosition.z);
 
+    result["left_foot_grounded"] = obs.leftFootGrounded;
+    result["right_foot_grounded"] = obs.rightFootGrounded;
+
+    result["left_foot_velocity"] = py::make_tuple(obs.leftFootVelocity.x, obs.leftFootVelocity.y,
+                                                  obs.leftFootVelocity.z);
+
+    result["right_foot_velocity"] = py::make_tuple(obs.rightFootVelocity.x, obs.rightFootVelocity.y,
+                                                   obs.rightFootVelocity.z);
+
     result["pelvis_up"] = py::make_tuple(obs.pelvisUp.x, obs.pelvisUp.y, obs.pelvisUp.z);
+
+    result["center_of_mass_position"] = py::make_tuple(obs.centerOfMassPosition.x, obs.centerOfMassPosition.y,
+                                                       obs.centerOfMassPosition.z);
+
+    result["center_of_mass_velocity"] = py::make_tuple(obs.centerOfMassVelocity.x, obs.centerOfMassVelocity.y,
+                                                       obs.centerOfMassVelocity.z);
+
+    py::list leftFootContacts;
+
+    for (const auto &point: obs.leftFootContactPoints) {
+        leftFootContacts.append(pybind11::make_tuple(point.x, point.y, point.z));
+    };
+
+    result["left_foot_contact_points"] = leftFootContacts;
+
+    py::list rightFootContacts;
+
+    for (const auto &point: obs.rightFootContactPoints) {
+        rightFootContacts.append(pybind11::make_tuple(point.x, point.y, point.z));
+    }
+
+    result["right_foot_contact_points"] = rightFootContacts;
+
+    py::list bodyPartStates;
+
+    for (const auto &part: obs.bodyPartStates) {
+        py::dict states;
+
+        states["name"] = part.name;
+        states["velocity"] = py::make_tuple(part.velocity.x, part.velocity.y, part.velocity.z);
+
+        bodyPartStates.append(states);
+    };
+
+    result["body_part_states"] = bodyPartStates;
+
+    py::list jointStates;
+
+    for (const auto &joint: obs.jointStates) {
+        py::dict state;
+
+        state["name"] = joint.name;
+        state["relative_orientation"] = py::make_tuple(joint.relativeOrientation.w, joint.relativeOrientation.x,
+                                                       joint.relativeOrientation.y, joint.relativeOrientation.z);
+        state["relative_angular_velocity"] = py::make_tuple(joint.relativeAngularVelocity.x,
+                                                            joint.relativeAngularVelocity.y,
+                                                            joint.relativeAngularVelocity.z);
+
+        jointStates.append(state);
+    }
+
+    result["joints"] = jointStates;
+
+    py::list supportPolygon;
+    for (const auto &vertex: obs.supportPolygon.vertices) {
+        supportPolygon.append(py::make_tuple(vertex.x, vertex.z));
+    }
+    result["support_polygon"] = supportPolygon;
+
+    result["center_of_mass_inside_support_polygon"] = obs.centerOfMassInsideSupportPolygon;
+    result["support_margin"] = obs.supportMargin;
 
     return result;
 }
 
 static py::dict actionToDict(const aura::sim::AuraAction &action) {
     py::dict result;
-    result["left_hip_target"] = action.leftHipTarget;
-    result["right_hip_target"] = action.rightHipTarget;
-    result["left_knee_target"] = action.leftKneeTarget;
-    result["right_knee_target"] = action.rightKneeTarget;
+
+    for (const auto &spec : aura::sim::actionSpecs)
+        result[spec.key] = action.*(spec.target);
+
     return result;
 }
 
 static aura::sim::AuraAction actionFromDict(const py::dict &input, const aura::sim::AuraAction &current) {
     auto action = current;
-
-    if (input.contains("left_hip_target")) action.leftHipTarget = input["left_hip_target"].cast<float>();
-    if (input.contains("right_hip_target")) action.rightHipTarget = input["right_hip_target"].cast<float>();
-    if (input.contains("left_knee_target")) action.leftKneeTarget = input["left_knee_target"].cast<float>();
-    if (input.contains("right_knee_target")) action.rightKneeTarget = input["right_knee_target"].cast<float>();
+    for (const auto &item : input) {
+        const auto key = py::cast<std::string>(item.first);
+        const auto spec = std::find_if(aura::sim::actionSpecs.begin(), aura::sim::actionSpecs.end(),
+                                      [&](const auto &entry) { return key == entry.key; });
+        if (spec == aura::sim::actionSpecs.end()) throw py::value_error("Unknown action key: " + key);
+        action.*(spec->target) = py::cast<float>(item.second);
+    }
 
     return action;
 }
 
 PYBIND11_MODULE(aura_python, m) {
     m.doc() = "Python bindings for AURA";
+    py::list specs;
+    for (const auto &spec: aura::sim::actionSpecs) {
+        py::dict item;
+        item["key"] = spec.key;
+        item["joint_name"] = spec.jointName;
+        item["angle_key"] = spec.angleKey;
+        item["label"] = spec.label;
+        item["minimum"] = spec.minimum;
+        item["maximum"] = spec.maximum;
+        specs.append(item);
+    }
+    m.attr("action_specs") = specs;
+    m.attr("action_schema_version") = aura::sim::actionSchemaVersion;
 
     py::class_<aura::sim::AuraSimulation>(m, "AuraSimulation")
             .def(py::init<>())
+            .def_property_readonly("episode_limit", [](const aura::sim::AuraSimulation &) {
+                return aura::sim::AuraSimulation::episodeLimit();
+            })
             .def("time", &aura::sim::AuraSimulation::time)
             .def("step", py::overload_cast<>(&aura::sim::AuraSimulation::step))
             .def("reset", [](aura::sim::AuraSimulation &sim) {
@@ -121,6 +210,17 @@ PYBIND11_MODULE(aura_python, m) {
                 action.leftHipTarget = target;
                 sim.step(action);
             })
+            .def("set_motor_enabled", &aura::sim::AuraSimulation::setMotorEnabled,
+                 py::arg("joint_name"), py::arg("enabled"))
+            .def("motor_states", [](aura::sim::AuraSimulation &sim) {
+                py::dict result;
+                for (const auto &joint : sim.getJoints()) result[joint.name] = joint.motor;
+                return result;
+            })
+            .def("set_action", [](aura::sim::AuraSimulation &sim, const py::dict &input) {
+                sim.setAction(actionFromDict(input, sim.action()));
+                return actionToDict(sim.action());
+            })
             .def("step_action", [](aura::sim::AuraSimulation &sim, const py::dict &input) {
                 const auto action = actionFromDict(input, sim.action());
                 sim.step(action);
@@ -134,15 +234,15 @@ PYBIND11_MODULE(aura_python, m) {
     py::class_<aura::render::AuraViewer>(m, "AuraViewer")
             .def(py::init([](aura::sim::AuraSimulation &sim) {
                 auto viewer = std::make_unique<aura::render::AuraViewer>(sim.getRoom());
-                auto* window = &viewer->window();
+                auto *window = &viewer->window();
                 window->setKeyCallback([window](int key, int action) {
-                    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) window->requestClose();
+                    if ((key == GLFW_KEY_ESCAPE || key == GLFW_KEY_V) && action == GLFW_PRESS) window->requestClose();
                 });
                 return viewer;
             }))
             .def("show", [](aura::render::AuraViewer &viewer) { viewer.window().show(); })
             .def("hide", [](aura::render::AuraViewer &viewer) { viewer.window().hide(); })
-            .def("set_title", [](aura::render::AuraViewer &viewer, const std::string& title) {
+            .def("set_title", [](aura::render::AuraViewer &viewer, const std::string &title) {
                 viewer.window().setTitle(title.c_str());
             })
             .def("is_open", [](aura::render::AuraViewer &viewer) {

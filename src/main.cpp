@@ -48,11 +48,8 @@ void loadViewerAction(aura::sim::AuraAction &action) {
     }
 
     const auto json = nlohmann::json::parse(file);
-    action.leftHipTarget = json.value("left_hip_target", action.leftHipTarget);
-    action.rightHipTarget = json.value("right_hip_target", action.rightHipTarget);
-
-    action.leftKneeTarget = json.value("left_knee_target", action.leftKneeTarget);
-    action.rightKneeTarget = json.value("right_knee_target", action.rightKneeTarget);
+    for (const auto &spec : aura::sim::actionSpecs)
+        action.*(spec.target) = json.value(spec.key, action.*(spec.target));
 }
 
 void writeViewerObservation(aura::sim::AuraSimulation &simulation, bool paused) {
@@ -68,10 +65,6 @@ void writeViewerObservation(aura::sim::AuraSimulation &simulation, bool paused) 
             std::to_string(nextWriteId.fetch_add(1, std::memory_order_relaxed)) + ".tmp";
 
     const auto &joints = simulation.getJoints();
-    const auto jointAngle = [&](std::size_t index) {
-        const auto &joint = joints[index];
-        return aura::body::relativeJointAngle(*joint.partA, *joint.partB, joint.constraint);
-    };
     const auto up = simulation.pelvisOrientation().rotate(aura::math::Vec3{0.0f, 1.0f, 0.0f});
     const auto omega = simulation.pelvisAngularVelocity();
 
@@ -87,7 +80,7 @@ void writeViewerObservation(aura::sim::AuraSimulation &simulation, bool paused) 
              })
             bodyPose.push_back(value);
     }
-    const nlohmann::json observation{
+    nlohmann::json observation{
         {"body_pose", bodyPose},
         {"simulation_time", simulation.time()},
         {"steps", simulation.steps()},
@@ -98,12 +91,18 @@ void writeViewerObservation(aura::sim::AuraSimulation &simulation, bool paused) 
         {"pelvis_uprightness", simulation.pelvisUprightness()},
         {"pelvis_up", {up.x, up.y, up.z}},
         {"pelvis_angular_velocity", {omega.x, omega.y, omega.z}},
-        {"is_standing", simulation.isStanding()},
-        {"left_hip_angle", jointAngle(9)},
-        {"left_knee_angle", jointAngle(10)},
-        {"right_hip_angle", jointAngle(12)},
-        {"right_knee_angle", jointAngle(13)}
+        {"is_standing", simulation.isStanding()}
     };
+    for (const auto &spec : aura::sim::actionSpecs) {
+        const auto joint = std::find_if(joints.begin(), joints.end(), [&](const auto &entry) {
+            return std::string_view(entry.name) == spec.jointName;
+        });
+        if (joint != joints.end()) {
+            observation[spec.angleKey] = aura::body::relativeJointAngle(
+                *joint->partA, *joint->partB, joint->constraint);
+            observation["motor_enabled"][spec.key] = joint->motor;
+        }
+    }
     {
         std::ofstream output(temporaryPath, std::ios::trunc);
         if (!output) return;

@@ -26,6 +26,30 @@ int main() {
     {
         auto body = aura::body::createAuraBody3D();
         const auto skeleton = aura::body::createAuraSkeleton3D(body);
+        for (bool left : {true, false}) {
+            const auto& joint = left ? skeleton.leftElbow : skeleton.rightElbow;
+            auto upper = left ? body.leftUpperArm : body.rightUpperArm;
+            auto forearm = left ? body.leftForearm : body.rightForearm;
+            const auto rotation = aura::math::Quaternion::fromAxisAngle(joint.hingeAxis, std::numbers::pi_v<float>/2);
+            check(rotation.rotate({0,-1,0}).z > 0.99f,
+                  "positive elbow flexion bends a downward forearm forward toward the toes (+Z)");
+            auto motor = joint;
+            motor.targetAngle = 0.1f;
+            aura::body::applyJointMotor(upper, forearm, motor);
+            check(forearm.body.torque.x < 0 && upper.body.torque.x > 0,
+                  "positive elbow command applies forward-flexion torque with equal opposite parent reaction");
+            aura::physics::updateAngularAcceleration(upper.body);
+            aura::physics::updateAngularAcceleration(forearm.body);
+            aura::physics::integrateAngularMotion(upper.body, 1.0f/120);
+            aura::physics::integrateAngularMotion(forearm.body, 1.0f/120);
+            const auto relative = upper.body.orientation.conjugate()*forearm.body.orientation;
+            check(aura::body::relativeJointAngle(upper,forearm,joint) > 0 && relative.rotate({0,-1,0}).z > 0,
+                  "integrated elbow motor response moves forward in the upper arm reference frame");
+        }
+    }
+    {
+        auto body = aura::body::createAuraBody3D();
+        const auto skeleton = aura::body::createAuraSkeleton3D(body);
         // Off-centre anchor impulses can restore outward hinge speed at either limit.
         for (float sign: {-1.0f, 1.0f}) {
             auto neck = body.neck;
@@ -66,10 +90,10 @@ int main() {
                   joint.motorDamping == damping, "upper-body motor uses its specified neutral gains");
             check(std::abs(aura::body::jointMotorTorque(partA, partB, joint)) < tolerance,
                   "neutral stationary upper-body joint produces no motor torque");
-            partB.body.orientation = aura::math::Quaternion::fromAxisAngle({1, 0, 0}, 0.2f);
+            partB.body.orientation = aura::math::Quaternion::fromAxisAngle(joint.hingeAxis, 0.2f);
             check(std::abs(aura::body::jointMotorTorque(partA, partB, joint) + 0.2f * stiffness) < tolerance,
                   "upper-body spring torque drives positive displacement toward neutral");
-            partB.body.angularVelocity = {1.0f, 0.0f, 0.0f};
+            partB.body.angularVelocity = joint.hingeAxis.normalized();
             check(std::abs(aura::body::jointMotorTorque(partA, partB, joint) +
                            0.2f * stiffness + damping) < tolerance,
                   "upper-body damping opposes motion away from neutral");
@@ -84,9 +108,9 @@ int main() {
                                       aura::body::BodyPart3D partB,
                                       const aura::body::Joint3D &joint,
                                       float maximum) {
-            partB.body.orientation = aura::math::Quaternion::fromAxisAngle({1, 0, 0}, 0.5f);
+            partB.body.orientation = aura::math::Quaternion::fromAxisAngle(joint.hingeAxis, 0.5f);
             check(std::abs(aura::body::relativeJointAngle(partA, partB, joint) - 0.5f) < tolerance,
-                  "assembled elbow/knee measures positive X rotation as positive flexion");
+                  "assembled elbow/knee measures positive rotation about its hinge axis as positive flexion");
             check(joint.minAngle == 0.0f && joint.maxAngle == maximum,
                   "elbow/knee permits only positive flexion within its configured range");
             aura::body::correctJointAngle(partA, partB, joint);
@@ -95,7 +119,7 @@ int main() {
 
             for (float angle: {-0.5f, maximum + 0.2f}) {
                 partA.body.orientation = {};
-                partB.body.orientation = aura::math::Quaternion::fromAxisAngle({1, 0, 0}, angle);
+                partB.body.orientation = aura::math::Quaternion::fromAxisAngle(joint.hingeAxis, angle);
                 aura::body::correctJointAngle(partA, partB, joint);
                 const float expected = angle < 0.0f ? 0.0f : maximum;
                 check(std::abs(aura::body::relativeJointAngle(partA, partB, joint) - expected) < tolerance,

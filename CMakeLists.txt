@@ -421,6 +421,10 @@ if (BUILD_TESTING)
     target_link_libraries(aura_runtime_baseline_tests PRIVATE aura_simulation)
     add_test(NAME runtime_baseline COMMAND aura_runtime_baseline_tests)
 
+    add_executable(aura_joint_direction_tests tests/joint_direction_tests.cpp)
+    target_link_libraries(aura_joint_direction_tests PRIVATE aura_simulation)
+    add_test(NAME joint_directions COMMAND aura_joint_direction_tests)
+
     # Explicit historical measurement tool; defaults are not a stability gate.
     add_executable(aura_full_body_diagnostics
             src/body/ThighSelfCollision.cpp

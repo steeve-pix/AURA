@@ -188,6 +188,10 @@ namespace {
         // poses retain the original torso-side shoulder mounts at X = +/-0.9.
         s.leftShoulder.localAnchorA.x = -0.9f;
         s.rightShoulder.localAnchorA.x = 0.9f;
+        // Archived poses also predate anatomical forward elbow flexion. Keep
+        // their original +X convention so these remain historical replays.
+        s.leftElbow.hingeAxis = {1,0,0};
+        s.rightElbow.hingeAxis = {1,0,0};
         body::configureBodyCollisionJoints(s);
         const auto parts = body::collisionParts(b);
         std::set<std::string> loaded;

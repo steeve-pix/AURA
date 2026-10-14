@@ -105,6 +105,11 @@ namespace aura::body {
         configure(skeleton.rightElbow, body.rightUpperArm, body.rightForearm, {0.0f, -0.675f, 0.0f}, 0.0f, 2.4f);
         configure(skeleton.rightWrist, body.rightForearm, body.rightHand, {0.0f, -0.625f, 0.0f}, -1.2f, 1.2f);
 
+        // Feet point toward +Z. With hanging arms, positive flexion about -X
+        // brings the forearm forward; knees retain +X for backward flexion.
+        skeleton.leftElbow.hingeAxis = {-1.0f, 0.0f, 0.0f};
+        skeleton.rightElbow.hingeAxis = {-1.0f, 0.0f, 0.0f};
+
         // Left leg.
         configure(skeleton.leftHip, body.pelvis, body.leftThigh, {-0.34f, -0.35f, 0.0f}, -0.8f, 0.8f);
         configure(skeleton.leftKnee, body.leftThigh, body.leftShin, {0.0f, -0.9f, 0.0f}, 0.0f, 2.2f);

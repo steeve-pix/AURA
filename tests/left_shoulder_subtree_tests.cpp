@@ -28,7 +28,7 @@ int main() {
             auto &hand = body.leftHand;
             const auto assemble = [](auto &parent, auto &child, const auto &joint, float childAngle) {
                 child.body.orientation = parent.body.orientation *
-                                         aura::math::Quaternion::fromAxisAngle({1, 0, 0}, childAngle);
+                                         aura::math::Quaternion::fromAxisAngle(joint.hingeAxis, childAngle);
                 child.body.position = aura::body::localToWorldPoint(parent, joint.localAnchorA) -
                                       child.body.orientation.rotate(joint.localAnchorB);
             };

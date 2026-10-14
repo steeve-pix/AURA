@@ -22,7 +22,7 @@ namespace {
     }
 
     void assemble(BodyPart3D &a, BodyPart3D &b, const Joint3D &j, float angle) {
-        b.body.orientation = a.body.orientation * math::Quaternion::fromAxisAngle({1, 0, 0}, angle);
+        b.body.orientation = a.body.orientation * math::Quaternion::fromAxisAngle(j.hingeAxis, angle);
         b.body.position = localToWorldPoint(a, j.localAnchorA) - b.body.orientation.rotate(j.localAnchorB);
     }
 }

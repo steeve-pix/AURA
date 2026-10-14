@@ -1,29 +1,59 @@
 #pragma once
 #include <array>
+#include "ActionSpec.hpp"
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include "../../../src/app/BodyDiagnostics.hpp"
 #include "aura/app/BodyJoint.hpp"
 #include "aura/body/AuraBody3D.hpp"
 #include "aura/body/AuraSkeleton3D.hpp"
 #include "aura/body/BodySelfCollision.hpp"
+#include "aura/physics/SupportPolygon.hpp"
 
 namespace aura::sim {
+    struct BodyPartObservation {
+        std::string name;
+        math::Vec3 velocity;
+    };
+
+    struct JointObservation {
+        std::string name;
+        math::Quaternion relativeOrientation;
+        math::Vec3 relativeAngularVelocity;
+    };
+
     struct AuraObservation {
         math::Vec3 pelvisPosition;
         math::Vec3 pelvisVelocity;
         math::Quaternion pelvisOrientation;
         math::Vec3 pelvisAngularVelocity;
+
         math::Vec3 leftFootPosition;
         math::Vec3 rightFootPosition;
+
         math::Vec3 pelvisUp;
-    };
 
-    struct AuraAction {
-        float leftHipTarget = 0.0f;
-        float rightHipTarget = 0.0f;
+        math::Vec3 centerOfMassPosition;
+        math::Vec3 centerOfMassVelocity;
 
-        float leftKneeTarget = 0.0f;
-        float rightKneeTarget = 0.0f;
+        bool leftFootGrounded = false;
+        bool rightFootGrounded = false;
+
+        math::Vec3 leftFootVelocity{};
+        math::Vec3 rightFootVelocity{};
+
+        physics::SupportPolygon supportPolygon;
+
+        std::vector<math::Vec3> leftFootContactPoints;
+        std::vector<math::Vec3> rightFootContactPoints;
+
+        std::vector<BodyPartObservation> bodyPartStates;
+        std::vector<JointObservation> jointStates;
+
+        bool centerOfMassInsideSupportPolygon = false;
+        float supportMargin = 0.0f;
     };
 
     class AuraSimulation {
@@ -64,6 +94,9 @@ namespace aura::sim {
 
         void setAction(const AuraAction &action);
 
+        // Evaluation controls; changing a flag preserves targets and motor gains.
+        void setMotorEnabled(std::string_view jointName, bool enabled);
+
 
         void step(const AuraAction &action);
 
@@ -77,6 +110,8 @@ namespace aura::sim {
 
         [[nodiscard]] std::size_t steps() const;
 
+        [[nodiscard]] static constexpr std::size_t episodeLimit() { return MAX_EPISODE_STEPS; }
+
         [[nodiscard]] bool isTruncated() const;
 
         [[nodiscard]] bool isDone() const;
@@ -86,6 +121,7 @@ namespace aura::sim {
         body::AuraBody3D auraBody;
         body::AuraSkeleton3D skeleton;
         std::array<app::BodyJoint, 15> joints;
+        std::array<std::size_t, actionSpecs.size()> actionJointIndices{};
         std::array<body::BodyPart3D *, 16> parts;
         std::vector<body::BodyCollisionPair> bodyPairs;
         physics::RoomBounds room;
