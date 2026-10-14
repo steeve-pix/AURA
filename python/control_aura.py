@@ -1,8 +1,8 @@
-"""Launch AURA and control its hip and knee targets in real time.
+"""Launch AURA and control its joint targets in real time.
 
-This builds and opens the AURA viewer, then accepts values as:
-    left_hip_target right_hip_target left_knee_target right_knee_target
-For example: 0.2 -0.1 1.0 1.0. Enter q to quit.
+This builds and opens the AURA viewer, then accepts targets in action_specs order.
+For example: 0.2 -0.1 1.0 1.0 controls the original hips/knees; omitted targets
+remain neutral. Up to 15 joint targets are supported. Enter q to quit.
 Use --prepare to hand joint editing to the AURA CLI after startup.
 """
 
@@ -10,11 +10,12 @@ import argparse
 import json
 import math
 import os
+import sys
 import subprocess
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
-BUILD_DIR = PROJECT_DIR / "build"
+BUILD_DIR = PROJECT_DIR / "build-release"
 ACTION_FILE = PROJECT_DIR / "viewer_action.json"
 
 
@@ -22,41 +23,48 @@ def clamp(val, min_val, max_val):
     return max(min_val, min(val, max_val))
 
 
-def write_action(left_hip_target: float, right_hip_target: float, left_knee_target: float = 0.0,
-                 right_knee_target: float = 0.0) -> tuple[float, float, float, float]:
-    """Write a complete JSON update atomically so the viewer never reads a partial file."""
-    left_hip_target = clamp(left_hip_target, -0.8, 0.8)
-    right_hip_target = clamp(right_hip_target, -0.8, 0.8)
-    left_knee_target = clamp(left_knee_target, 0.0, 2.2)
-    right_knee_target = clamp(right_knee_target, 0.0, 2.2)
+def action_specs():
+    # Load only after preparation has built the Python extension.
+    if str(BUILD_DIR) not in sys.path:
+        sys.path.insert(0, str(BUILD_DIR))
+    import aura_python
+    return aura_python.action_specs
+
+
+def write_action(*targets: float) -> tuple[float, ...]:
+    """Atomically write targets in simulator order; omitted targets are neutral."""
+    specs = action_specs()
+    if len(targets) > len(specs):
+        raise ValueError("Too many targets for the simulator's action contract")
+    requested = (*targets, *([0.0] * (len(specs) - len(targets))))
+    if not all(math.isfinite(value) for value in requested):
+        raise ValueError("Joint targets must be finite")
+    values = [clamp(value, spec["minimum"], spec["maximum"])
+              for value, spec in zip(requested, specs)]
 
     temporary_file = ACTION_FILE.with_suffix(".json.tmp")
-    contents = {
-        "left_hip_target": left_hip_target,
-        "right_hip_target": right_hip_target,
-        "left_knee_target": left_knee_target,
-        "right_knee_target": right_knee_target,
-    }
+    contents = {spec["key"]: value for spec, value in zip(specs, values)}
     with temporary_file.open("w", encoding="utf-8") as file:
         json.dump(contents, file, indent=2)
         file.write("\n")
         file.flush()
         os.fsync(file.fileno())
     temporary_file.replace(ACTION_FILE)
-    return left_hip_target, right_hip_target, left_knee_target, right_knee_target
+    return tuple(values)
 
 
 def prepare_viewer() -> None:
     """Build and open the viewer before an interactive controller takes over."""
     print("Configuring AURA…", flush=True)
-    subprocess.run(["cmake", "-S", str(PROJECT_DIR), "-B", str(BUILD_DIR)], check=True)
+    subprocess.run(["cmake", "-S", str(PROJECT_DIR), "-B", str(BUILD_DIR),
+                    "-DCMAKE_BUILD_TYPE=Release"], check=True)
     print("Building AURA…", flush=True)
     subprocess.run(
-        ["cmake", "--build", str(BUILD_DIR), "--target", "aura"],
+        ["cmake", "--build", str(BUILD_DIR), "--target", "aura", "aura_python"],
         check=True,
     )
 
-    write_action(0.0, 0.0)
+    write_action()
     print("Opening AURA with neutral joint targets…", flush=True)
     viewer = BUILD_DIR / "AURA.app"
     subprocess.run(["open", str(viewer)], check=True)
@@ -80,30 +88,23 @@ def main() -> None:
         return
 
     print(f"Writing actions to {ACTION_FILE}")
-    print("Enter targets in this order: left hip | right hip | left knee | right knee, or q to quit.")
+    specs = action_specs()
+    print("Enter targets in this order: " + " | ".join(spec["label"] for spec in specs) + ", or q to quit.")
 
     while True:
         line = input("> ").strip()
         if line.lower() in {"q", "quit", "exit"}:
-            write_action(0.0, 0.0)
+            write_action()
             break
         try:
-            left_hip, right_hip, left_knee, right_knee = (
-                float(value) for value in line.split()
-            )
-        except ValueError:
-            print("Enter exactly four numbers, such as: 0.2 -0.2 1.0 1.0")
+            targets = [float(value) for value in line.split()]
+            if len(targets) != len(specs):
+                raise ValueError(f"Enter exactly {len(specs)} numbers")
+            values = write_action(*targets)
+        except ValueError as error:
+            print(error)
             continue
-        if not all(math.isfinite(value) for value in (left_hip, right_hip, left_knee, right_knee)):
-            print("Please enter finite numbers.")
-            continue
-        left_hip, right_hip, left_knee, right_knee = (
-            write_action(left_hip, right_hip, left_knee, right_knee)
-        )
-        print(
-            f"Updated targets: left hip={left_hip}, right hip={right_hip}, "
-            f"left knee={left_knee}, right knee={right_knee}"
-        )
+        print("Updated targets: " + ", ".join(f"{spec['label']}={value}" for spec, value in zip(specs, values)))
 
 
 if __name__ == "__main__":
