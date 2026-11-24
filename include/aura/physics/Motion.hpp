@@ -1,31 +1,16 @@
 #pragma once
-#include "Body2D.hpp"
-#include "Torque.hpp"
+#include "RigidBody3D.hpp"
 
 namespace aura::physics {
-    inline void updatePosition(Body2D &body, float dt) noexcept {
-        body.position += body.velocity * dt;
-    }
+    void integrateLinearMotion(RigidBody3D &body, float dt);
 
-    inline void updateVelocity(Body2D &body, float dt) noexcept {
-        body.velocity += body.acceleration * dt;
-    }
+    void integrateAngularMotion(RigidBody3D &body, float dt);
 
+    void updateLinearAcceleration(RigidBody3D & body);
 
-    inline void updateAngle(Body2D &body, float dt) noexcept {
-        body.angle += body.angularVelocity * dt;
-    }
+    void updateAngularAcceleration(RigidBody3D & body);
 
-    inline void updateAngularVelocity(Body2D &body, float dt) noexcept {
-        body.angularVelocity +=
-                body.angularAcceleration * dt;
-    }
+    void clearForce(RigidBody3D & body);
 
-    inline void integrate(Body2D &body, float dt) noexcept {
-        updateVelocity(body, dt);
-        updatePosition(body, dt);
-
-        updateAngularVelocity(body, dt);
-        updateAngle(body, dt);
-    }
+    void clearTorque(RigidBody3D & body);
 }

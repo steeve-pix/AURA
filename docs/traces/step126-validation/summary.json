@@ -1,0 +1,1226 @@
+{
+  "classifier_changed": false,
+  "controller": "Existing zero targets and motor settings; no policy/checkpoint access",
+  "diagnostic_step_limit": 642,
+  "fixed_dt": 0.008333333333333333,
+  "physics_scenarios": [
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 1.2166666666666666,
+      "both_feet_airborne_samples_after_step_80": 47,
+      "degenerate_polygon_samples_after_step_80": 401,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 1.05,
+      "first_geometric_contacts": {
+        "head": 514,
+        "left_foot": 42,
+        "left_forearm": 563,
+        "left_hand": 482,
+        "pelvis": 599,
+        "right_foot": 42,
+        "right_forearm": 594,
+        "right_thigh": 599,
+        "right_upper_arm": 596,
+        "torso": 514
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 0.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.1359221339225769,
+      "legacy_first_failure": 462,
+      "max_anchor_gap": 9.830249609876773e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 314,
+      "physical_state_digest": "efa666e369d7f1e3",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "neutral",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": true,
+          "state": "BALANCED",
+          "stay_envelope": true,
+          "step": 64,
+          "time": 0.5333333333333333
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 210,
+          "time": 1.75
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": false,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 516,
+          "time": 4.3
+        }
+      ],
+      "unbalanced_seconds": 3.0833333333333335
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 407,
+      "degenerate_polygon_samples_after_step_80": 439,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 3.0666666666666664,
+      "first_geometric_contacts": {
+        "head": 271,
+        "left_foot": 39,
+        "left_forearm": 260,
+        "left_hand": 230,
+        "left_thigh": 262,
+        "pelvis": 260,
+        "right_foot": 39,
+        "right_forearm": 257,
+        "right_hand": 231,
+        "right_thigh": 262,
+        "torso": 263
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 8.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.12510770559310913,
+      "legacy_first_failure": 207,
+      "max_anchor_gap": 9.5367431640625e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 5,
+      "physical_state_digest": "d900a94629c36182",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "mild_forward",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 274,
+          "time": 2.283333333333333
+        }
+      ],
+      "unbalanced_seconds": 2.283333333333333
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 538,
+      "degenerate_polygon_samples_after_step_80": 538,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 4.175,
+      "first_geometric_contacts": {
+        "head": 148,
+        "left_foot": 25,
+        "left_forearm": 121,
+        "left_hand": 104,
+        "left_thigh": 153,
+        "right_foot": 25,
+        "right_forearm": 120,
+        "right_hand": 104,
+        "right_thigh": 153,
+        "torso": 129
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 45.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.10987317562103271,
+      "legacy_first_failure": 75,
+      "max_anchor_gap": 9.5367431640625e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 0,
+      "physical_state_digest": "1695ad2e3cd005a6",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "severe_forward",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": false,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 141,
+          "time": 1.175
+        }
+      ],
+      "unbalanced_seconds": 1.175
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 380,
+      "degenerate_polygon_samples_after_step_80": 414,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 3.0,
+      "first_geometric_contacts": {
+        "head": 269,
+        "left_foot": 39,
+        "left_forearm": 365,
+        "left_hand": 242,
+        "left_shin": 262,
+        "left_upper_arm": 360,
+        "pelvis": 251,
+        "right_foot": 39,
+        "right_forearm": 375,
+        "right_hand": 243,
+        "right_shin": 263,
+        "right_upper_arm": 383,
+        "torso": 263
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": -8.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.07418185472488403,
+      "legacy_first_failure": 198,
+      "max_anchor_gap": 9.537034202367067e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 24,
+      "physical_state_digest": "1d92348248f43aa2",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "mild_backward",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 282,
+          "time": 2.35
+        }
+      ],
+      "unbalanced_seconds": 2.35
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 520,
+      "degenerate_polygon_samples_after_step_80": 542,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 4.2,
+      "first_geometric_contacts": {
+        "head": 132,
+        "left_foot": 25,
+        "left_forearm": 102,
+        "left_hand": 91,
+        "left_shin": 229,
+        "pelvis": 105,
+        "right_foot": 25,
+        "right_forearm": 102,
+        "right_hand": 91,
+        "right_shin": 230,
+        "torso": 118
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": -45.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.05831509828567505,
+      "legacy_first_failure": 58,
+      "max_anchor_gap": 5.331201577973843e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 22,
+      "physical_state_digest": "fcef14d6cff0175c",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "severe_backward",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 138,
+          "time": 1.15
+        }
+      ],
+      "unbalanced_seconds": 1.15
+    },
+    {
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 149,
+      "degenerate_polygon_samples_after_step_80": 527,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 2.9583333333333335,
+      "first_geometric_contacts": {
+        "head": 266,
+        "left_foot": 33,
+        "left_forearm": 240,
+        "left_hand": 190,
+        "left_thigh": 303,
+        "left_upper_arm": 260,
+        "pelvis": 293,
+        "right_foot": 89,
+        "right_forearm": 300,
+        "right_hand": 304,
+        "right_thigh": 295,
+        "right_upper_arm": 309,
+        "torso": 271
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 20.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.07440721988677979,
+      "legacy_first_failure": 181,
+      "max_anchor_gap": 9.555351425660774e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 295,
+      "physical_state_digest": "b53511069c87350f",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "left_lateral",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 287,
+          "time": 2.3916666666666666
+        }
+      ],
+      "unbalanced_seconds": 2.3916666666666666
+    },
+    {
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 446,
+      "degenerate_polygon_samples_after_step_80": 556,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 3.3916666666666666,
+      "first_geometric_contacts": {
+        "head": 230,
+        "left_foot": 106,
+        "left_forearm": 320,
+        "left_hand": 324,
+        "left_thigh": 357,
+        "pelvis": 340,
+        "right_foot": 33,
+        "right_forearm": 193,
+        "right_hand": 176,
+        "right_thigh": 204,
+        "right_upper_arm": 211,
+        "torso": 318
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": -20.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.11328160762786865,
+      "legacy_first_failure": 148,
+      "max_anchor_gap": 9.555351425660774e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 59,
+      "physical_state_digest": "7c994689a8f12220",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "right_lateral",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": false,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 235,
+          "time": 1.9583333333333333
+        }
+      ],
+      "unbalanced_seconds": 1.9583333333333333
+    },
+    {
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 127,
+      "degenerate_polygon_samples_after_step_80": 518,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 2.1666666666666665,
+      "first_geometric_contacts": {
+        "head": 371,
+        "left_foot": 41,
+        "left_forearm": 353,
+        "left_hand": 334,
+        "left_upper_arm": 369,
+        "pelvis": 355,
+        "right_foot": 44,
+        "right_forearm": 435,
+        "right_hand": 327,
+        "right_thigh": 421,
+        "right_upper_arm": 405,
+        "torso": 370
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 2.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.06131094694137573,
+      "legacy_first_failure": 303,
+      "max_anchor_gap": 9.610960205463925e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 322,
+      "physical_state_digest": "e8ed46a0b7ecb6c7",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "one_foot_landing",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 382,
+          "time": 3.183333333333333
+        }
+      ],
+      "unbalanced_seconds": 3.183333333333333
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": true,
+      "balanced_seconds": 0.95,
+      "both_feet_airborne_samples_after_step_80": 104,
+      "degenerate_polygon_samples_after_step_80": 435,
+      "disturbance_at_step_80": "jump",
+      "fallen_seconds": 0.041666666666666664,
+      "first_geometric_contacts": {
+        "head": 627,
+        "left_foot": 42,
+        "left_forearm": 620,
+        "left_hand": 604,
+        "right_foot": 42,
+        "right_hand": 601,
+        "torso": 628
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 0.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.08765292167663574,
+      "legacy_first_failure": 583,
+      "max_anchor_gap": 1.3486991292666062e-06,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 254,
+      "physical_state_digest": "6de7ba1a019b7415",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "brief_airborne",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": true,
+          "state": "BALANCED",
+          "stay_envelope": true,
+          "step": 64,
+          "time": 0.5333333333333333
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 86,
+          "time": 0.7166666666666667
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": true,
+          "state": "BALANCED",
+          "stay_envelope": true,
+          "step": 146,
+          "time": 1.2166666666666666
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 238,
+          "time": 1.9833333333333334
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 637,
+          "time": 5.308333333333334
+        }
+      ],
+      "unbalanced_seconds": 4.358333333333333
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        1.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 229,
+      "degenerate_polygon_samples_after_step_80": 527,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 0.3833333333333333,
+      "first_geometric_contacts": {
+        "head": 592,
+        "left_foot": 39,
+        "left_forearm": 268,
+        "left_hand": 251,
+        "left_thigh": 271,
+        "left_upper_arm": 295,
+        "pelvis": 564,
+        "right_foot": 41,
+        "right_hand": 561,
+        "right_thigh": 634,
+        "right_upper_arm": 623
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 5.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.29612720012664795,
+      "legacy_first_failure": 219,
+      "max_anchor_gap": 1.90827972801344e-06,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 226,
+      "physical_state_digest": "c0a41ffc7b99980c",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "edge_landing",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 596,
+          "time": 4.966666666666667
+        }
+      ],
+      "unbalanced_seconds": 4.966666666666667
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.18333333333333332,
+      "both_feet_airborne_samples_after_step_80": 440,
+      "degenerate_polygon_samples_after_step_80": 556,
+      "disturbance_at_step_80": "rotation",
+      "fallen_seconds": 1.875,
+      "first_geometric_contacts": {
+        "head": 195,
+        "left_foot": 42,
+        "left_forearm": 158,
+        "left_hand": 148,
+        "left_shin": 619,
+        "left_thigh": 364,
+        "left_upper_arm": 171,
+        "pelvis": 364,
+        "right_foot": 42,
+        "right_forearm": 451,
+        "right_hand": 403,
+        "right_shin": 612,
+        "torso": 422
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 0.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.1845000982284546,
+      "legacy_first_failure": 130,
+      "max_anchor_gap": 9.5367431640625e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 113,
+      "physical_state_digest": "c6e04886f708b507",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "rapid_rotation",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": true,
+          "state": "BALANCED",
+          "stay_envelope": true,
+          "step": 64,
+          "time": 0.5333333333333333
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": true,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 86,
+          "time": 0.7166666666666667
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": false,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 417,
+          "time": 3.475
+        }
+      ],
+      "unbalanced_seconds": 3.2916666666666665
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.8333333333333334,
+      "both_feet_airborne_samples_after_step_80": 307,
+      "degenerate_polygon_samples_after_step_80": 403,
+      "disturbance_at_step_80": "small_pitch",
+      "fallen_seconds": 2.283333333333333,
+      "first_geometric_contacts": {
+        "head": 353,
+        "left_foot": 42,
+        "left_forearm": 358,
+        "left_hand": 331,
+        "left_thigh": 391,
+        "pelvis": 398,
+        "right_foot": 42,
+        "right_forearm": 358,
+        "right_hand": 343,
+        "right_thigh": 391,
+        "torso": 355
+      },
+      "floor_start": false,
+      "initial_tilt_degrees": 0.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.049338340759277344,
+      "legacy_first_failure": 305,
+      "max_anchor_gap": 4.924151539853483e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 92,
+      "physical_state_digest": "61b908f9d96e8965",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "recovery_attempt",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": true,
+          "state": "BALANCED",
+          "stay_envelope": true,
+          "step": 64,
+          "time": 0.5333333333333333
+        },
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 164,
+          "time": 1.3666666666666667
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 368,
+          "time": 3.0666666666666664
+        }
+      ],
+      "unbalanced_seconds": 2.2333333333333334
+    },
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "balanced_reentry": false,
+      "balanced_seconds": 0.0,
+      "both_feet_airborne_samples_after_step_80": 563,
+      "degenerate_polygon_samples_after_step_80": 563,
+      "disturbance_at_step_80": "",
+      "fallen_seconds": 5.15,
+      "first_geometric_contacts": {
+        "head": 32,
+        "left_foot": 0,
+        "left_forearm": 45,
+        "left_hand": 47,
+        "left_thigh": 58,
+        "right_foot": 0,
+        "right_forearm": 45,
+        "right_hand": 46,
+        "right_thigh": 58,
+        "torso": 12
+      },
+      "floor_start": true,
+      "initial_tilt_degrees": 90.0,
+      "initial_velocities": "zero; impulses add common v and omega cross COM offsets consistently",
+      "kind": "integrated_physics",
+      "largest_upward_com_jump_while_velocity_downward": 0.01249229907989502,
+      "legacy_first_failure": 0,
+      "max_anchor_gap": 9.53790731728077e-07,
+      "max_floor_penetration": 0.0,
+      "one_foot_samples_after_step_80": 0,
+      "physical_state_digest": "eb7405f9c70f357a",
+      "pivot": [
+        0,
+        0.6,
+        0.25
+      ],
+      "repeat_exact_match": true,
+      "scenario": "horizontal_collapse",
+      "steps": 642,
+      "transitions": [
+        {
+          "collapse_timer": 0.0,
+          "contact_collapse": false,
+          "dangerous_motion": false,
+          "deep_collapse": false,
+          "enter_envelope": false,
+          "state": "UNBALANCED",
+          "stay_envelope": false,
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "collapse_timer": 0.19999999999999998,
+          "contact_collapse": true,
+          "dangerous_motion": true,
+          "deep_collapse": true,
+          "enter_envelope": false,
+          "state": "FALLEN",
+          "stay_envelope": false,
+          "step": 24,
+          "time": 0.2
+        }
+      ],
+      "unbalanced_seconds": 0.2
+    }
+  ],
+  "synthetic_fixtures": [
+    {
+      "bad_interval_steps": [
+        25,
+        36
+      ],
+      "balanced_seconds": 0.5166666666666666,
+      "fallen_seconds": 0.0,
+      "kind": "synthetic_measurement_fixture",
+      "note": "Externally specified measurements; validates the state machine, not physical recovery",
+      "scenario": "one_foot",
+      "transitions": [
+        {
+          "state": "UNBALANCED",
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "state": "BALANCED",
+          "step": 18,
+          "time": 0.15
+        }
+      ],
+      "unbalanced_seconds": 0.15
+    },
+    {
+      "bad_interval_steps": [
+        25,
+        28
+      ],
+      "balanced_seconds": 0.5166666666666666,
+      "fallen_seconds": 0.0,
+      "kind": "synthetic_measurement_fixture",
+      "note": "Externally specified measurements; validates the state machine, not physical recovery",
+      "scenario": "both_feet",
+      "transitions": [
+        {
+          "state": "UNBALANCED",
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "state": "BALANCED",
+          "step": 18,
+          "time": 0.15
+        }
+      ],
+      "unbalanced_seconds": 0.15
+    },
+    {
+      "bad_interval_steps": [
+        25,
+        28
+      ],
+      "balanced_seconds": 0.5166666666666666,
+      "fallen_seconds": 0.0,
+      "kind": "synthetic_measurement_fixture",
+      "note": "Externally specified measurements; validates the state machine, not physical recovery",
+      "scenario": "polygon",
+      "transitions": [
+        {
+          "state": "UNBALANCED",
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "state": "BALANCED",
+          "step": 18,
+          "time": 0.15
+        }
+      ],
+      "unbalanced_seconds": 0.15
+    },
+    {
+      "bad_interval_steps": [
+        25,
+        36
+      ],
+      "balanced_seconds": 0.31666666666666665,
+      "fallen_seconds": 0.0,
+      "kind": "synthetic_measurement_fixture",
+      "note": "Externally specified measurements; validates the state machine, not physical recovery",
+      "scenario": "rotation",
+      "transitions": [
+        {
+          "state": "UNBALANCED",
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "state": "BALANCED",
+          "step": 18,
+          "time": 0.15
+        },
+        {
+          "state": "UNBALANCED",
+          "step": 30,
+          "time": 0.25
+        },
+        {
+          "state": "BALANCED",
+          "step": 54,
+          "time": 0.45
+        }
+      ],
+      "unbalanced_seconds": 0.35
+    },
+    {
+      "bad_interval_steps": [
+        25,
+        36
+      ],
+      "balanced_seconds": 0.31666666666666665,
+      "fallen_seconds": 0.0,
+      "kind": "synthetic_measurement_fixture",
+      "note": "Externally specified measurements; validates the state machine, not physical recovery",
+      "scenario": "recovery",
+      "transitions": [
+        {
+          "state": "UNBALANCED",
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "state": "BALANCED",
+          "step": 18,
+          "time": 0.15
+        },
+        {
+          "state": "UNBALANCED",
+          "step": 30,
+          "time": 0.25
+        },
+        {
+          "state": "BALANCED",
+          "step": 54,
+          "time": 0.45
+        }
+      ],
+      "unbalanced_seconds": 0.35
+    },
+    {
+      "bad_interval_steps": [
+        25,
+        36
+      ],
+      "balanced_seconds": 0.31666666666666665,
+      "fallen_seconds": 0.0,
+      "kind": "synthetic_measurement_fixture",
+      "note": "Externally specified measurements; validates the state machine, not physical recovery",
+      "scenario": "brief_collapse",
+      "transitions": [
+        {
+          "state": "UNBALANCED",
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "state": "BALANCED",
+          "step": 18,
+          "time": 0.15
+        },
+        {
+          "state": "UNBALANCED",
+          "step": 30,
+          "time": 0.25
+        },
+        {
+          "state": "BALANCED",
+          "step": 54,
+          "time": 0.45
+        }
+      ],
+      "unbalanced_seconds": 0.35
+    },
+    {
+      "bad_interval_steps": [
+        25,
+        54
+      ],
+      "balanced_seconds": 0.1,
+      "fallen_seconds": 0.26666666666666666,
+      "kind": "synthetic_measurement_fixture",
+      "note": "Externally specified measurements; validates the state machine, not physical recovery",
+      "scenario": "sustained_collapse",
+      "transitions": [
+        {
+          "state": "UNBALANCED",
+          "step": 0,
+          "time": 0.0
+        },
+        {
+          "state": "BALANCED",
+          "step": 18,
+          "time": 0.15
+        },
+        {
+          "state": "UNBALANCED",
+          "step": 30,
+          "time": 0.25
+        },
+        {
+          "state": "FALLEN",
+          "step": 48,
+          "time": 0.4
+        }
+      ],
+      "unbalanced_seconds": 0.3
+    }
+  ]
+}

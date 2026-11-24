@@ -1,14 +1,11 @@
 #pragma once
-#include "Body2D.hpp"
+#include "aura/math/Vec3.hpp"
+#include "RigidBody3D.hpp"
 
 namespace aura::physics {
-    inline float rectangleMomentOfInertia(const Body2D &body) noexcept {
-        const float widthSquared =
-                body.size.x * body.size.x;
+    math::Vec3 boxMomentOfInertia(float mass, const math::Vec3 &size);
 
-        const float heightSquared =
-                body.size.y * body.size.y;
-
-        return body.mass * (widthSquared + heightSquared) / 12.0f;
-    }
+    // Principal moments are local; vector and result are world-space.
+    // Requires positive principal moments on a dynamic body.
+    math::Vec3 applyInverseInertiaWorld(const RigidBody3D &body, const math::Vec3 &worldVector);
 }

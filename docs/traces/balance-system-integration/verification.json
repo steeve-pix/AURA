@@ -1,0 +1,88 @@
+{
+  "changed_files": [
+    "python/aura_env.py",
+    "python/balance_metrics.py",
+    "python/train_nn.py",
+    "python/model_checkpoint.py",
+    "python/balance_system_smoke.py",
+    "python/critic_error_analysis.py",
+    "python/consecutive_actor_experiment.py",
+    "python/gradient_experiment.py",
+    "python/current_residual_critic_experiment.py",
+    "python/actor_update_experiment.py",
+    "python/balance_diagnostics.py",
+    "python/timestep_baseline_analysis.py",
+    "python/stochastic_policy_experiment.py",
+    "python/residual_gradient_experiment.py",
+    "python/critic_experiment.py",
+    "python/train_balance.py",
+    "python/termination_diagnostics.py",
+    "include/aura/sim/AuraSimulation.hpp",
+    "src/python/AuraPython.cpp",
+    "src/main.cpp",
+    "cli/training_run.py",
+    "cli/nn_session.py",
+    "cli/evaluate_model.py",
+    "cli/critic_session.py",
+    "cli/model_viewer.py",
+    "cli/BalanceReadout.hpp",
+    "cli/NNTraining.hpp",
+    "cli/NNTraining.cpp",
+    "cli/EvaluationScreen.hpp",
+    "cli/EvaluationScreen.cpp",
+    "cli/ModelsScreen.cpp",
+    "cli/Terminal.hpp",
+    "cli/Terminal.cpp",
+    "cli/main.cpp",
+    "cli/ControlScreen.cpp",
+    "cli/TrainingSetup.cpp",
+    "tests/test_balance_system.py",
+    "tests/test_balance_classifier.py",
+    "tests/test_post_termination_diagnostics.py",
+    "tests/test_balance_reward_v2.py",
+    "tests/test_termination_modes.py",
+    "tests/test_model_checkpoint.py",
+    "tests/test_nn_configuration.py",
+    "tests/test_evaluation.py",
+    "tests/test_best_checkpoint.py",
+    "tests/termination_tests.cpp",
+    "tests/nn_training_screen_tests.cpp",
+    "tests/models_screen_tests.cpp",
+    "tests/evaluation_screen_tests.cpp",
+    "tests/cli_evaluation_smoke.py",
+    "docs/architecture.md",
+    "cli/README.md"
+  ],
+  "preserved_historical_files": 186,
+  "preserved_historical_checkpoints": 5,
+  "python_suite": {
+    "tests": 178,
+    "passed": true
+  },
+  "targeted_followup": {
+    "tests": 13,
+    "passed": true
+  },
+  "cpp_debug": [
+    "balance_classifier",
+    "termination_modes"
+  ],
+  "cpp_release": [
+    "balance_classifier",
+    "termination_modes",
+    "termination_release_replay"
+  ],
+  "strict_release_endpoints": {
+    "legacy": 462,
+    "balance_v2": 516
+  },
+  "cli_checks": [
+    "training screen",
+    "evaluation screen",
+    "model library screen",
+    "real PTY evaluation: alias, repeatability, resize, cancellation, checkpoint unchanged"
+  ],
+  "smoke": "smoke.json",
+  "training_run": "One physical critic update only; zero actor optimizer updates. Other optimizer tests use short measurement fixtures.",
+  "cache_repair": "Joined an invalid preprocessor line break in ignored build-release nlohmann_json hedley.hpp; no dependency version change."
+}

@@ -1,68 +1,56 @@
 #pragma once
-#include "Body2D.hpp"
-#include "BodyGeometry.hpp"
-#include "Impulses.hpp"
-#include "World2D.hpp"
-#include "aura/math/Math.hpp"
+#include "CollisionShape.hpp"
+#include "RigidBody3D.hpp"
+#include <vector>
 
 namespace aura::physics {
-    inline bool intersectsFloor(const Body2D &body, const World2D &world) noexcept {
-        return bottom(body) < world.floorHeight;
-    }
+    // Dry, grippy ground: static friction holds until the support limit is
+    // exceeded; sliding uses the lower dynamic coefficient. Material assumption,
+    // not a measured property of AURA. Both impulses remain load-limited.
+    inline constexpr float groundStaticFriction = 0.8f;
+    inline constexpr float groundDynamicFriction = 0.6f;
 
-    inline void correctFloorPenetration(Body2D &body, const World2D &world) noexcept {
-        const float penetration =
-                world.floorHeight - bottom(body);
+    enum class FloorFrictionModel { Coulomb, LegacyVelocityDamping };
 
-        if (penetration <= 0.0f) {
-            return;
-        }
+    struct FloorNormalImpulseAudit {
+        int iteration = 0;
+        std::size_t contact = 0;
+        float magnitude = 0.0f;
+        float normalVelocityBefore = 0.0f, normalVelocityAfter = 0.0f;
+        double energyBefore = 0.0, energyAfter = 0.0;
+        RigidBody3D before{}, after{};
+    };
 
-        body.position.y +=
-                penetration;
-    }
+    bool intersectFloor(const RigidBody3D &body, float halfHeight, float floorY);
 
-    inline void stopDownwardVelocity(Body2D &body) noexcept {
-        if (body.velocity.y < 0.0f)
-            body.velocity.y = 0.0f;
-    }
+    // Optional measurements only; enabling them does not change the response.
+    struct FloorCollisionAudit {
+        float lowestBefore = 0.0f;
+        float lowestAfterPosition = 0.0f;
+        std::vector<math::Vec3> contacts;
+        std::vector<math::Vec3> normalImpulses; // Sum per contact across four passes.
+        std::vector<math::Vec3> frictionImpulses; // Tangential impulses summed per contact.
+        math::Vec3 dampingDeltaVelocity{};
+        math::Vec3 dampingDeltaOmega{};
+        math::Vec3 normalDeltaVelocity{};
+        math::Vec3 normalDeltaOmega{};
+        math::Vec3 frictionDeltaVelocity{};
+        math::Vec3 frictionDeltaOmega{};
+        double energyBefore = 0.0, energyAfterDamping = 0.0, energyAfterNormal = 0.0, energyAfterFriction = 0.0;
+        float linearSpeedBefore = 0.0f, linearSpeedAfterDamping = 0.0f, linearSpeedAfterNormal = 0.0f,
+              linearSpeedAfterFriction = 0.0f;
+        float angularSpeedBefore = 0.0f, angularSpeedAfterDamping = 0.0f, angularSpeedAfterNormal = 0.0f,
+              angularSpeedAfterFriction = 0.0f;
+        std::vector<FloorNormalImpulseAudit> impulseEvents;
+    };
 
-    inline void stopAngularVelocity(Body2D &body) noexcept {
-        body.angularVelocity = 0.0f;
-    }
+    void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, float floorY, float dt,
+                               FloorCollisionAudit *audit = nullptr,
+                               FloorFrictionModel friction = FloorFrictionModel::LegacyVelocityDamping,
+                               bool applyAngularDamping = true);
 
-    inline void resolveFloorCollision(Body2D &body, const World2D &world) noexcept {
-        if (!intersectsFloor(body, world)) {
-            return;
-        }
-
-        correctFloorPenetration(body, world);
-        stopDownwardVelocity(body);
-        stopAngularVelocity(body);
-    }
-
-    inline void applyFloorFriction(Body2D &body, const World2D &world) noexcept {
-        if (!isGrounded(body, world)) {
-            return;
-        }
-
-        const math::Vec2 contactPoint = lowestPoint(body);
-        const math::Vec2 contactVelocity = velocityAtWorldPoint(body, contactPoint);
-        const math::Vec2 tangent{1.0f, 0.0f};
-        const float tangentVelocity = contactVelocity.dot(tangent);
-
-        const math::Vec2 offset = contactPoint - body.position;
-        const float inverseMass = 1.0f / body.mass;
-        const float rotationalTerm = math::cross(offset, tangent);
-        const float effectiveInverseMass =
-                inverseMass + (rotationalTerm * rotationalTerm) / body.momentOfInertia;
-
-        if (effectiveInverseMass <= 0.0f) {
-            return;
-        }
-
-        const float impulseMagnitude = -tangentVelocity / effectiveInverseMass;
-        const math::Vec2 impulse = tangent * impulseMagnitude;
-        applyImpulseAtPoint(body, impulse, contactPoint);
-    }
+    void resolveFloorCollision(RigidBody3D &body, const math::Vec3 &size, CollisionShape shape,
+                               float floorY, float dt, FloorCollisionAudit *audit = nullptr,
+                               FloorFrictionModel friction = FloorFrictionModel::LegacyVelocityDamping,
+                               bool applyAngularDamping = true);
 }

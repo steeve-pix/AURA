@@ -1,17 +1,10 @@
 #pragma once
-
-#include <cmath>
-
-#include "Vec2.hpp"
+#include "Vec3.hpp"
 
 namespace aura::math {
-    inline Vec2 rotate(const Vec2 &vec, float angle) noexcept {
-        const float cos = std::cos(angle);
-        const float sin = std::sin(angle);
+    Vec3 rotateAroundY(const Vec3 &vec, float angleRadians);
 
-        return Vec2{
-            vec.x * cos - vec.y * sin,
-            vec.x * sin + vec.y * cos
-        };
-    }
+    Vec3 rotateAroundZ(const Vec3 &vec, float angleRadians);
+
+    Vec3 rotateAroundX(const Vec3 &vec, float angleRadians);
 }

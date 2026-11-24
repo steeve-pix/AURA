@@ -1,0 +1,1675 @@
+{
+  "reward_version": 2,
+  "termination_mode": "balance_v2",
+  "config": {
+    "posture_scale_degrees": 30.0,
+    "height_zero_ratio": 0.25,
+    "height_full_ratio": 0.75,
+    "vertical_deadband": 0.25,
+    "horizontal_deadband": 0.35,
+    "angular_deadband": 0.4,
+    "linear_dynamic_fraction": 0.25,
+    "angular_dynamic_fraction": 0.5,
+    "support_margin_scale": 0.1,
+    "support_time_constant": 0.08,
+    "gravity": 9.81,
+    "time_step": 0.008333333333333333,
+    "discount": 0.995,
+    "posture_weight": 0.25,
+    "height_weight": 0.15,
+    "motion_weight": 0.25,
+    "support_weight": 1.0,
+    "recovery_weight": 0.1,
+    "terminal_weight": 1.0
+  },
+  "scenarios": [
+    {
+      "scenario": "brief_airborne",
+      "total_reward": -38.47433667188857,
+      "by_state": {
+        "BALANCED": {
+          "steps": 114,
+          "seconds": 0.95,
+          "average_reward": 0.76291404266321
+        },
+        "UNBALANCED": {
+          "steps": 522,
+          "seconds": 4.35,
+          "average_reward": -0.23715812964699728
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6499938597619364
+        }
+      },
+      "terminal_reward": -1.6499938597619364,
+      "termination_step": 637,
+      "component_totals": {
+        "posture": -58.92963830523587,
+        "height": -7.398936712182719,
+        "motion": -101.13978481363405,
+        "support": 130.05905268550683,
+        "recovery": -0.06502952634275352,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 574.1474930644035,
+      "legacy_termination_step": 583,
+      "legacy_formula_through_v2_end": 609.0630713573191,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.0,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.5688177570680956,
+          "reward_recovery": 0.004500905876214933,
+          "quality_motion": 1.0,
+          "quality_support": 0.5643214542972174
+        },
+        {
+          "step": "64",
+          "balance_state": "BALANCED",
+          "reward_total": 0.8993011711970814,
+          "reward_recovery": 0.0006632940701234547,
+          "quality_motion": 1.0,
+          "quality_support": 0.8986508630225323
+        },
+        {
+          "step": "80",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9595351878884426,
+          "reward_recovery": -3.639962064925228e-05,
+          "quality_motion": 1.0,
+          "quality_support": 0.9596007781015111
+        },
+        {
+          "step": "81",
+          "balance_state": "BALANCED",
+          "reward_total": 0.07179284001848574,
+          "reward_recovery": -0.066024161827793,
+          "quality_motion": 0.34793284823903736,
+          "quality_support": 0.8646723725780519
+        },
+        {
+          "step": "86",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.1790579897272508,
+          "reward_recovery": -0.0007162701555539164,
+          "quality_motion": 0.562820742178768,
+          "quality_support": 0.5136372832945495
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.11813570688311181,
+          "reward_recovery": -0.0013273302989013011,
+          "quality_motion": 0.9999840746998464,
+          "quality_support": 0.11948418368267887
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.14660821869020896,
+          "reward_recovery": -9.066361483686132e-05,
+          "quality_motion": 0.39835176941301087,
+          "quality_support": 0.009807859053170368
+        },
+        {
+          "step": "146",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9003185383133946,
+          "reward_recovery": 0.0006480397277521699,
+          "quality_motion": 1.0,
+          "quality_support": 0.8998937282308379
+        },
+        {
+          "step": "180",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9304467532016147,
+          "reward_recovery": 0.00028068523630084833,
+          "quality_motion": 1.0,
+          "quality_support": 0.9310978525447667
+        },
+        {
+          "step": "200",
+          "balance_state": "BALANCED",
+          "reward_total": 0.7768995711540262,
+          "reward_recovery": 0.002049637038760477,
+          "quality_motion": 0.9998578478293412,
+          "quality_support": 0.7769089904805523
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.48479042378128934,
+          "reward_recovery": -0.0034227453719492765,
+          "quality_motion": 0.9186641779754446,
+          "quality_support": 0.5656830902977554
+        },
+        {
+          "step": "300",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.25037975172642774,
+          "reward_recovery": -1.596907125077651e-05,
+          "quality_motion": 0.1022166766842032,
+          "quality_support": 0.25603720029153276
+        },
+        {
+          "step": "400",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3783481876328835,
+          "reward_recovery": 3.5902900034762553e-07,
+          "quality_motion": 0.0008855421335290479,
+          "quality_support": 0.25000018069025515
+        },
+        {
+          "step": "462",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.4182877440367271,
+          "reward_recovery": 9.587548858333404e-08,
+          "quality_motion": 6.950263377056107e-05,
+          "quality_support": 0.25000000028321495
+        },
+        {
+          "step": "637",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6499938597619364,
+          "reward_recovery": -6.338994336166807e-18,
+          "quality_motion": 1.0331330064686556e-11,
+          "quality_support": 0.003791341415694822
+        }
+      ]
+    },
+    {
+      "scenario": "edge_landing",
+      "total_reward": -249.89745488698807,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 595,
+          "seconds": 4.958333333333333,
+          "average_reward": -0.41722263759966977
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.649985515184564
+        }
+      },
+      "terminal_reward": -1.649985515184564,
+      "termination_step": 596,
+      "component_totals": {
+        "posture": -98.62261322998765,
+        "height": -43.90117405566664,
+        "motion": -133.7258530183347,
+        "support": 27.365868352881776,
+        "recovery": -0.013682935880846268,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 211.83170196413994,
+      "legacy_termination_step": 219,
+      "legacy_formula_through_v2_end": 488.8186047151685,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.0068488413338584075,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.24542222567442823,
+          "reward_recovery": 0.00017175458684324182,
+          "quality_motion": 0.016100839103463684,
+          "quality_support": 0.42611460673290735
+        },
+        {
+          "step": "80",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.41102889888773697,
+          "reward_recovery": -0.0017601375302710998,
+          "quality_motion": 0.6865923760281581,
+          "quality_support": 0.7478489722534378
+        },
+        {
+          "step": "81",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.3700969094931846,
+          "reward_recovery": -0.0039430983588014945,
+          "quality_motion": 0.6806288781060124,
+          "quality_support": 0.6985993153065023
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.11235189523535369,
+          "reward_recovery": -0.0032393181615496315,
+          "quality_motion": 0.43060369644402163,
+          "quality_support": 0.6637897215117763
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.2553075022093471,
+          "reward_recovery": 0.00042375994682854537,
+          "quality_motion": 0.07008804466604769,
+          "quality_support": 0.2843131143981898
+        },
+        {
+          "step": "146",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.31488915544177,
+          "reward_recovery": -4.9374475824189544e-05,
+          "quality_motion": 0.041691884763130314,
+          "quality_support": 0.2534689812341946
+        },
+        {
+          "step": "180",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3469701461000851,
+          "reward_recovery": -1.671618461840484e-06,
+          "quality_motion": 0.0005851803729567251,
+          "quality_support": 0.2501004790824205
+        },
+        {
+          "step": "200",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3713583070490366,
+          "reward_recovery": -6.276721769578831e-08,
+          "quality_motion": 2.0288052118799696e-05,
+          "quality_support": 0.2500125110998388
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.5127360819107455,
+          "reward_recovery": -1.1643623665648486e-12,
+          "quality_motion": 2.83479848502245e-10,
+          "quality_support": 0.25000023889835843
+        },
+        {
+          "step": "300",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6459154739697427,
+          "reward_recovery": 3.994182115012318e-15,
+          "quality_motion": 1.2129066953482031e-10,
+          "quality_support": 0.19905156498564724
+        },
+        {
+          "step": "400",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.648934943080898,
+          "reward_recovery": -5.49242335511038e-16,
+          "quality_motion": 1.223628293923222e-10,
+          "quality_support": 0.011712806299144795
+        },
+        {
+          "step": "462",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6050228339871753,
+          "reward_recovery": 3.442809449213695e-13,
+          "quality_motion": 3.351621370469616e-09,
+          "quality_support": 0.03791118714466851
+        },
+        {
+          "step": "596",
+          "balance_state": "FALLEN",
+          "reward_total": -1.649985515184564,
+          "reward_recovery": -4.461530046418438e-24,
+          "quality_motion": 1.2874004510704233e-16,
+          "quality_support": 0.004514184115998031
+        }
+      ]
+    },
+    {
+      "scenario": "horizontal_collapse",
+      "total_reward": -12.625729976456002,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 23,
+          "seconds": 0.19166666666666668,
+          "average_reward": -0.4811225010172577
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.5599124530590756
+        }
+      },
+      "terminal_reward": -1.5599124530590756,
+      "termination_step": 24,
+      "component_totals": {
+        "posture": -5.9992793249783105,
+        "height": -3.5999999999999996,
+        "motion": -2.0264473539648655,
+        "support": 0.0,
+        "recovery": -3.297512826434679e-06,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 0,
+      "legacy_termination_step": 0,
+      "legacy_formula_through_v2_end": 12.09326325746224,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.39996916297520385,
+          "reward_recovery": -1.5426225510834858e-08,
+          "quality_motion": 1.0,
+          "quality_support": 0.25
+        },
+        {
+          "step": "24",
+          "balance_state": "FALLEN",
+          "reward_total": -1.5599124530590756,
+          "reward_recovery": -3.8721960556490866e-07,
+          "quality_motion": 0.3602357723493575,
+          "quality_support": 0.07948971041399748
+        }
+      ]
+    },
+    {
+      "scenario": "left_lateral",
+      "total_reward": -130.27550689896597,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 286,
+          "seconds": 2.3833333333333333,
+          "average_reward": -0.44973958686024285
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.649985056936493
+        }
+      },
+      "terminal_reward": -1.649985056936493,
+      "termination_step": 287,
+      "component_totals": {
+        "posture": -48.696333319199866,
+        "height": -14.264386627275014,
+        "motion": -66.55189686884813,
+        "support": 0.23722853528571802,
+        "recovery": -0.00011861892866700732,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 169.57277989387512,
+      "legacy_termination_step": 181,
+      "legacy_formula_through_v2_end": 234.360304688802,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.08970490805208811,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3284446575084967,
+          "reward_recovery": -1.691442301225022e-05,
+          "quality_motion": 0.019395783510249016,
+          "quality_support": 0.2116612582887679
+        },
+        {
+          "step": "80",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.33306706245363293,
+          "reward_recovery": -9.741931931501731e-06,
+          "quality_motion": 0.005939679190455172,
+          "quality_support": 0.24831551325022863
+        },
+        {
+          "step": "81",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.33283345427767824,
+          "reward_recovery": 1.6717182586042307e-05,
+          "quality_motion": 0.007003049956994501,
+          "quality_support": 0.24848215092386364
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.33629938986135777,
+          "reward_recovery": -0.00032183320186537386,
+          "quality_motion": 0.04091987306899879,
+          "quality_support": 0.22505903345302025
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.38776752846975654,
+          "reward_recovery": 1.1321288709013303e-06,
+          "quality_motion": 0.009072061183471694,
+          "quality_support": 0.2456997871166495
+        },
+        {
+          "step": "146",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.4306865503505772,
+          "reward_recovery": -1.0668428420742215e-05,
+          "quality_motion": 0.0035006447453045306,
+          "quality_support": 0.24956525783051123
+        },
+        {
+          "step": "180",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.514659156146982,
+          "reward_recovery": -1.1403351032784373e-08,
+          "quality_motion": 1.1617740389249176e-05,
+          "quality_support": 0.24998740768792604
+        },
+        {
+          "step": "200",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.5860180353312633,
+          "reward_recovery": 6.272935507077472e-12,
+          "quality_motion": 7.890607278275621e-09,
+          "quality_support": 0.17936895794746557
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6493777982265713,
+          "reward_recovery": -5.175876781602035e-15,
+          "quality_motion": 4.202770902843771e-09,
+          "quality_support": 0.007569804759145863
+        },
+        {
+          "step": "287",
+          "balance_state": "FALLEN",
+          "reward_total": -1.649985056936493,
+          "reward_recovery": -3.899754826940186e-21,
+          "quality_motion": 1.324702602099707e-11,
+          "quality_support": 4.5959284640808345e-05
+        }
+      ]
+    },
+    {
+      "scenario": "mild_backward",
+      "total_reward": -87.0720136950462,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 281,
+          "seconds": 2.341666666666667,
+          "average_reward": -0.3039930076773379
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6499785377142502
+        }
+      },
+      "terminal_reward": -1.6499785377142502,
+      "termination_step": 282,
+      "component_totals": {
+        "posture": -29.228804908962566,
+        "height": -10.308355157700104,
+        "motion": -54.81846861134664,
+        "support": 8.287758888598491,
+        "recovery": -0.004143905635373975,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 190.28185909986496,
+      "legacy_termination_step": 198,
+      "legacy_formula_through_v2_end": 251.0651289006928,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.017160428642145176,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.119109922970931,
+          "reward_recovery": 0.0007195926593128538,
+          "quality_motion": 0.9310741745354916,
+          "quality_support": 0.17837380078495246
+        },
+        {
+          "step": "80",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.04041166825959513,
+          "reward_recovery": -4.502256531087323e-06,
+          "quality_motion": 0.5275657536965447,
+          "quality_support": 0.2468529644393915
+        },
+        {
+          "step": "81",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.04220484277825845,
+          "reward_recovery": -0.00010702360757575136,
+          "quality_motion": 0.5270977758314475,
+          "quality_support": 0.24716428459951603
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.2090505263375011,
+          "reward_recovery": -0.0005023080890196472,
+          "quality_motion": 0.23713537633984058,
+          "quality_support": 0.24960814853055496
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.27197779174399755,
+          "reward_recovery": -0.00016416441396645173,
+          "quality_motion": 0.11161530891827434,
+          "quality_support": 0.24996783487266983
+        },
+        {
+          "step": "146",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.32373060734918707,
+          "reward_recovery": -2.6259531336011522e-05,
+          "quality_motion": 0.013230011322330157,
+          "quality_support": 0.24999674817558648
+        },
+        {
+          "step": "180",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3645387765175243,
+          "reward_recovery": -4.229866358142978e-07,
+          "quality_motion": 0.0001245217281024601,
+          "quality_support": 0.2499999058108674
+        },
+        {
+          "step": "200",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.42106985207543146,
+          "reward_recovery": -9.178679114657547e-09,
+          "quality_motion": 2.5505865830626156e-06,
+          "quality_support": 0.24999998827208994
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6250587019281835,
+          "reward_recovery": -1.075539913083679e-15,
+          "quality_motion": 4.822637364004272e-13,
+          "quality_support": 0.24999999977605658
+        },
+        {
+          "step": "282",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6499785377142502,
+          "reward_recovery": -8.469081760683953e-13,
+          "quality_motion": 7.358797279573077e-05,
+          "quality_support": 0.009052055662581502
+        }
+      ]
+    },
+    {
+      "scenario": "mild_forward",
+      "total_reward": -72.49057833519642,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 273,
+          "seconds": 2.275,
+          "average_reward": -0.25948933830451226
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6499889780645776
+        }
+      },
+      "terminal_reward": -1.6499889780645776,
+      "termination_step": 274,
+      "component_totals": {
+        "posture": -31.34237872218027,
+        "height": -8.582930059648966,
+        "motion": -49.9882966771012,
+        "support": 18.43224329319055,
+        "recovery": -0.009216169456535656,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 195.50388696789742,
+      "legacy_termination_step": 207,
+      "legacy_formula_through_v2_end": 241.1954862587154,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.017160428642145176,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.4393779915530312,
+          "reward_recovery": 0.005313446835145669,
+          "quality_motion": 0.9524223701861559,
+          "quality_support": 0.5225678205405102
+        },
+        {
+          "step": "80",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.014070657403984258,
+          "reward_recovery": -0.0017923784681371153,
+          "quality_motion": 0.5286531391709984,
+          "quality_support": 0.33413038303095666
+        },
+        {
+          "step": "81",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.009234722418551309,
+          "reward_recovery": -0.0014989248224716617,
+          "quality_motion": 0.4961109653327864,
+          "quality_support": 0.32580779378399194
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.20371010513298024,
+          "reward_recovery": -0.0015938453591045664,
+          "quality_motion": 0.21098001169647354,
+          "quality_support": 0.2604754501754912
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.07216164905743216,
+          "reward_recovery": -0.0007830259191182909,
+          "quality_motion": 0.6089249709354044,
+          "quality_support": 0.25085987731323983
+        },
+        {
+          "step": "146",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.2505826646849739,
+          "reward_recovery": -2.6931641544306052e-05,
+          "quality_motion": 0.27855881048256104,
+          "quality_support": 0.25008693172612445
+        },
+        {
+          "step": "180",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.4037418652959273,
+          "reward_recovery": -2.812649602768362e-06,
+          "quality_motion": 0.012226222123816452,
+          "quality_support": 0.250002517978474
+        },
+        {
+          "step": "200",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.46406128828704124,
+          "reward_recovery": -4.3814321071078476e-07,
+          "quality_motion": 0.00023087047406255442,
+          "quality_support": 0.25000031352475877
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6323358210902702,
+          "reward_recovery": 7.317242408542819e-12,
+          "quality_motion": 7.33792104978836e-07,
+          "quality_support": 0.10864955811349744
+        },
+        {
+          "step": "274",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6499889780645776,
+          "reward_recovery": -1.9463673972272716e-15,
+          "quality_motion": 1.102380509423046e-06,
+          "quality_support": 0.002555192695080927
+        }
+      ]
+    },
+    {
+      "scenario": "neutral",
+      "total_reward": 26.246968496585097,
+      "by_state": {
+        "BALANCED": {
+          "steps": 146,
+          "seconds": 1.2166666666666666,
+          "average_reward": 0.9096715202291232
+        },
+        "UNBALANCED": {
+          "steps": 369,
+          "seconds": 3.075,
+          "average_reward": -0.28432270732796966
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6499944528461066
+        }
+      },
+      "terminal_reward": -1.6499944528461066,
+      "termination_step": 516,
+      "component_totals": {
+        "posture": -49.081171067291265,
+        "height": -7.486558429042256,
+        "motion": -75.56241281693052,
+        "support": 159.45683922946387,
+        "recovery": -0.07972841961473448,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 451.60978722572327,
+      "legacy_termination_step": 462,
+      "legacy_formula_through_v2_end": 486.82323116622865,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.0,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.5688177570680956,
+          "reward_recovery": 0.004500905876214933,
+          "quality_motion": 1.0,
+          "quality_support": 0.5643214542972174
+        },
+        {
+          "step": "64",
+          "balance_state": "BALANCED",
+          "reward_total": 0.8993011711970814,
+          "reward_recovery": 0.0006632940701234547,
+          "quality_motion": 1.0,
+          "quality_support": 0.8986508630225323
+        },
+        {
+          "step": "80",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9595351878884426,
+          "reward_recovery": -3.639962064925228e-05,
+          "quality_motion": 1.0,
+          "quality_support": 0.9596007781015111
+        },
+        {
+          "step": "81",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9634838392248788,
+          "reward_recovery": -8.229368683604354e-05,
+          "quality_motion": 1.0,
+          "quality_support": 0.9635972668567613
+        },
+        {
+          "step": "100",
+          "balance_state": "BALANCED",
+          "reward_total": 0.977389356578616,
+          "reward_recovery": -0.00024428230765755066,
+          "quality_motion": 1.0,
+          "quality_support": 0.9777105091639098
+        },
+        {
+          "step": "124",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9973976782262131,
+          "reward_recovery": -0.000480187778518415,
+          "quality_motion": 1.0,
+          "quality_support": 0.9981703671753922
+        },
+        {
+          "step": "146",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9905661376919839,
+          "reward_recovery": -0.00041130100985442564,
+          "quality_motion": 1.0,
+          "quality_support": 0.9919882900837446
+        },
+        {
+          "step": "180",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9271522756128551,
+          "reward_recovery": 0.0002377722252290604,
+          "quality_motion": 1.0,
+          "quality_support": 0.9335027676923001
+        },
+        {
+          "step": "200",
+          "balance_state": "BALANCED",
+          "reward_total": 0.6213074083437318,
+          "reward_recovery": -0.0036775915015710317,
+          "quality_motion": 0.9548311408996927,
+          "quality_support": 0.6840719240616405
+        },
+        {
+          "step": "210",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.4305738988267026,
+          "reward_recovery": -0.00331355519080081,
+          "quality_motion": 0.872615664648942,
+          "quality_support": 0.5621164906611023
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.026553561940551532,
+          "reward_recovery": -0.0005093658315385136,
+          "quality_motion": 0.4020652620321174,
+          "quality_support": 0.5642838372775736
+        },
+        {
+          "step": "300",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.33946767419614915,
+          "reward_recovery": 5.163683104826007e-05,
+          "quality_motion": 0.02797251028796641,
+          "quality_support": 0.2532625306285777
+        },
+        {
+          "step": "400",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.4720684697066816,
+          "reward_recovery": -2.1377706298805736e-09,
+          "quality_motion": 2.2931900878939082e-06,
+          "quality_support": 0.24942683238149121
+        },
+        {
+          "step": "462",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.5506218214495825,
+          "reward_recovery": -2.475292635182313e-17,
+          "quality_motion": 1.563618683108324e-13,
+          "quality_support": 0.24089223071962948
+        },
+        {
+          "step": "516",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6499944528461066,
+          "reward_recovery": -7.591703331207123e-40,
+          "quality_motion": 3.43278702957526e-20,
+          "quality_support": 0.09416601296145174
+        }
+      ]
+    },
+    {
+      "scenario": "one_foot_landing",
+      "total_reward": -76.05448048316703,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 381,
+          "seconds": 3.175,
+          "average_reward": -0.19528737635186372
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6499900931069398
+        }
+      },
+      "terminal_reward": -1.6499900931069398,
+      "termination_step": 382,
+      "component_totals": {
+        "posture": -30.8771703202408,
+        "height": -10.075333345555734,
+        "motion": -73.68952346962045,
+        "support": 39.60735032760101,
+        "recovery": -0.01980367535103362,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 296.967493891716,
+      "legacy_termination_step": 303,
+      "legacy_formula_through_v2_end": 355.0222938172519,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.0011086210918624384,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.5522910756139475,
+          "reward_recovery": 0.008032305431489495,
+          "quality_motion": 0.9799182135977017,
+          "quality_support": 0.56379801056804
+        },
+        {
+          "step": "80",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.5185796043220012,
+          "reward_recovery": 0.002552593855588292,
+          "quality_motion": 0.8740410904280191,
+          "quality_support": 0.6290683916472738
+        },
+        {
+          "step": "81",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.5290647578065698,
+          "reward_recovery": 0.0014349402375022358,
+          "quality_motion": 0.8517149332471078,
+          "quality_support": 0.6657627617881989
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.26748071004925944,
+          "reward_recovery": -0.00022145429433242383,
+          "quality_motion": 0.6701441358387087,
+          "quality_support": 0.524410471885911
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.03289215766046777,
+          "reward_recovery": -0.0007079012646888927,
+          "quality_motion": 0.3354140321188716,
+          "quality_support": 0.4029089725104037
+        },
+        {
+          "step": "146",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.1847241394082492,
+          "reward_recovery": -0.00041771531485498354,
+          "quality_motion": 0.1351611633770138,
+          "quality_support": 0.267230473291129
+        },
+        {
+          "step": "180",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.255901930443259,
+          "reward_recovery": -0.00012286512315057234,
+          "quality_motion": 0.05889129747068665,
+          "quality_support": 0.2504990808623862
+        },
+        {
+          "step": "200",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3150672069651289,
+          "reward_recovery": 1.3285144842051841e-05,
+          "quality_motion": 0.01915707271553071,
+          "quality_support": 0.2500621427897879
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3646403167720043,
+          "reward_recovery": -3.231433402174416e-06,
+          "quality_motion": 0.00228968904379097,
+          "quality_support": 0.2500011866111422
+        },
+        {
+          "step": "300",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.41206594662753976,
+          "reward_recovery": -1.723547144432281e-10,
+          "quality_motion": 3.509270996920977e-08,
+          "quality_support": 0.24891338773149468
+        },
+        {
+          "step": "382",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6499900931069398,
+          "reward_recovery": -1.6819165711069314e-26,
+          "quality_motion": 1.2982313167662168e-17,
+          "quality_support": 0.0007318628553314903
+        }
+      ]
+    },
+    {
+      "scenario": "rapid_rotation",
+      "total_reward": -180.67777046065552,
+      "by_state": {
+        "BALANCED": {
+          "steps": 22,
+          "seconds": 0.18333333333333332,
+          "average_reward": 0.6461878895687744
+        },
+        "UNBALANCED": {
+          "steps": 394,
+          "seconds": 3.283333333333333,
+          "average_reward": -0.4904669545974947
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6499239197556725
+        }
+      },
+      "terminal_reward": -1.6499239197556725,
+      "termination_step": 417,
+      "component_totals": {
+        "posture": -79.46738141811457,
+        "height": -39.67583673904063,
+        "motion": -89.12579397964286,
+        "support": 28.605544448572054,
+        "recovery": -0.014302772429514056,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 124.28139272332191,
+      "legacy_termination_step": 130,
+      "legacy_formula_through_v2_end": 278.4916729014367,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.0,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.5688177570680956,
+          "reward_recovery": 0.004500905876214933,
+          "quality_motion": 1.0,
+          "quality_support": 0.5643214542972174
+        },
+        {
+          "step": "64",
+          "balance_state": "BALANCED",
+          "reward_total": 0.8993011711970814,
+          "reward_recovery": 0.0006632940701234547,
+          "quality_motion": 1.0,
+          "quality_support": 0.8986508630225323
+        },
+        {
+          "step": "80",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9595351878884426,
+          "reward_recovery": -3.639962064925228e-05,
+          "quality_motion": 1.0,
+          "quality_support": 0.9596007781015111
+        },
+        {
+          "step": "81",
+          "balance_state": "BALANCED",
+          "reward_total": -0.3464797151038345,
+          "reward_recovery": -0.09595291179397114,
+          "quality_motion": 5.493746562087111e-05,
+          "quality_support": 0.8894035961477292
+        },
+        {
+          "step": "86",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.2695464826752189,
+          "reward_recovery": -3.390127673654929e-07,
+          "quality_motion": 3.583172630609594e-05,
+          "quality_support": 0.6298219261648019
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.393937600025832,
+          "reward_recovery": -3.045278973396036e-08,
+          "quality_motion": 6.928150920012175e-05,
+          "quality_support": 0.3383555658216481
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.4924399281426778,
+          "reward_recovery": -2.5469242048843532e-08,
+          "quality_motion": 0.0001689604175143059,
+          "quality_support": 0.25725266649888373
+        },
+        {
+          "step": "146",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.5624570795497825,
+          "reward_recovery": -2.08012341455584e-11,
+          "quality_motion": 4.668690961265063e-06,
+          "quality_support": 0.04874959928478892
+        },
+        {
+          "step": "180",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6499967385454206,
+          "reward_recovery": 2.853989272347949e-19,
+          "quality_motion": 1.579978823265323e-10,
+          "quality_support": 0.0014120327190639747
+        },
+        {
+          "step": "200",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6155497432968877,
+          "reward_recovery": -9.167604379618896e-13,
+          "quality_motion": 0.1377964869802477,
+          "quality_support": 0.00017581850767605858
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6415667346326349,
+          "reward_recovery": -3.5252787600711946e-16,
+          "quality_motion": 0.004997094101156019,
+          "quality_support": 3.3572390445743065e-06
+        },
+        {
+          "step": "300",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6499997054547706,
+          "reward_recovery": -1.2825109252595864e-24,
+          "quality_motion": 1.6640743350312776e-09,
+          "quality_support": 5.2621562115786405e-09
+        },
+        {
+          "step": "400",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6495898688504528,
+          "reward_recovery": 1.1618369001863673e-11,
+          "quality_motion": 5.790685203531194e-07,
+          "quality_support": 0.1911100629011717
+        },
+        {
+          "step": "417",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6499239197556725,
+          "reward_recovery": -3.4555485739960834e-13,
+          "quality_motion": 9.622322517681086e-08,
+          "quality_support": 0.03252523255148775
+        }
+      ]
+    },
+    {
+      "scenario": "recovery_attempt",
+      "total_reward": 26.594478971089803,
+      "by_state": {
+        "BALANCED": {
+          "steps": 100,
+          "seconds": 0.8333333333333334,
+          "average_reward": 0.9051402739152445
+        },
+        "UNBALANCED": {
+          "steps": 267,
+          "seconds": 2.225,
+          "average_reward": -0.23322147694244824
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6494140768009715
+        }
+      },
+      "terminal_reward": -1.6494140768009715,
+      "termination_step": 368,
+      "component_totals": {
+        "posture": -40.09270730574823,
+        "height": -6.8248996937197495,
+        "motion": -47.271623983426224,
+        "support": 121.84463227013126,
+        "recovery": -0.06092231614725273,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 292.57333940267563,
+      "legacy_termination_step": 305,
+      "legacy_formula_through_v2_end": 329.8648784601828,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.0,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.5688177570680956,
+          "reward_recovery": 0.004500905876214933,
+          "quality_motion": 1.0,
+          "quality_support": 0.5643214542972174
+        },
+        {
+          "step": "64",
+          "balance_state": "BALANCED",
+          "reward_total": 0.8993011711970814,
+          "reward_recovery": 0.0006632940701234547,
+          "quality_motion": 1.0,
+          "quality_support": 0.8986508630225323
+        },
+        {
+          "step": "80",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9595351878884426,
+          "reward_recovery": -3.639962064925228e-05,
+          "quality_motion": 1.0,
+          "quality_support": 0.9596007781015111
+        },
+        {
+          "step": "81",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9634656193005343,
+          "reward_recovery": -8.362772401537821e-05,
+          "quality_motion": 1.0,
+          "quality_support": 0.9635972668567613
+        },
+        {
+          "step": "100",
+          "balance_state": "BALANCED",
+          "reward_total": 0.9866909991495766,
+          "reward_recovery": -0.000500441248665684,
+          "quality_motion": 1.0,
+          "quality_support": 0.9949697122385558
+        },
+        {
+          "step": "124",
+          "balance_state": "BALANCED",
+          "reward_total": 0.946934481688711,
+          "reward_recovery": -0.0005008682524801467,
+          "quality_motion": 0.9999391363405911,
+          "quality_support": 0.9872897215113222
+        },
+        {
+          "step": "146",
+          "balance_state": "BALANCED",
+          "reward_total": 0.8405128373739474,
+          "reward_recovery": -0.0004464031946964431,
+          "quality_motion": 0.979737020058457,
+          "quality_support": 0.9643660185558011
+        },
+        {
+          "step": "164",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.6476330306237789,
+          "reward_recovery": 8.76506852576786e-05,
+          "quality_motion": 0.9039705011872065,
+          "quality_support": 0.93062407326268
+        },
+        {
+          "step": "180",
+          "balance_state": "UNBALANCED",
+          "reward_total": 0.37290474359748643,
+          "reward_recovery": -0.0010754327095404026,
+          "quality_motion": 0.788041866398843,
+          "quality_support": 0.8350168701168251
+        },
+        {
+          "step": "200",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.04883135199428487,
+          "reward_recovery": -0.0006127002758362616,
+          "quality_motion": 0.6486207354760272,
+          "quality_support": 0.36027949621117566
+        },
+        {
+          "step": "238",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.42013261146714476,
+          "reward_recovery": -1.3230309829633664e-06,
+          "quality_motion": 0.04984784603904414,
+          "quality_support": 0.2521057773461386
+        },
+        {
+          "step": "300",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.5048971771785887,
+          "reward_recovery": -8.028088201258634e-10,
+          "quality_motion": 1.690269710618347e-05,
+          "quality_support": 0.25000330060778964
+        },
+        {
+          "step": "368",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6494140768009715,
+          "reward_recovery": -5.868172598452947e-11,
+          "quality_motion": 0.002293955104307184,
+          "quality_support": 0.004301490375580064
+        }
+      ]
+    },
+    {
+      "scenario": "right_lateral",
+      "total_reward": -102.0621770390096,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 234,
+          "seconds": 1.95,
+          "average_reward": -0.429111922594766
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6499871518343432
+        }
+      },
+      "terminal_reward": -1.6499871518343432,
+      "termination_step": 235,
+      "component_totals": {
+        "posture": -36.177205031777895,
+        "height": -11.272357499774909,
+        "motion": -53.74802984535708,
+        "support": 0.13548308062636058,
+        "recovery": -6.774272607218477e-05,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 140.75544273853302,
+      "legacy_termination_step": 148,
+      "legacy_formula_through_v2_end": 205.59984815120697,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.08970490805208811,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.32707943208098433,
+          "reward_recovery": -2.867641593783934e-05,
+          "quality_motion": 0.02471465635969539,
+          "quality_support": 0.2116612582887679
+        },
+        {
+          "step": "80",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3637028688121071,
+          "reward_recovery": 6.217004712291848e-07,
+          "quality_motion": 0.003415160674279025,
+          "quality_support": 0.24831551325022863
+        },
+        {
+          "step": "81",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.36433449689910635,
+          "reward_recovery": -8.036779065357182e-06,
+          "quality_motion": 0.002836390574337048,
+          "quality_support": 0.24848215092386364
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.3954791169414574,
+          "reward_recovery": -2.0744570236697344e-06,
+          "quality_motion": 0.0006253490034328088,
+          "quality_support": 0.2497902570226976
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.39786783520090674,
+          "reward_recovery": -1.3264044797253613e-07,
+          "quality_motion": 4.3192906019928463e-05,
+          "quality_support": 0.24998278324799675
+        },
+        {
+          "step": "146",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.4284556963168797,
+          "reward_recovery": -1.6543104071906299e-10,
+          "quality_motion": 2.363912450599574e-08,
+          "quality_support": 0.24999825942381912
+        },
+        {
+          "step": "180",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.5908225290558901,
+          "reward_recovery": 2.2717185017545776e-12,
+          "quality_motion": 1.9608901042366763e-09,
+          "quality_support": 0.1485062797225991
+        },
+        {
+          "step": "200",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6447056786007443,
+          "reward_recovery": -1.1104847872818309e-14,
+          "quality_motion": 1.9510589263846015e-10,
+          "quality_support": 0.07216161554983502
+        },
+        {
+          "step": "235",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6499871518343432,
+          "reward_recovery": -6.607057154273383e-21,
+          "quality_motion": 1.8107138773174136e-13,
+          "quality_support": 0.010237827513597596
+        }
+      ]
+    },
+    {
+      "scenario": "severe_backward",
+      "total_reward": -72.62349764856553,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 137,
+          "seconds": 1.1416666666666666,
+          "average_reward": -0.5182484283737687
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6234629613592195
+        }
+      },
+      "terminal_reward": -1.6234629613592195,
+      "termination_step": 138,
+      "component_totals": {
+        "posture": -32.5688383610407,
+        "height": -10.772500528614215,
+        "motion": -28.32069267536778,
+        "support": 0.03855431518294102,
+        "recovery": -2.0398725781065415e-05,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 47.896306693553925,
+      "legacy_termination_step": 58,
+      "legacy_formula_through_v2_end": 100.08377429842949,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.22365020916942208,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.4817606904997052,
+          "reward_recovery": -5.55782842742035e-06,
+          "quality_motion": 0.06325016877914472,
+          "quality_support": 0.1481981063117178
+        },
+        {
+          "step": "80",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6105091459361118,
+          "reward_recovery": -2.8114866884573518e-08,
+          "quality_motion": 0.0002002309630740869,
+          "quality_support": 0.14952596267476345
+        },
+        {
+          "step": "81",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6145951955003507,
+          "reward_recovery": -2.723728042274961e-08,
+          "quality_motion": 0.00015327334125976493,
+          "quality_support": 0.1594653461949176
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6464655227230874,
+          "reward_recovery": -3.0648042846461466e-09,
+          "quality_motion": 4.689278187471081e-05,
+          "quality_support": 0.07570604871330333
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6499197434050575,
+          "reward_recovery": 2.109734052219119e-25,
+          "quality_motion": 4.654335438426878e-19,
+          "quality_support": 0.014216021112539723
+        },
+        {
+          "step": "138",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6234629613592195,
+          "reward_recovery": -1.74827246573672e-09,
+          "quality_motion": 0.10609362987022722,
+          "quality_support": 0.0033069828322284524
+        }
+      ]
+    },
+    {
+      "scenario": "severe_forward",
+      "total_reward": -72.24977952771097,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0,
+          "average_reward": null
+        },
+        "UNBALANCED": {
+          "steps": 140,
+          "seconds": 1.1666666666666667,
+          "average_reward": -0.5042871018630771
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333,
+          "average_reward": -1.6495852668801747
+        }
+      },
+      "terminal_reward": -1.6495852668801747,
+      "termination_step": 141,
+      "component_totals": {
+        "posture": -33.34471490953292,
+        "height": -8.667248649417669,
+        "motion": -29.337764829300713,
+        "support": 0.09999945065605756,
+        "recovery": -5.059011572722903e-05,
+        "terminal": -1.0
+      },
+      "legacy_episode_reward": 61.416960030794144,
+      "legacy_termination_step": 75,
+      "legacy_formula_through_v2_end": 103.17924161069095,
+      "timelines": [
+        {
+          "step": "1",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.22365020916942208,
+          "reward_recovery": 0.0,
+          "quality_motion": 1.0,
+          "quality_support": 0.0
+        },
+        {
+          "step": "50",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.4367341374005725,
+          "reward_recovery": -9.700040238767427e-06,
+          "quality_motion": 0.15525819331672183,
+          "quality_support": 0.2333380515358829
+        },
+        {
+          "step": "80",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.5466393859436851,
+          "reward_recovery": -6.04457047654053e-07,
+          "quality_motion": 0.0023547184054122537,
+          "quality_support": 0.24926792507629544
+        },
+        {
+          "step": "81",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.5506173542081593,
+          "reward_recovery": -4.785456028445619e-07,
+          "quality_motion": 0.0019167085445853911,
+          "quality_support": 0.249340345510727
+        },
+        {
+          "step": "100",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.6295315676331369,
+          "reward_recovery": -2.8185433049732025e-09,
+          "quality_motion": 1.9167218902011455e-05,
+          "quality_support": 0.24990884607781744
+        },
+        {
+          "step": "124",
+          "balance_state": "UNBALANCED",
+          "reward_total": -0.649595777669012,
+          "reward_recovery": -3.3582681408580356e-11,
+          "quality_motion": 1.712258309074096e-05,
+          "quality_support": 0.031121135491453844
+        },
+        {
+          "step": "141",
+          "balance_state": "FALLEN",
+          "reward_total": -1.6495852668801747,
+          "reward_recovery": -3.3262809510561836e-11,
+          "quality_motion": 0.0014977486321720412,
+          "quality_support": 0.00529654040064517
+        }
+      ]
+    }
+  ],
+  "physical_columns_identical_to_step127": true,
+  "deterministic_reward_replay": true,
+  "no_training": true,
+  "state_duration_convention": "Post-tick labels, including terminal tick; reset is not rewarded",
+  "source_sha256": {
+    "python/balance_reward_v2.py": "73b6eeba7799c303b0cd0df50036b23b9ec13c85cede0ca9cf49dcfe1ecbce93",
+    "python/aura_env.py": "46d4f25dd06c4375a81901e9d53debf3bfd27508f2745f2e9569befdf4c98ecd",
+    "python/train_nn.py": "9106e0d43e7cd37cbbfcb5218321f19128baad03213a37b17750713557a01128",
+    "src/sim/AuraSimulation.cpp": "a4c0a89d832dd6ee208a5f11ed2e8a4e98cad2596d8f621c77ddfefb21575645",
+    "src/sim/BalanceClassifier.cpp": "e59e749f620e750022e3c0b0b22370443eec62dd306957450e537e51f8815dab",
+    "include/aura/sim/Termination.hpp": "9d5b0cc284071aa464c619eb913f7104a091ddec4092c65fb098e0c7f5fc6f39"
+  }
+}

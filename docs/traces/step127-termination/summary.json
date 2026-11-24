@@ -1,0 +1,20 @@
+{
+  "legacy_first_termination": 462,
+  "v2_first_termination": 516,
+  "compared_physics_and_neural_snapshots": 643,
+  "legacy_reward_steps": 462,
+  "legacy_reward_sum": 451.60978722572327,
+  "v2_reward": "unavailable",
+  "pre_change_legacy_reference_exact_match": true,
+  "legacy_reward_sequence_sha256": "386eb68a476c03ca66520e6d2c65355832a2fcc073890a5599358a446a750a59",
+  "same_step_end_policy": "Both flags true; fallen reason takes precedence",
+  "source_sha256": {
+    "include/aura/sim/Termination.hpp": "9d5b0cc284071aa464c619eb913f7104a091ddec4092c65fb098e0c7f5fc6f39",
+    "include/aura/sim/BalanceClassifier.hpp": "68f70b9eec609aaea632bc0fbc19606e24320b04e84013344bcb9908d4b8e0cb",
+    "src/sim/BalanceClassifier.cpp": "e59e749f620e750022e3c0b0b22370443eec62dd306957450e537e51f8815dab",
+    "src/sim/AuraSimulation.cpp": "fb65c327f3ee694af925e62868653518db63afa854eb310724636a44f0962091",
+    "src/python/AuraPython.cpp": "0c02bd49d7627a61f3a6064531a389d3fec7561b5b4132cdb4519691b0cdbd71",
+    "python/aura_env.py": "287145959c876cc0cc12add76ec84a7dc6f62ce1aabc847c8608169fb0019ad5",
+    "python/termination_diagnostics.py": "902da0dfc5394ddb5526ccfabbd397458b173ffc79431f0263f33d1db81bbe1b"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "scenario_comparisons": [
+    {
+      "scenario": "neutral",
+      "legacy_termination_step": 462,
+      "v2_termination_step": 516,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "mild_forward",
+      "legacy_termination_step": 207,
+      "v2_termination_step": 274,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "severe_forward",
+      "legacy_termination_step": 75,
+      "v2_termination_step": 141,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "mild_backward",
+      "legacy_termination_step": 198,
+      "v2_termination_step": 282,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "severe_backward",
+      "legacy_termination_step": 58,
+      "v2_termination_step": 138,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "left_lateral",
+      "legacy_termination_step": 181,
+      "v2_termination_step": 287,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "right_lateral",
+      "legacy_termination_step": 148,
+      "v2_termination_step": 235,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "one_foot_landing",
+      "legacy_termination_step": 303,
+      "v2_termination_step": 382,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "brief_airborne",
+      "legacy_termination_step": 583,
+      "v2_termination_step": 637,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "edge_landing",
+      "legacy_termination_step": 219,
+      "v2_termination_step": 596,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "rapid_rotation",
+      "legacy_termination_step": 130,
+      "v2_termination_step": 417,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "recovery_attempt",
+      "legacy_termination_step": 305,
+      "v2_termination_step": 368,
+      "unchanged_step126_trace": true
+    },
+    {
+      "scenario": "horizontal_collapse",
+      "legacy_termination_step": 0,
+      "v2_termination_step": 24,
+      "unchanged_step126_trace": true
+    }
+  ],
+  "all_13_physical_modes_match_exactly": true,
+  "classifier_thresholds_physics_step_and_policy_source_unchanged": true,
+  "checkpoint_count": 136,
+  "all_checkpoint_hashes_unchanged": true,
+  "changed_checkpoint_files": [],
+  "no_training_launched": true,
+  "pre_change_reference_sha256": "f1f6b6467dea5b11a114b70137e5dcc314637ac03a863c461fd5ce103105f638"
+}

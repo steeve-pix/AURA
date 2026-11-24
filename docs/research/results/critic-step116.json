@@ -1,0 +1,555 @@
+{
+  "batches": [
+    {
+      "batch": "A",
+      "exploration_seed": 11601,
+      "episodes": 32,
+      "survival_steps": [
+        333,
+        298,
+        297,
+        304,
+        324,
+        296,
+        320,
+        303,
+        310,
+        305,
+        321,
+        301,
+        325,
+        341,
+        290,
+        317,
+        302,
+        303,
+        348,
+        289,
+        305,
+        317,
+        323,
+        306,
+        312,
+        299,
+        305,
+        297,
+        319,
+        334,
+        306,
+        360
+      ],
+      "losses": {
+        "timestep": 0.5171024799346924,
+        "residual": 0.3086874186992645
+      },
+      "timesteps": 10010,
+      "fallback_count": 10,
+      "clipped_latent_coordinates": 64,
+      "mean_absolute_advantage": {
+        "timestep": 0.005315966438502073,
+        "residual": 0.004484596196562052
+      },
+      "gradient_norms": {
+        "timestep": 1.7555480845230593,
+        "residual": 1.3478135357772798
+      }
+    },
+    {
+      "batch": "B",
+      "exploration_seed": 11602,
+      "episodes": 32,
+      "survival_steps": [
+        307,
+        311,
+        298,
+        325,
+        301,
+        307,
+        298,
+        292,
+        307,
+        294,
+        321,
+        305,
+        302,
+        323,
+        313,
+        314,
+        313,
+        325,
+        296,
+        292,
+        290,
+        316,
+        299,
+        301,
+        344,
+        300,
+        299,
+        301,
+        309,
+        292,
+        311,
+        317
+      ],
+      "losses": {
+        "timestep": -0.37766459584236145,
+        "residual": -0.2935410141944885
+      },
+      "timesteps": 9823,
+      "fallback_count": 0,
+      "clipped_latent_coordinates": 88,
+      "mean_absolute_advantage": {
+        "timestep": 0.004072107374668121,
+        "residual": 0.0035965361166745424
+      },
+      "gradient_norms": {
+        "timestep": 1.0078824361253267,
+        "residual": 0.9365832759361441
+      }
+    },
+    {
+      "batch": "C",
+      "exploration_seed": 11603,
+      "episodes": 32,
+      "survival_steps": [
+        303,
+        313,
+        298,
+        322,
+        317,
+        296,
+        310,
+        309,
+        298,
+        299,
+        321,
+        304,
+        307,
+        304,
+        338,
+        319,
+        313,
+        314,
+        341,
+        324,
+        288,
+        311,
+        316,
+        299,
+        300,
+        302,
+        308,
+        304,
+        302,
+        308,
+        298,
+        310
+      ],
+      "losses": {
+        "timestep": 0.16759717464447021,
+        "residual": -0.014243511483073235
+      },
+      "timesteps": 9896,
+      "fallback_count": 0,
+      "clipped_latent_coordinates": 74,
+      "mean_absolute_advantage": {
+        "timestep": 0.00374121917411685,
+        "residual": 0.0031113664153963327
+      },
+      "gradient_norms": {
+        "timestep": 1.018820774899293,
+        "residual": 0.9216064643501665
+      }
+    },
+    {
+      "batch": "D",
+      "exploration_seed": 11604,
+      "episodes": 32,
+      "survival_steps": [
+        297,
+        303,
+        309,
+        293,
+        300,
+        288,
+        302,
+        304,
+        303,
+        310,
+        301,
+        297,
+        305,
+        347,
+        314,
+        321,
+        318,
+        333,
+        332,
+        310,
+        315,
+        314,
+        302,
+        341,
+        312,
+        303,
+        298,
+        295,
+        316,
+        317,
+        303,
+        315
+      ],
+      "losses": {
+        "timestep": 0.0798380896449089,
+        "residual": 0.11084645241498947
+      },
+      "timesteps": 9918,
+      "fallback_count": 0,
+      "clipped_latent_coordinates": 90,
+      "mean_absolute_advantage": {
+        "timestep": 0.004310381133109331,
+        "residual": 0.0035524540580809116
+      },
+      "gradient_norms": {
+        "timestep": 1.0362087914380038,
+        "residual": 0.8877674270285795
+      }
+    },
+    {
+      "batch": "E",
+      "exploration_seed": 11605,
+      "episodes": 32,
+      "survival_steps": [
+        299,
+        304,
+        301,
+        291,
+        321,
+        300,
+        293,
+        306,
+        299,
+        308,
+        309,
+        334,
+        289,
+        339,
+        316,
+        306,
+        302,
+        346,
+        310,
+        294,
+        302,
+        304,
+        297,
+        316,
+        311,
+        309,
+        297,
+        319,
+        301,
+        307,
+        316,
+        318
+      ],
+      "losses": {
+        "timestep": -0.22985590994358063,
+        "residual": -0.0372428335249424
+      },
+      "timesteps": 9864,
+      "fallback_count": 0,
+      "clipped_latent_coordinates": 72,
+      "mean_absolute_advantage": {
+        "timestep": 0.004184927325695753,
+        "residual": 0.0033535032998770475
+      },
+      "gradient_norms": {
+        "timestep": 1.1542644692864354,
+        "residual": 0.9413228659403912
+      }
+    }
+  ],
+  "methods": {
+    "timestep": {
+      "gradient_norms": [
+        1.7555480845230593,
+        1.0078824361253267,
+        1.018820774899293,
+        1.0362087914380038,
+        1.1542644692864354
+      ],
+      "mean_gradient_norm": 1.1945449112544237,
+      "mean_gradient_vector_norm": 0.5380618628654361,
+      "pairwise_cosines": {
+        "A\u2013B": -0.02975967243566566,
+        "A\u2013C": -0.06369504137663316,
+        "A\u2013D": -0.14284164248651424,
+        "A\u2013E": 0.18938762046808144,
+        "B\u2013C": -0.0995334168126261,
+        "B\u2013D": -0.19922593448563572,
+        "B\u2013E": 0.04405979142605096,
+        "C\u2013D": 0.05120770779128754,
+        "C\u2013E": -0.010519136630557327,
+        "D\u2013E": 0.09025556492213974
+      },
+      "mean_pairwise_cosine": -0.017066415962007253,
+      "total_gradient_variance": 1.52356853416206,
+      "mean_coordinate_variance": 7.843742453470243e-05
+    },
+    "residual": {
+      "gradient_norms": [
+        1.3478135357772798,
+        0.9365832759361441,
+        0.9216064643501665,
+        0.8877674270285795,
+        0.9413228659403912
+      ],
+      "mean_gradient_norm": 1.0070187138065123,
+      "mean_gradient_vector_norm": 0.4618376939293344,
+      "pairwise_cosines": {
+        "A\u2013B": -0.2727183640379027,
+        "A\u2013C": -0.03391062765191044,
+        "A\u2013D": -0.009973605159813364,
+        "A\u2013E": 0.16859243976614047,
+        "B\u2013C": -0.044985026374528614,
+        "B\u2013D": -0.01698828958891314,
+        "B\u2013E": 0.026631367312153664,
+        "C\u2013D": 0.12299407130898507,
+        "C\u2013E": 0.1666648548565397,
+        "D\u2013E": 0.03131815864717122
+      },
+      "mean_pairwise_cosine": 0.013762497907792184,
+      "total_gradient_variance": 1.0377243749712648,
+      "mean_coordinate_variance": 5.342485455988802e-05
+    }
+  },
+  "variance_reduction_percent": 31.888566106282987,
+  "per_parameter_tensor": [
+    {
+      "name": "network.0.weight",
+      "shape": [
+        64,
+        205
+      ],
+      "count": 13120,
+      "start": 0,
+      "end": 13120,
+      "timestep_variance_sum": 0.8306900442415129,
+      "timestep_mean_coordinate_variance": 6.331478995743239e-05,
+      "residual_variance_sum": 0.5527664736815253,
+      "residual_mean_coordinate_variance": 4.213159098182358e-05
+    },
+    {
+      "name": "network.0.bias",
+      "shape": [
+        64
+      ],
+      "count": 64,
+      "start": 13120,
+      "end": 13184,
+      "timestep_variance_sum": 0.016896184496431342,
+      "timestep_mean_coordinate_variance": 0.0002640028827567397,
+      "residual_variance_sum": 0.01165602131977894,
+      "residual_mean_coordinate_variance": 0.00018212533312154594
+    },
+    {
+      "name": "network.2.weight",
+      "shape": [
+        64,
+        64
+      ],
+      "count": 4096,
+      "start": 13184,
+      "end": 17280,
+      "timestep_variance_sum": 0.19601277168644213,
+      "timestep_mean_coordinate_variance": 4.7854680587510285e-05,
+      "residual_variance_sum": 0.13571313028905851,
+      "residual_mean_coordinate_variance": 3.3133088449477176e-05
+    },
+    {
+      "name": "network.2.bias",
+      "shape": [
+        64
+      ],
+      "count": 64,
+      "start": 17280,
+      "end": 17344,
+      "timestep_variance_sum": 0.051161735920386774,
+      "timestep_mean_coordinate_variance": 0.0007994021237560433,
+      "residual_variance_sum": 0.03753803296319358,
+      "residual_mean_coordinate_variance": 0.0005865317650498997
+    },
+    {
+      "name": "network.4.weight",
+      "shape": [
+        32,
+        64
+      ],
+      "count": 2048,
+      "start": 17344,
+      "end": 19392,
+      "timestep_variance_sum": 0.26669058598148876,
+      "timestep_mean_coordinate_variance": 0.0001302200126862738,
+      "residual_variance_sum": 0.1828673535128111,
+      "residual_mean_coordinate_variance": 8.92906999574273e-05
+    },
+    {
+      "name": "network.4.bias",
+      "shape": [
+        32
+      ],
+      "count": 32,
+      "start": 19392,
+      "end": 19424,
+      "timestep_variance_sum": 0.16211721183579803,
+      "timestep_mean_coordinate_variance": 0.005066162869868688,
+      "residual_variance_sum": 0.11718336320489747,
+      "residual_mean_coordinate_variance": 0.003661980100153046
+    }
+  ],
+  "coordinate_variance_comparison": {
+    "lower": 14315,
+    "equal": 0,
+    "higher": 5109
+  },
+  "variance_definition": "Unbiased per-coordinate sample variance across batch gradients (ddof=1); total is covariance trace",
+  "cosine_definition": "All pairwise cosines within each method; zero-norm pairs are undefined",
+  "actor_max_parameter_change": 0.0,
+  "critic_max_parameter_change": 0.0,
+  "actor_optimizer_updates": 0,
+  "critic_optimizer_updates": 0,
+  "actor_has_no_gradients": true,
+  "critic_has_no_gradients": true,
+  "same_trajectories_for_both_baselines": true,
+  "baseline_fitted_to_evaluation_batches": false,
+  "exploration_seeds": [
+    11601,
+    11602,
+    11603,
+    11604,
+    11605
+  ],
+  "episodes_per_batch": 32,
+  "independent_batches": 5,
+  "actor_advantage_denominator": 1200,
+  "scaled_return_to_actor_advantage_factor": 0.08333333333333333,
+  "advantage_formulas": {
+    "timestep": "(G/100 - b_t) * 100/episode_limit",
+    "residual": "(G/100 - (b_t + V(s))) * 100/episode_limit"
+  },
+  "loss_reduction": "Negative sum of log_probability * detached advantage over timesteps / episode count",
+  "production_reinforce_changed": false,
+  "total_environment_steps": 49511,
+  "total_fallback_count": 10,
+  "limitations": "Five batch estimates only. Ten cosine pairs and thousands of parameter coordinates are correlated, not independent repetitions. Variance and agreement do not establish improved learning or balance.",
+  "provenance": {
+    "experiment": "step116-paired-residual-gradients",
+    "exploration_seeds": [
+      11601,
+      11602,
+      11603,
+      11604,
+      11605
+    ],
+    "episodes_per_batch": 32,
+    "independent_batches": 5,
+    "actor_optimizer_updates": 0,
+    "critic_optimizer_updates": 0,
+    "observation_size": 205,
+    "action_count": 32,
+    "action_schema": 5,
+    "physical_action_schema": 4,
+    "observation_schema": 2,
+    "action_keys": [
+      "left_hip_target",
+      "right_hip_target",
+      "left_knee_target",
+      "right_knee_target",
+      "left_ankle_target",
+      "right_ankle_target",
+      "waist_target",
+      "neck_target",
+      "left_shoulder_target",
+      "right_shoulder_target",
+      "left_elbow_target",
+      "right_elbow_target",
+      "left_wrist_target",
+      "right_wrist_target",
+      "left_shoulder_swing_y_target",
+      "right_shoulder_swing_y_target",
+      "left_shoulder_swing_z_target",
+      "right_shoulder_swing_z_target",
+      "left_hip_swing_y_target",
+      "right_hip_swing_y_target",
+      "left_hip_swing_z_target",
+      "right_hip_swing_z_target",
+      "waist_swing_y_target",
+      "waist_swing_z_target",
+      "neck_swing_y_target",
+      "neck_swing_z_target",
+      "left_wrist_swing_y_target",
+      "right_wrist_swing_y_target",
+      "left_wrist_swing_z_target",
+      "right_wrist_swing_z_target",
+      "left_ankle_swing_z_target",
+      "right_ankle_swing_z_target"
+    ],
+    "timestep_baseline_coverage": 350,
+    "timestep_fallback_constant": 0.9264360901611479,
+    "actor_exploration_std": 0.25,
+    "latent_sample_bounds": [
+      -1.0,
+      1.0
+    ],
+    "step115_artifacts_sha256": {
+      "models/critics/step115-current-physics/report.json": "6dff365f835432c5c8d117712e57924f2d563c37b27c8557f83d18c2edc91af4",
+      "models/critics/step115-current-physics/config.json": "569348a36e1454c3a04c36219bd545bb3fc47ca900b2bb34af5ea2f7e3100e94",
+      "models/critics/step115-current-physics/critic.pt": "9abab6862c4b815f7b85f373e5677fc6e8181b57aa62c11b7f5e1b6d3280d5c3",
+      "models/critics/step115-current-physics/training.pt": "c5314030079fad608dca875da0d1413a5948ac13d8ee565fb0dd1ebf104e12ec",
+      "models/critics/step115-current-physics/source-snapshot.zip": "b44defa821f8c9cfaae8e5037205885c980dd299d37cce1d0688dac9fe3c1e2c",
+      "models/critics/step115-current-physics/frozen-actor.pt": "b5281b8c32dc7aad2e25d2dfc1b18ce2d02cd77dea4a2fe13fcc1007ca6c120a",
+      "models/critics/step115-current-physics/aura_python.cpython-314-darwin.so": "5a2962559e1db4b69cb57fdbba5baed4476ca7c7e0a1fdee3ef16f3ccd183221",
+      "models/critics/step115-current-physics/test.pt": "429c7fdd4280cf0f357005b1d6df35b10f2186d5fd68f41fb00438988bcce12d"
+    },
+    "physics_extension_sha256": "5a2962559e1db4b69cb57fdbba5baed4476ca7c7e0a1fdee3ef16f3ccd183221",
+    "diagnostic_source_sha256": "ccaa6a2eee035f696539e82fa2767e7a663547dc4c88f07676ed92ad34d49258"
+  },
+  "artifacts": {
+    "batch-A.pt": {
+      "path": "models/critics/step116-residual-gradients/batch-A.pt",
+      "sha256": "446176294d439e0481ad3c537a9367352150d3858fd7905ae6666e20f5791d35"
+    },
+    "batch-B.pt": {
+      "path": "models/critics/step116-residual-gradients/batch-B.pt",
+      "sha256": "e6dd5e32989a60f65dd4e5c5a2344539b72fa2064a3a5877ce3a4c1f2cb20de4"
+    },
+    "batch-C.pt": {
+      "path": "models/critics/step116-residual-gradients/batch-C.pt",
+      "sha256": "7f5e1198b206f1b42ca471644d62534b7d8514bc0d46eb60946a8086cde7c0ab"
+    },
+    "batch-D.pt": {
+      "path": "models/critics/step116-residual-gradients/batch-D.pt",
+      "sha256": "4eb586e89c8a97e8e65d1556b9141c6f673e4c7b1c6a8a56c844685458ef3fc7"
+    },
+    "batch-E.pt": {
+      "path": "models/critics/step116-residual-gradients/batch-E.pt",
+      "sha256": "3f80c483119667ec0c6fe265d89026e2db235f9a5e306f78e52f30e1fdcd3d69"
+    },
+    "gradients.pt": {
+      "path": "models/critics/step116-residual-gradients/gradients.pt",
+      "sha256": "69a16c724c2ca23b9c7f4eff9ca8bd0eb46724f44383529aa7b9e1bedca38811"
+    }
+  },
+  "step115_artifacts_unchanged": true,
+  "action_count": 32,
+  "observation_size": 205,
+  "action_schema": 5,
+  "physical_action_schema": 4,
+  "archived_gradient_replay_verified": true,
+  "all_original_latents_actions_and_discounted_returns_verified": true,
+  "verified_archived_timesteps": 49511,
+  "unique_batch_estimates_per_method": 5,
+  "assessment": "Estimated total gradient variance fell 31.9%, but mean pairwise cosine remains near zero. Mixed evidence: retain independent critic diagnostics; no production integration or balance-improvement claim."
+}

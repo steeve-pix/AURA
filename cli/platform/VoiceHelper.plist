@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleIdentifier</key><string>dev.aura.cli.dictation</string>
+  <key>CFBundleName</key><string>Aura Dictation</string>
+  <key>CFBundleDisplayName</key><string>Aura Dictation</string>
+  <key>CFBundleExecutable</key><string>AuraDictation</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleVersion</key><string>1</string>
+  <key>LSUIElement</key><true/>
+  <key>NSMicrophoneUsageDescription</key><string>Aura Dictation uses your microphone during /voice to create an editable prompt.</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Aura Dictation converts speech into an editable draft using on-device recognition. Nothing is sent automatically.</string>
+</dict></plist>

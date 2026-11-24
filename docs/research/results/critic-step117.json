@@ -1,0 +1,142 @@
+{
+  "methods": {
+    "timestep": {
+      "initial_deterministic_survival_steps": 330,
+      "survival_after_update_steps": 330,
+      "change_from_initial_steps": 0,
+      "actor_gradient_norm": 1.3220684451472378,
+      "maximum_parameter_change": 0.0010000020265579224,
+      "actor_optimizer_updates": 1,
+      "latest_checkpoint": "models/experiments/step117-actor-update/timestep/actor.pt",
+      "best_checkpoint": "models/experiments/step117-actor-update/timestep/actor_best.pt",
+      "best_survival_steps": 330,
+      "best_updates_completed": 0
+    },
+    "residual": {
+      "initial_deterministic_survival_steps": 330,
+      "survival_after_update_steps": 333,
+      "change_from_initial_steps": 3,
+      "actor_gradient_norm": 1.0623758254751547,
+      "maximum_parameter_change": 0.0010000020265579224,
+      "actor_optimizer_updates": 1,
+      "latest_checkpoint": "models/experiments/step117-actor-update/residual/actor.pt",
+      "best_checkpoint": "models/experiments/step117-actor-update/residual/actor_best.pt",
+      "best_survival_steps": 333,
+      "best_updates_completed": 1
+    }
+  },
+  "initial_actor_copies_identical": true,
+  "initial_actor_maximum_difference": 0.0,
+  "initial_adam_states_empty": true,
+  "critic_maximum_parameter_change": 0.0,
+  "critic_has_no_gradients": true,
+  "critic_optimizer_updates": 0,
+  "reference_actor_maximum_parameter_change": 0.0,
+  "same_trajectories_for_both_methods": true,
+  "episodes": 32,
+  "exploration_seed": 11701,
+  "actor_advantage_denominator": 1200,
+  "scaled_return_to_actor_advantage_factor": 0.08333333333333333,
+  "loss_reduction": "Negative sum over timesteps / episode count; no gradient clipping",
+  "baseline_fitted_to_comparison_trajectories": false,
+  "critic_trained_on_comparison_trajectories": false,
+  "production_trainer_changed": false,
+  "gradient_details": {
+    "losses": {
+      "timestep": 0.3946645259857178,
+      "residual": 0.39593130350112915
+    },
+    "timesteps": 9971,
+    "fallback_count": 4,
+    "clipped_latent_coordinates": 77,
+    "mean_absolute_advantage": {
+      "timestep": 0.005329540465027094,
+      "residual": 0.004138966090977192
+    }
+  },
+  "limitations": "One update and one actor seed. Deterministic survival is a single fixed initial-state evaluation, not evidence of robust balance or a production-method decision.",
+  "experiment": "step117-controlled-actor-update",
+  "actor_seed": 42,
+  "observation_size": 205,
+  "observation_schema": 2,
+  "action_count": 32,
+  "action_schema": 5,
+  "physical_action_schema": 4,
+  "discount_factor": 0.995,
+  "return_scale": 100.0,
+  "exploration_std": 0.25,
+  "sample_bounds": [
+    -1.0,
+    1.0
+  ],
+  "action_keys": [
+    "left_hip_target",
+    "right_hip_target",
+    "left_knee_target",
+    "right_knee_target",
+    "left_ankle_target",
+    "right_ankle_target",
+    "waist_target",
+    "neck_target",
+    "left_shoulder_target",
+    "right_shoulder_target",
+    "left_elbow_target",
+    "right_elbow_target",
+    "left_wrist_target",
+    "right_wrist_target",
+    "left_shoulder_swing_y_target",
+    "right_shoulder_swing_y_target",
+    "left_shoulder_swing_z_target",
+    "right_shoulder_swing_z_target",
+    "left_hip_swing_y_target",
+    "right_hip_swing_y_target",
+    "left_hip_swing_z_target",
+    "right_hip_swing_z_target",
+    "waist_swing_y_target",
+    "waist_swing_z_target",
+    "neck_swing_y_target",
+    "neck_swing_z_target",
+    "left_wrist_swing_y_target",
+    "right_wrist_swing_y_target",
+    "left_wrist_swing_z_target",
+    "right_wrist_swing_z_target",
+    "left_ankle_swing_z_target",
+    "right_ankle_swing_z_target"
+  ],
+  "optimizer": {
+    "name": "Adam",
+    "learning_rate": 0.001,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0,
+    "amsgrad": false
+  },
+  "updates_per_method": 1,
+  "critic_updates": 0,
+  "reference_artifacts_sha256": {
+    "models/critics/step115-current-physics/report.json": "6dff365f835432c5c8d117712e57924f2d563c37b27c8557f83d18c2edc91af4",
+    "models/critics/step115-current-physics/config.json": "569348a36e1454c3a04c36219bd545bb3fc47ca900b2bb34af5ea2f7e3100e94",
+    "models/critics/step115-current-physics/critic.pt": "9abab6862c4b815f7b85f373e5677fc6e8181b57aa62c11b7f5e1b6d3280d5c3",
+    "models/critics/step115-current-physics/training.pt": "c5314030079fad608dca875da0d1413a5948ac13d8ee565fb0dd1ebf104e12ec",
+    "models/critics/step115-current-physics/source-snapshot.zip": "b44defa821f8c9cfaae8e5037205885c980dd299d37cce1d0688dac9fe3c1e2c",
+    "models/critics/step115-current-physics/frozen-actor.pt": "b5281b8c32dc7aad2e25d2dfc1b18ce2d02cd77dea4a2fe13fcc1007ca6c120a",
+    "models/critics/step115-current-physics/aura_python.cpython-314-darwin.so": "5a2962559e1db4b69cb57fdbba5baed4476ca7c7e0a1fdee3ef16f3ccd183221",
+    "models/critics/step115-current-physics/test.pt": "429c7fdd4280cf0f357005b1d6df35b10f2186d5fd68f41fb00438988bcce12d"
+  },
+  "physics_extension_sha256": "5a2962559e1db4b69cb57fdbba5baed4476ca7c7e0a1fdee3ef16f3ccd183221",
+  "torch_version": "2.14.1",
+  "source_sha256": "4cc3dc11a2a1bbcfa5256045ed99c6f81a2d79c194b49b47fa51fb0f37d76987",
+  "reference_artifacts_unchanged": true,
+  "artifacts": {
+    "config.json": "431ef4ecb6c90533fa55c424f078052fc8f379862e6dde9ee5f330e71a511856",
+    "trajectories.pt": "0d792c69a0075fa2a63997fba8fb6a799ec67502c5747bb29de26db27c2dcd36",
+    "experiment.py": "4cc3dc11a2a1bbcfa5256045ed99c6f81a2d79c194b49b47fa51fb0f37d76987",
+    "timestep/actor_best.pt": "065b8c01b360c65727f1ef7ebb26e579ebec29ccba7fa282c4901c7c2df27b7b",
+    "timestep/actor.pt": "d38cb4f62cf2f0eddb74342c70a46becdcf352ba820724bb9f6e298fc5f0d7c6",
+    "residual/actor_best.pt": "ee1fc5834f3f20705425dc1b0fb4d366fff98224a506640b33de1893e92787c1",
+    "residual/actor.pt": "dbea75628a758002f88be1e9740d70e4bfc389dc92b6af156e996a0e993e70ce"
+  }
+}

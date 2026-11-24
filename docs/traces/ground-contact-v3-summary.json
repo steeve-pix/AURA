@@ -1,0 +1,50 @@
+{
+  "configuration": {
+    "build": "Release / Apple Clang / arm64",
+    "seconds": 10,
+    "hz": 120,
+    "outer_iterations": 16,
+    "actions": "neutral targets; controlled comparison with all motors disabled",
+    "after_environment_contract": 5,
+    "after_ground_version": 3,
+    "material": {
+      "static": 0.8,
+      "sliding": 0.6
+    },
+    "no_trained_policy_used": true
+  },
+  "comparisons": {
+    "motors_enabled": {
+      "before": {
+        "internal_net_translation_m": 2.6292052130194676,
+        "internal_projection_path_m": 11.8764393,
+        "largest_internal_com_shift_m": 0.149205,
+        "total_com_displacement_m": 6.797444064762578,
+        "final_horizontal_com_speed_m_s": 0.7973302657942708
+      },
+      "after": {
+        "internal_net_translation_m": 7.0839103359699365e-06,
+        "internal_projection_path_m": 0.00161777194,
+        "largest_internal_com_shift_m": 7.67988e-08,
+        "total_com_displacement_m": 2.6010026193029874,
+        "final_horizontal_com_speed_m_s": 0.13186894963016313
+      }
+    },
+    "motors_disabled": {
+      "before": {
+        "internal_net_translation_m": 0.6519340522300504,
+        "internal_projection_path_m": 6.9412297,
+        "largest_internal_com_shift_m": 0.147857,
+        "total_com_displacement_m": 2.7354899375557937,
+        "final_horizontal_com_speed_m_s": 0.17915388020938347
+      },
+      "after": {
+        "internal_net_translation_m": 3.38705731435587e-05,
+        "internal_projection_path_m": 0.0030590293,
+        "largest_internal_com_shift_m": 1.54543e-07,
+        "total_com_displacement_m": 4.964074465557502,
+        "final_horizontal_com_speed_m_s": 0.01274664277276815
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+endpoint motors=1 tick=120 dx=-0.00219141 dz=0.136872 com_y=3.22016 px=-0.0728273 pz=2.33606
+endpoint motors=1 tick=480 dx=-0.528467 dz=1.12489 com_y=0.665537 px=-7.71683 pz=-9.1202
+endpoint motors=1 tick=1200 dx=-6.74129 dz=0.871926 com_y=0.560558 px=-12.702 pz=-1.18638
+stage motors=1 floor dx=0 dz=0 path=0 largest=0 dpx=-12.702 dpz=-1.18632
+stage motors=1 integration dx=-5.25159 dz=-1.29453 path=6.90905 largest=0.0147235 dpx=0 dpz=0
+stage motors=1 joint/head dx=0.114788 dz=-0.26361 path=0.5193 largest=0.0250199 dpx=-1.13132e-05 dpz=-4.8068e-06
+stage motors=1 joint/leftAnkle dx=-0.02091 dz=-0.147702 path=0.347313 largest=0.00455247 dpx=2.42812e-06 dpz=-1.79338e-05
+stage motors=1 joint/leftElbow dx=0.0636133 dz=0.00816202 path=0.319951 largest=0.00297902 dpx=-5.54341e-06 dpz=-1.36453e-05
+stage motors=1 joint/leftHip dx=0.167431 dz=0.331837 path=1.16611 largest=0.00673583 dpx=7.8605e-06 dpz=-1.38653e-06
+stage motors=1 joint/leftKnee dx=-0.0388985 dz=-0.00672036 path=0.633115 largest=0.00509458 dpx=-6.29973e-06 dpz=9.18952e-07
+stage motors=1 joint/leftShoulder dx=0.243278 dz=0.107607 path=0.433507 largest=0.00506286 dpx=2.5204e-06 dpz=6.94886e-06
+stage motors=1 joint/leftWrist dx=0.0130969 dz=0.00182135 path=0.048517 largest=0.00253686 dpx=-1.14194e-05 dpz=4.5846e-06
+stage motors=1 joint/neck dx=0.0499188 dz=-0.0259929 path=0.180048 largest=0.00152949 dpx=2.50668e-05 dpz=-2.32335e-06
+stage motors=1 joint/rightAnkle dx=0.0553842 dz=-0.212453 path=0.373153 largest=0.00415899 dpx=1.0187e-06 dpz=-1.23917e-06
+stage motors=1 joint/rightElbow dx=-0.00123054 dz=0.0625822 path=0.214519 largest=0.00246144 dpx=1.84093e-06 dpz=-5.20362e-06
+stage motors=1 joint/rightHip dx=0.143242 dz=0.107347 path=0.533744 largest=0.00601274 dpx=-5.62488e-06 dpz=-8.01454e-06
+stage motors=1 joint/rightKnee dx=0.0533813 dz=-0.0213624 path=0.305888 largest=0.00363536 dpx=-6.57804e-06 dpz=-1.13465e-05
+stage motors=1 joint/rightShoulder dx=-0.0723526 dz=0.0453039 path=0.325453 largest=0.00492934 dpx=1.30026e-05 dpz=-1.26078e-05
+stage motors=1 joint/rightWrist dx=0.00787058 dz=0.00134216 path=0.0245813 largest=0.00174934 dpx=1.81491e-06 dpz=-3.73025e-08
+stage motors=1 joint/waist dx=0.133013 dz=-0.0173063 path=1.56195 largest=0.0135939 dpx=2.82837e-06 dpz=1.59033e-06
+stage motors=1 room dx=0 dz=0 path=0 largest=0 dpx=0 dpz=0
+stage motors=1 self_collision dx=-2.40132 dz=2.1956 path=4.88929 largest=0.149205 dpx=9.49295e-07 dpz=1.45513e-06
+endpoint motors=0 tick=120 dx=-0.00101982 dz=0.0632525 com_y=3.19649 px=0.0595423 pz=0.527875
+endpoint motors=0 tick=480 dx=0.759494 dz=-2.0107 com_y=0.688119 px=7.66362 pz=-2.3137
+endpoint motors=0 tick=1200 dx=2.58447 dz=-0.896337 com_y=0.552277 px=-0.493278 pz=2.8237
+stage motors=0 floor dx=0 dz=0 path=0 largest=0 dpx=-0.493243 dpz=2.8237
+stage motors=0 integration dx=3.02562 dz=-0.41633 path=4.72357 largest=0.0133663 dpx=0 dpz=0
+stage motors=0 joint/head dx=-0.000534601 dz=0.0022871 path=0.0299331 largest=0.00199502 dpx=-2.22331e-06 dpz=8.6653e-08
+stage motors=0 joint/leftAnkle dx=-0.0158967 dz=-0.0256215 path=0.0686898 largest=0.00468359 dpx=-4.34744e-05 dpz=-2.03579e-05
+stage motors=0 joint/leftElbow dx=0.000453335 dz=-0.000294407 path=0.0190014 largest=0.000910113 dpx=-8.12314e-06 dpz=-7.2953e-06
+stage motors=0 joint/leftHip dx=0.0758332 dz=-0.0542706 path=0.217028 largest=0.00470094 dpx=1.96672e-06 dpz=2.09108e-05
+stage motors=0 joint/leftKnee dx=0.0459295 dz=0.00600928 path=0.10122 largest=0.00332535 dpx=-1.23725e-05 dpz=1.17578e-05
+stage motors=0 joint/leftShoulder dx=0.0344036 dz=-0.00717884 path=0.0553124 largest=0.00244203 dpx=4.427e-06 dpz=-2.03038e-06
+stage motors=0 joint/leftWrist dx=-0.00391274 dz=0.000604128 path=0.0125085 largest=0.000825498 dpx=-5.07738e-07 dpz=-3.7208e-06
+stage motors=0 joint/neck dx=0.0121788 dz=-0.0178884 path=0.0325142 largest=0.002851 dpx=2.85843e-06 dpz=5.33506e-06
+stage motors=0 joint/rightAnkle dx=-0.0293593 dz=-0.0227004 path=0.0626357 largest=0.00299438 dpx=1.45715e-06 dpz=-6.15567e-06
+stage motors=0 joint/rightElbow dx=0.00182774 dz=0.0135907 path=0.0237435 largest=0.00177148 dpx=-6.38614e-07 dpz=7.86745e-06
+stage motors=0 joint/rightHip dx=0.0576184 dz=-0.0937459 path=0.241068 largest=0.0110658 dpx=4.93513e-06 dpz=8.57362e-06
+stage motors=0 joint/rightKnee dx=0.00532849 dz=0.0036244 path=0.0401411 largest=0.00318621 dpx=3.27345e-06 dpz=1.69005e-05
+stage motors=0 joint/rightShoulder dx=0.00201554 dz=-0.00281623 path=0.0805089 largest=0.00636726 dpx=4.34588e-06 dpz=-9.00391e-06
+stage motors=0 joint/rightWrist dx=-0.00278147 dz=-0.00300278 path=0.0153391 largest=0.000719543 dpx=8.56479e-06 dpz=-1.29029e-05
+stage motors=0 joint/waist dx=0.143256 dz=-0.377317 path=0.760966 largest=0.0346055 dpx=7.86026e-07 dpz=-1.72439e-06
+stage motors=0 room dx=0 dz=0 path=0 largest=0 dpx=0 dpz=0
+stage motors=0 self_collision dx=-0.767507 dz=0.098713 path=5.18062 largest=0.147857 dpx=8.86903e-08 dpz=-1.18476e-06

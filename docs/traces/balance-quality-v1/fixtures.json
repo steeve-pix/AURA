@@ -1,0 +1,16 @@
+{
+  "interpretation": "Measurement fixtures, not physically realized trajectories.",
+  "qualities": {
+    "controlled_standing": 1.0,
+    "mild_tilt_10deg": 0.8948393168143696,
+    "tilt_30deg": 0.36787944117144233,
+    "severe_tilt_60deg": 0.01831563888873418,
+    "controlled_crouch_75percent": 1.0,
+    "crouch_50percent": 0.5,
+    "one_foot": 1.0,
+    "airborne": 0.0,
+    "outside_support": 0.25,
+    "vertical_speed_4": 0.0022293811742656526,
+    "rotation_4": 2.3958176049484787e-09
+  }
+}

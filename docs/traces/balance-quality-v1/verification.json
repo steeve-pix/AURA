@@ -1,0 +1,8 @@
+{
+  "existing_production_files_unchanged": 125,
+  "replay_files_byte_identical": 14,
+  "scoped_tests_passed": 26,
+  "simulation_steps_performed": 0,
+  "actor_updates": 0,
+  "critic_updates": 0
+}

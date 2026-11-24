@@ -1,0 +1,24 @@
+{
+  "checkpoints_unchanged": 135,
+  "checkpoint_count": 136,
+  "changed_checkpoints": {
+    "models/aura_balance.pt": {
+      "before": "42f138eb18e9ee71068f2926f7e1a7761db77e3ce958fbd7baf8c87a9fc795b7",
+      "after": "f017b498f107bab2215a37e19c3aea17008a4b092f0ad50b3708109b10f320d2"
+    }
+  },
+  "existing_training_worker": {
+    "pid": 46832,
+    "started": "2026-10-14 15:02:43",
+    "checkpoint": "models/aura_balance.pt",
+    "observed_checkpoint_mtime": "2026-10-14 16:18:40 -0400"
+  },
+  "historical_checkpoints_preserved": true,
+  "legacy_reward_source_exact": true,
+  "legacy_reward_sequence_sha256": "386eb68a476c03ca66520e6d2c65355832a2fcc073890a5599358a446a750a59",
+  "legacy_reward_steps": 462,
+  "legacy_reward_sum": 451.60978722572327,
+  "live_v2_matches_native_csv_exactly": true,
+  "v2_reward_steps": 516,
+  "no_training_started": true
+}
