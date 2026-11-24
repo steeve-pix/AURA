@@ -1,11 +1,10 @@
 """Latest and best evaluated checkpoints shared by training and model playback."""
 
-from pathlib import Path
+import fcntl
 import os
 import tempfile
-import fcntl
-
 import torch
+from pathlib import Path
 from torch import nn
 
 if __package__:
@@ -16,10 +15,11 @@ else:
     from aura_env import OBSERVATION_SCHEMA_VERSION
 
 MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
-DEFAULT_CHECKPOINT = MODEL_DIR / "aura_balance.pt"
+DEFAULT_CHECKPOINT = MODEL_DIR / "aura_balance_env6.pt"
 
 
-def save_checkpoint(policy, optimizer, episodes_completed, path=DEFAULT_CHECKPOINT, training_seed=None, training_run_id=None):
+def save_checkpoint(policy, optimizer, episodes_completed, path=DEFAULT_CHECKPOINT, training_seed=None,
+                    training_run_id=None, *, critic=None, critic_optimizer=None, training_schedule=None, training_history=None, initial_actor=None, worker_changes=None):
     """Replace the latest checkpoint only after its complete contents are written."""
     updates_completed = max(
         (int(state.get("step", 0)) for state in optimizer.state.values()),
@@ -34,8 +34,19 @@ def save_checkpoint(policy, optimizer, episodes_completed, path=DEFAULT_CHECKPOI
             layers.append({"type": type(layer).__name__})
         else:
             raise ValueError(f"Checkpoint does not support layer {type(layer).__name__}")
+    device_rng_states = {}
+    policy_device = next(policy.parameters()).device.type
+    if policy_device == "cuda":
+        device_rng_states["cuda"] = torch.cuda.get_rng_state_all()
+    elif policy_device == "mps":
+        device_rng_states["mps"] = torch.mps.get_rng_state()
     checkpoint = {
         "format_version": 1,
+        # Historical writers retain legacy metadata unless explicitly bound to a new environment.
+        "termination_mode": "legacy",
+        "termination_version": 1,
+        "reward_version": 1,
+        "reward_name": "legacy_balance_reward",
         "observation_schema_version": OBSERVATION_SCHEMA_VERSION,
         "action_schema_version": ACTION_SCHEMA_VERSION,
         "model": policy.state_dict(),
@@ -43,13 +54,37 @@ def save_checkpoint(policy, optimizer, episodes_completed, path=DEFAULT_CHECKPOI
         "observation_size": layers[0]["inputs"],
         "episodes_completed": episodes_completed,
         "layers": layers,
+        "actor_design": __import__("dataclasses").asdict(policy.design),
         "action_transforms": dict(policy.action_transforms),
         "sample_bounds": tuple(policy.sample_bounds),
         "exploration_std": policy.exploration_std,
         "updates_completed": updates_completed,
         "training_status": "trained" if updates_completed > 0 else "untrained",
         "rng_state": torch.get_rng_state(),
+        "device_rng_states": device_rng_states,
     }
+    contract = getattr(policy, "environment_contract", None)
+    if contract is not None:
+        checkpoint.update(contract)
+    if checkpoint['reward_version'] == 3:
+        if critic is None or critic_optimizer is None:
+            raise ValueError("Balance System checkpoints require actor and critic together")
+        checkpoint.update(training_algorithm=getattr(policy,"training_algorithm","actor_critic_mc"), critic=dict(
+            model=critic.state_dict(), optimizer=critic_optimizer.state_dict(),
+            architecture=[layer.in_features for layer in critic.network if isinstance(layer, nn.Linear)] + [1],
+            design=__import__("dataclasses").asdict(critic.design), return_scale=100.,
+            environment_contract=contract))
+    if hasattr(policy, "fork_source"):
+        checkpoint["fork_source"] = dict(policy.fork_source)
+    if initial_actor is not None:
+        checkpoint["initial_actor"] = initial_actor
+    if training_history is not None:
+        checkpoint["training_history_version"] = 1
+        checkpoint["training_history"] = training_history
+    if worker_changes is not None:
+        checkpoint["worker_changes"] = list(worker_changes)
+    if training_schedule is not None:
+        checkpoint["training_schedule"] = dict(training_schedule)
     if training_seed is not None:
         checkpoint["training_seed"] = training_seed
     if training_run_id is not None:
@@ -71,7 +106,7 @@ def _write_checkpoint(checkpoint, path):
     return path
 
 
-def promote_best_checkpoint(latest_path, evaluation_steps, *, reset_best=False):
+def promote_best_checkpoint(latest_path, evaluation_steps, *, reset_best=False, balance_metrics=None):
     """Copy the evaluated latest state if its score beats the persisted best.
 
     Call immediately after evaluating, while holding the latest model's training
@@ -102,8 +137,18 @@ def promote_best_checkpoint(latest_path, evaluation_steps, *, reset_best=False):
                 raise ValueError(f"Refusing to overwrite unrelated checkpoint: {best_path.name}")
             restarted = (checkpoint.get("training_run_id") is not None
                          and checkpoint["training_run_id"] != previous.get("training_run_id"))
-            if not reset_best and not restarted and evaluation_steps <= score:
-                return None
+            if not reset_best and not restarted:
+                if balance_metrics is not None:
+                    new_score = (balance_metrics['balanced_steps'], balance_metrics['total_reward'])
+                    old_score = (previous.get('best_balance_metrics', {}).get('balanced_steps', -1),
+                                 previous.get('best_balance_metrics', {}).get('total_reward', -1.))
+                    if new_score <= old_score:
+                        return None
+                elif evaluation_steps <= score:
+                    return None
+        if balance_metrics is not None:
+            checkpoint['best_balance_metrics'] = balance_metrics
+            checkpoint['best_selection'] = 'deterministic_balanced_steps_then_total_reward'
         checkpoint["best_evaluation_steps"] = evaluation_steps
         checkpoint["best_source_model"] = latest_path.name
         return _write_checkpoint(checkpoint, best_path)
@@ -113,8 +158,26 @@ def validate_checkpoint_contract(checkpoint, env):
     """Check interface compatibility without constructing or changing a policy."""
     if checkpoint.get("format_version") != 1:
         raise ValueError("Unsupported checkpoint format")
+    if (checkpoint.get("termination_mode", "legacy") != getattr(env, "termination_mode", "legacy") or
+            checkpoint.get("reward_version", 1) != getattr(env, "reward_version", 1) or
+            checkpoint.get("termination_version", 1) != getattr(env, "termination_version", 1)):
+        raise ValueError("Checkpoint uses a different reward/termination objective; create a new Balance System model. Historical checkpoints are replay-only.")
+    if getattr(env, "reward_version", 1) == 3:
+        changed = [k for k, v in env.environment_contract.items() if checkpoint.get(k) != v]
+        if changed:
+            raise ValueError("Checkpoint Balance System contract differs (changed: " + ", ".join(changed)
+                             + "); use Fork actor for a new reward, or create a new model for changed physics")
+        pair = checkpoint.get('critic', {})
+        if (checkpoint.get('training_algorithm') not in ('actor_critic_mc','ppo_clip') or
+                pair.get('environment_contract') != env.environment_contract or
+                not isinstance(pair.get('architecture'), list) or len(pair['architecture'])<2 or
+                any(type(n) is not int or n<1 for n in pair['architecture']) or
+                pair['architecture'][0] != env.observation_size or pair['architecture'][-1] != 1 or
+                pair.get('return_scale') != 100.):
+            raise ValueError("Checkpoint lacks a compatible paired Balance System critic")
     if checkpoint["observation_size"] != env.observation_size:
-        raise ValueError(f"Model expects {checkpoint['observation_size']} inputs; environment has {env.observation_size}")
+        raise ValueError(
+            f"Model expects {checkpoint['observation_size']} inputs; environment has {env.observation_size}")
     if checkpoint.get("observation_schema_version") != OBSERVATION_SCHEMA_VERSION:
         saved_version = checkpoint.get("observation_schema_version", "missing")
         raise ValueError(
@@ -137,6 +200,11 @@ def validate_checkpoint_contract(checkpoint, env):
 def load_checkpoint(path, env):
     """Rebuild the saved architecture, independently of today's policy defaults."""
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    return policy_from_checkpoint(checkpoint, env), checkpoint
+
+
+def policy_from_checkpoint(checkpoint, env):
+    """Reconstruct an in-memory snapshot without reading its file again."""
     validate_checkpoint_contract(checkpoint, env)
     transforms = checkpoint["action_transforms"]
     layers = []
@@ -156,9 +224,15 @@ def load_checkpoint(path, env):
         raise ValueError("Saved output size does not match its action transforms")
     policy = AuraPolicy(env.observation_size, hidden_sizes=(), exploration_std=checkpoint["exploration_std"])
     policy.network = nn.Sequential(*layers)
+    from .model_templates import NetworkDesign
+    linears = [layer for layer in checkpoint["layers"] if layer["type"] == "Linear"]
+    hidden_activations = [layer["type"] for layer in checkpoint["layers"] if layer["type"] != "Linear"]
+    policy.design = NetworkDesign(tuple(layer["outputs"] for layer in linears[:-1]), hidden_activations[0] if len(linears)>1 and hidden_activations else "Tanh", checkpoint.get("actor_design",{}).get("initialization","default"))
     policy.action_transforms = transforms
     policy.sample_bounds = tuple(checkpoint["sample_bounds"])
     policy.load_state_dict(checkpoint["model"], strict=True)
     if not all(torch.isfinite(value).all() for value in policy.parameters()):
         raise ValueError("Saved model contains non-finite parameters")
-    return policy, checkpoint
+    if hasattr(env, "environment_contract"):
+        policy.environment_contract = env.environment_contract
+    return policy

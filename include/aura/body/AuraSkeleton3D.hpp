@@ -45,5 +45,5 @@ namespace aura::body {
     };
 
     // Create joints from an assembled body with identity orientations.
-    AuraSkeleton3D createAuraSkeleton3D(AuraBody3D &body);
+    AuraSkeleton3D createAuraSkeleton3D(AuraBody3D & body);
 }

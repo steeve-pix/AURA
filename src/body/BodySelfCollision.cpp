@@ -105,7 +105,7 @@ namespace aura::body {
     BodyCollisionStep solveBodySelfCollisions(AuraBody3D &b, const AuraSkeleton3D &s,
                                               const std::vector<BodyCollisionPair> &pairs,
                                               const physics::RoomBounds &room,
-                                              int budget, float step, float tolerance) {
+                                              int budget, float step, float tolerance, bool shapedFloor) {
         BodyCollisionStep stats;
         for (const auto &edge: s.connections(b))projectBodyHingeAxis(b, s, *edge.a, *edge.b, *edge.joint);
         // Aim inside the unchanged acceptance tolerance so float roundoff does not
@@ -121,7 +121,7 @@ namespace aura::body {
             float bestEnvironmentTranslation = 0;
             const auto inputParts = collisionParts(input);
             const auto edges = s.connections(b);
-            std::array<float, 15> oldGap{}, oldLimit{};
+            std::array < float, 15 > oldGap{}, oldLimit{};
             for (size_t i = 0; i < edges.size(); ++i) {
                 oldGap[i] = gap(edges[i]);
                 oldLimit[i] = limitError(edges[i]);
@@ -133,8 +133,8 @@ namespace aura::body {
                         physics::lowestPoint(inputParts[i]->body, inputParts[i]->size, inputParts[i]->floorShape).y,
                         physics::lowestPoint(parts[i]->body, parts[i]->size, parts[i]->floorShape).y))
                         return false;
-                    if (physics::roomPenetration(parts[i]->body, parts[i]->size, room) >
-                        physics::roomPenetration(inputParts[i]->body, inputParts[i]->size, room) + 1e-6f)
+                    if (physics::roomPenetration(parts[i]->body, parts[i]->size, room, shapedFloor ? parts[i]->floorShape : physics::CollisionShape{}) >
+                        physics::roomPenetration(inputParts[i]->body, inputParts[i]->size, room, shapedFloor ? inputParts[i]->floorShape : physics::CollisionShape{}) + 1e-6f)
                         return false;
                 }
                 const auto connections = s.connections(candidate);
@@ -174,8 +174,9 @@ namespace aura::body {
                         if (std::find(component.begin(), component.end(), cp[bad]) == component.end())continue;
                         const auto source = candidate;
                         std::vector<unsigned> indices;
-                        for (const auto *p: component)indices.push_back(
-                            unsigned(std::find(cp.begin(), cp.end(), p) - cp.begin()));
+                        for (const auto *p: component)
+                            indices.push_back(
+                                unsigned(std::find(cp.begin(), cp.end(), p) - cp.begin()));
                         const auto attempt = [&](float angle, AuraBody3D &result) {
                             result = source;
                             const auto rp = collisionParts(result);
@@ -243,9 +244,9 @@ namespace aura::body {
                         candidate = unmodified;
                         const auto parts = collisionParts(candidate);
                         std::array<physics::RoomBody, 16> roomBodies;
-                        for (size_t i = 0; i < parts.size(); ++i)roomBodies[i] = {&parts[i]->body, parts[i]->size};
+                        for (size_t i = 0; i < parts.size(); ++i)roomBodies[i] = {&parts[i]->body, parts[i]->size, parts[i]->floorShape};
                         const auto before = parts.front()->body.position;
-                        if (!physics::projectRoomGeometry(roomBodies, room) || !feasible(candidate))return;
+                        if (!physics::projectRoomGeometry(roomBodies, room, shapedFloor) || !feasible(candidate))return;
                         environmentTranslation = (parts.front()->body.position - before).length();
                         score = bodyCollisionMetrics(candidate, pairs, projectionTarget).squaredError;
                         if (score >= bestScore - improvementEpsilon)return;
@@ -269,8 +270,9 @@ namespace aura::body {
                 const auto members = s.collectComponent(b, *edge.b, *edge.joint);
                 const auto liveParts = collisionParts(b);
                 std::vector<unsigned> childIndices;
-                for (const auto *p: members)childIndices.push_back(
-                    unsigned(std::find(liveParts.begin(), liveParts.end(), p) - liveParts.begin()));
+                for (const auto *p: members)
+                    childIndices.push_back(
+                        unsigned(std::find(liveParts.begin(), liveParts.end(), p) - liveParts.begin()));
                 const auto contains = [&](unsigned i) {
                     return std::find(childIndices.begin(), childIndices.end(), i) != childIndices.end();
                 };
@@ -304,8 +306,10 @@ namespace aura::body {
                                 const auto candidateParts = collisionParts(candidate);
                                 const auto ce = s.connections(candidate);
                                 std::vector<BodyPart3D *> moved;
-                                for (unsigned i = 0; i < 16; ++i)if (contains(i) == moveChild)moved.push_back(
-                                    candidateParts[i]);
+                                for (unsigned i = 0; i < 16; ++i)
+                                    if (contains(i) == moveChild)
+                                        moved.push_back(
+                                            candidateParts[i]);
                                 const auto p = moveChild
                                                    ? localToWorldPoint(*ce[e].b, edge.joint->localAnchorB)
                                                    : localToWorldPoint(*ce[e].a, edge.joint->localAnchorA);
@@ -327,7 +331,8 @@ namespace aura::body {
                                 (coordinate == 1 ? sw.y : sw.z) += sign * magnitude;
                                 if (j.type == JointType::SwingTwist && (
                                         sw.y < j.minSwingY || sw.y > j.maxSwingY || sw.z < j.minSwingZ || sw.z > j.
-                                        maxSwingZ))continue;
+                                        maxSwingZ))
+                                    continue;
                                 const math::Vec3 v{0, sw.y, sw.z};
                                 const float length = v.length();
                                 const auto swing = length > 0
@@ -344,8 +349,10 @@ namespace aura::body {
                                 const auto candidateEdges = s.connections(candidate);
                                 const auto &c = candidateEdges[e];
                                 std::vector<BodyPart3D *> moved;
-                                for (unsigned i = 0; i < 16; ++i)if (contains(i) == moveChild)moved.push_back(
-                                    candidateParts[i]);
+                                for (unsigned i = 0; i < 16; ++i)
+                                    if (contains(i) == moveChild)
+                                        moved.push_back(
+                                            candidateParts[i]);
                                 const auto pivot = moveChild
                                                        ? localToWorldPoint(*c.b, j.localAnchorB)
                                                        : localToWorldPoint(*c.a, j.localAnchorA);

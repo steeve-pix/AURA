@@ -43,10 +43,11 @@ namespace aura::body {
             return double(x.linearKinetic) + x.rotationalKinetic + double(y.linearKinetic) + y.rotationalKinetic;
         };
         const auto momentum = [&] {
-            return std::array<double, 3>{
+            return std::array < double, 3 >
+            {
                 double(a.mass) * a.velocity.x + double(c.mass) * c.velocity.x,
-                double(a.mass) * a.velocity.y + double(c.mass) * c.velocity.y,
-                double(a.mass) * a.velocity.z + double(c.mass) * c.velocity.z
+                        double(a.mass) * a.velocity.y + double(c.mass) * c.velocity.y,
+                        double(a.mass) * a.velocity.z + double(c.mass) * c.velocity.z
             };
         };
         const double beforeEnergy = energy();
@@ -85,7 +86,7 @@ namespace aura::body {
             const std::array<const Joint3D *, 6> joints{
                 &s.leftHip, &s.leftKnee, &s.leftAnkle, &s.rightHip, &s.rightKnee, &s.rightAnkle
             };
-            std::array<float, 6> result{};
+            std::array < float, 6 > result{};
             for (size_t i = 0; i < 6; ++i)
                 result[i] = (localToWorldPoint(*children[i], joints[i]->localAnchorB) - localToWorldPoint(
                                  *parents[i], joints[i]->localAnchorA)).length();
@@ -115,13 +116,14 @@ namespace aura::body {
                 minimum = std::min(minimum, y);
                 if (i == 2) result.leftFootY = y;
                 if (i == 5) result.rightFootY = y;
-                if (beforeY ? !floorMoveIsNoWorse((*beforeY)[i], y) : y < -1e-6f) result.rejections |= i == 2
-                    ? LeftFootFloor
-                    : i == 5
-                          ? RightFootFloor
-                          : left
-                                ? LeftOtherLegFloor
-                                : RightOtherLegFloor;
+                if (beforeY ? !floorMoveIsNoWorse((*beforeY)[i], y) : y < -1e-6f)
+                    result.rejections |= i == 2
+                                             ? LeftFootFloor
+                                             : i == 5
+                                                   ? RightFootFloor
+                                                   : left
+                                                         ? LeftOtherLegFloor
+                                                         : RightOtherLegFloor;
                 const float error = std::abs(jointAngleError(*parents[i], *children[i], *joints[i]));
                 result.jointLimitErrors[i] = error;
                 auto &limit = left ? result.leftLimitError : result.rightLimitError;
@@ -152,8 +154,9 @@ namespace aura::body {
             };
             const auto feasible = [&](const ThighCandidateAudit &m) {
                 for (int i = first; i < first + 3; ++i)
-                    if (!floorMoveIsNoWorse(initial.lowestY[i], m.lowestY[i]) || m.jointLimitErrors[i] > 1e-5f)return
-                            false;
+                    if (!floorMoveIsNoWorse(initial.lowestY[i], m.lowestY[i]) || m.jointLimitErrors[i] > 1e-5f)
+                        return
+                                false;
                 return (m.rejections & AnchorGapDrift) == 0;
             };
             constexpr double probe = 0.001;
@@ -216,8 +219,9 @@ namespace aura::body {
             };
             const auto legSafe = [&](const ThighCandidateAudit &m) {
                 for (int i = first; i < first + 3; ++i)
-                    if (!floorMoveIsNoWorse(initial.lowestY[i], m.lowestY[i]) || m.jointLimitErrors[i] > 1e-5f) return
-                            false;
+                    if (!floorMoveIsNoWorse(initial.lowestY[i], m.lowestY[i]) || m.jointLimitErrors[i] > 1e-5f)
+                        return
+                                false;
                 return (m.rejections & AnchorGapDrift) == 0;
             };
             const auto &inputFoot = left ? input.leftFoot : input.rightFoot;
@@ -285,9 +289,10 @@ namespace aura::body {
             const auto world = [](const BodyPart3D &part, const math::Vec3 &anchor) {
                 const auto q = part.body.orientation.normalized();
                 const auto p = q * math::Quaternion{0, anchor.x, anchor.y, anchor.z} * q.conjugate();
-                return std::array<double, 3>{
+                return std::array < double, 3 >
+                {
                     double(part.body.position.x) + p.x, double(part.body.position.y) + p.y,
-                    double(part.body.position.z) + p.z
+                            double(part.body.position.z) + p.z
                 };
             };
             const std::array<const BodyPart3D *, 4> a{
@@ -295,7 +300,7 @@ namespace aura::body {
             };
             const std::array<const BodyPart3D *, 4> c{&body.leftShin, &body.leftFoot, &body.rightShin, &body.rightFoot};
             const std::array<const Joint3D *, 4> joints{&s.leftKnee, &s.leftAnkle, &s.rightKnee, &s.rightAnkle};
-            std::array<double, 4> values{};
+            std::array < double, 4 > values{};
             for (size_t i = 0; i < 4; ++i) {
                 const auto pa = world(*a[i], joints[i]->localAnchorA), pc = world(*c[i], joints[i]->localAnchorB);
                 for (size_t k = 0; k < 3; ++k)values[i] += (pc[k] - pa[k]) * (pc[k] - pa[k]);
@@ -357,10 +362,11 @@ namespace aura::body {
                     return false;
                 }
             const auto g = preciseGaps(candidate);
-            for (size_t i = 0; i < 4; ++i)if (std::abs(g[i] - originalGaps[i]) > 1e-6) {
-                ++stats.blockedByTwistOrAnchor;
-                return false;
-            }
+            for (size_t i = 0; i < 4; ++i)
+                if (std::abs(g[i] - originalGaps[i]) > 1e-6) {
+                    ++stats.blockedByTwistOrAnchor;
+                    return false;
+                }
             return true;
         };
         const auto hipGap = [&](const AuraBody3D &body) {
@@ -560,11 +566,13 @@ namespace aura::body {
                     ++stats.kneeSearchCandidates;
                     auto coupled = candidate;
                     bool restored = true;
-                    if (trial.rejections & LeftFootFloor) restored = compensateSwingFoot(
-                                                              coupled, s, true, initial, originalGaps, leftKnee);
-                    if (restored && (trial.rejections & RightFootFloor)) restored = compensateSwingFoot(
-                                                                             coupled, s, false, initial, originalGaps,
-                                                                             rightKnee);
+                    if (trial.rejections & LeftFootFloor)
+                        restored = compensateSwingFoot(
+                            coupled, s, true, initial, originalGaps, leftKnee);
+                    if (restored && (trial.rejections & RightFootFloor))
+                        restored = compensateSwingFoot(
+                            coupled, s, false, initial, originalGaps,
+                            rightKnee);
                     if (restored) {
                         const auto checked = inspect(coupled, s, originalGaps, &initial.lowestY);
                         restored = checked.rejections == 0 && penetration(coupled) == overlap;
@@ -625,7 +633,8 @@ namespace aura::body {
         for (float dl: steps)
             for (float dr: steps) {
                 if ((dl == 0 && dr == 0) || (dl != 0 && la.lengthSquared() == 0) || (
-                        dr != 0 && ra.lengthSquared() == 0)) continue;
+                        dr != 0 && ra.lengthSquared() == 0))
+                    continue;
                 auto candidate = b;
                 const auto left = s.collectComponent(candidate, candidate.leftThigh, s.leftHip);
                 const auto right = s.collectComponent(candidate, candidate.rightThigh, s.rightHip);

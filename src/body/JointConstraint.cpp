@@ -12,9 +12,20 @@ namespace aura::body {
                                         const Joint3D &joint, std::span<BodyPart3D *const> childComponent) {
         const float error = jointAngleError(parent, child, joint);
         if (std::abs(error) < 0.000001f) return;
-        const auto axis = parent.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
         const auto pivot = localToWorldPoint(child, joint.localAnchorB);
-        rotateSubtreeAroundWorldPoint(childComponent, pivot, math::Quaternion::fromAxisAngle(axis, -error));
+        if (joint.motorControlsSwing) {
+            // Correct twist within its swing frame: rotating about parent X alone
+            // would also change swing at a compound shoulder pose.
+            const auto decomposition = relativeJointSwingTwist(parent, child, joint);
+            const float targetAngle = relativeJointAngle(parent, child, joint) - error;
+            const auto target = parent.body.orientation.normalized() * decomposition.swing *
+                                math::Quaternion::fromAxisAngle(joint.hingeAxis, targetAngle);
+            rotateSubtreeAroundWorldPoint(childComponent, pivot,
+                                          (target * child.body.orientation.normalized().conjugate()).normalized());
+        } else {
+            const auto axis = parent.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
+            rotateSubtreeAroundWorldPoint(childComponent, pivot, math::Quaternion::fromAxisAngle(axis, -error));
+        }
     }
 
     void correctJointPosition(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {
@@ -209,14 +220,7 @@ namespace aura::body {
     }
 
     void applyJointMotor(BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint) {
-        const auto axis =
-                partA.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
-
-        const float torqueMagnitude =
-                jointMotorTorque(partA, partB, joint);
-
-        const auto torque =
-                axis * torqueMagnitude;
+        const auto torque = jointMotorTorqueVector(partA, partB, joint);
 
         partA.body.torque -= torque;
         partB.body.torque += torque;

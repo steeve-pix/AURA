@@ -25,20 +25,26 @@ namespace aura::physics {
         }
     }
 
-    float roomPenetration(const RigidBody3D &body, const math::Vec3 &size, const RoomBounds &room) {
+    float roomPenetration(const RigidBody3D &body, const math::Vec3 &size, const RoomBounds &room, CollisionShape floorShape) {
         float result = 0;
         const auto corners = cubeCorners(body, size);
-        for (const auto &plane: planes(room))
+        for (const auto &plane: planes(room)) {
+            if (plane.normal.y == 1 && floorShape.type != CollisionShapeType::Box) {
+                result = std::max(result, room.minimum.y - lowestPoint(body, size, floorShape).y);
+                continue;
+            }
             for (const auto &corner: corners)
                 result = std::max(result, plane.offset - corner.dot(plane.normal));
+        }
         return result;
     }
 
     namespace {
-        void resolveRoomVelocity(RigidBody3D &body, const math::Vec3 &size, const RoomBounds &room) {
+        void resolveRoomVelocity(RigidBody3D &body, const math::Vec3 &size, const RoomBounds &room, bool separateFloor) {
             constexpr float contactTolerance = 1e-4f;
             constexpr int impulseIterations = 4;
             for (const auto &plane: planes(room)) {
+                if (separateFloor && plane.normal.y == 1) continue;
                 auto corners = cubeCorners(body, size);
                 float nearest = std::numeric_limits<float>::infinity();
                 for (const auto &corner: corners)
@@ -60,19 +66,21 @@ namespace aura::physics {
         }
     }
 
-    bool projectRoomGeometry(std::span<const RoomBody> bodies, const RoomBounds &room) {
+    bool projectRoomGeometry(std::span<const RoomBody> bodies, const RoomBounds &room, bool shapedFloor) {
         if (bodies.empty()) return true;
         const float infinity = std::numeric_limits<float>::infinity();
         math::Vec3 low{infinity, infinity, infinity}, high{-infinity, -infinity, -infinity};
-        for (const auto &entry: bodies)
+        for (const auto &entry: bodies) {
+            if (shapedFloor) low.y = std::min(low.y, lowestPoint(*entry.body, entry.size, entry.floorShape).y);
             for (const auto &corner: cubeCorners(*entry.body, entry.size)) {
                 low.x = std::min(low.x, corner.x);
-                low.y = std::min(low.y, corner.y);
+                if (!shapedFloor) low.y = std::min(low.y, corner.y);
                 low.z = std::min(low.z, corner.z);
                 high.x = std::max(high.x, corner.x);
                 high.y = std::max(high.y, corner.y);
                 high.z = std::max(high.z, corner.z);
             }
+        }
         const auto extent = high - low, available = room.maximum - room.minimum;
         if (extent.x > available.x || extent.y > available.y || extent.z > available.z) return false;
         const auto shift = [](float low, float high, float minimum, float maximum) {
@@ -89,9 +97,17 @@ namespace aura::physics {
         return true;
     }
 
-    bool resolveRoomCollisions(std::span<const RoomBody> bodies, const RoomBounds &room) {
-        if (!projectRoomGeometry(bodies, room))return false;
-        for (const auto &entry: bodies) resolveRoomVelocity(*entry.body, entry.size, room);
+    bool resolveRoomCollisions(std::span<const RoomBody> bodies, const RoomBounds &room,
+                               FloorFrictionModel friction, float dt) {
+        const bool physicalFloor = friction == FloorFrictionModel::Coulomb;
+        if (!projectRoomGeometry(bodies, room, physicalFloor))return false;
+        for (const auto &entry: bodies) {
+            // The final room pass must use the same floor surface and friction as
+            // the floor solver, including support impulses introduced by joints.
+            if (physicalFloor) resolveFloorCollision(*entry.body, entry.size, entry.floorShape,
+                                                     room.minimum.y, dt, entry.floorAudit, friction, false);
+            resolveRoomVelocity(*entry.body, entry.size, room, physicalFloor);
+        }
         return true;
     }
 

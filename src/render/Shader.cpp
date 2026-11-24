@@ -17,7 +17,7 @@ namespace aura::render {
 
             glCompileShader(shader);
             int success = 0;
-            glGetShaderiv(shader,GL_COMPILE_STATUS, &success);
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
             if (!success) {
                 glDeleteShader(shader);
@@ -60,7 +60,7 @@ namespace aura::render {
 
         int success = 0;
 
-        glGetProgramiv(program_,GL_LINK_STATUS, &success);
+        glGetProgramiv(program_, GL_LINK_STATUS, &success);
 
         if (!success) {
             glDeleteProgram(program_);
@@ -90,7 +90,7 @@ namespace aura::render {
         const int location =
                 glGetUniformLocation(program_, name.c_str());
 
-        glUniformMatrix4fv(location, 1,GL_FALSE, matrix.data());
+        glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
     }
 
     void Shader::setVec3(const std::string &name, const math::Vec3 &value) const {

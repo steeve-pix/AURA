@@ -226,7 +226,69 @@ namespace aura::body {
         return joint.targetAngle - relativeJointAngle(partA, partB, joint);
     }
 
+    math::Vec3 jointMotorTorqueVector(const BodyPart3D &a, const BodyPart3D &b, const Joint3D &joint) {
+        if (!joint.motorControlsSwing)
+            return a.body.orientation.rotate(joint.hingeAxis.normalized()).normalized() * jointMotorTorque(a, b, joint);
+        const auto gradients = jointCoordinateGradients(a, b, joint);
+        const auto swing = relativeJointSwingAngles(a, b, joint);
+        const std::array<float, 3> errors{
+            joint.targetAngle - relativeJointAngle(a, b, joint),
+            joint.targetSwingY - swing.y, joint.targetSwingZ - swing.z
+        };
+        const auto omega = b.body.angularVelocity - a.body.angularVelocity;
+        math::Vec3 torque{};
+        // Three angular-coordinate springs. The same coordinate Jacobians map
+        // rates to damping and generalized forces to physical torque, so damping
+        // power is -D * sum(coordinate_rate^2), including at compound poses.
+        // Signed pitch error follows the allowed interval, never a wrapped route.
+        for (int i = 0; i < 3; ++i)
+            torque += gradients[i] * (joint.motorStiffness * errors[i] - joint.motorDamping * omega.dot(gradients[i]));
+        return torque;
+    }
+
+    std::array<math::Vec3, 3> jointCoordinateGradients(
+        const BodyPart3D &a, const BodyPart3D &b, const Joint3D &joint) {
+        validateSwingJoint(joint);
+        const auto parent = a.body.orientation.normalized();
+        const auto q = (parent.conjugate() * b.body.orientation.normalized()).normalized();
+        const double d = q.w * q.w + q.x * q.x;
+        if (d < 1e-10f) return {}; // Twist is undefined at perpendicular half-turn swing.
+        const math::Vec3 twist{
+            1, static_cast<float>((q.w * q.z + q.x * q.y) / d), static_cast<float>((-q.w * q.y + q.x * q.z) / d)
+        };
+        const auto decomposition = relativeJointSwingTwist(a, b, joint);
+        const auto v = jointSwingRotationVector(decomposition.swing);
+        const float angle = v.length();
+        const float c = angle < .01f
+                            ? 1.f / 12.f + angle * angle / 720.f
+                            : (1.f - .5f * angle / std::tan(.5f * angle)) / (angle * angle);
+        math::Vec3 gy{}, gz{};
+        const std::array<math::Vec3, 3> basis{math::Vec3{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+        for (int i = 0; i < 3; ++i) {
+            // Relative rotation = swing * twist. Remove the twist contribution
+            // from the left angular differential, then apply inverse left Jacobian.
+            const auto tangent = basis[i] - decomposition.swing.rotate({1, 0, 0}) * twist.dot(basis[i]);
+            const auto dv = tangent - v.cross(tangent) * .5f + v.cross(v.cross(tangent)) * c;
+            if (i == 0) {
+                gy.x = dv.y;
+                gz.x = dv.z;
+            }
+            if (i == 1) {
+                gy.y = dv.y;
+                gz.y = dv.z;
+            }
+            if (i == 2) {
+                gy.z = dv.y;
+                gz.z = dv.z;
+            }
+        }
+        return {parent.rotate(twist), parent.rotate(gy), parent.rotate(gz)};
+    }
+
     float jointMotorTorque(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint) {
+        if (joint.motorControlsSwing)
+            return jointMotorTorqueVector(partA, partB, joint).dot(
+                partA.body.orientation.rotate(joint.hingeAxis.normalized()).normalized());
         const auto axis =
                 partA.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
 

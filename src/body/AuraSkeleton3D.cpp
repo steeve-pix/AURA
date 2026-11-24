@@ -95,15 +95,29 @@ namespace aura::body {
 
         // Left arm.
         configure(skeleton.leftShoulder, body.torso, body.leftUpperArm,
-                  {body.leftUpperArm.body.position.x - body.torso.body.position.x, 0.35f, 0.0f}, -1.5f, 1.5f);
+                  {body.leftUpperArm.body.position.x - body.torso.body.position.x, 0.35f, 0.0f}, -3.0f, 0.8f);
         configure(skeleton.leftElbow, body.leftUpperArm, body.leftForearm, {0.0f, -0.675f, 0.0f}, 0.0f, 2.4f);
         configure(skeleton.leftWrist, body.leftForearm, body.leftHand, {0.0f, -0.625f, 0.0f}, -1.2f, 1.2f);
 
         // Right arm.
         configure(skeleton.rightShoulder, body.torso, body.rightUpperArm,
-                  {body.rightUpperArm.body.position.x - body.torso.body.position.x, 0.35f, 0.0f}, -1.5f, 1.5f);
+                  {body.rightUpperArm.body.position.x - body.torso.body.position.x, 0.35f, 0.0f}, -3.0f, 0.8f);
         configure(skeleton.rightElbow, body.rightUpperArm, body.rightForearm, {0.0f, -0.675f, 0.0f}, 0.0f, 2.4f);
         configure(skeleton.rightWrist, body.rightForearm, body.rightHand, {0.0f, -0.625f, 0.0f}, -1.2f, 1.2f);
+
+        // Robot shoulder envelope: pitch forward nearly overhead, limited backward
+        // extension, mirrored sideways lift, and across-chest rotation. Swing Y/Z
+        // are rotation-vector components, not independent Euler angles.
+        for (auto *shoulder: {&skeleton.leftShoulder, &skeleton.rightShoulder}) {
+            shoulder->type = JointType::SwingTwist;
+            shoulder->motorControlsSwing = true;
+            shoulder->minSwingY = -0.8f;
+            shoulder->maxSwingY = 0.8f;
+        }
+        skeleton.leftShoulder.minSwingZ = -1.8f;
+        skeleton.leftShoulder.maxSwingZ = 0.2f;
+        skeleton.rightShoulder.minSwingZ = -0.2f;
+        skeleton.rightShoulder.maxSwingZ = 1.8f;
 
         // Feet point toward +Z. With hanging arms, positive flexion about -X
         // brings the forearm forward; knees retain +X for backward flexion.
@@ -111,12 +125,12 @@ namespace aura::body {
         skeleton.rightElbow.hingeAxis = {-1.0f, 0.0f, 0.0f};
 
         // Left leg.
-        configure(skeleton.leftHip, body.pelvis, body.leftThigh, {-0.34f, -0.35f, 0.0f}, -0.8f, 0.8f);
+        configure(skeleton.leftHip, body.pelvis, body.leftThigh, {-0.34f, -0.35f, 0.0f}, -1.8f, 0.5f);
         configure(skeleton.leftKnee, body.leftThigh, body.leftShin, {0.0f, -0.9f, 0.0f}, 0.0f, 2.2f);
         configure(skeleton.leftAnkle, body.leftShin, body.leftFoot, {0.0f, -0.8f, 0.0f}, -0.35f, 0.85f);
 
         // Right leg.
-        configure(skeleton.rightHip, body.pelvis, body.rightThigh, {0.34f, -0.35f, 0.0f}, -0.8f, 0.8f);
+        configure(skeleton.rightHip, body.pelvis, body.rightThigh, {0.34f, -0.35f, 0.0f}, -1.8f, 0.5f);
         configure(skeleton.rightKnee, body.rightThigh, body.rightShin, {0.0f, -0.9f, 0.0f}, 0.0f, 2.2f);
         configure(skeleton.rightAnkle, body.rightShin, body.rightFoot, {0.0f, -0.8f, 0.0f}, -0.35f, 0.85f);
 
@@ -140,10 +154,9 @@ namespace aura::body {
 
         for (auto *hip: {&skeleton.leftHip, &skeleton.rightHip}) {
             hip->type = JointType::SwingTwist;
-            hip->minSwingY = -0.4f;
-            hip->maxSwingY = 0.4f;
-            hip->minSwingZ = -0.4f;
-            hip->maxSwingZ = 0.4f;
+            hip->motorControlsSwing = true;
+            hip->minSwingY = -0.6f;
+            hip->maxSwingY = 0.6f;
             hip->targetAngle = 0.5f;
             hip->motorStiffness = 15.0f;
             hip->motorDamping = 4.0f;
@@ -154,6 +167,29 @@ namespace aura::body {
             knee->motorDamping = 4.0f;
         }
 
+        // Human-like robot envelopes, not biological joint reconstructions.
+        // +Z forward, +Y up; mirrored adduction/abduction permits leg crossing
+        // where the actual body contacts leave a collision-free path.
+        skeleton.leftHip.minSwingY = -0.9f;
+        skeleton.rightHip.maxSwingY = 0.9f;
+        skeleton.leftHip.minSwingZ = -0.9f;
+        skeleton.leftHip.maxSwingZ = 0.5f;
+        skeleton.rightHip.minSwingZ = -0.5f;
+        skeleton.rightHip.maxSwingZ = 0.9f;
+        const auto articulate = [](Joint3D &joint, float y, float z) {
+            joint.type = JointType::SwingTwist;
+            joint.motorControlsSwing = true;
+            joint.minSwingY = -y;
+            joint.maxSwingY = y;
+            joint.minSwingZ = -z;
+            joint.maxSwingZ = z;
+        };
+        articulate(skeleton.waist, 1.0f, .35f);
+        articulate(skeleton.neck, .9f, .3f);
+        articulate(skeleton.leftWrist, 1.2f, .35f);
+        articulate(skeleton.rightWrist, 1.2f, .35f);
+        articulate(skeleton.leftAnkle, 0, .3f);
+        articulate(skeleton.rightAnkle, 0, .3f);
         return skeleton;
     }
 }

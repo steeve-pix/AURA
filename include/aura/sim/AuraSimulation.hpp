@@ -1,6 +1,9 @@
 #pragma once
 #include <array>
-#include "ActionSpec.hpp"
+#include "ActionGeometry.hpp"
+#include "BalanceClassifier.hpp"
+#include "Termination.hpp"
+#include "aura/physics/Collision.hpp"
 #include <string>
 #include <string_view>
 #include <vector>
@@ -13,15 +16,29 @@
 #include "aura/physics/SupportPolygon.hpp"
 
 namespace aura::sim {
+    // Existing floor-contact band, reused for read-only end-of-step diagnostics.
+    inline constexpr float diagnosticFloorContactTolerance = 0.01f;
+
     struct BodyPartObservation {
         std::string name;
         math::Vec3 velocity;
+        math::Vec3 position;
+        math::Quaternion orientation;
+        math::Vec3 up;
+        math::Vec3 angularVelocity;
+        physics::CollisionShape floorShape;
+        float floorClearance = 0.0f;
+        // Geometric proximity, not solver contact events or measured load.
+        std::vector<math::Vec3> geometricFloorContactPoints;
     };
 
     struct JointObservation {
         std::string name;
         math::Quaternion relativeOrientation;
         math::Vec3 relativeAngularVelocity;
+        // Knee joints have anchors, not separate physical knee colliders.
+        math::Vec3 worldAnchorA;
+        math::Vec3 worldAnchorB;
     };
 
     struct AuraObservation {
@@ -54,11 +71,16 @@ namespace aura::sim {
 
         bool centerOfMassInsideSupportPolygon = false;
         float supportMargin = 0.0f;
+        float floorY = 0.0f;
+        BalanceAssessment balance;
+        std::array<float, 3> neutralHeightReferences{}; // pelvis, torso, mass-weighted COM; before reset lift
     };
 
     class AuraSimulation {
     public:
-        AuraSimulation();
+        explicit AuraSimulation(BalanceConfig balanceConfig = {},
+                                TerminationMode terminationMode = TerminationMode::BalanceV2,
+                                physics::FloorFrictionModel floorFriction = physics::FloorFrictionModel::Coulomb);
 
         body::AuraBody3D &body();
 
@@ -116,7 +138,14 @@ namespace aura::sim {
 
         [[nodiscard]] bool isDone() const;
 
+        [[nodiscard]] TerminationStatus terminationStatus() const;
+
+        [[nodiscard]] TerminationMode terminationMode() const { return selectedTerminationMode; }
+
     private:
+        friend class AuraArena;
+        void stepArenaPhysics();
+        void classifyArenaTick();
         static constexpr std::size_t MAX_EPISODE_STEPS = 1200;
         body::AuraBody3D auraBody;
         body::AuraSkeleton3D skeleton;
@@ -131,5 +160,9 @@ namespace aura::sim {
         AuraAction currentAction;
         float initialPelvisHeight = 0.0f;
         std::size_t stepCount = 0;
+        BalanceClassifier balanceClassifier;
+        float standingPelvisHeight = 0, standingTorsoHeight = 0, standingComHeight = 0;
+        TerminationMode selectedTerminationMode = TerminationMode::Legacy;
+        physics::FloorFrictionModel selectedFloorFriction = physics::FloorFrictionModel::Coulomb;
     };
 }

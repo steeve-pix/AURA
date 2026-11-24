@@ -3,6 +3,7 @@
 #include "aura/physics/BodyGeometry.hpp"
 #include "aura/physics/Inertia.hpp"
 #include <cmath>
+#include <algorithm>
 
 namespace aura::body {
     LocalJointVelocityAudit correctLocalJointHingeAngularVelocity(
@@ -90,6 +91,104 @@ namespace aura::body {
     LocalJointVelocityAudit correctLocalJointAngularLimitVelocity(
         BodyPart3D &a, BodyPart3D &b, const Joint3D &joint) {
         LocalJointVelocityAudit audit;
+        if (joint.motorControlsSwing) {
+            const auto gradients = jointCoordinateGradients(a, b, joint);
+            const auto swing = relativeJointSwingAngles(a, b, joint);
+            const std::array<float, 3> angles{relativeJointAngle(a, b, joint), swing.y, swing.z};
+            const std::array<float, 3> minimum{joint.minAngle, joint.minSwingY, joint.minSwingZ};
+            const std::array<float, 3> maximum{joint.maxAngle, joint.maxSwingY, joint.maxSwingZ};
+            const auto relative = b.body.angularVelocity - a.body.angularVelocity;
+            struct Bound {
+                math::Vec3 normal;
+                bool equality;
+            };
+            std::array<Bound, 3> bounds{};
+            int count = 0;
+            for (int i = 0; i < 3; ++i) {
+                if (maximum[i] == minimum[i]) bounds[count++] = {gradients[i], true};
+                else if (angles[i] >= maximum[i] - 1e-5f) bounds[count++] = {gradients[i], false};
+                else if (angles[i] <= minimum[i] + 1e-5f) bounds[count++] = {-gradients[i], false};
+            }
+            if (count == 0) return audit;
+            const auto response = [&](const math::Vec3 &impulse) {
+                return physics::applyInverseInertiaWorld(a.body, impulse) + physics::applyInverseInertiaWorld(
+                           b.body, impulse);
+            };
+            // At most three constraints: enumerate the unilateral active set,
+            // always including locked coordinates. Solve the coupled inertia
+            // system together so stopping pitch/roll cannot reintroduce ankle yaw.
+            math::Vec3 impulse{};
+            bool found = false;
+            for (int mask = 0; mask < (1 << count) && !found; ++mask) {
+                std::array < int, 3 > indices{};
+                int n = 0;
+                bool admissible = true;
+                for (int i = 0; i < count; ++i) {
+                    if (bounds[i].equality && !(mask & (1 << i))) admissible = false;
+                    if (mask & (1 << i)) indices[n++] = i;
+                }
+                if (!admissible) continue;
+                double matrix[3][4]{};
+                for (int row = 0; row < n; ++row) {
+                    const auto normal = bounds[indices[row]].normal;
+                    for (int col = 0; col < n; ++col) matrix[row][col] = normal.dot(
+                                                          response(bounds[indices[col]].normal));
+                    matrix[row][n] = -normal.dot(relative);
+                }
+                for (int col = 0; col < n && admissible; ++col) {
+                    int pivot = col;
+                    for (int row = col + 1; row < n; ++row)
+                        if (std::abs(matrix[row][col]) > std::abs(matrix[pivot][col])) pivot = row;
+                    if (std::abs(matrix[pivot][col]) < 1e-12) {
+                        admissible = false;
+                        break;
+                    }
+                    for (int k = col; k <= n; ++k) std::swap(matrix[col][k], matrix[pivot][k]);
+                    const double diagonal = matrix[col][col];
+                    for (int k = col; k <= n; ++k) matrix[col][k] /= diagonal;
+                    for (int row = 0; row < n; ++row)
+                        if (row != col) {
+                            const double factor = matrix[row][col];
+                            for (int k = col; k <= n; ++k) matrix[row][k] -= factor * matrix[col][k];
+                        }
+                }
+                if (!admissible) continue;
+                math::Vec3 candidate{};
+                for (int row = 0; row < n; ++row) {
+                    if (!bounds[indices[row]].equality && matrix[row][n] > 1e-7) admissible = false;
+                    candidate += bounds[indices[row]].normal * static_cast<float>(matrix[row][n]);
+                }
+                const auto after = relative + response(candidate);
+                for (int i = 0; i < count; ++i) {
+                    const float rate = after.dot(bounds[i].normal);
+                    if (bounds[i].equality ? std::abs(rate) > 1e-5f : rate > 1e-5f) admissible = false;
+                }
+                if (admissible) {
+                    impulse = candidate;
+                    found = true;
+                }
+            }
+            if (!found) return audit;
+            audit.predictedWork = relative.dot(impulse);
+            const auto apply = [&](physics::RigidBody3D &rb, const math::Vec3 &p) {
+                const auto delta = physics::applyInverseInertiaWorld(rb, p);
+                const auto inverse = rb.orientation.normalized().conjugate();
+                const auto old = inverse.rotate(rb.angularVelocity), dw = inverse.rotate(delta);
+                const auto &I = rb.momentOfInertia;
+                audit.measuredAngularWork += I.x * old.x * dw.x + I.y * old.y * dw.y + I.z * old.z * dw.z;
+                audit.quadraticEnergy += .5 * (I.x * dw.x * dw.x + I.y * dw.y * dw.y + I.z * dw.z * dw.z);
+                rb.angularVelocity += delta;
+            };
+            apply(a.body, -impulse);
+            apply(b.body, impulse);
+            const auto after = b.body.angularVelocity - a.body.angularVelocity;
+            for (int i = 0; i < count; ++i) {
+                const float beforeRate = relative.dot(bounds[i].normal), afterRate = after.dot(bounds[i].normal);
+                audit.projectedSpeedBefore += bounds[i].equality ? std::abs(beforeRate) : std::max(0.f, beforeRate);
+                audit.projectedSpeedAfter += bounds[i].equality ? std::abs(afterRate) : std::max(0.f, afterRate);
+            }
+            return audit;
+        }
         const auto axis = a.body.orientation.rotate(joint.hingeAxis.normalized()).normalized();
         const float omega = (b.body.angularVelocity - a.body.angularVelocity).dot(axis);
         audit.projectedSpeedBefore = audit.projectedSpeedAfter = omega;

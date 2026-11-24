@@ -18,9 +18,11 @@ namespace aura::body {
     LocalJointVelocityAudit correctLocalJointVelocity(
         BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
 
-    // Unilateral hinge-limit impulse: equal/opposite world angular impulses.
-    // Linear velocities and descendants are untouched. Audit projected speeds
-    // are hinge angular velocities (rad/s) for this function.
+    // Unilateral angular-limit impulses, equal/opposite and local to endpoints.
+    // Multi-axis joints use exact coordinate gradients at compound poses.
+    // A small active-set solve couples locked axes and unilateral stops.
+    // Audit speeds are hinge speed or sums of activated shoulder coordinate speeds.
+    // Linear velocities and descendants are untouched.
     LocalJointVelocityAudit correctLocalJointAngularLimitVelocity(
         BodyPart3D &partA, BodyPart3D &partB, const Joint3D &joint);
 

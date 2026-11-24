@@ -12,10 +12,7 @@ __pycache__/
 *.pyc
 
 # Learned model artifacts
-models/*.pt
-models/.*.tmp
-models/.*.lock
-models/.evaluations/
+models/
 
 # Live viewer bridge state
 viewer_action.json
@@ -27,3 +24,9 @@ Thumbs.db
 
 # Critic-only experiment artifacts (separate from actor checkpoints)
 models/critics/
+
+# Read-only model analysis exports
+/reports/
+
+# Independent experiment outputs; templates remain versionable configuration.
+/models/experiments/

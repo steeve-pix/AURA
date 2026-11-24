@@ -2,7 +2,8 @@
 
 This builds and opens the AURA viewer, then accepts targets in action_specs order.
 For example: 0.2 -0.1 1.0 1.0 controls the original hips/knees; omitted targets
-remain neutral. Up to 15 joint targets are supported. Enter q to quit.
+remain neutral. The available targets and limits come from the simulator.
+For movement presets, use /control in aura-cli. Enter q to quit.
 Use --prepare to hand joint editing to the AURA CLI after startup.
 """
 
@@ -10,8 +11,8 @@ import argparse
 import json
 import math
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
@@ -89,17 +90,18 @@ def main() -> None:
 
     print(f"Writing actions to {ACTION_FILE}")
     specs = action_specs()
-    print("Enter targets in this order: " + " | ".join(spec["label"] for spec in specs) + ", or q to quit.")
+    print(f"Enter 1–{len(specs)} targets; omitted targets are neutral. Order: " + " | ".join(
+        spec["label"] for spec in specs) + ", or q to quit.")
 
     while True:
         line = input("> ").strip()
-        if line.lower() in {"q", "quit", "exit"}:
+        if line.lower() in {"q", "quit", "exit", "/quit", "/exit"}:
             write_action()
             break
         try:
             targets = [float(value) for value in line.split()]
-            if len(targets) != len(specs):
-                raise ValueError(f"Enter exactly {len(specs)} numbers")
+            if not 1 <= len(targets) <= len(specs):
+                raise ValueError(f"Enter between 1 and {len(specs)} numbers")
             values = write_action(*targets)
         except ValueError as error:
             print(error)

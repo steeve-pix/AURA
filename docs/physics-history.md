@@ -8,7 +8,7 @@ read [architecture.md](architecture.md) and the root AGENTS.md.
 Historical flags belong to `aura_full_body_diagnostics`; the visual application
 has one fixed configuration with all 105 eligible self-collision pairs enabled.
 
-`tests/full_body_diagnostics.cpp` duplicates application setup and stepping for
+`tests/historical/full_body_diagnostics.cpp` duplicates application setup and stepping for
 headless investigation, with documented configuration differences. If changing
 simulation ordering or setup, check both paths and keep intended differences
 explicit. Do not extract a new simulation framework solely to remove duplication.
@@ -116,7 +116,6 @@ application or establish live stability. It automatically enables the legacy
 compensation on its snapshot-generating trajectory so the copied event remains
 reproducible. Its projected copy has compensation disabled.
 
-
 The application now projects elbow/knee geometry without descendant velocity
 compensation. `--local-angular-limits --hand-geometry-momentum --live-velocity-metrics`
 measures the current ten-second configuration: finite, no gap/limit failures,
@@ -136,12 +135,11 @@ without altering the collision result. A copied replay checks exact live endpoin
 velocity agreement and can account separately for historical right-shin-to-foot
 response propagation. The former maximum was right shin at 8.283333 s, outer iteration 1:
 horizontal delta magnitude 3.64678 kg m/s. Direct normal impulses add zero
-horizontal momentum; propagating their angular response to the foot adds about
-(-1.90545, -3.12650) kg m/s horizontally. This is not a Coulomb friction response.
+horizontal momentum; propagating their angular response to the foot adds about (-1.90545, -3.12650) kg m/s horizontally.
+This is not a Coulomb friction response.
 Those measurements used the former nonmutating `Vec3::operator*=`. It is now
 fixed to mutate and return a reference, so configured angular damping is active.
 Do not expect regenerated trajectories to match the former inactive-damping run.
-
 
 `tests/fixtures/right_shin_contact_8_283333.csv` stores all 16 body states from the
 original inactive-angular-damping contact event. `aura_shin_contact_velocity_replay`
@@ -157,10 +155,9 @@ damping behavior without changing gains: the legacy `joint` four-part chain test
 now fails its existing ankle-gap threshold. Do not weaken that threshold or tune
 damping to hide this result. Two older collision-signature test build errors remain.
 
-
 Runtime floor responses change velocities only on the contacting rigid body.
 Right-shin floor position correction still translates shin + foot. The old motion
-copying helper exists only in `tests/LegacyFloorResponse.hpp`; explicit
+copying helper exists only in `tests/historical/LegacyFloorResponse.hpp`; explicit
 `--right-shin-floor-motion` enables it for comparisons. Other hierarchy flags now
 select position propagation only. Current `--floor-momentum-diagnostic
 --hand-geometry-momentum --live-velocity-metrics` checks all 307,200 floor
@@ -236,9 +233,9 @@ forward/backward joint geometry operation, and end-step penetration/distance.
 Moved-part identities and A/B full/partial component scopes come from observed
 pose changes, not assumed solver choices. No physics/chooser policy is changed.
 First event: 1.650 s, left thigh/right thigh. Penetration 0.014064252 before the
-self pass -> 5.96e-8 after -> 0.007032096 after forward left-hip position repair
-(moves left thigh/shin/foot) -> 0.014064133 after forward right-hip position repair
-(moves right thigh/shin/foot). Hip angular repairs do nothing at this encounter;
+self pass -> 5.96e-8 after -> 0.007032096 after forward left-hip position repair (moves left thigh/shin/foot) ->
+0.014064133 after forward right-hip position repair (moves right thigh/shin/foot). Hip angular repairs do nothing at
+this encounter;
 backward repairs leave the overlap unchanged. Component selection currently
 checks floor feasibility only. The alternative component's self-collision
 feasibility was subsequently tested by `--self-translation-replay` (see below).
@@ -261,8 +258,8 @@ geometry policy has been introduced by this copied-state experiment.
 `--self-fraction-replay` captures that same pre-left-hip state. On copies only,
 32 binary-search rounds find a floor-safe child translation using the crossing
 pair no-worsening query with 0.001 per-operation tolerance. The measured fraction
-is 0.14220719, remaining left-hip gap 0.006032060, thigh penetration 0.001000047
-(increase 0.000999987), lowest moved Y 1.568960. The 16-cycle experiment applies
+is 0.14220719, remaining left-hip gap 0.006032060, thigh penetration 0.001000047 (increase 0.000999987), lowest moved Y
+1.568960. The 16-cycle experiment applies
 only the existing thigh-pair separation, then partial left/right hip component
 translations; no integration, velocity, orientation, floor or other joint solves.
 It does not converge: after separation both hip gaps return to ~0.007032, and
@@ -273,8 +270,8 @@ convergence. Live solver/chooser are unchanged; do not enable this policy or
 increase cycles/tolerances to present it as a passing solution.
 
 `--neutral-sphere-compatibility` checks the fresh assembled body before dynamics
-and reports all 105 eligible pairs. None overlap. Neutral thighs: centers
-(-0.34, 2.92, 0) and (+0.34, 2.92, 0), center distance 0.68, individual radii
+and reports all 105 eligible pairs. None overlap. Neutral thighs: centers (-0.34, 2.92, 0) and (+0.34, 2.92, 0), center
+distance 0.68, individual radii
 0.29, required separation 0.58, clearance 0.10. The self_collision CTest checks
 all 15 neutral joint anchor attachments and all eligible neutral sphere pairs.
 `--hip-sphere-compatibility-replay` captures the 1.650 s pre-left-hip state and
@@ -289,13 +286,13 @@ policies remain unchanged; experimental headless self-collision remains availabl
 
 SelfCollision now also provides detection-only CollisionCapsule,
 bodyPartCollisionCapsule, closestPointsBetweenSegments, and capsulePenetration.
-Limb radius is half min(size.x,size.z), straight half-length max(0,size.y/2-radius).
+Limb radius is half min (size.x,size.z), straight half-length max (0,size.y/2-radius).
 Endpoints follow local Y transformed by normalized orientation and world position.
 This uses physical dimensions, not rendering insets; short capsules collapse to
 spheres, so this is not a general fitting rule for flat feet/other body parts.
 Closest segment points include fractions clamped to [0,1]; double coefficients
 and a cross-product determinant handle parallel and near-parallel cases, including
-zero-length segments. Capsule penetration is max(0,radii sum - segment distance).
+zero-length segments. Capsule penetration is max (0,radii sum - segment distance).
 There is no capsule resolution, impulse, runtime filtering or chooser integration.
 The existing neutral/attached-hip compatibility modes now emit hipCapsuleGeometry
 and hipCapsuleBody alongside sphere measurements. Neutral thighs have segment
@@ -316,8 +313,8 @@ attaches both hips on a copy at fixed orientations, and emits all 16 pose/veloci
 inputs. tests/fixtures/thigh_hip_rotation_1_650.csv saves this state. The source
 already has ~0.007032 knee gaps introduced by the preceding sphere pass; do not
 misreport them as rotation-induced or assume this snapshot is fully attached.
-The test-only HipCapsuleRotationReplay.hpp searches world-space axes from
-(closest point - fixed hip pivot) cross separation direction. Opposite separation
+The test-only HipCapsuleRotationReplay.hpp searches world-space axes from (closest point - fixed hip pivot) cross
+separation direction. Opposite separation
 forces are already encoded in the two axes; a second right-angle sign inversion
 is not needed. Each candidate uses signed 0, 0.005, 0.01, or 0.02 rad steps on
 both sides, preserving each leg component rigidly around its pelvis hip pivot.
@@ -341,9 +338,6 @@ accepted penetration, gaps, descendant full relative orientations, floor/limits,
 fixed pelvis, and untouched velocities for both input configurations. Runtime
 self-collision remains OFF; the live chooser/solver were not changed.
 
-
-
-
 The application now has a static room matching the original 120 x 120 platform:
 X/Z in [-60,60], floor Y=0, ceiling Y=30. `RoomCollision.hpp/.cpp` uses world-space
 box corners and inward plane normals. After each existing forward/backward joint
@@ -363,7 +357,6 @@ failures, max anchor gap 3.844384e-6, and no gap/limit threshold failures. It st
 has self-overlap (maximum sphere penetration 0.733533) and peak joint-relative
 angular speed about 208.79 rad/s. This establishes containment for the measured
 run, not a fix for unstable motion or physically acceptable body stability.
-
 
 ## Build and validation
 
@@ -396,8 +389,8 @@ open build/AURA.app
 ./build/aura_full_body_diagnostics
 ```
 
-On macOS, target `aura` builds `AURA.app` using the configured architecture
-(`arm64` on the current Apple Silicon build). CMake bundles the `assets/` tree
+On macOS, target `aura` builds `AURA.app` using the configured architecture (`arm64` on the current Apple Silicon
+build). CMake bundles the `assets/` tree
 under `Contents/Resources/assets`; `src/AssetPath.cpp` resolves it through the
 main bundle, independent of the working directory or checkout location. Rebuild
 with `cmake --build build --target aura --parallel` after code or asset changes.
@@ -444,7 +437,6 @@ editing. Explain the scope briefly before changing several files.
 Keep changes scoped to the requested step. Update these instructions when the
 architecture or working practices actually change, so future agents can rely on
 them without following an obsolete roadmap.
-
 
 ### Opt-in thigh capsule live experiment
 
@@ -499,7 +491,7 @@ blocked by lack of improvement, degeneracy, or anchor drift. Instrumentation
 reproduces all 38,400 velocity-sweep lines and run/energy/room summaries exactly.
 The worst completed-step overlap occurs at 9.975 s, penetration 0.2515273,
 left/right hip angles 0.7999855/0.1790255 and feet Y 2.062015/0.6176354. It still
-has a feasible right-leg-only  +0.01 rad candidate, reducing penetration to 0.2397777;
+has a feasible right-leg-only +0.01 rad candidate, reducing penetration to 0.2397777;
 do not confuse this finite per-iteration progress with the blocked-call cases.
 `build/thigh_block_reasons_final_10s.csv` contains per-call masks, counters and
 both worst-case candidate tables. Audit/no-audit endpoint equivalence and candidate
@@ -537,8 +529,8 @@ headless comparisons; it does not turn on the thigh experiment by itself.
 trajectory with room bounds and no sphere pass, stops before the 1.508333 s,
 iteration-1 correction, and evaluates both policies on copies. Old rejects; new
 accepts right +0.01 rad, overlap 0.1424013376 -> 0.1396258771. Left foot Y is
-exactly unchanged (-0.02749505639), right foot Y remains positive
-(0.4039449394 -> 0.4014346302). All 16 bodies' velocities remain exactly unchanged,
+exactly unchanged (-0.02749505639), right foot Y remains positive (0.4039449394 -> 0.4014346302). All 16 bodies'
+velocities remain exactly unchanged,
 all six leg gaps are preserved within 1e-5, no floor violation worsens, and limit
 error is zero. The replay checks those invariants and returns failure if any fail.
 Artifact: build/thigh_floor_policy_replay.csv. Unit tests cover clear, near-clear,
@@ -580,7 +572,7 @@ counts A 7776, B 11574; 6386 B candidates have no floor rejection.
 
 The copied experiment selects a one-sided hip trial with only that leg's foot
 floor flag, all limits satisfied, no anchor drift, and all six input leg boxes
-floor-valid within 1e-6. `tests/ThighKneeReplay.hpp` reproduces the same hip axis
+floor-valid within 1e-6. `tests/historical/ThighKneeReplay.hpp` reproduces the same hip axis
 and pivot, then searches signed knee steps in 0.0005-rad increments, smallest
 magnitude first, up to 0.01 rad. The knee world axis is transformed from its local
 hinge using the already hip-rotated thigh, and its pivot is that thigh's knee
@@ -590,8 +582,8 @@ No impulses, integration, motors, floor/room repair, or live knee participation.
 
 The FIRST eligible replay succeeds: 1.400000 s, outer iteration 2, left hip
 +0.005 rad. Initial thigh penetration 0.0011601448 becomes zero, but hip alone
-lowers left foot from -1.192e-7 (roundoff) to -0.0017089844. Knee +0.0015 rad
-(the sixth tested signed trial) restores foot Y to +0.0005810559, retaining zero
+lowers left foot from -1.192e-7 (roundoff) to -0.0017089844. Knee +0.0015 rad (the sixth tested signed trial) restores
+foot Y to +0.0005810559, retaining zero
 overlap and the exact same thigh/hip state. Hip angle 0.79955685 is unchanged by
 the knee; knee angle 1.37785995 -> 1.37935996. Hip/knee/ankle gaps after coupling
 2.46e-7 / 2.73e-7 / 2.38e-7, zero limit error, all 16 velocities exactly unchanged.
@@ -666,7 +658,7 @@ outer iteration 1. Both hip angles are at their +0.8 rad maximum; thigh capsule
 penetration is 0.00830555. The intermediate left foot is already at -0.01988094,
 so candidate floor feasibility uses per-body no-worsening, not absolute clearance.
 
-`tests/SharedHipReplay.hpp` tests 6,561 signed rotation pairs at 0.00025 rad
+`tests/historical/SharedHipReplay.hpp` tests 6,561 signed rotation pairs at 0.00025 rad
 spacing within the unchanged +/-0.01 rad per-hip cap, including single-side,
 symmetric and biased pairs. Torque-derived axes already encode opposite
 separating forces: +0.005/+0.005 is the symmetric separating trial, while
@@ -698,7 +690,7 @@ this copied-only diagnostic, and no shared-hip runtime policy was enabled.
 ### Copied secondary hip Z swing
 
 `aura_hip_z_replay_tests tests/fixtures/shared_hip_class_b.csv` reuses the exact
-1.433333 s Class-B snapshot. `tests/HipZReplay.hpp` first applies pure rotations
+1.433333 s Class-B snapshot. `tests/historical/HipZReplay.hpp` first applies pure rotations
 around pelvis-local Z transformed to world, at fixed world hip pivots. Outward
 signs in this tilted pose are left negative/right positive. Raw -0.01/+0.01
 reduces penetration 0.00830555 -> 0.00124580 but changes the measured X twists
@@ -883,8 +875,8 @@ remain excluded. No gains, damping, timestep or iteration count was changed.
 Ten-second artifacts use the same bounded hip/room configuration:
 build/thigh_swing_off_10s.csv (--hip-swing-limits);
 build/thigh_legacy_on_bounded_hips_10s.csv (--hip-swing-limits
---thigh-self-collision); build/thigh_swing_collision_10s.csv
-(--thigh-swing-collision). OFF output exactly reproduces the prior bounded-hip
+--thigh-self-collision); build/thigh_swing_collision_10s.csv (--thigh-swing-collision). OFF output exactly reproduces
+the prior bounded-hip
 baseline build/hip_swing_limits_10s.csv. Maximum thigh penetration OFF/legacy/new
 is 0.5792376/0.1374985/0.4540110; position distance 11.176637/11.262475/13.410398;
 max leg gap 1.072884e-6/1.430511e-6/9.830250e-7. All stay finite, minimum foot/body
@@ -942,15 +934,15 @@ motions and tests compare detailed/no-audit selection. Production flags/order
 are unchanged; this diagnostic uses the same opt-in legal trajectory.
 
 Worst blocked event is 2.516667 s, iteration 2, penetration 0.2482319.
-Left hip (twist,Y,Z)=(0.02845154,-0.3999914,-0.04922154);
-right=(-0.1844497,-0.4000000,-0.2689490). Both Y coordinates approach min -0.4;
+Left hip (twist,Y,Z)= (0.02845154,-0.3999914,-0.04922154);
+right= (-0.1844497,-0.4000000,-0.2689490). Both Y coordinates approach min -0.4;
 Z is not saturated in this pose. Left-only request +0.01 lowers penetration to
 0.2369818 and is floor-no-worse, but requested Y=-0.4000520 violates Ymin.
 Right-only +0.01 requests Y=-0.3957401,Z=-0.2601435 (legal), lowers penetration
 to 0.2359037, but fails floor feasibility. No sampled improving request is both
 floor-safe and swing-legal. Across all improving trials, bound counts
-left(Ymin,Ymax,Zmin,Zmax)=(2988,1668,563,607),
-right=(1410,1411,124,2950). Thus the worst pose is a Ymin/floor conflict, while
+left (Ymin,Ymax,Zmin,Zmax)= (2988,1668,563,607),
+right= (1410,1411,124,2950). Thus the worst pose is a Ymin/floor conflict, while
 right Zmax also matters elsewhere. Do not infer that every remaining overlap
 has exhausted Z swing or that pelvis motion is already proven necessary.
 
@@ -962,8 +954,8 @@ full-humanoid knee-limit event. The experiment remains uncommitted and opt-in;
 two older floor-signature tests still cannot compile. Report this remaining
 suite failure rather than describing the repository as fully green.
 
-After the precision change, the self-collision-OFF current application baseline
-(`--hip-swing-limits`, build/quaternion_precision_baseline_10s.csv) also remains
+After the precision change, the self-collision-OFF current application baseline (`--hip-swing-limits`,
+build/quaternion_precision_baseline_10s.csv) also remains
 finite for ten seconds, with no gap/limit failures, min Y=0, max gap 1.092571e-6,
 hip swing error 5.960464e-8 and position distance 11.827232. Completed-step thigh
 penetration is 0.4483978 OFF versus 0.2482319 ON on the new-precision trajectories.
@@ -1088,8 +1080,8 @@ previous ON run byte-for-byte. The worst pose is at 8.466667 s: penetration
 `tests/fixtures/thigh_contact_worst_on_10s.csv` stores this full sixteen-part
 state. `thigh_contact_velocity_replay` loads it after constructing neutral
 skeleton anchors and tests a pose attempt followed by a copied-state-only local
-inelastic impulse. At this worst pose, all further pose candidates are blocked
-(22 swing-limit rejections and two floor rejections), so the pose phase does not
+inelastic impulse. At this worst pose, all further pose candidates are blocked (22 swing-limit rejections and two floor
+rejections), so the pose phase does not
 reduce the existing overlap. The impulse uses world inverse inertia for both
 thighs in its denominator and actual response, acts only on the two contacting
 thighs, and copies no velocities to descendants. It has magnitude 0.874539793
@@ -1140,7 +1132,7 @@ self-collision impulses 0 -> 353, largest magnitude 1.04055309 kg m/s;
 maximum positive individual collision KE delta 2.47639e-7 J (roundoff);
 maximum predicted/measured work discrepancy 4.52914e-6 J;
 maximum individual momentum-vector drift 4.95113e-7 kg m/s;
-accumulated collision-only delta P=(7.07805e-7,2.62260e-6,-3.31551e-7) kg m/s;
+accumulated collision-only delta P= (7.07805e-7,2.62260e-6,-3.31551e-7) kg m/s;
 max leg gap 1.092571e-6 -> 9.536743e-7;
 minimum completed-step foot/body Y=0 in both;
 max position distance 13.402345 -> 10.441753; finite throughout both;
@@ -1191,7 +1183,7 @@ No speculative contact or pose-solver behavior change was implemented.
 normal-impulse trajectory to 4.691666667 s, outer iteration one, then stops
 immediately after its first forward sweep. It records all thirty angle/position
 operations, their thigh penetration and joint gap before/after, both hips' X
- twist and Y/Z swing, observed moved parts and cut-component coverage. The
+twist and Y/Z swing, observed moved parts and cut-component coverage. The
 17,984 prior velocity-sweep records match the live impulse baseline prefix
 byte-for-byte. Full trace: build/thigh_joint_geometry_trace_final.csv; focused
 operations: build/thigh_joint_geometry_operations.csv. No runtime policy changes.
@@ -1210,6 +1202,7 @@ No other operation adds more than 0.001 penetration in this forward sweep.
 
 `tests/fixtures/left_hip_swing_projection_4_691667.csv` stores the full sixteen-
 part pre-left-hip-angle state. `thigh_joint_projection_replay` compares:
+
 1. exact current angle wrapper: penetration 0.221312523, hip gap 0.009990145;
 2. same wrapper then existing legal thigh collision search: unchanged, blocked
    candidates include swing, floor and twist/anchor checks;
@@ -1222,16 +1215,16 @@ part pre-left-hip-angle state. `thigh_joint_projection_replay` compares:
 The third search samples 41 translation fractions and thirteen radial-bounded
 Y/Z requests per hip; 2,296 candidates pass intermediate-state feasibility.
 Selected alpha=0.225, left request (Y=0,Z=-0.01), right (Y=-0.005,Z=0) gives
-penetration 0.207767308 and target gap 0.007742516. Left swing becomes
-(Y=0.399864197,Z=0.096007623); right (Y=0.254202157,Z=-0.353640586).
+penetration 0.207767308 and target gap 0.007742516. Left swing becomes (Y=0.399864197,Z=0.096007623); right
+(Y=0.254202157,Z=-0.353640586).
 Foot lowest Y is (0.445333839,0.004957974). All velocities are exactly unchanged,
 non-target leg gaps/descendant angles are preserved to 1e-6, hip twists preserved.
 None of the feasible sampled candidates keeps penetration <= the original
 0.131957263 (1e-6 allowance) while enforcing the required left swing bound.
 This is a search-budget limitation result, not proof of global infeasibility.
 
-This is an imperfect mid-sweep fixture: right hip X twist remains 0.830638111
-(outside +0.8) until its own later solve, and other attachment errors are already
+This is an imperfect mid-sweep fixture: right hip X twist remains 0.830638111 (outside +0.8) until its own later solve,
+and other attachment errors are already
 present. The copied coupled search does not worsen these incoming violations;
 it does not claim all joint limits or attachments are valid globally. The
 existing collision helper's twist/anchor rejection checks also encounter this
@@ -1282,8 +1275,8 @@ Knee compensation is permitted only for otherwise foot-only floor failures.
 A test-only probe/bracket/bisection finds the smallest foot-restoring knee
 change within its limits; knee motion is never rewarded by the objective.
 This run recovers no candidates through knees and the selected solution uses
-no knee adjustment. Its left swing is (Y=0.150000021,Z=-0.400000066), right
-(Y=0.250000030,Z=-0.349999994); foot heights are (0.021397233,0.017607927).
+no knee adjustment. Its left swing is (Y=0.150000021,Z=-0.400000066), right (Y=0.250000030,Z=-0.349999994); foot heights
+are (0.021397233,0.017607927).
 Both hip gaps and thigh penetration are exactly zero at float measurement
 precision. Existing knee/ankle gaps are preserved, not repaired or hidden.
 Full descendant relative orientations, legal fixed hip twists, unchanged
@@ -1330,8 +1323,8 @@ mandatory repair to 0.186496615 at iteration 6, 0.131252617 at 12, 0.094592214 a
 are accepted, and iterations 28-32 retain the resolved pose. Final hip gaps are
 0 and 1.192093e-7, minimum foot Y is 0.005753338, maximum precise descendant gap
 drift is 5.257474e-7, and each accepted hip-coordinate change is at most 0.01 rad.
-Final swings: left (Y=0.400000036,Z=-0.144531682), right
-(Y=0.248990938,Z=-0.343793839). Limits, fixed twists, descendant relationships
+Final swings: left (Y=0.400000036,Z=-0.144531682), right (Y=0.248990938,Z=-0.343793839). Limits, fixed twists,
+descendant relationships
 and exact velocity preservation pass. This proves copied local convergence,
 not live stability or a general multi-contact/self-collision solver. Existing
 descendant gaps are preserved, not repaired. Runtime wiring is unchanged.
@@ -1371,6 +1364,7 @@ preservation. Report: `build/coupled_production_replay.csv`.
 
 The controlled 10-second comparison (120 Hz, 16 outer/four inner iterations,
 hip/knee motors, bounded hip swing, room pass) records:
+
 - existing swing+knee+impulse: maximum thigh penetration 0.155861825, 51 overlap
   steps, 29 closing-overlap steps, max leg gap 9.536743e-7, minimum foot Y 0,
   position radius 10.441753, peak KE 1157.588 J;
@@ -1379,14 +1373,14 @@ hip/knee motors, bounded hip swing, room pass) records:
   fully blocked or no-improvement calls, 1274 limit-rejected and 339 floor-rejected
   candidates, max leg gap 9.615579e-7, minimum foot Y 0, position radius 8.327415,
   peak KE 1080.954 J.
-Both remain finite with no completed-step gap/twist failures; max hip swing error
-is 5.960464e-8. Coupled-mode 188 thigh impulses have maximum momentum drift
-4.910641e-7 kg m/s and maximum positive KE delta 4.242622e-6 J (roundoff scale).
-All 2,227,200 audited local anchor impulses have no suspicious energy injection.
-Pose-only projection creates no linear momentum by construction. Residual
-0.0299 thigh penetration remains; this is an opt-in single-pair improvement,
-not a claim of general humanoid nonintersection or physical stability.
-Reports: `build/thigh_current_live_10s.csv` and `build/thigh_coupled_live_10s.csv`.
+  Both remain finite with no completed-step gap/twist failures; max hip swing error
+  is 5.960464e-8. Coupled-mode 188 thigh impulses have maximum momentum drift
+  4.910641e-7 kg m/s and maximum positive KE delta 4.242622e-6 J (roundoff scale).
+  All 2,227,200 audited local anchor impulses have no suspicious energy injection.
+  Pose-only projection creates no linear momentum by construction. Residual
+  0.0299 thigh penetration remains; this is an opt-in single-pair improvement,
+  not a claim of general humanoid nonintersection or physical stability.
+  Reports: `build/thigh_current_live_10s.csv` and `build/thigh_coupled_live_10s.csv`.
 
 The coupled self-collision checkpoint was committed as `83cc283` ("Add coupled
 thigh self-collision solving"). The next controlled experiment adds
@@ -1408,24 +1402,24 @@ byte-for-byte excluding the expanded summary counters and timing.
 
 Ten-second results (same 120 Hz, 16 outer/four velocity iterations, gains, limits,
 room, floor and normal impulse):
-                               1 step          2 steps         4 steps
-maximum thigh penetration      0.029897988     0.010714352     0.000328362
-completed overlap steps        34              63              4
-closing overlap steps          18              58              3
-accepted projection steps      589             642             41
-projection searches            589             737             41
-candidate evaluations          4712            5896            328
-no-improvement searches         0               95              0
-fully blocked outer calls       0               92              0
-limit-rejected candidates       1274            1712            92
-floor-rejected candidates       339             405             35
-maximum leg anchor gap          9.615579e-7     1.066240e-6     1.066240e-6
-minimum foot Y                  0               0               0
-maximum position radius         8.327415        9.228723        11.652372
-peak KE (J)                     1080.954        1112.822        1055.522
-peak angular speed (rad/s)      57.42411        83.80127        84.92314
-projection time (s)             0.077081        0.087894        0.019280
-whole diagnostic CPU time (s)   75.9158         75.8394         75.8134
+1 step 2 steps 4 steps
+maximum thigh penetration 0.029897988 0.010714352 0.000328362
+completed overlap steps 34 63 4
+closing overlap steps 18 58 3
+accepted projection steps 589 642 41
+projection searches 589 737 41
+candidate evaluations 4712 5896 328
+no-improvement searches 0 95 0
+fully blocked outer calls 0 92 0
+limit-rejected candidates 1274 1712 92
+floor-rejected candidates 339 405 35
+maximum leg anchor gap 9.615579e-7 1.066240e-6 1.066240e-6
+minimum foot Y 0 0 0
+maximum position radius 8.327415 9.228723 11.652372
+peak KE (J)                     1080.954 1112.822 1055.522
+peak angular speed (rad/s)      57.42411 83.80127 84.92314
+projection time (s)             0.077081 0.087894 0.019280
+whole diagnostic CPU time (s)   75.9158 75.8394 75.8134
 
 All three remain finite with no completed-step joint-gap/twist failures; maximum
 hip swing error is 5.960464e-8. No suspicious local anchor energy events occur.
@@ -1456,7 +1450,7 @@ replays in each run match endpoint linear/angular velocities exactly. The peak
 angular owner/time/operation is recorded, including the otherwise separate room
 pass. No runtime settings or body state are changed by this trace.
 
-`tests/compare_projection_momentum_traces.py` compares these two trace files
+`tests/tools/compare_projection_momentum_traces.py` compares these two trace files
 using fixed thresholds 0.1 kg m/s for horizontal momentum and 1 rad/s for the
 largest angular-speed difference. It reports both accumulated momentum-state
 and per-completed-step momentum-change crossings. It independently balances
@@ -1467,9 +1461,8 @@ closure errors are below 9.6e-11 kg m/s, COM closure below 1.3e-13 m; no physics
 or legacy test thresholds/expectations changed.
 
 First material horizontal momentum-state divergence: 1.625 s, floor pass 11,
-|P4-P1|=0.103565657 kg m/s. Budget 1 has one right-foot point at
-(0.444378972, 2.98e-8, 1.801041126); floor changes (Px,Pz) from
-(0.231523749,-3.373874754) to (0.223032948,-3.377840370). Its normal impulse
+|P4-P1|=0.103565657 kg m/s. Budget 1 has one right-foot point at (0.444378972, 2.98e-8, 1.801041126); floor changes
+(Px,Pz) from (0.231523749,-3.373874754) to (0.223032948,-3.377840370). Its normal impulse
 is vertical only (+0.000402301); horizontal delta (-0.008490801,-0.003965616)
 comes from body-velocity damping. Budget 4 has no active contact in that pass:
 (Px,Pz) stays (0.318380227,-3.337408431). Both runs contact the right foot
@@ -1488,9 +1481,8 @@ Thigh impulse drift is roundoff only.
 First angular-speed difference above 1 rad/s: 1.591666667 s, pass 1 after the
 forward joint sweep. Budget 1's maximum is left foot 8.491721 rad/s, budget 4's
 is right foot 12.073540 rad/s. At the immediately preceding floor pass, budget 1
-has a right-foot normal impulse +4.302234 kg m/s at
-(0.019197941,0.001840740,1.968463540); budget 4 has no contact in pass 1
-(its right foot contacts later in this step). The full-run peak is left hand
+has a right-foot normal impulse +4.302234 kg m/s at (0.019197941,0.001840740,1.968463540); budget 4 has no contact in
+pass 1 (its right foot contacts later in this step). The full-run peak is left hand
 57.424113 rad/s after floor response at 9.066666667 s, pass 1, in budget 1;
 in budget 4 it is neck 84.923143 rad/s after a local neck anchor impulse at
 4.208333333 s, pass 16, with the head floor-supported. This is not a demonstrated
@@ -1498,9 +1490,8 @@ harder-foot-impact peak. No suspicious local anchor KE injection occurs.
 
 The travel premise needs a distinction: pose-only projection cannot add linear
 momentum, but it CAN translate the mass-weighted COM directly. Net ten-second
-COM displacement (X,Z) by integration is (-0.253763,-3.631751) /
-(-0.919122,-1.828325) for budgets 1/4; ordinary joint geometry contributes
-(+3.932246,+2.948785) / (-2.848936,-2.601782); thigh geometry itself contributes
+COM displacement (X,Z) by integration is (-0.253763,-3.631751) / (-0.919122,-1.828325) for budgets 1/4; ordinary joint
+geometry contributes (+3.932246,+2.948785) / (-2.848936,-2.601782); thigh geometry itself contributes
 (-0.030617,-0.112213) / (-0.058843,-0.050178). Floor and room geometry have zero
 horizontal COM displacement. These are net vector displacements, not path lengths.
 Thus altered floor contact explains momentum divergence, while ordinary pose
@@ -1510,7 +1501,6 @@ realistic from this comparison. The projection count remains unchanged/default 1
 budget 4 stays the best opt-in collision experiment. Reports:
 `build/projection_momentum_{1,4}_10s.csv`,
 `build/projection_momentum_comparison.json`.
-
 
 `--joint-com-projection-replay` requires `--coupled-thigh-projection
 --thigh-projection-iterations=4`. It instruments every ordinary
@@ -1525,9 +1515,9 @@ algebraic replay to pass. Active thigh capsules and the experimental filtered CO
 sphere proxies are reported separately; the latter are not live collision shapes.
 
 In the four-projection ten-second run, the worst ordinary positional operation is
-the forward right ankle at 4.775 s, outer iteration 1. The anchor error is
-(-0.40488386,+0.26262522,+0.02762914); component A is the other fifteen bodies
-(total mass 15 kg), component B is the right foot (1 kg). The floor-aware chooser
+the forward right ankle at 4.775 s, outer iteration 1. The anchor error is (-0.40488386,+0.26262522,+0.02762914);
+component A is the other fifteen bodies (total mass 15 kg), component B is the right foot (1 kg). The floor-aware
+chooser
 moves A, producing COM delta (-0.37957861,+0.24621114,+0.02590232) m and closing
 the 0.48339045 m anchor gap exactly. The balanced copied correction closes the gap
 to 5.96e-8 m with COM drift below 6.2e-8 m and leaves velocities/orientations
@@ -1544,7 +1534,6 @@ byte-for-byte. `build/joint_com_projection_replay.csv` contains the focused repl
 report and all sixteen input body states; the full unchanged live trace is
 `build/joint_com_projection_4_10s.csv`. Floor infeasibility is intentionally not
 masked by the replay's algebra/pose-preservation pass result.
-
 
 `aura_directional_joint_projection_replay` / CTest
 `directional_joint_projection_replay` loads the saved all-sixteen-body 4.775 s
@@ -1569,7 +1558,6 @@ test checks the saved event's identity, all-body floor no-worsening, gap closure
 horizontal COM neutrality, pose-only behavior, and attachment preservation. This
 validates directional distribution on one flat-floor copied state, not a general
 multi-contact/self-collision policy or a full-body runtime stability improvement.
-
 
 `correctJointPositionDirectionally` in ComponentPosition is a pose-only,
 flat-Y=0-floor experiment. It sums each complementary graph component's mass,
@@ -1610,14 +1598,13 @@ The saved ankle replay now compares the production solver with its independent
 copied reference. Component-position tests also check airborne unequal component
 masses and the opposite floor-supported parent-side case. Both focused CTests pass.
 
-
 `--angular-com-projection-replay` instruments the unchanged
 `--hip-swing-limits --directional-joint-projection` ten-second trajectory and
 captures the ordinary angular wrapper with the largest horizontal whole-body COM
 shift. It records both full-body endpoints; live physical summaries and COM
 ledger match the preceding directional-ON run byte-for-byte. The largest event
-is forward left hip at 6.8 s, outer iteration 1: COM delta
-(+0.408962525,+0.078090459,-0.210133791) m, horizontal magnitude 0.459789688 m.
+is forward left hip at 6.8 s, outer iteration 1: COM delta (+0.408962525,+0.078090459,-0.210133791) m, horizontal
+magnitude 0.459789688 m.
 The copied fixture is `tests/fixtures/angular_com_worst_directional.csv`.
 
 `aura_angular_com_projection_replay` / CTest `angular_com_projection_replay`
@@ -1625,8 +1612,8 @@ loads this fixture after configuring the skeleton in the neutral pose. It derive
 the complete world relative correction from captured endpoint orientations,
 uses the same child-anchor world pivot as the live hip wrapper, and rotates both
 complementary graph components by -s*delta and (1-s)*delta. This joint has component
-masses 13 kg and 3 kg. Delta is +1.281859417 rad about world axis
-(+0.266525030,-0.949447095,+0.165875211); left hip twist changes 2.08185935 ->
+masses 13 kg and 3 kg. Delta is +1.281859417 rad about world axis (+0.266525030,-0.949447095,+0.165875211); left hip
+twist changes 2.08185935 ->
 0.799999893 rad. 101 uniform shares in [0,1] plus 201 local refinement samples
 are evaluated without modifying velocities. The s=0 reconstructed endpoint agrees
 with the captured live positions within 5.9605e-8 m; no floor lift is needed.
@@ -1650,10 +1637,9 @@ all-joints-legal criterion. The report separately labels `strictFeasible=0` and
 preservation, NOT all-joint feasibility or COM-neutral correction success. Raw
 trials and all-body floor checks are in `build/angular_com_projection_replay.csv`.
 
-
 `aura_angular_com_projection_replay <fixture> --recenter` and CTest
 `angular_com_recenter_replay` test horizontal COM recentering on the same saved
-6.8 s left-hip event. `tests/AngularCOMRecenterReplay.hpp` uses the actual
+6.8 s left-hip event. `tests/historical/AngularCOMRecenterReplay.hpp` uses the actual
 production angular wrapper, verifies exact reproduction of captured body
 positions, then applies one common X/Z translation to all sixteen bodies based
 on double-accumulated before/after COM. It never changes Y, orientations or
@@ -1688,7 +1674,6 @@ penetration after recentering. That measurement does not make arbitrary X/Z
 recentering wall/obstacle-safe. Room/contact feasibility must be considered before
 any future runtime use. Both angular replay CTests pass; focused report is
 `build/angular_com_recenter_replay.csv`.
-
 
 `wholeBodyCenterOfMass` and `recenterHorizontallyWithinRoom` in
 AuraBodyConstraint implement the environment-feasible horizontal recenter. The
@@ -1731,9 +1716,8 @@ suspicious energy injection. The OFF physical summaries reproduce the preceding
 directional-ON baseline exactly.
 Net angular geometry COM X/Y/Z changes from (-4.032419864,+24.729458742,
 +1.324862901) to (-2.601589e-6,+31.383435334,-3.073390e-6) m: horizontal
-magnitude 4.244498 -> 4.0266e-6 m. In the ON trajectory, raw angular X/Z drift
-(-1.228517180,+0.609073543) is cancelled by measured recenter contribution
-(+1.228514578,-0.609076616) m. There are 20,205 nonzero full recenters, zero
+magnitude 4.244498 -> 4.0266e-6 m. In the ON trajectory, raw angular X/Z drift (-1.228517180,+0.609073543) is cancelled
+by measured recenter contribution (+1.228514578,-0.609076616) m. There are 20,205 nonzero full recenters, zero
 partial recenters and zero initially-wall-invalid inputs. This trajectory does
 not exercise wall limiting; the copied test does. Position-only horizontal COM
 drift also remains roundoff-scale. The higher angular speed and large vertical
@@ -1743,7 +1727,6 @@ Both angular replay CTests pass. Reports: `build/wall_recenter_replay.csv`,
 `build/feasible_recenter_off_10s.csv`, `build/feasible_recenter_on_10s.csv`, and
 `build/feasible_recenter_comparison.json`.
 
-
 ### Angular dynamics after feasible recentering
 
 Read-only `--angular-dynamics-trace` emits completed-step angular maxima.
@@ -1752,7 +1735,7 @@ per-operation maxima, changed body angular velocities/orientation/endpoint impul
 and lever arm, floor normal-impulse replay details, and local anchor work audits
 within that window. A finite trace end stops after that completed step; this is
 a focused diagnostic, not a full-run stability gate. No runtime mechanics change.
-The comparison script is tests/compare_angular_dynamics_traces.py.
+The comparison script is tests/tools/compare_angular_dynamics_traces.py.
 
 Matching ten-second `--hip-swing-limits --directional-joint-projection` runs,
 self-collision OFF, with/without `--feasible-angular-recenter`, first differ by
@@ -1792,15 +1775,15 @@ world anchor velocities separately, their full difference, head-floor linear/
 angular response decomposition, and all four forward head anchor impulses.
 Whole-body world-origin angular momentum is the sum of orbital position cross m v and
 world-transformed local-principal spin; totals accumulate in double precision.
-The expected internal impulse torque from any anchor separation is
-(anchorB-anchorA) cross impulseOnB. Geometry, masses, gains and ordering are unchanged.
+The expected internal impulse torque from any anchor separation is (anchorB-anchorA) cross impulseOnB. Geometry, masses,
+gains and ordering are unchanged.
 
 At outer iteration 4, ON anchor-relative speed A/B=0.66185924, C=0.66069018,
-D=0.66817950, E(first anchor impulse)=0.13481797 m/s. After four inner anchor
+D=0.66817950, E (first anchor impulse)=0.13481797 m/s. After four inner anchor
 passes it reaches 0.00116235 m/s. OFF values A/B=0.10798744, C=0.10895144,
 D=0.09737941, E=0.01845728; after four passes 0.00016518 m/s.
-The iteration-4 head-floor response changes the ON head-anchor velocity by
-(+0.002490282,-0.001976490,-0.002186298) m/s; neck-anchor delta is exactly zero.
+The iteration-4 head-floor response changes the ON head-anchor velocity by (+0.002490282,-0.001976490,-0.002186298) m/s;
+neck-anchor delta is exactly zero.
 Thus that particular floor pass does not create the large mismatch.
 
 The preceding backward iteration-3 head solve reduces ON relative speed to
@@ -1808,23 +1791,23 @@ The preceding backward iteration-3 head solve reduces ON relative speed to
 resolveRoomCollisions pass (which includes floor normal impulses) raises it to
 0.6618592. That pass gives head momentum (0,+0.42417097,0) kg m/s and angular
 velocity delta (-0.5525274,+0.01203728,-0.04233360) rad/s, with no neck velocity
-change. OFF preceding-room residual 0.02957659 -> 0.10798744, head impulse
-(0,+0.06706238,0). This is an external floor-contact difference, not a wall
+change. OFF preceding-room residual 0.02957659 -> 0.10798744, head impulse (0,+0.06706238,0). This is an external
+floor-contact difference, not a wall
 clipping effect or a direct recenter velocity change.
 
 Across the selected forward iteration-4 ON head-joint anchor impulse:
-delta P=(+1.19209e-7,+1.19209e-7,0) kg m/s (norm 1.68587e-7);
-delta L=(+4.82550e-7,-3.06223e-7,-4.62400e-8) kg m²/s
-(norm 5.73380e-7). Anchor-gap expected torque norm is about 1.30e-8.
+delta P= (+1.19209e-7,+1.19209e-7,0) kg m/s (norm 1.68587e-7);
+delta L= (+4.82550e-7,-3.06223e-7,-4.62400e-8) kg m²/s (norm 5.73380e-7). Anchor-gap expected torque norm is about
+1.30e-8.
 Total KE decreases 0.07270280 J; endpoint replay remains exact.
 Both OFF/ON four-impulse audits pass momentum/energy roundoff checks.
 This supports contact-driven internal motion redistribution at this event,
 without proving all dynamics physically realistic or diagnosing the later peak.
 No mass/inertia tuning was performed. The neck currently uses mass 1 and box
-principal moments (0.0102,0.015,0.0102); head mass 1 has
-(0.17520833,0.17520833,0.18375), so parameter realism remains a distinct topic.
+principal moments (0.0102,0.015,0.0102); head mass 1 has (0.17520833,0.17520833,0.18375), so parameter realism remains a
+distinct topic.
 
-tests/compare_head_anchor_residual_traces.py checks and summarizes the two traces.
+tests/tools/compare_head_anchor_residual_traces.py checks and summarizes the two traces.
 Reports: build/head_anchor_residual_comparison.json and
 build/head_anchor_residual_off.csv / build/head_anchor_residual_on.csv.
 Completed-step neck maxima exactly reproduce the earlier 40.02077 OFF /
@@ -1846,29 +1829,28 @@ The exact scalar anchor impulse is reconstructed from pre-solve endpoint
 velocities and world-inverse-inertia effective mass, separately from the rounded
 mass-times-measured-delta-v diagnostic. Each endpoint's angular impulse is its
 world COM lever arm cross its signed impulse. Axial moment is n dot I_world n.
-Directional response inertia is 1/(n dot I_world_inverse n). Neither scalar
+Directional response inertia is 1/ (n dot I_world_inverse n). Neither scalar
 generally predicts the full 3D delta omega; the exact prediction uses
-applyInverseInertiaWorld(body, angularImpulse). This distinction matters on the
+applyInverseInertiaWorld (body, angularImpulse). This distinction matters on the
 head; the neck's impulse axis lies almost entirely in its equal-Ix/Iz plane.
 
 Neck local principal moments (0.0102000013,0.0150000006,0.0102000013) kg m²;
 axis moment/response inertia both 0.0102000013. Angular impulse magnitude
-0.0160942543 N m s; predicted delta omega
-(-0.542050064,+0.380273312,+1.432215452) rad/s, magnitude 1.577867866;
+0.0160942543 N m s; predicted delta omega (-0.542050064,+0.380273312,+1.432215452) rad/s, magnitude 1.577867866;
 measured (-0.542050362,+0.380273819,+1.432216644), magnitude 1.577869177.
 Vector prediction error 1.32913e-6 rad/s.
 
 Head principal moments (0.1752083302,0.1752083302,0.1837499738) kg m²;
 axis moment 0.1801569015, directional response inertia 0.1800574809.
-Angular impulse magnitude 0.0674932301 N m s; tensor predicted delta omega
-(+0.311280608,+0.058689628,+0.200611860), magnitude 0.374946952;
+Angular impulse magnitude 0.0674932301 N m s; tensor predicted delta omega (+0.311280608,+0.058689628,+0.200611860),
+magnitude 0.374946952;
 measured (+0.311280251,+0.058689594,+0.200611115), magnitude 0.374946237.
 Vector prediction error 8.27124e-7 rad/s. The axis moments differ about 17.66x.
 This establishes small neck rotational resistance at this event, not a complete
 explanation of the later 108.85 rad/s peak or a prescribed new mass distribution.
 No physics values were tuned.
 
-tests/summarize_mass_inertia_audit.py validates positive inventory, box inertia
+tests/tools/summarize_mass_inertia_audit.py validates positive inventory, box inertia
 consistency and <1e-5 rad/s tensor-response error against this exact event.
 Reports: build/mass_inertia_inventory.md / .csv,
 build/head_inertia_inventory_comparison.json, build/head_inertia_on_event.csv.
@@ -1891,7 +1873,8 @@ and headless diagnostic expose cumulative `--body-self-collision=1|2|3`: 10
 arm/core pairs, then 57 including leg/leg and arm/leg, then all 105 non-adjacent
 pairs. Pair indices refer to the supplied body, so reset/copy cannot retain stale
 part pointers. Skeleton `connections()` shares the existing fixed topology.
-Legacy sphere/thigh flags cannot be combined with these modes. The application always uses batch 3; headless historical defaults remain
+Legacy sphere/thigh flags cannot be combined with these modes. The application always uses batch 3; headless historical
+defaults remain
 unchanged. See the corrected baseline below.
 
 Each existing outer iteration runs joints, body-contact pose projection, local
@@ -1918,7 +1901,7 @@ are unchanged.
 containment, local impulse conservation, neutral compatibility, pair filtering,
 and articulated arm/core improvement with unchanged zero velocities. The focused
 capsule, room, swing/twist, component-angle, local-anchor, and historical thigh
-impulse tests also pass. `tests/summarize_body_collision_runs.py` summarizes the
+impulse tests also pass. `tests/tools/summarize_body_collision_runs.py` summarizes the
 10-second reports and returns failure for residual penetration above the existing
 0.001 m tolerance, even though the diagnostic itself exits only on nonfinite state.
 Do not equate a finite collision run with nonintersection. Initial generalized
@@ -1928,8 +1911,8 @@ JSON live under `build/body_collision_*`.
 
 Final Release 10-second staged reports (`body_collision_batchN_final_10s.csv`):
 batch 1 max penetration 0.381925 m (torso/left hand at 2.858333 s), peak KE
-1063.571 J, largest contact impulse 2.174382 N s; batch 2 penetration 0.5520023 m
-(left foot/right thigh at 4.0 s), KE 1167.377 J, impulse 3.858729 N s; batch 3
+1063.571 J, largest contact impulse 2.174382 N s; batch 2 penetration 0.5520023 m (left foot/right thigh at 4.0 s), KE
+1167.377 J, impulse 3.858729 N s; batch 3
 penetration 0.8402498 m (head/torso at 9.091667 s), KE 795.8089 J, impulse
 3.876533 N s. All stay finite with no gap/limit failures, maximum joint gap below
 1.911e-6 m, minimum Y=0, and zero completed-step room penetration. Maximum positive
@@ -1937,7 +1920,6 @@ contact energy change is below 4.583e-6 J and momentum error below 9.556e-7 kg m
 All three fail the 1 mm collision-quality gate. Do not enable by default or claim
 the stable collision-enabled baseline is complete. Mass realism was not used as
 a prerequisite and Python/control integration has not been added in this change.
-
 
 ### Corrected generalized collision baseline
 
@@ -1970,7 +1952,8 @@ penetration, no joint failures, and finite states. Full batch 3: max joint gap
 24.51 rad/s. Maximum positive contact KE is 7.97e-7 J and contact momentum error
 5.34e-7 kg m/s. It accepts 157 common environment projections, at most 0.02622 m.
 This is a tested ten-second collision baseline, not general anatomical realism,
-standing control, or an arbitrary-scene stability guarantee. The application always uses this full 105-pair configuration with no arguments.
+standing control, or an arbitrary-scene stability guarantee. The application always uses this full 105-pair
+configuration with no arguments.
 Application physics switches and legacy experiment branches have been removed;
 historical comparisons belong to the headless diagnostic executable only.
 Headless diagnostic defaults remain unchanged.
@@ -1989,3 +1972,42 @@ floor/room penetration, finite state, peak KE 402.55 J. Debug and optimized
 trajectories differ but meet the same unchanged gates. On macOS launch the
 rebuilt application with `./build/AURA.app/Contents/MacOS/AURA`.
 CLion uses the same target without program arguments and builds before running.
+
+### Ground contact v3: translation attribution and correction (2026-10-15)
+
+Before/after measurements are saved in `docs/traces/ground-contact-v3-before.txt`,
+`ground-contact-v3-after.txt`, and `ground-contact-v3-summary.json`. Both are Release,
+120 Hz, sixteen outer sweeps, ten seconds, neutral motor targets. The all-motors-off
+comparison is diagnostic only; the production motor configuration is unchanged.
+
+With motors enabled, internal projections produced 2.6292 m net horizontal COM
+translation and a largest single shift of 0.149205 m. With the correction, net
+projection translation is 0.00000708 m and the largest shift is 0.0000000768 m.
+With motors disabled, corresponding net values are 0.651934 m and 0.00003387 m.
+The residual is float roundoff across many operations. Horizontal momentum is
+preserved by internal corrections; floor contacts remain external impulses.
+
+Raw ten-second COM travel is **not** a directly comparable balance score because
+physical trajectories and collapse timing changed. Motors-on displacement is
+6.7974 -> 2.6010 m; motors-off is 2.7355 -> 4.9641 m (the latter is worse in total
+travel). Final horizontal COM speed improves 0.7973 -> 0.1319 m/s with motors on
+and 0.1792 -> 0.01275 m/s with motors off. These raw diagnostics deliberately
+continue after failure; they do not establish successful balance or prove that
+all post-fall motion disappears. The initial viewer stop at FALLEN was subsequently removed at the user's request: normal `/run` continues, while training/evaluation still terminate.
+
+Dry-ground block cases (mass 1 and 10) stop a 1 m/s axial slide in about 0.0922 m;
+subsequent nine-second drift is below 1 mm. A 0.04 m/s initial slip stops within
+0.54 mm. No extra damping gain or horizontal velocity clamp was introduced.
+A neutral default environment ends at step 473 / FALLEN, with 139 BALANCED steps,
+return 145.350695, zero terminal reward, and a guard rejecting further rewards.
+This is an untrained neutral rollout, not evidence of robust learned balance.
+
+Release full CTest: 59/60 pass. The legacy isolated `joint` test still reports the
+previous passive-ankle attachment gap 0.00446963 m; no tolerance or historical
+stepping was changed to conceal it. The current ten-second full-body gate passes:
+max anchor gap 0.000000954 m, overlap 0.000499725 m, room/floor penetration zero.
+Seven targeted Debug tests and 34 Python environment/checkpoint/viewer tests pass.
+Strict historical Release endpoints 462/516 and full physical-state digest remain
+unchanged. Debug's cached nlohmann Hedley header contained an invalid split macro;
+its cache entry was repaired to match the valid directive in the Release cache,
+allowing the Debug viewer to build. No dependency version was changed.

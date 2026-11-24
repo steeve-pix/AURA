@@ -4,15 +4,15 @@
 
 namespace aura:: physics {
     struct RigidBody3D {
-        math::Vec3 position{};
-        math::Vec3 velocity{};
-        math::Vec3 acceleration{};
-        math::Vec3 force{};
+        math::Vec3 position{}; // 0.0 0.0 0.0
+        math::Vec3 velocity{}; // 0.0 0.0 0.0
+        math::Vec3 acceleration{}; // 0.0 0.0 0.0
+        math::Vec3 force{}; // 0.0 0.0 0.0
 
-        math::Quaternion orientation{};
-        math::Vec3 angularVelocity{};
-        math::Vec3 angularAcceleration{};
-        math::Vec3 torque{};
+        math::Quaternion orientation{}; // 0.0 0.0 0.0 0.0
+        math::Vec3 angularVelocity{}; // 0.0 0.0 0.0
+        math::Vec3 angularAcceleration{}; // 0.0 0.0 0.0
+        math::Vec3 torque{}; // 0.0 0.0 0.0
 
         math::Vec3 momentOfInertia{1.0f, 1.0f, 1.0f};
 

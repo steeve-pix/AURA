@@ -1,5 +1,6 @@
 #pragma once
 #include <span>
+#include <array>
 #include "BodyPart3D.hpp"
 #include "Joint3D.hpp"
 #include "aura/math/Vec3.hpp"
@@ -93,6 +94,15 @@ namespace aura::body {
     float jointAngleError(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint);
 
     float jointMotorError(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint);
+
+    // World-space equal/opposite torque for hinges and multi-coordinate motors.
+    math::Vec3 jointMotorTorqueVector(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint);
+
+    // World-space coordinate gradients: dot with relative angular velocity gives
+    // twist / swing-Y / swing-Z rates for X-axis SwingTwist joints.
+    // Valid away from undefined 180-degree swing.
+    std::array<math::Vec3, 3> jointCoordinateGradients(
+        const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint);
 
     float jointMotorTorque(const BodyPart3D &partA, const BodyPart3D &partB, const Joint3D &joint);
 }

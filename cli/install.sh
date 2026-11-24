@@ -25,6 +25,9 @@ if [ -d "$build_dir/AuraDictation.app" ]; then
   /usr/bin/ditto "$build_dir/AuraDictation.app" "$helper_dir/AuraDictation.app"
 fi
 
+if [ "${AURA_CLI_UPDATE:-}" = "1" ]; then
+  echo "CLI build installed."
+else
 case ":${PATH}:" in
   *":$bin_dir:"*) echo "Installed. Run 'aura-cli' from any folder." ;;
   *)
@@ -32,6 +35,7 @@ case ":${PATH}:" in
     echo "  export PATH=\"$bin_dir:\$PATH\""
     ;;
 esac
+fi
 
 if [ "${1:-}" = "--iterm2" ]; then
   python3 "$project_dir/cli/install-iterm2-profile.py" "$bin_dir/aura-cli"

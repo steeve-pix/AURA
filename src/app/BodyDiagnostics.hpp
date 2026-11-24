@@ -176,11 +176,10 @@ namespace aura::app {
         void sampleMotorWork(std::span<const BodyJoint> joints, double dt) {
             for (const auto &c: joints) {
                 if (!c.motor) continue;
-                const auto axis = c.partA->body.orientation.rotate(c.constraint.hingeAxis.normalized()).normalized();
-                const float omega = (c.partB->body.angularVelocity - c.partA->body.angularVelocity).dot(axis);
-                // Power of equal/opposite torques: tau . (omegaB - omegaA), before integration.
-                const double work = static_cast<double>(aura::body::jointMotorTorque(*c.partA, *c.partB, c.constraint))
-                                    * omega * dt;
+                // Power of equal/opposite torques, including all shoulder axes.
+                const auto torque = aura::body::jointMotorTorqueVector(*c.partA, *c.partB, c.constraint);
+                const auto omega = c.partB->body.angularVelocity - c.partA->body.angularVelocity;
+                const double work = static_cast<double>(torque.dot(omega)) * dt;
                 motorAdded += std::max(0.0, work);
                 motorRemoved += std::min(0.0, work);
                 totalMotorWork += work;

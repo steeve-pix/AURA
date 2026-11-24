@@ -2,11 +2,11 @@
 """Install Aura's native-selection and wheel iTerm2 profile, inheriting the default appearance."""
 import json
 import os
-from pathlib import Path
 import shlex
 import sys
 import tempfile
 import uuid
+from pathlib import Path
 
 binary = Path(sys.argv[1]).resolve()
 folder = Path.home() / 'Library/Application Support/iTerm2/DynamicProfiles'
@@ -56,8 +56,10 @@ profile = {
     'Restrict Mouse Reporting to Alternate Screen Mode': True,
     'Disable Smcup Rmcup': False,
     'Allow Paste Bracketing': True,
-    'Selection Color': {'Red Component': 184/255, 'Green Component': 178/255, 'Blue Component': 204/255, 'Color Space': 'sRGB'},
-    'Selected Text Color': {'Red Component': 25/255, 'Green Component': 25/255, 'Blue Component': 28/255, 'Color Space': 'sRGB'},
+    'Selection Color': {'Red Component': 184 / 255, 'Green Component': 178 / 255, 'Blue Component': 204 / 255,
+                        'Color Space': 'sRGB'},
+    'Selected Text Color': {'Red Component': 25 / 255, 'Green Component': 25 / 255, 'Blue Component': 28 / 255,
+                            'Color Space': 'sRGB'},
     'Use Selected Text Color': True,
     'Drag to Scroll in Alternate Screen Mode Disabled': True,
 }
@@ -67,4 +69,5 @@ with tempfile.NamedTemporaryFile(mode='w', dir=folder, suffix='.json', delete=Fa
     json.dump({'Profiles': [profile]}, stream, indent=2)
     stream.write('\n')
 os.replace(temporary, path)
-print('iTerm2 profile installed. Open Profiles > Aura CLI for wheel scrolling and native drag selection (Cmd+C copies, Ctrl+O opens Details).')
+print(
+    'iTerm2 profile installed. Open Profiles > Aura CLI for wheel scrolling and native drag selection (Cmd+C copies, Ctrl+O opens Details).')

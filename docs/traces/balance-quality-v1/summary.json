@@ -1,0 +1,310 @@
+{
+  "quality_version": 1,
+  "config": {
+    "posture_scale_degrees": 30.0,
+    "height_zero_ratio": 0.25,
+    "height_full_ratio": 0.75,
+    "vertical_deadband": 0.25,
+    "horizontal_deadband": 0.35,
+    "angular_deadband": 0.4,
+    "linear_dynamic_fraction": 0.25,
+    "angular_dynamic_fraction": 0.5,
+    "gravity": 9.81,
+    "support_margin_scale": 0.1,
+    "marginal_support_quality": 0.25
+  },
+  "interpretation": "Instantaneous quality, not reward; includes reset and terminal sample.",
+  "limitations": [
+    "Geometric support is not measured load bearing.",
+    "Archived recovery attempts do not establish active motor recovery.",
+    "No return-ranking or training readiness claim."
+  ],
+  "traces": [
+    {
+      "trace": "brief_airborne.csv",
+      "source_sha256": "0e7b6a69b6e12b40446f88f361d647d5b635ff586054189ee01caed3f5f9f285",
+      "samples": 638,
+      "mean": 0.21286798328609835,
+      "states": {
+        "BALANCED": {
+          "samples": 114,
+          "mean": 0.7422644444313706
+        },
+        "UNBALANCED": {
+          "samples": 523,
+          "mean": 0.0978807393333738
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "edge_landing.csv",
+      "source_sha256": "6cae087b136c088b413bcb04940b17a2d9f897eeec38a05cf84bafbdd0047d2f",
+      "samples": 597,
+      "mean": 0.048067234552429706,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 596,
+          "mean": 0.04814788427483311
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "horizontal_collapse.csv",
+      "source_sha256": "1036d607e8998c0bfa2fd1c6fe1cc028b8be22d86f2ef2844ead685e3ec45f7c",
+      "samples": 25,
+      "mean": 0.0,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 24,
+          "mean": 0.0
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "left_lateral.csv",
+      "source_sha256": "64d517abb924e3691796bf53bf30937c64de51b3f8282b73be0a48d845c02a94",
+      "samples": 288,
+      "mean": 0.0011291069031050282,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 287,
+          "mean": 0.0011330410734991226
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "mild_backward.csv",
+      "source_sha256": "c32f33c317b31b226ec6c12be71a1b10d57649e46f9a3c2d46234f955510d847",
+      "samples": 283,
+      "mean": 0.03394709999013068,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 282,
+          "mean": 0.034067479777329726
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "mild_forward.csv",
+      "source_sha256": "b684f8e61c57f2ace45770425d78331a341719b7f4b562dce2710f27a521ef50",
+      "samples": 275,
+      "mean": 0.07291235783036895,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 274,
+          "mean": 0.07317846132610023
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "neutral.csv",
+      "source_sha256": "edbd84f338a38e69e0c2db955cbb30481d8e9539dc526f3457068ee59a6ecbca",
+      "samples": 517,
+      "mean": 0.31593451556195334,
+      "states": {
+        "BALANCED": {
+          "samples": 146,
+          "mean": 0.8960931160474013
+        },
+        "UNBALANCED": {
+          "samples": 370,
+          "mean": 0.08786094487191698
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "one_foot_landing.csv",
+      "source_sha256": "143e1dc10f03ea9de6a286f431a35e31ef8942392d2ee886a84090b6dd6d63ef",
+      "samples": 383,
+      "mean": 0.10456613481924384,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 382,
+          "mean": 0.104839868156467
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "rapid_rotation.csv",
+      "source_sha256": "5f8661462c33a89bbfcb1b9e0c5e725ca75ef9392978825952b51dd8ffec96cd",
+      "samples": 418,
+      "mean": 0.08740470340720326,
+      "states": {
+        "BALANCED": {
+          "samples": 22,
+          "mean": 0.7386266436823714
+        },
+        "UNBALANCED": {
+          "samples": 395,
+          "mean": 0.05135539205873111
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "recovery_attempt.csv",
+      "source_sha256": "3b10e46ad9bb2ca62e297aa3dd2a847b3aa929532c822d7341e6a85eeaea1602",
+      "samples": 369,
+      "mean": 0.3431792098466362,
+      "states": {
+        "BALANCED": {
+          "samples": 100,
+          "mean": 0.9214410893267909
+        },
+        "UNBALANCED": {
+          "samples": 268,
+          "mean": 0.12869037127137933
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "right_lateral.csv",
+      "source_sha256": "f7ceb51e30ef0dab6a5ccfd4cd13a3c9ac2d72edf345d6c50a9b3739e9f36aab",
+      "samples": 236,
+      "mean": 0.0009533357156038949,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 235,
+          "mean": 0.0009573924633298689
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "severe_backward.csv",
+      "source_sha256": "086bc62d6f1c9db5b41ff7bbc1558066344a0fc86f466fc5ca4fa6754863c39e",
+      "samples": 139,
+      "mean": 0.0005326060112346343,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 138,
+          "mean": 0.0005364654750841607
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    },
+    {
+      "trace": "severe_forward.csv",
+      "source_sha256": "fa48d67f6ee8b7f4a9bd37f7a3c9d685a75d4c5c45ccdb266fb84fd051edd960",
+      "samples": 142,
+      "mean": 0.0010862819491312117,
+      "states": {
+        "BALANCED": {
+          "samples": 0,
+          "mean": null
+        },
+        "UNBALANCED": {
+          "samples": 141,
+          "mean": 0.0010939860764300146
+        },
+        "FALLEN": {
+          "samples": 1,
+          "mean": 0.0
+        }
+      },
+      "terminal_quality": 0.0,
+      "terminated": true
+    }
+  ]
+}

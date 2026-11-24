@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 #include "aura/sim/AuraSimulation.hpp"
 
 #include "../app/SimulationStep.hpp"
@@ -9,24 +10,53 @@
 #include "aura/physics/SupportPolygon.hpp"
 
 namespace aura::sim {
-    AuraSimulation::AuraSimulation()
+    namespace {
+        BalanceMeasurements balanceMeasurements(const AuraObservation &obs, float pelvisReference,
+                                                float torsoReference, float comReference) {
+            const auto &torso = *std::find_if(obs.bodyPartStates.begin(), obs.bodyPartStates.end(),
+                                              [](const auto &part) { return part.name == "torso"; });
+            const auto &head = *std::find_if(obs.bodyPartStates.begin(), obs.bodyPartStates.end(),
+                                             [](const auto &part) { return part.name == "head"; });
+            return {
+                .pelvisUp = obs.pelvisUp.y, .torsoUp = torso.up.y,
+                .pelvisHeightRatio = (obs.pelvisPosition.y - obs.floorY) / pelvisReference,
+                .torsoHeightRatio = (torso.position.y - obs.floorY) / torsoReference,
+                .comHeightRatio = (obs.centerOfMassPosition.y - obs.floorY) / comReference,
+                .comVelocity = obs.centerOfMassVelocity,
+                .pelvisAngularSpeed = obs.pelvisAngularVelocity.length(),
+                .torsoAngularSpeed = torso.angularVelocity.length(),
+                .leftFootContact = obs.leftFootGrounded, .rightFootContact = obs.rightFootGrounded,
+                .supportPolygonValid = obs.supportPolygon.vertices.size() >= 3, .supportMargin = obs.supportMargin,
+                .torsoContact = !torso.geometricFloorContactPoints.empty(),
+                .headContact = !head.geometricFloorContactPoints.empty()
+            };
+        }
+    }
+
+    AuraSimulation::AuraSimulation(BalanceConfig balanceConfig, TerminationMode terminationMode,
+                                   physics::FloorFrictionModel floorFriction)
         : auraBody(body::createAuraBody3D()), skeleton(body::createAuraSkeleton3D(auraBody)),
           joints(app::makeBodyJoints(auraBody, skeleton)), parts(body::collisionParts(auraBody)),
-          bodyPairs(body::bodyCollisionPairs(auraBody, skeleton, 3)) {
+          bodyPairs(body::bodyCollisionPairs(auraBody, skeleton, 3)), balanceClassifier(balanceConfig),
+          selectedTerminationMode(terminationMode), selectedFloorFriction(floorFriction) {
+        (void) terminationModeName(selectedTerminationMode);
+        standingPelvisHeight = auraBody.pelvis.body.position.y - room.minimum.y;
+        standingTorsoHeight = auraBody.torso.body.position.y - room.minimum.y;
+        standingComHeight = body::componentCenterOfMass(parts).y - room.minimum.y;
         for (std::size_t actionIndex = 0; actionIndex < actionSpecs.size(); ++actionIndex) {
             const auto &spec = actionSpecs[actionIndex];
             const auto joint = std::find_if(joints.begin(), joints.end(), [&](const auto &entry) {
                 return std::string_view(entry.name) == spec.jointName;
             });
             if (joint == joints.end()) throw std::logic_error("Action references an unknown joint");
-            if (joint->constraint.minAngle != static_cast<float>(spec.minimum) ||
-                joint->constraint.maxAngle != static_cast<float>(spec.maximum))
+            if (spec.jointMinimum(joint->constraint) != static_cast<float>(spec.minimum) ||
+                spec.jointMaximum(joint->constraint) != static_cast<float>(spec.maximum))
                 throw std::logic_error("Action limits disagree with the physical joint");
             actionJointIndices[actionIndex] = static_cast<std::size_t>(joint - joints.begin());
         }
         body::configureBodyCollisionJoints(skeleton);
         for (std::size_t i = 0; i < parts.size(); ++i) {
-            roomBodies[i] = {&parts[i]->body, parts[i]->size};
+            roomBodies[i] = {&parts[i]->body, parts[i]->size, parts[i]->floorShape};
         }
         // Start above the floor so gravity is visible immediately.
         for (auto *part: parts) part->body.position.y += 0.6f;
@@ -73,10 +103,14 @@ namespace aura::sim {
 
     void AuraSimulation::step() {
         for (std::size_t i = 0; i < actionSpecs.size(); ++i)
-            joints[actionJointIndices[i]].constraint.targetAngle = currentAction.*(actionSpecs[i].target);
-        app::stepSimulation(auraBody, skeleton, joints, parts, bodyPairs, roomBodies, room, diagnosticHistory);
+            actionSpecs[i].jointTarget(joints[actionJointIndices[i]].constraint) =
+                    currentAction.*(actionSpecs[i].target);
+        app::stepSimulation(auraBody, skeleton, joints, parts, bodyPairs, roomBodies, room, diagnosticHistory,
+                            selectedFloorFriction);
         simulatedTime += app::FIXED_DT;
         ++stepCount;
+        balanceClassifier.update(balanceMeasurements(observation(), standingPelvisHeight,
+                                                     standingTorsoHeight, standingComHeight), app::FIXED_DT);
     }
 
     void AuraSimulation::reset() {
@@ -86,7 +120,7 @@ namespace aura::sim {
         body::configureBodyCollisionJoints(skeleton);
         bodyPairs = body::bodyCollisionPairs(auraBody, skeleton, 3);
         for (std::size_t i = 0; i < parts.size(); ++i) {
-            roomBodies[i] = {&parts[i]->body, parts[i]->size};
+            roomBodies[i] = {&parts[i]->body, parts[i]->size, parts[i]->floorShape};
         }
         for (auto *part: parts) {
             part->body.position.y += 0.6f;
@@ -97,6 +131,21 @@ namespace aura::sim {
         simulatedTime = 0.0;
         stepCount = 0.0;
         currentAction = AuraAction{};
+        balanceClassifier.reset();
+    }
+
+    void AuraSimulation::stepArenaPhysics() {
+        for (std::size_t i = 0; i < actionSpecs.size(); ++i)
+            actionSpecs[i].jointTarget(joints[actionJointIndices[i]].constraint) = currentAction.*(actionSpecs[i].target);
+        app::stepSimulation(auraBody, skeleton, joints, parts, bodyPairs, roomBodies, room, diagnosticHistory,
+                            selectedFloorFriction);
+        simulatedTime += app::FIXED_DT;
+        ++stepCount;
+    }
+
+    void AuraSimulation::classifyArenaTick() {
+        balanceClassifier.update(balanceMeasurements(observation(), standingPelvisHeight,
+                                                     standingTorsoHeight, standingComHeight), app::FIXED_DT);
     }
 
     math::Vec3 AuraSimulation::pelvisPosition() const {
@@ -125,12 +174,15 @@ namespace aura::sim {
             auraBody.rightFoot.body.position,
             auraBody.pelvis.body.orientation.rotate(math::Vec3{0.0f, 1.0f, 0.0f})
         };
+        obs.balance = balanceClassifier.assessment();
+        obs.neutralHeightReferences = {standingPelvisHeight, standingTorsoHeight, standingComHeight};
 
         obs.centerOfMassPosition = body::componentCenterOfMass(parts);
         obs.centerOfMassVelocity = body::componentCenterOfMassVelocity(parts);
 
 
-        constexpr float contactTolerance = 0.01f;
+        constexpr float contactTolerance = diagnosticFloorContactTolerance;
+        obs.floorY = room.minimum.y;
 
         obs.leftFootContactPoints = physics::floorContactPoints(auraBody.leftFoot.body, auraBody.leftFoot.size,
                                                                 auraBody.leftFoot.floorShape, room.minimum.y,
@@ -168,9 +220,23 @@ namespace aura::sim {
         obs.bodyPartStates.reserve(parts.size());
 
         for (const auto *part: parts) {
+            // Reuse the exact foot samples already used by support geometry.
+            auto contacts = part == &auraBody.leftFoot
+                                ? obs.leftFootContactPoints
+                                : part == &auraBody.rightFoot
+                                      ? obs.rightFootContactPoints
+                                      : physics::floorContactPoints(part->body, part->size, part->floorShape,
+                                                                    obs.floorY, contactTolerance);
             obs.bodyPartStates.push_back({
                 .name = part->name,
-                .velocity = part->body.velocity
+                .velocity = part->body.velocity,
+                .position = part->body.position,
+                .orientation = part->body.orientation,
+                .up = part->body.orientation.rotate({0.0f, 1.0f, 0.0f}),
+                .angularVelocity = part->body.angularVelocity,
+                .floorShape = part->floorShape,
+                .floorClearance = physics::lowestPoint(part->body, part->size, part->floorShape).y - obs.floorY,
+                .geometricFloorContactPoints = std::move(contacts)
             });
         }
 
@@ -191,7 +257,9 @@ namespace aura::sim {
             obs.jointStates.push_back({
                 .name = joint.name,
                 .relativeOrientation = relativeOrientation,
-                .relativeAngularVelocity = relativeAngularVelocity
+                .relativeAngularVelocity = relativeAngularVelocity,
+                .worldAnchorA = body::localToWorldPoint(*joint.partA, joint.constraint.localAnchorA),
+                .worldAnchorB = body::localToWorldPoint(*joint.partB, joint.constraint.localAnchorB)
             });
         }
 
@@ -200,7 +268,7 @@ namespace aura::sim {
 
     void AuraSimulation::setAction(const AuraAction &action) {
         auto clamped = action;
-        for (const auto &spec : actionSpecs) {
+        for (const auto &spec: actionSpecs) {
             auto &target = clamped.*(spec.target);
             if (!std::isfinite(target)) throw std::invalid_argument("Joint targets must be finite");
             target = std::clamp(target, static_cast<float>(spec.minimum), static_cast<float>(spec.maximum));
@@ -250,6 +318,11 @@ namespace aura::sim {
     }
 
     bool AuraSimulation::isDone() const {
-        return !isStanding() || isTruncated();
+        return terminationStatus().done();
+    }
+
+    TerminationStatus AuraSimulation::terminationStatus() const {
+        return evaluateTermination(selectedTerminationMode, isStanding(), balanceClassifier.assessment().state,
+                                   stepCount, MAX_EPISODE_STEPS);
     }
 }

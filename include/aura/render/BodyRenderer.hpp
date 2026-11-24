@@ -20,7 +20,8 @@ namespace aura::render {
         BodyRenderer();
 
         void draw(const body::AuraBody3D &auraBody, std::span<const JointMarker> joints,
-                  const Shader &shader, bool colored, bool details = false) const;
+                  const Shader &shader, bool colored, bool details = false,
+                  const math::Vec3 &tint = {0.96f, 0.97f, 1.0f}) const;
 
     private:
         Mesh jointSphere, cylinder, sphereLines, topSphereLines, bottomSphereLines, cylinderLines, roundedBox, soleLines

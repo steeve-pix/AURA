@@ -11,7 +11,7 @@
 namespace aura::render {
     class AuraViewer {
     public:
-        AuraViewer(const physics::RoomBounds &room)
+        AuraViewer(const physics::RoomBounds &room, bool showEnclosure = true)
             : window_(1024, 820, "AURA - Physics running"),
               camera_({0.0f, 3.9f, 8.2f}, {0.0f, 3.9f, 0.0f}, 1280.0f / 720.0f),
               shadowMap_(2048, 2048),
@@ -32,7 +32,7 @@ namespace aura::render {
               grid_(MeshFactory::createGrid(60, 1.0f), MeshPrimitive::Lines),
               floor_(MeshFactory::createFloor((room.maximum - room.minimum).x), MeshPrimitive::Triangles,
                      VertexLayout::PositionNormal),
-              light_({4.0f, 8.0f, 4.0f}, {0.0f, 0.0f, 0.0f}) {
+              light_({4.0f, 8.0f, 4.0f}, {0.0f, 0.0f, 0.0f}), showEnclosure_(showEnclosure) {
             camera_.setOrbit(0.55f, 0.25f);
 
             const auto roomSize = room.maximum - room.minimum;
@@ -98,6 +98,9 @@ namespace aura::render {
         }
 
         void render(const body::AuraBody3D &body, const std::vector<JointMarker> &jointMarkers);
+        void renderMany(std::span<const body::AuraBody3D * const> bodies,
+                        const std::vector<std::vector<JointMarker>> &jointMarkers,
+                        std::span<const math::Vec3> tints = {});
 
     private:
         Window window_;
@@ -117,5 +120,6 @@ namespace aura::render {
 
         DirectionalLight light_;
         math::Vec3 roomOrigin_;
+        bool showEnclosure_ = true;
     };
 }

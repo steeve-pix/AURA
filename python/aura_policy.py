@@ -1,17 +1,13 @@
+import aura_python
 import torch
 from torch import nn
-import aura_python
 
-# This is the neural-policy contract version. The simulator still exposes its
-# separate 15-target C++ action schema (currently version 2).
-ACTION_SCHEMA_VERSION = 3
+# Full human-like robot articulation. Head's separate nod motor remains off;
+# neck controls already orient the head, without activating unstable coupled PDs.
+ACTION_SCHEMA_VERSION = 5
 EXCLUDED_POLICY_ACTION_KEYS = ("head_target",)
-CONTROLLED_ACTION_KEYS = (
-    "left_hip_target", "right_hip_target", "left_knee_target", "right_knee_target",
-    "left_ankle_target", "right_ankle_target", "waist_target", "neck_target",
-    "left_shoulder_target", "right_shoulder_target", "left_elbow_target",
-    "right_elbow_target", "left_wrist_target", "right_wrist_target",
-)
+CONTROLLED_ACTION_KEYS = tuple(spec["key"] for spec in aura_python.action_specs
+                               if spec["key"] not in EXCLUDED_POLICY_ACTION_KEYS)
 
 _SIMULATOR_POLICY_KEYS = tuple(
     spec["key"] for spec in aura_python.action_specs
@@ -38,11 +34,29 @@ ACTION_TRANSFORMS = {
     "right_elbow_target": (0.48, True),
     "left_wrist_target": (0.24, False),
     "right_wrist_target": (0.24, False),
+    "left_shoulder_swing_y_target": (0.16, False),
+    "right_shoulder_swing_y_target": (0.16, False),
+    "left_shoulder_swing_z_target": (0.2, False),
+    "right_shoulder_swing_z_target": (0.2, False),
+    "left_hip_swing_y_target": (0.12, False),
+    "right_hip_swing_y_target": (0.12, False),
+    "left_hip_swing_z_target": (0.12, False),
+    "right_hip_swing_z_target": (0.12, False),
+    "waist_swing_y_target": (0.12, False),
+    "waist_swing_z_target": (0.07, False),
+    "neck_swing_y_target": (0.12, False),
+    "neck_swing_z_target": (0.05, False),
+    "left_wrist_swing_y_target": (0.12, False),
+    "right_wrist_swing_y_target": (0.12, False),
+    "left_wrist_swing_z_target": (0.07, False),
+    "right_wrist_swing_z_target": (0.07, False),
+    "left_ankle_swing_z_target": (0.05, False),
+    "right_ankle_swing_z_target": (0.05, False),
 }
 
 
 class AuraPolicy(nn.Module):
-    def __init__(self, observation_size, hidden_sizes=(64, 64), exploration_std=0.25):
+    def __init__(self, observation_size, hidden_sizes=(64, 64), exploration_std=0.25, activation="Tanh", initialization="default"):
         super().__init__()
         if observation_size < 1 or any(size < 1 for size in hidden_sizes):
             raise ValueError("Layer sizes must be positive")
@@ -53,13 +67,20 @@ class AuraPolicy(nn.Module):
         self.action_transforms = dict(ACTION_TRANSFORMS)
         if tuple(self.action_transforms) != CONTROLLED_ACTION_KEYS:
             raise ValueError("Policy action order must match its controlled-action contract")
+        from .model_templates import NetworkDesign, ACTIVATIONS, initialize
+        design = NetworkDesign(hidden_sizes, activation, initialization)
+        self.design = design
         sizes = (observation_size, *hidden_sizes, len(self.action_transforms))
         layers = []
-        for inputs, outputs in zip(sizes, sizes[1:]):
-            layers.extend((nn.Linear(inputs, outputs), nn.Tanh()))
+        for index, (inputs, outputs) in enumerate(zip(sizes, sizes[1:])):
+            layers.extend((nn.Linear(inputs, outputs), ACTIVATIONS[activation]() if index < len(hidden_sizes) else nn.Tanh()))
         self.network = nn.Sequential(*layers)
+        initialize(self.network, initialization)
 
     def forward(self, observation):
+        # Physics observations are produced on the CPU; move only the small
+        # policy input to the selected compute device.
+        observation = observation.to(device=next(self.parameters()).device)
         return self.network(observation)
 
     def sample_action(self, observation):
@@ -79,16 +100,19 @@ class AuraPolicy(nn.Module):
 class AuraValue(nn.Module):
     """Estimate expected future return from one encoded physical state."""
 
-    def __init__(self, observation_size, hidden_sizes=(64, 64)):
+    def __init__(self, observation_size, hidden_sizes=(64, 64), activation="Tanh", initialization="default"):
         super().__init__()
         if observation_size < 1 or any(size < 1 for size in hidden_sizes):
             raise ValueError("Layer sizes must be positive")
+        from .model_templates import NetworkDesign, ACTIVATIONS, initialize
+        self.design = NetworkDesign(hidden_sizes, activation, initialization)
         sizes = (observation_size, *hidden_sizes, 1)
         layers = []
         for inputs, outputs in zip(sizes[:-2], sizes[1:-1]):
-            layers.extend((nn.Linear(inputs, outputs), nn.Tanh()))
+            layers.extend((nn.Linear(inputs, outputs), ACTIVATIONS[activation]()))
         layers.append(nn.Linear(sizes[-2], sizes[-1]))
         self.network = nn.Sequential(*layers)
+        initialize(self.network, initialization)
 
     def forward(self, observation):
         return self.network(observation)

@@ -1,0 +1,4026 @@
+{
+  "model": "unbalanced_stall_audit_v1",
+  "horizon": 1200,
+  "gamma": 0.995,
+  "reward_config": {
+    "posture_scale_degrees": 30.0,
+    "height_zero_ratio": 0.25,
+    "height_full_ratio": 0.75,
+    "vertical_deadband": 0.25,
+    "horizontal_deadband": 0.35,
+    "angular_deadband": 0.4,
+    "linear_dynamic_fraction": 0.25,
+    "angular_dynamic_fraction": 0.5,
+    "support_margin_scale": 0.1,
+    "support_time_constant": 0.08,
+    "gravity": 9.81,
+    "time_step": 0.008333333333333333,
+    "discount": 0.995,
+    "posture_weight": 0.25,
+    "height_weight": 0.15,
+    "motion_weight": 0.25,
+    "support_weight": 1.0,
+    "recovery_weight": 0.1,
+    "terminal_weight": 1.0
+  },
+  "failure_utility_candidates": {
+    "zero": {
+      "value": 0.0,
+      "interpretation": "Failure has no ongoing utility; negative control."
+    },
+    "stationary_collapse": {
+      "value": -0.4,
+      "interpretation": "Low, tilted, unsupported failure with no excessive motion; posture and height penalty bound."
+    },
+    "observed_collapse": {
+      "value": -0.6498584654195751,
+      "samples": 363,
+      "observed_min": -0.6499976289237402,
+      "observed_max": -0.399969128710231,
+      "interpretation": "Constant task utility anchored to pooled preterminal deep/contact-collapse median, excluding shaping and fall component."
+    },
+    "physical_lower_bound": {
+      "value": -0.65,
+      "interpretation": "Existing unshaped nonterminal lower bound; worst physical quality, not an extra tuned coefficient."
+    }
+  },
+  "scenarios": {
+    "sustained_controlled_standing": {
+      "source_case": "sustained_standing_reference",
+      "kind": "constructed_measurements",
+      "interpretation": "Ideal fully supported neutral standing reused from Step 129; not a learned controller trajectory.",
+      "fork_step": 0,
+      "feasibility": ""
+    },
+    "prompt_recovery": {
+      "source_case": "severe_recover_wait0_ramp60",
+      "kind": "constructed_measurements",
+      "interpretation": "Step 129 shared-prefix artificial 60-tick recovery ramp followed by ideal neutral standing.",
+      "fork_step": 0,
+      "feasibility": "Prescribed measurements; native classification; no proven joint/force/action feasibility."
+    },
+    "delayed_recovery": {
+      "source_case": "severe_recover_wait720_ramp60",
+      "kind": "constructed_measurements",
+      "interpretation": "Step 129 shared-prefix 720-tick unstable hold, artificial recovery ramp, then ideal standing.",
+      "fork_step": 0,
+      "feasibility": "Prescribed measurements; native classification; no proven joint/force/action feasibility."
+    },
+    "constant_unbalanced_posture": {
+      "source_case": "severe_unbalanced_truncation",
+      "kind": "constructed_measurements",
+      "interpretation": "Step 129 shared-prefix 35-degree unsupported-margin posture held until truncation.",
+      "fork_step": 0,
+      "feasibility": "Prescribed measurements; native classification; no proven joint/force/action feasibility."
+    },
+    "controlled_crouch": {
+      "kind": "constructed_measurements",
+      "fork_step": 0,
+      "interpretation": "Supported upright crouch at 62% neutral height after a two-second measurement ramp; classifier state is reported separately.",
+      "feasibility": "Classifier and Reward V2 are real; prescribed body measurements do not prove joint, contact-force, or action feasibility."
+    },
+    "oscillate_near_balanced_boundary": {
+      "kind": "constructed_measurements",
+      "fork_step": 0,
+      "interpretation": "Repeated supported 14-to-26-degree lean cycles around the classifier stay/entry boundary; ramps are measurement interpolation, not an action replay.",
+      "feasibility": "Classifier and Reward V2 are real; prescribed body measurements do not prove joint, contact-force, or action feasibility."
+    },
+    "constant_near_balanced_posture": {
+      "kind": "constructed_measurements",
+      "fork_step": 0,
+      "interpretation": "Supported, motionless 19-degree posture above the strict BALANCED entry threshold but within its retention-angle band.",
+      "feasibility": "Classifier and Reward V2 are real; prescribed body measurements do not prove joint, contact-force, or action feasibility."
+    },
+    "constant_near_fall_stall": {
+      "kind": "constructed_measurements",
+      "fork_step": 0,
+      "interpretation": "Unsupported 59-degree posture below the classifier collapse-angle condition, reached over three seconds and held to truncation.",
+      "feasibility": "Classifier and Reward V2 are real; prescribed body measurements do not prove joint, contact-force, or action feasibility."
+    },
+    "oscillate_near_fallen_boundary": {
+      "kind": "constructed_measurements",
+      "fork_step": 0,
+      "interpretation": "Unsupported low posture oscillating 59-to-61 degrees; brief collapse-threshold crossings test the classifier persistence rule.",
+      "feasibility": "Classifier and Reward V2 are real; prescribed body measurements do not prove joint, contact-force, or action feasibility."
+    },
+    "slow_collapse_below_terminal_angle": {
+      "kind": "constructed_measurements",
+      "fork_step": 0,
+      "interpretation": "Two-second supported lean/height ramp to 55 degrees and 40% height, then held below the 60-degree deep-collapse condition.",
+      "feasibility": "Classifier and Reward V2 are real; prescribed body measurements do not prove joint, contact-force, or action feasibility."
+    },
+    "confirmed_collapse": {
+      "kind": "constructed_measurements",
+      "fork_step": 0,
+      "interpretation": "Common standing prefix followed by measured collapse; the native classifier determines FALLEN and physical termination.",
+      "feasibility": "Classifier and Reward V2 are real; prescribed body measurements do not prove joint, contact-force, or action feasibility."
+    },
+    "native_physics_brief_airborne": {
+      "source_case": "brief_airborne",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_edge_landing": {
+      "source_case": "edge_landing",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_horizontal_collapse": {
+      "source_case": "horizontal_collapse",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_left_lateral": {
+      "source_case": "left_lateral",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_mild_backward": {
+      "source_case": "mild_backward",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_mild_forward": {
+      "source_case": "mild_forward",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_neutral": {
+      "source_case": "neutral",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_one_foot_landing": {
+      "source_case": "one_foot_landing",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_rapid_rotation": {
+      "source_case": "rapid_rotation",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_recovery_attempt": {
+      "source_case": "recovery_attempt",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_right_lateral": {
+      "source_case": "right_lateral",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_severe_backward": {
+      "source_case": "severe_backward",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    },
+    "native_physics_severe_forward": {
+      "source_case": "severe_forward",
+      "kind": "integrated_physics_replay",
+      "fork_step": 0,
+      "interpretation": "Step 128 native passive zero-target physics replay; not a learned policy trajectory.",
+      "feasibility": "Integrated simulator trace with its original measured state and termination labels."
+    }
+  },
+  "results": {
+    "sustained_controlled_standing": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1183,
+          "UNBALANCED": 17,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.858333333333333,
+          "UNBALANCED": 0.14166666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 1199.3005,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 1199.3005,
+        "discounted_physical_return": 199.41165483689758,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 199.41165483689758,
+        "mean_posture_quality": 1.0,
+        "mean_uncontrolled_motion_penalty": 0.0,
+        "mean_support_quality": 1.0,
+        "discounted_reward_components": {
+          "posture": 0.0,
+          "height": 0.0,
+          "motion": 0.0,
+          "support": 199.5116548368953,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1183,
+          "UNBALANCED": 17,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.858333333333333,
+          "UNBALANCED": 0.14166666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 1199.3005,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 1199.3005,
+        "discounted_physical_return": 199.41165483689758,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 199.41165483689758,
+        "mean_posture_quality": 1.0,
+        "mean_uncontrolled_motion_penalty": 0.0,
+        "mean_support_quality": 1.0,
+        "discounted_reward_components": {
+          "posture": 0.0,
+          "height": 0.0,
+          "motion": 0.0,
+          "support": 199.5116548368953,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1183,
+          "UNBALANCED": 17,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.858333333333333,
+          "UNBALANCED": 0.14166666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 1199.3005,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 1199.3005,
+        "discounted_physical_return": 199.41165483689758,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 199.41165483689758,
+        "mean_posture_quality": 1.0,
+        "mean_uncontrolled_motion_penalty": 0.0,
+        "mean_support_quality": 1.0,
+        "discounted_reward_components": {
+          "posture": 0.0,
+          "height": 0.0,
+          "motion": 0.0,
+          "support": 199.5116548368953,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      }
+    },
+    "prompt_recovery": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1081,
+          "UNBALANCED": 119,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.008333333333333,
+          "UNBALANCED": 0.9916666666666667,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 1097.1980578440466,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 1097.1980578440466,
+        "discounted_physical_return": 122.75634530905417,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 122.75634530905417,
+        "mean_posture_quality": 0.9741905978924027,
+        "mean_uncontrolled_motion_penalty": 0.052700129153698115,
+        "mean_support_quality": 0.9787499999999997,
+        "discounted_reward_components": {
+          "posture": -5.933334029607751,
+          "height": 0.0,
+          "motion": -11.855565702737685,
+          "support": 140.64524504139933,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1081,
+          "UNBALANCED": 119,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.008333333333333,
+          "UNBALANCED": 0.9916666666666667,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 1097.1980578440466,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 1097.1980578440466,
+        "discounted_physical_return": 122.75634530905417,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 122.75634530905417,
+        "mean_posture_quality": 0.9741905978924027,
+        "mean_uncontrolled_motion_penalty": 0.052700129153698115,
+        "mean_support_quality": 0.9787499999999997,
+        "discounted_reward_components": {
+          "posture": -5.933334029607751,
+          "height": 0.0,
+          "motion": -11.855565702737685,
+          "support": 140.64524504139933,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1081,
+          "UNBALANCED": 119,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.008333333333333,
+          "UNBALANCED": 0.9916666666666667,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 1097.1980578440466,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 1097.1980578440466,
+        "discounted_physical_return": 122.75634530905417,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 122.75634530905417,
+        "mean_posture_quality": 0.9741905978924027,
+        "mean_uncontrolled_motion_penalty": 0.052700129153698115,
+        "mean_support_quality": 0.9787499999999997,
+        "discounted_reward_components": {
+          "posture": -5.933334029607751,
+          "height": 0.0,
+          "motion": -11.855565702737685,
+          "support": 140.64524504139933,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      }
+    },
+    "delayed_recovery": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 361,
+          "UNBALANCED": 839,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 3.0083333333333333,
+          "UNBALANCED": 6.991666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 290.02095145695864,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 290.02095145695864,
+        "discounted_physical_return": -5.739738617559856,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -5.739738617559856,
+        "mean_posture_quality": 0.5280160519042502,
+        "mean_uncontrolled_motion_penalty": 0.052700129153698115,
+        "mean_support_quality": 0.52875,
+        "discounted_reward_components": {
+          "posture": -31.093582194551235,
+          "height": 0.0,
+          "motion": -5.359122604358047,
+          "support": 30.812966181349413,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 361,
+          "UNBALANCED": 839,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 3.0083333333333333,
+          "UNBALANCED": 6.991666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 290.02095145695864,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 290.02095145695864,
+        "discounted_physical_return": -5.739738617559856,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -5.739738617559856,
+        "mean_posture_quality": 0.5280160519042502,
+        "mean_uncontrolled_motion_penalty": 0.052700129153698115,
+        "mean_support_quality": 0.52875,
+        "discounted_reward_components": {
+          "posture": -31.093582194551235,
+          "height": 0.0,
+          "motion": -5.359122604358047,
+          "support": 30.812966181349413,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 361,
+          "UNBALANCED": 839,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 3.0083333333333333,
+          "UNBALANCED": 6.991666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 290.02095145695864,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 290.02095145695864,
+        "discounted_physical_return": -5.739738617559856,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -5.739738617559856,
+        "mean_posture_quality": 0.5280160519042502,
+        "mean_uncontrolled_motion_penalty": 0.052700129153698115,
+        "mean_support_quality": 0.52875,
+        "discounted_reward_components": {
+          "posture": -31.093582194551235,
+          "height": 0.0,
+          "motion": -5.359122604358047,
+          "support": 30.812966181349413,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      }
+    },
+    "constant_unbalanced_posture": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -130.417188459654,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -130.417188459654,
+        "discounted_physical_return": -8.77225404025911,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -8.77225404025911,
+        "mean_posture_quality": 0.2757797555442889,
+        "mean_uncontrolled_motion_penalty": 0.019999768126219966,
+        "mean_support_quality": 0.2766304243663294,
+        "discounted_reward_components": {
+          "posture": -31.70304902787235,
+          "height": 0.0,
+          "motion": -5.178315373381966,
+          "support": 28.20911036099515,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -130.417188459654,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -130.417188459654,
+        "discounted_physical_return": -8.77225404025911,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -8.77225404025911,
+        "mean_posture_quality": 0.2757797555442889,
+        "mean_uncontrolled_motion_penalty": 0.019999768126219966,
+        "mean_support_quality": 0.2766304243663294,
+        "discounted_reward_components": {
+          "posture": -31.70304902787235,
+          "height": 0.0,
+          "motion": -5.178315373381966,
+          "support": 28.20911036099515,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -130.417188459654,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -130.417188459654,
+        "discounted_physical_return": -8.77225404025911,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -8.77225404025911,
+        "mean_posture_quality": 0.2757797555442889,
+        "mean_uncontrolled_motion_penalty": 0.019999768126219966,
+        "mean_support_quality": 0.2766304243663294,
+        "discounted_reward_components": {
+          "posture": -31.70304902787235,
+          "height": 0.0,
+          "motion": -5.178315373381966,
+          "support": 28.20911036099515,
+          "recovery": -0.1,
+          "terminal": 0.0
+        }
+      }
+    },
+    "controlled_crouch": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 892.6672463321778,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 892.6672463321778,
+        "discounted_physical_return": 129.11823843364576,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 129.11823843364576,
+        "mean_posture_quality": 0.9748252555430992,
+        "mean_uncontrolled_motion_penalty": 0.045223150171074394,
+        "mean_support_quality": 1.0,
+        "discounted_reward_components": {
+          "posture": -0.8465673361924925,
+          "height": -2.704694184428207,
+          "motion": -9.338946360337365,
+          "support": 142.10844631460486,
+          "recovery": -0.10000000000000034,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 892.6672463321778,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 892.6672463321778,
+        "discounted_physical_return": 129.11823843364576,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 129.11823843364576,
+        "mean_posture_quality": 0.9748252555430992,
+        "mean_uncontrolled_motion_penalty": 0.045223150171074394,
+        "mean_support_quality": 1.0,
+        "discounted_reward_components": {
+          "posture": -0.8465673361924925,
+          "height": -2.704694184428207,
+          "motion": -9.338946360337365,
+          "support": 142.10844631460486,
+          "recovery": -0.10000000000000034,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 892.6672463321778,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 892.6672463321778,
+        "discounted_physical_return": 129.11823843364576,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 129.11823843364576,
+        "mean_posture_quality": 0.9748252555430992,
+        "mean_uncontrolled_motion_penalty": 0.045223150171074394,
+        "mean_support_quality": 1.0,
+        "discounted_reward_components": {
+          "posture": -0.8465673361924925,
+          "height": -2.704694184428207,
+          "motion": -9.338946360337365,
+          "support": 142.10844631460486,
+          "recovery": -0.10000000000000034,
+          "terminal": 0.0
+        }
+      }
+    },
+    "oscillate_near_balanced_boundary": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 102,
+          "UNBALANCED": 1098,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.85,
+          "UNBALANCED": 9.15,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 220.00835638594026,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 220.00835638594026,
+        "discounted_physical_return": 40.61802066506511,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 40.61802066506511,
+        "mean_posture_quality": 0.6735746151770098,
+        "mean_uncontrolled_motion_penalty": 0.32296661436772034,
+        "mean_support_quality": 0.7462777301777295,
+        "discounted_reward_components": {
+          "posture": -14.640598102332188,
+          "height": 0.0,
+          "motion": -17.723172955101685,
+          "support": 73.08179172249893,
+          "recovery": -0.10000000000000003,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 102,
+          "UNBALANCED": 1098,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.85,
+          "UNBALANCED": 9.15,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 220.00835638594026,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 220.00835638594026,
+        "discounted_physical_return": 40.61802066506511,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 40.61802066506511,
+        "mean_posture_quality": 0.6735746151770098,
+        "mean_uncontrolled_motion_penalty": 0.32296661436772034,
+        "mean_support_quality": 0.7462777301777295,
+        "discounted_reward_components": {
+          "posture": -14.640598102332188,
+          "height": 0.0,
+          "motion": -17.723172955101685,
+          "support": 73.08179172249893,
+          "recovery": -0.10000000000000003,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 102,
+          "UNBALANCED": 1098,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.85,
+          "UNBALANCED": 9.15,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 220.00835638594026,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 220.00835638594026,
+        "discounted_physical_return": 40.61802066506511,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 40.61802066506511,
+        "mean_posture_quality": 0.6735746151770098,
+        "mean_uncontrolled_motion_penalty": 0.32296661436772034,
+        "mean_support_quality": 0.7462777301777295,
+        "discounted_reward_components": {
+          "posture": -14.640598102332188,
+          "height": 0.0,
+          "motion": -17.723172955101685,
+          "support": 73.08179172249893,
+          "recovery": -0.10000000000000003,
+          "terminal": 0.0
+        }
+      }
+    },
+    "constant_near_balanced_posture": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1183,
+          "UNBALANCED": 17,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.858333333333333,
+          "UNBALANCED": 0.14166666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 553.0591722695649,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 553.0591722695649,
+        "discounted_physical_return": 128.80468662297955,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 128.80468662297955,
+        "mean_posture_quality": 0.6955325875112605,
+        "mean_uncontrolled_motion_penalty": 0.0,
+        "mean_support_quality": 0.7639866815058545,
+        "discounted_reward_components": {
+          "posture": -10.36908710873116,
+          "height": 0.0,
+          "motion": 0.0,
+          "support": 139.27377373171066,
+          "recovery": -0.09999999999999998,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1183,
+          "UNBALANCED": 17,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.858333333333333,
+          "UNBALANCED": 0.14166666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 553.0591722695649,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 553.0591722695649,
+        "discounted_physical_return": 128.80468662297955,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 128.80468662297955,
+        "mean_posture_quality": 0.6955325875112605,
+        "mean_uncontrolled_motion_penalty": 0.0,
+        "mean_support_quality": 0.7639866815058545,
+        "discounted_reward_components": {
+          "posture": -10.36908710873116,
+          "height": 0.0,
+          "motion": 0.0,
+          "support": 139.27377373171066,
+          "recovery": -0.09999999999999998,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 1183,
+          "UNBALANCED": 17,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 9.858333333333333,
+          "UNBALANCED": 0.14166666666666666,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": 553.0591722695649,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": 553.0591722695649,
+        "discounted_physical_return": 128.80468662297955,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 128.80468662297955,
+        "mean_posture_quality": 0.6955325875112605,
+        "mean_uncontrolled_motion_penalty": 0.0,
+        "mean_support_quality": 0.7639866815058545,
+        "discounted_reward_components": {
+          "posture": -10.36908710873116,
+          "height": 0.0,
+          "motion": 0.0,
+          "support": 139.27377373171066,
+          "recovery": -0.09999999999999998,
+          "terminal": 0.0
+        }
+      }
+    },
+    "constant_near_fall_stall": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -425.5303581571055,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -425.5303581571055,
+        "discounted_physical_return": -34.184799068246726,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -34.184799068246726,
+        "mean_posture_quality": 0.09927506768410967,
+        "mean_uncontrolled_motion_penalty": 0.10962334322019814,
+        "mean_support_quality": 0.13456973248843895,
+        "discounted_reward_components": {
+          "posture": -30.695159543634023,
+          "height": -15.239503632592818,
+          "motion": -19.844374947201246,
+          "support": 31.69423905518137,
+          "recovery": -0.10000000000000002,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -425.5303581571055,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -425.5303581571055,
+        "discounted_physical_return": -34.184799068246726,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -34.184799068246726,
+        "mean_posture_quality": 0.09927506768410967,
+        "mean_uncontrolled_motion_penalty": 0.10962334322019814,
+        "mean_support_quality": 0.13456973248843895,
+        "discounted_reward_components": {
+          "posture": -30.695159543634023,
+          "height": -15.239503632592818,
+          "motion": -19.844374947201246,
+          "support": 31.69423905518137,
+          "recovery": -0.10000000000000002,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -425.5303581571055,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -425.5303581571055,
+        "discounted_physical_return": -34.184799068246726,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -34.184799068246726,
+        "mean_posture_quality": 0.09927506768410967,
+        "mean_uncontrolled_motion_penalty": 0.10962334322019814,
+        "mean_support_quality": 0.13456973248843895,
+        "discounted_reward_components": {
+          "posture": -30.695159543634023,
+          "height": -15.239503632592818,
+          "motion": -19.844374947201246,
+          "support": 31.69423905518137,
+          "recovery": -0.10000000000000002,
+          "terminal": 0.0
+        }
+      }
+    },
+    "oscillate_near_fallen_boundary": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -426.1690265306329,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -426.1690265306329,
+        "discounted_physical_return": -34.231688945674065,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -34.231688945674065,
+        "mean_posture_quality": 0.0971461641246273,
+        "mean_uncontrolled_motion_penalty": 0.10962334322019814,
+        "mean_support_quality": 0.13456973248843895,
+        "discounted_reward_components": {
+          "posture": -30.74204942106139,
+          "height": -15.239503632592818,
+          "motion": -19.844374947201246,
+          "support": 31.69423905518137,
+          "recovery": -0.10000000000000002,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -426.1690265306329,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -426.1690265306329,
+        "discounted_physical_return": -34.231688945674065,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -34.231688945674065,
+        "mean_posture_quality": 0.0971461641246273,
+        "mean_uncontrolled_motion_penalty": 0.10962334322019814,
+        "mean_support_quality": 0.13456973248843895,
+        "discounted_reward_components": {
+          "posture": -30.74204942106139,
+          "height": -15.239503632592818,
+          "motion": -19.844374947201246,
+          "support": 31.69423905518137,
+          "recovery": -0.10000000000000002,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -426.1690265306329,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -426.1690265306329,
+        "discounted_physical_return": -34.231688945674065,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": -34.231688945674065,
+        "mean_posture_quality": 0.0971461641246273,
+        "mean_uncontrolled_motion_penalty": 0.10962334322019814,
+        "mean_support_quality": 0.13456973248843895,
+        "discounted_reward_components": {
+          "posture": -30.74204942106139,
+          "height": -15.239503632592818,
+          "motion": -19.844374947201246,
+          "support": 31.69423905518137,
+          "recovery": -0.10000000000000002,
+          "terminal": 0.0
+        }
+      }
+    },
+    "slow_collapse_below_terminal_angle": {
+      "stationary_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -295.4017234174942,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -295.4017234174942,
+        "discounted_physical_return": 25.124673621812416,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 25.124673621812416,
+        "mean_posture_quality": 0.13759335220532085,
+        "mean_uncontrolled_motion_penalty": 0.0581659423524894,
+        "mean_support_quality": 0.6013579889771024,
+        "discounted_reward_components": {
+          "posture": -26.210085158999835,
+          "height": -8.675946447852978,
+          "motion": -9.297002574696767,
+          "support": 69.40770780336196,
+          "recovery": -0.09999999999999998,
+          "terminal": 0.0
+        }
+      },
+      "observed_collapse": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -295.4017234174942,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -295.4017234174942,
+        "discounted_physical_return": 25.124673621812416,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 25.124673621812416,
+        "mean_posture_quality": 0.13759335220532085,
+        "mean_uncontrolled_motion_penalty": 0.0581659423524894,
+        "mean_support_quality": 0.6013579889771024,
+        "discounted_reward_components": {
+          "posture": -26.210085158999835,
+          "height": -8.675946447852978,
+          "motion": -9.297002574696767,
+          "support": 69.40770780336196,
+          "recovery": -0.09999999999999998,
+          "terminal": 0.0
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 1200,
+        "terminal_step": 1200,
+        "terminated": false,
+        "truncated": true,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 1194,
+          "FALLEN": 0
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 9.95,
+          "FALLEN": 0.0
+        },
+        "undiscounted_physical_reward": -295.4017234174942,
+        "undiscounted_failure_tail": 0.0,
+        "undiscounted_adjusted_return": -295.4017234174942,
+        "discounted_physical_return": 25.124673621812416,
+        "terminal_penalty_undiscounted": 0.0,
+        "terminal_penalty_discounted": 0.0,
+        "failure_tail_at_terminal": 0.0,
+        "failure_tail_at_start": 0.0,
+        "discounted_adjusted_return": 25.124673621812416,
+        "mean_posture_quality": 0.13759335220532085,
+        "mean_uncontrolled_motion_penalty": 0.0581659423524894,
+        "mean_support_quality": 0.6013579889771024,
+        "discounted_reward_components": {
+          "posture": -26.210085158999835,
+          "height": -8.675946447852978,
+          "motion": -9.297002574696767,
+          "support": 69.40770780336196,
+          "recovery": -0.09999999999999998,
+          "terminal": 0.0
+        }
+      }
+    },
+    "confirmed_collapse": {
+      "stationary_collapse": {
+        "steps": 94,
+        "terminal_step": 94,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 87,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 0.725,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -13.435441214101221,
+        "undiscounted_failure_tail": -442.40000000000003,
+        "undiscounted_adjusted_return": -455.83544121410125,
+        "discounted_physical_return": -6.176064950200106,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.6274028820538087,
+        "failure_tail_at_terminal": -79.28865609191593,
+        "failure_tail_at_start": -49.74593134624133,
+        "discounted_adjusted_return": -55.921996296441435,
+        "mean_posture_quality": 0.3895431796413884,
+        "mean_uncontrolled_motion_penalty": 0.5106353377815315,
+        "mean_support_quality": 0.550668302430385,
+        "discounted_reward_components": {
+          "posture": -10.45975866061844,
+          "height": -3.2064178052817374,
+          "motion": -9.633707715821854,
+          "support": 17.85122211357573,
+          "recovery": -0.1,
+          "terminal": -0.6274028820538087
+        }
+      },
+      "observed_collapse": {
+        "steps": 94,
+        "terminal_step": 94,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 87,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 0.725,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -13.435441214101221,
+        "undiscounted_failure_tail": -718.7434627540501,
+        "undiscounted_adjusted_return": -732.1789039681514,
+        "discounted_physical_return": -6.176064950200106,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.6274028820538087,
+        "failure_tail_at_terminal": -128.8160109326823,
+        "failure_tail_at_start": -80.81953651383981,
+        "discounted_adjusted_return": -86.99560146403991,
+        "mean_posture_quality": 0.3895431796413884,
+        "mean_uncontrolled_motion_penalty": 0.5106353377815315,
+        "mean_support_quality": 0.550668302430385,
+        "discounted_reward_components": {
+          "posture": -10.45975866061844,
+          "height": -3.2064178052817374,
+          "motion": -9.633707715821854,
+          "support": 17.85122211357573,
+          "recovery": -0.1,
+          "terminal": -0.6274028820538087
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 94,
+        "terminal_step": 94,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 6,
+          "UNBALANCED": 87,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.05,
+          "UNBALANCED": 0.725,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -13.435441214101221,
+        "undiscounted_failure_tail": -718.9,
+        "undiscounted_adjusted_return": -732.3354412141013,
+        "discounted_physical_return": -6.176064950200106,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.6274028820538087,
+        "failure_tail_at_terminal": -128.84406614936339,
+        "failure_tail_at_start": -80.83713843764215,
+        "discounted_adjusted_return": -87.01320338784225,
+        "mean_posture_quality": 0.3895431796413884,
+        "mean_uncontrolled_motion_penalty": 0.5106353377815315,
+        "mean_support_quality": 0.550668302430385,
+        "discounted_reward_components": {
+          "posture": -10.45975866061844,
+          "height": -3.2064178052817374,
+          "motion": -9.633707715821854,
+          "support": 17.85122211357573,
+          "recovery": -0.1,
+          "terminal": -0.6274028820538087
+        }
+      }
+    },
+    "native_physics_brief_airborne": {
+      "stationary_collapse": {
+        "steps": 637,
+        "terminal_step": 637,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 114,
+          "UNBALANCED": 522,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.95,
+          "UNBALANCED": 4.35,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -38.47433667188857,
+        "undiscounted_failure_tail": -225.20000000000002,
+        "undiscounted_adjusted_return": -263.67433667188857,
+        "discounted_physical_return": 38.975345819994686,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.04125526245077422,
+        "failure_tail_at_terminal": -74.86513579995078,
+        "failure_tail_at_start": -3.0885808258398217,
+        "discounted_adjusted_return": 35.886764994154866,
+        "mean_posture_quality": 0.6299551754773258,
+        "mean_uncontrolled_motion_penalty": 0.6351006895675607,
+        "mean_support_quality": 0.34301420254505416,
+        "discounted_reward_components": {
+          "posture": -5.481400709347461,
+          "height": -0.3480949627020317,
+          "motion": -17.7941855065561,
+          "support": 62.64028226105105,
+          "recovery": 2.7923919868238407e-18,
+          "terminal": -0.04125526245077422
+        }
+      },
+      "observed_collapse": {
+        "steps": 637,
+        "terminal_step": 637,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 114,
+          "UNBALANCED": 522,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.95,
+          "UNBALANCED": 4.35,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -38.47433667188857,
+        "undiscounted_failure_tail": -365.8703160312208,
+        "undiscounted_adjusted_return": -404.3446527031094,
+        "discounted_physical_return": 38.975345819994686,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.04125526245077422,
+        "failure_tail_at_terminal": -121.62935566096026,
+        "failure_tail_at_start": -5.0178509895114765,
+        "discounted_adjusted_return": 33.95749483048321,
+        "mean_posture_quality": 0.6299551754773258,
+        "mean_uncontrolled_motion_penalty": 0.6351006895675607,
+        "mean_support_quality": 0.34301420254505416,
+        "discounted_reward_components": {
+          "posture": -5.481400709347461,
+          "height": -0.3480949627020317,
+          "motion": -17.7941855065561,
+          "support": 62.64028226105105,
+          "recovery": 2.7923919868238407e-18,
+          "terminal": -0.04125526245077422
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 637,
+        "terminal_step": 637,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 114,
+          "UNBALANCED": 522,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.95,
+          "UNBALANCED": 4.35,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -38.47433667188857,
+        "undiscounted_failure_tail": -365.95,
+        "undiscounted_adjusted_return": -404.42433667188857,
+        "discounted_physical_return": 38.975345819994686,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.04125526245077422,
+        "failure_tail_at_terminal": -121.65584567492,
+        "failure_tail_at_start": -5.01894384198971,
+        "discounted_adjusted_return": 33.956401978004976,
+        "mean_posture_quality": 0.6299551754773258,
+        "mean_uncontrolled_motion_penalty": 0.6351006895675607,
+        "mean_support_quality": 0.34301420254505416,
+        "discounted_reward_components": {
+          "posture": -5.481400709347461,
+          "height": -0.3480949627020317,
+          "motion": -17.7941855065561,
+          "support": 62.64028226105105,
+          "recovery": 2.7923919868238407e-18,
+          "terminal": -0.04125526245077422
+        }
+      }
+    },
+    "native_physics_edge_landing": {
+      "stationary_collapse": {
+        "steps": 596,
+        "terminal_step": 596,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 595,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 4.958333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -249.89745488698807,
+        "undiscounted_failure_tail": -241.60000000000002,
+        "undiscounted_adjusted_return": -491.49745488698807,
+        "discounted_physical_return": -41.25252453418975,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.050667916213027374,
+        "failure_tail_at_terminal": -75.74473852801583,
+        "failure_tail_at_start": -3.8378280653151724,
+        "discounted_adjusted_return": -45.090352599504925,
+        "mean_posture_quality": 0.33810326691283454,
+        "mean_uncontrolled_motion_penalty": 0.8974889464317766,
+        "mean_support_quality": 0.2032857589553828,
+        "discounted_reward_components": {
+          "posture": -17.6202013312123,
+          "height": -6.481095803578601,
+          "motion": -35.84459881658958,
+          "support": 18.744039333403748,
+          "recovery": -1.1225947570598931e-17,
+          "terminal": -0.050667916213027374
+        }
+      },
+      "observed_collapse": {
+        "steps": 596,
+        "terminal_step": 596,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 595,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 4.958333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -249.89745488698807,
+        "undiscounted_failure_tail": -392.5145131134234,
+        "undiscounted_adjusted_return": -642.4119680004114,
+        "discounted_physical_return": -41.25252453418975,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.050667916213027374,
+        "failure_tail_at_terminal": -123.05839885855833,
+        "failure_tail_at_start": -6.235112642674737,
+        "discounted_adjusted_return": -47.48763717686449,
+        "mean_posture_quality": 0.33810326691283454,
+        "mean_uncontrolled_motion_penalty": 0.8974889464317766,
+        "mean_support_quality": 0.2032857589553828,
+        "discounted_reward_components": {
+          "posture": -17.6202013312123,
+          "height": -6.481095803578601,
+          "motion": -35.84459881658958,
+          "support": 18.744039333403748,
+          "recovery": -1.1225947570598931e-17,
+          "terminal": -0.050667916213027374
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 596,
+        "terminal_step": 596,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 595,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 4.958333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -249.89745488698807,
+        "undiscounted_failure_tail": -392.6,
+        "undiscounted_adjusted_return": -642.4974548869881,
+        "discounted_physical_return": -41.25252453418975,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.050667916213027374,
+        "failure_tail_at_terminal": -123.08520010802573,
+        "failure_tail_at_start": -6.236470606137155,
+        "discounted_adjusted_return": -47.48899514032691,
+        "mean_posture_quality": 0.33810326691283454,
+        "mean_uncontrolled_motion_penalty": 0.8974889464317766,
+        "mean_support_quality": 0.2032857589553828,
+        "discounted_reward_components": {
+          "posture": -17.6202013312123,
+          "height": -6.481095803578601,
+          "motion": -35.84459881658958,
+          "support": 18.744039333403748,
+          "recovery": -1.1225947570598931e-17,
+          "terminal": -0.050667916213027374
+        }
+      }
+    },
+    "native_physics_horizontal_collapse": {
+      "stationary_collapse": {
+        "steps": 24,
+        "terminal_step": 24,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 23,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 0.19166666666666668,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -12.625729976456002,
+        "undiscounted_failure_tail": -470.40000000000003,
+        "undiscounted_adjusted_return": -483.02572997645603,
+        "discounted_physical_return": -11.822024956608034,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.8911090557802088,
+        "failure_tail_at_terminal": -79.38079218926708,
+        "failure_tail_at_start": -70.73694277486277,
+        "discounted_adjusted_return": -82.5589677314708,
+        "mean_posture_quality": 0.00012011250361494172,
+        "mean_uncontrolled_motion_penalty": 0.33774122566081094,
+        "mean_support_quality": 0.20013014548626698,
+        "discounted_reward_components": {
+          "posture": -5.666643075778227,
+          "height": -3.400394684960763,
+          "motion": -1.8638750548437286,
+          "support": 0.0,
+          "recovery": -3.0852451021669888e-06,
+          "terminal": -0.8911090557802088
+        }
+      },
+      "observed_collapse": {
+        "steps": 24,
+        "terminal_step": 24,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 23,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 0.19166666666666668,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -12.625729976456002,
+        "undiscounted_failure_tail": -764.2335553334203,
+        "undiscounted_adjusted_return": -776.8592853098763,
+        "discounted_physical_return": -11.822024956608034,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.8911090557802088,
+        "failure_tail_at_terminal": -128.96569948976824,
+        "failure_tail_at_start": -114.92250270036153,
+        "discounted_adjusted_return": -126.74452765696957,
+        "mean_posture_quality": 0.00012011250361494172,
+        "mean_uncontrolled_motion_penalty": 0.33774122566081094,
+        "mean_support_quality": 0.20013014548626698,
+        "discounted_reward_components": {
+          "posture": -5.666643075778227,
+          "height": -3.400394684960763,
+          "motion": -1.8638750548437286,
+          "support": 0.0,
+          "recovery": -3.0852451021669888e-06,
+          "terminal": -0.8911090557802088
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 24,
+        "terminal_step": 24,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 23,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 0.19166666666666668,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -12.625729976456002,
+        "undiscounted_failure_tail": -764.4,
+        "undiscounted_adjusted_return": -777.025729976456,
+        "discounted_physical_return": -11.822024956608034,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.8911090557802088,
+        "failure_tail_at_terminal": -128.99378730755902,
+        "failure_tail_at_start": -114.947532009152,
+        "discounted_adjusted_return": -126.76955696576003,
+        "mean_posture_quality": 0.00012011250361494172,
+        "mean_uncontrolled_motion_penalty": 0.33774122566081094,
+        "mean_support_quality": 0.20013014548626698,
+        "discounted_reward_components": {
+          "posture": -5.666643075778227,
+          "height": -3.400394684960763,
+          "motion": -1.8638750548437286,
+          "support": 0.0,
+          "recovery": -3.0852451021669888e-06,
+          "terminal": -0.8911090557802088
+        }
+      }
+    },
+    "native_physics_left_lateral": {
+      "stationary_collapse": {
+        "steps": 287,
+        "terminal_step": 287,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 286,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.3833333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -130.27550689896597,
+        "undiscounted_failure_tail": -365.20000000000005,
+        "undiscounted_adjusted_return": -495.47550689896605,
+        "discounted_physical_return": -59.61647155085847,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.23845206801529312,
+        "failure_tail_at_terminal": -78.7808078375345,
+        "failure_tail_at_start": -18.785446548775514,
+        "discounted_adjusted_return": -78.40191809963399,
+        "mean_posture_quality": 0.32130545896585555,
+        "mean_uncontrolled_motion_penalty": 0.9275525696006708,
+        "mean_support_quality": 0.14459784450045218,
+        "discounted_reward_components": {
+          "posture": -21.829948100615155,
+          "height": -4.387948276365966,
+          "motion": -33.3258442730135,
+          "support": 0.16572116715142926,
+          "recovery": 7.671425767580709e-20,
+          "terminal": -0.23845206801529312
+        }
+      },
+      "observed_collapse": {
+        "steps": 287,
+        "terminal_step": 287,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 286,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.3833333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -130.27550689896597,
+        "undiscounted_failure_tail": -593.3207789280721,
+        "undiscounted_adjusted_return": -723.5962858270381,
+        "discounted_physical_return": -59.61647155085847,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.23845206801529312,
+        "failure_tail_at_terminal": -127.9909372145365,
+        "failure_tail_at_start": -30.51970366602177,
+        "discounted_adjusted_return": -90.13617521688025,
+        "mean_posture_quality": 0.32130545896585555,
+        "mean_uncontrolled_motion_penalty": 0.9275525696006708,
+        "mean_support_quality": 0.14459784450045218,
+        "discounted_reward_components": {
+          "posture": -21.829948100615155,
+          "height": -4.387948276365966,
+          "motion": -33.3258442730135,
+          "support": 0.16572116715142926,
+          "recovery": 7.671425767580709e-20,
+          "terminal": -0.23845206801529312
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 287,
+        "terminal_step": 287,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 286,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.3833333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -130.27550689896597,
+        "undiscounted_failure_tail": -593.45,
+        "undiscounted_adjusted_return": -723.725506898966,
+        "discounted_physical_return": -59.61647155085847,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.23845206801529312,
+        "failure_tail_at_terminal": -128.01881273599355,
+        "failure_tail_at_start": -30.526350641760207,
+        "discounted_adjusted_return": -90.14282219261868,
+        "mean_posture_quality": 0.32130545896585555,
+        "mean_uncontrolled_motion_penalty": 0.9275525696006708,
+        "mean_support_quality": 0.14459784450045218,
+        "discounted_reward_components": {
+          "posture": -21.829948100615155,
+          "height": -4.387948276365966,
+          "motion": -33.3258442730135,
+          "support": 0.16572116715142926,
+          "recovery": 7.671425767580709e-20,
+          "terminal": -0.23845206801529312
+        }
+      }
+    },
+    "native_physics_mild_backward": {
+      "stationary_collapse": {
+        "steps": 282,
+        "terminal_step": 282,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 281,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.341666666666667,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -87.0720136950462,
+        "undiscounted_failure_tail": -367.20000000000005,
+        "undiscounted_adjusted_return": -454.2720136950462,
+        "discounted_physical_return": -34.436857631327946,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.24450384299593586,
+        "failure_tail_at_terminal": -78.8010838649883,
+        "failure_tail_at_start": -19.267167837234673,
+        "discounted_adjusted_return": -53.70402546856262,
+        "mean_posture_quality": 0.5854070225679069,
+        "mean_uncontrolled_motion_penalty": 0.7775669306573991,
+        "mean_support_quality": 0.17878563025108152,
+        "discounted_reward_components": {
+          "posture": -11.268513938238568,
+          "height": -3.043421914505361,
+          "motion": -25.66306179978352,
+          "support": 5.782643864195457,
+          "recovery": -6.703607180022417e-18,
+          "terminal": -0.24450384299593586
+        }
+      },
+      "observed_collapse": {
+        "steps": 282,
+        "terminal_step": 282,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 281,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.341666666666667,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -87.0720136950462,
+        "undiscounted_failure_tail": -596.57007125517,
+        "undiscounted_adjusted_return": -683.6420849502161,
+        "discounted_physical_return": -34.436857631327946,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.24450384299593586,
+        "failure_tail_at_terminal": -128.02387858475134,
+        "failure_tail_at_start": -31.3023303092168,
+        "discounted_adjusted_return": -65.73918794054475,
+        "mean_posture_quality": 0.5854070225679069,
+        "mean_uncontrolled_motion_penalty": 0.7775669306573991,
+        "mean_support_quality": 0.17878563025108152,
+        "discounted_reward_components": {
+          "posture": -11.268513938238568,
+          "height": -3.043421914505361,
+          "motion": -25.66306179978352,
+          "support": 5.782643864195457,
+          "recovery": -6.703607180022417e-18,
+          "terminal": -0.24450384299593586
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 282,
+        "terminal_step": 282,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 281,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.341666666666667,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -87.0720136950462,
+        "undiscounted_failure_tail": -596.7,
+        "undiscounted_adjusted_return": -683.7720136950462,
+        "discounted_physical_return": -34.436857631327946,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.24450384299593586,
+        "failure_tail_at_terminal": -128.051761280606,
+        "failure_tail_at_start": -31.309147735506347,
+        "discounted_adjusted_return": -65.7460053668343,
+        "mean_posture_quality": 0.5854070225679069,
+        "mean_uncontrolled_motion_penalty": 0.7775669306573991,
+        "mean_support_quality": 0.17878563025108152,
+        "discounted_reward_components": {
+          "posture": -11.268513938238568,
+          "height": -3.043421914505361,
+          "motion": -25.66306179978352,
+          "support": 5.782643864195457,
+          "recovery": -6.703607180022417e-18,
+          "terminal": -0.24450384299593586
+        }
+      }
+    },
+    "native_physics_mild_forward": {
+      "stationary_collapse": {
+        "steps": 274,
+        "terminal_step": 274,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 273,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.275,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.49057833519642,
+        "undiscounted_failure_tail": -370.40000000000003,
+        "undiscounted_adjusted_return": -442.89057833519644,
+        "discounted_physical_return": -26.182706035959278,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.2545077687728011,
+        "failure_tail_at_terminal": -78.8324868266941,
+        "failure_tail_at_start": -20.06348032907315,
+        "discounted_adjusted_return": -46.24618636503243,
+        "mean_posture_quality": 0.5424470259535726,
+        "mean_uncontrolled_motion_penalty": 0.7297561558700905,
+        "mean_support_quality": 0.21461894122981037,
+        "discounted_reward_components": {
+          "posture": -12.285507820002994,
+          "height": -2.5486399864020117,
+          "motion": -23.902090956068523,
+          "support": 12.808040495287093,
+          "recovery": -1.2912546967131884e-17,
+          "terminal": -0.2545077687728011
+        }
+      },
+      "observed_collapse": {
+        "steps": 274,
+        "terminal_step": 274,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 273,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.275,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.49057833519642,
+        "undiscounted_failure_tail": -601.7689389785265,
+        "undiscounted_adjusted_return": -674.259517313723,
+        "discounted_physical_return": -26.182706035959278,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.2545077687728011,
+        "failure_tail_at_terminal": -128.07489728601072,
+        "failure_tail_at_start": -32.59605634406827,
+        "discounted_adjusted_return": -58.77876238002755,
+        "mean_posture_quality": 0.5424470259535726,
+        "mean_uncontrolled_motion_penalty": 0.7297561558700905,
+        "mean_support_quality": 0.21461894122981037,
+        "discounted_reward_components": {
+          "posture": -12.285507820002994,
+          "height": -2.5486399864020117,
+          "motion": -23.902090956068523,
+          "support": 12.808040495287093,
+          "recovery": -1.2912546967131884e-17,
+          "terminal": -0.2545077687728011
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 274,
+        "terminal_step": 274,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 273,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 2.275,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.49057833519642,
+        "undiscounted_failure_tail": -601.9,
+        "undiscounted_adjusted_return": -674.3905783351964,
+        "discounted_physical_return": -26.182706035959278,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.2545077687728011,
+        "failure_tail_at_terminal": -128.1027910933779,
+        "failure_tail_at_start": -32.60315553474387,
+        "discounted_adjusted_return": -58.78586157070315,
+        "mean_posture_quality": 0.5424470259535726,
+        "mean_uncontrolled_motion_penalty": 0.7297561558700905,
+        "mean_support_quality": 0.21461894122981037,
+        "discounted_reward_components": {
+          "posture": -12.285507820002994,
+          "height": -2.5486399864020117,
+          "motion": -23.902090956068523,
+          "support": 12.808040495287093,
+          "recovery": -1.2912546967131884e-17,
+          "terminal": -0.2545077687728011
+        }
+      }
+    },
+    "native_physics_neutral": {
+      "stationary_collapse": {
+        "steps": 516,
+        "terminal_step": 516,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 146,
+          "UNBALANCED": 369,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 1.2166666666666666,
+          "UNBALANCED": 3.075,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": 26.246968496585097,
+        "undiscounted_failure_tail": -273.6,
+        "undiscounted_adjusted_return": -247.3530315034149,
+        "discounted_physical_return": 60.105733309851594,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.07566352740075048,
+        "failure_tail_at_terminal": -77.01833255794163,
+        "failure_tail_at_start": -5.8274787158579295,
+        "discounted_adjusted_return": 54.278254593993665,
+        "mean_posture_quality": 0.6195258056799127,
+        "mean_uncontrolled_motion_penalty": 0.5857551381157404,
+        "mean_support_quality": 0.4565859696032236,
+        "discounted_reward_components": {
+          "posture": -6.829929000957967,
+          "height": -0.650780390470081,
+          "motion": -16.609135801373224,
+          "support": 84.27124203005357,
+          "recovery": -2.228170034217158e-17,
+          "terminal": -0.07566352740075048
+        }
+      },
+      "observed_collapse": {
+        "steps": 516,
+        "terminal_step": 516,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 146,
+          "UNBALANCED": 369,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 1.2166666666666666,
+          "UNBALANCED": 3.075,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": 26.246968496585097,
+        "undiscounted_failure_tail": -444.5031903469894,
+        "undiscounted_adjusted_return": -418.2562218504043,
+        "discounted_physical_return": 60.105733309851594,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.07566352740075048,
+        "failure_tail_at_terminal": -125.12753851319613,
+        "failure_tail_at_start": -9.467590938881676,
+        "discounted_adjusted_return": 50.638142370969916,
+        "mean_posture_quality": 0.6195258056799127,
+        "mean_uncontrolled_motion_penalty": 0.5857551381157404,
+        "mean_support_quality": 0.4565859696032236,
+        "discounted_reward_components": {
+          "posture": -6.829929000957967,
+          "height": -0.650780390470081,
+          "motion": -16.609135801373224,
+          "support": 84.27124203005357,
+          "recovery": -2.228170034217158e-17,
+          "terminal": -0.07566352740075048
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 516,
+        "terminal_step": 516,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 146,
+          "UNBALANCED": 369,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 1.2166666666666666,
+          "UNBALANCED": 3.075,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": 26.246968496585097,
+        "undiscounted_failure_tail": -444.6,
+        "undiscounted_adjusted_return": -418.3530315034149,
+        "discounted_physical_return": 60.105733309851594,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.07566352740075048,
+        "failure_tail_at_terminal": -125.15479040665517,
+        "failure_tail_at_start": -9.469652913269137,
+        "discounted_adjusted_return": 50.63608039658246,
+        "mean_posture_quality": 0.6195258056799127,
+        "mean_uncontrolled_motion_penalty": 0.5857551381157404,
+        "mean_support_quality": 0.4565859696032236,
+        "discounted_reward_components": {
+          "posture": -6.829929000957967,
+          "height": -0.650780390470081,
+          "motion": -16.609135801373224,
+          "support": 84.27124203005357,
+          "recovery": -2.228170034217158e-17,
+          "terminal": -0.07566352740075048
+        }
+      }
+    },
+    "native_physics_one_foot_landing": {
+      "stationary_collapse": {
+        "steps": 382,
+        "terminal_step": 382,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 381,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 3.175,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -76.05448048316703,
+        "undiscounted_failure_tail": -327.20000000000005,
+        "undiscounted_adjusted_return": -403.2544804831671,
+        "discounted_physical_return": -9.408281647442521,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.14811319969530848,
+        "failure_tail_at_terminal": -78.28115694182792,
+        "failure_tail_at_start": -11.594472630504741,
+        "discounted_adjusted_return": -21.00275427794726,
+        "mean_posture_quality": 0.6766788448142323,
+        "mean_uncontrolled_motion_penalty": 0.7716180468023084,
+        "mean_support_quality": 0.26769446949725995,
+        "discounted_reward_components": {
+          "posture": -7.157062528762117,
+          "height": -1.7859625427780863,
+          "motion": -27.003949289986778,
+          "support": 26.686805913779803,
+          "recovery": 6.6162022367792016e-18,
+          "terminal": -0.14811319969530848
+        }
+      },
+      "observed_collapse": {
+        "steps": 382,
+        "terminal_step": 382,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 381,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 3.175,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -76.05448048316703,
+        "undiscounted_failure_tail": -531.5842247132125,
+        "undiscounted_adjusted_return": -607.6387051963795,
+        "discounted_physical_return": -9.408281647442521,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.14811319969530848,
+        "failure_tail_at_terminal": -127.17918130371301,
+        "failure_tail_at_start": -18.836915477522687,
+        "discounted_adjusted_return": -28.24519712496521,
+        "mean_posture_quality": 0.6766788448142323,
+        "mean_uncontrolled_motion_penalty": 0.7716180468023084,
+        "mean_support_quality": 0.26769446949725995,
+        "discounted_reward_components": {
+          "posture": -7.157062528762117,
+          "height": -1.7859625427780863,
+          "motion": -27.003949289986778,
+          "support": 26.686805913779803,
+          "recovery": 6.6162022367792016e-18,
+          "terminal": -0.14811319969530848
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 382,
+        "terminal_step": 382,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 381,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 3.175,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -76.05448048316703,
+        "undiscounted_failure_tail": -531.7,
+        "undiscounted_adjusted_return": -607.7544804831671,
+        "discounted_physical_return": -9.408281647442521,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.14811319969530848,
+        "failure_tail_at_terminal": -127.20688003047037,
+        "failure_tail_at_start": -18.841018024570207,
+        "discounted_adjusted_return": -28.24929967201273,
+        "mean_posture_quality": 0.6766788448142323,
+        "mean_uncontrolled_motion_penalty": 0.7716180468023084,
+        "mean_support_quality": 0.26769446949725995,
+        "discounted_reward_components": {
+          "posture": -7.157062528762117,
+          "height": -1.7859625427780863,
+          "motion": -27.003949289986778,
+          "support": 26.686805913779803,
+          "recovery": 6.6162022367792016e-18,
+          "terminal": -0.14811319969530848
+        }
+      }
+    },
+    "native_physics_rapid_rotation": {
+      "stationary_collapse": {
+        "steps": 417,
+        "terminal_step": 417,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 22,
+          "UNBALANCED": 394,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.18333333333333332,
+          "UNBALANCED": 3.283333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -180.67777046065552,
+        "undiscounted_failure_tail": -313.20000000000005,
+        "undiscounted_adjusted_return": -493.8777704606556,
+        "discounted_physical_return": -45.91466562510447,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.1242800989098765,
+        "failure_tail_at_terminal": -78.02824340376922,
+        "failure_tail_at_start": -9.697357807984357,
+        "discounted_adjusted_return": -55.61202343308882,
+        "mean_posture_quality": 0.23772296001808574,
+        "mean_uncontrolled_motion_penalty": 0.8549236832579651,
+        "mean_support_quality": 0.13657970766843974,
+        "discounted_reward_components": {
+          "posture": -24.292842187616348,
+          "height": -10.356854664070474,
+          "motion": -31.986397675285406,
+          "support": 20.845709000777585,
+          "recovery": 4.0181566828569036e-18,
+          "terminal": -0.1242800989098765
+        }
+      },
+      "observed_collapse": {
+        "steps": 417,
+        "terminal_step": 417,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 22,
+          "UNBALANCED": 394,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.18333333333333332,
+          "UNBALANCED": 3.283333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -180.67777046065552,
+        "undiscounted_failure_tail": -508.83917842352736,
+        "undiscounted_adjusted_return": -689.5169488841829,
+        "discounted_physical_return": -45.91466562510447,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.1242800989098765,
+        "failure_tail_at_terminal": -126.76828629439638,
+        "failure_tail_at_start": -15.754775159303122,
+        "discounted_adjusted_return": -61.66944078440759,
+        "mean_posture_quality": 0.23772296001808574,
+        "mean_uncontrolled_motion_penalty": 0.8549236832579651,
+        "mean_support_quality": 0.13657970766843974,
+        "discounted_reward_components": {
+          "posture": -24.292842187616348,
+          "height": -10.356854664070474,
+          "motion": -31.986397675285406,
+          "support": 20.845709000777585,
+          "recovery": 4.0181566828569036e-18,
+          "terminal": -0.1242800989098765
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 417,
+        "terminal_step": 417,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 22,
+          "UNBALANCED": 394,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.18333333333333332,
+          "UNBALANCED": 3.283333333333333,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -180.67777046065552,
+        "undiscounted_failure_tail": -508.95000000000005,
+        "undiscounted_adjusted_return": -689.6277704606556,
+        "discounted_physical_return": -45.91466562510447,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.1242800989098765,
+        "failure_tail_at_terminal": -126.795895531125,
+        "failure_tail_at_start": -15.758206437974582,
+        "discounted_adjusted_return": -61.672872063079055,
+        "mean_posture_quality": 0.23772296001808574,
+        "mean_uncontrolled_motion_penalty": 0.8549236832579651,
+        "mean_support_quality": 0.13657970766843974,
+        "discounted_reward_components": {
+          "posture": -24.292842187616348,
+          "height": -10.356854664070474,
+          "motion": -31.986397675285406,
+          "support": 20.845709000777585,
+          "recovery": 4.0181566828569036e-18,
+          "terminal": -0.1242800989098765
+        }
+      }
+    },
+    "native_physics_recovery_attempt": {
+      "stationary_collapse": {
+        "steps": 368,
+        "terminal_step": 368,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 100,
+          "UNBALANCED": 267,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.8333333333333334,
+          "UNBALANCED": 2.225,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": 26.594478971089803,
+        "undiscounted_failure_tail": -332.8,
+        "undiscounted_adjusted_return": -306.2055210289102,
+        "discounted_physical_return": 43.05788060460981,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.15888051309497409,
+        "failure_tail_at_terminal": -78.37053477839005,
+        "failure_tail_at_start": -12.451550777118122,
+        "discounted_adjusted_return": 30.606329827491685,
+        "mean_posture_quality": 0.5642097031983888,
+        "mean_uncontrolled_motion_penalty": 0.5138219998198502,
+        "mean_support_quality": 0.4645104723281009,
+        "discounted_reward_components": {
+          "posture": -10.156691891833045,
+          "height": -1.225018546213593,
+          "motion": -15.424545096844978,
+          "support": 70.02301665259644,
+          "recovery": -4.104451476188135e-18,
+          "terminal": -0.15888051309497409
+        }
+      },
+      "observed_collapse": {
+        "steps": 368,
+        "terminal_step": 368,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 100,
+          "UNBALANCED": 267,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.8333333333333334,
+          "UNBALANCED": 2.225,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": 26.594478971089803,
+        "undiscounted_failure_tail": -540.6822432290866,
+        "undiscounted_adjusted_return": -514.0877642579968,
+        "discounted_physical_return": 43.05788060460981,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.15888051309497409,
+        "failure_tail_at_terminal": -127.32438866298999,
+        "failure_tail_at_start": -20.22936420027975,
+        "discounted_adjusted_return": 22.828516404330056,
+        "mean_posture_quality": 0.5642097031983888,
+        "mean_uncontrolled_motion_penalty": 0.5138219998198502,
+        "mean_support_quality": 0.4645104723281009,
+        "discounted_reward_components": {
+          "posture": -10.156691891833045,
+          "height": -1.225018546213593,
+          "motion": -15.424545096844978,
+          "support": 70.02301665259644,
+          "recovery": -4.104451476188135e-18,
+          "terminal": -0.15888051309497409
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 368,
+        "terminal_step": 368,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 100,
+          "UNBALANCED": 267,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.8333333333333334,
+          "UNBALANCED": 2.225,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": 26.594478971089803,
+        "undiscounted_failure_tail": -540.8000000000001,
+        "undiscounted_adjusted_return": -514.2055210289103,
+        "discounted_physical_return": 43.05788060460981,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.15888051309497409,
+        "failure_tail_at_terminal": -127.35211901488384,
+        "failure_tail_at_start": -20.23377001281695,
+        "discounted_adjusted_return": 22.824110591792856,
+        "mean_posture_quality": 0.5642097031983888,
+        "mean_uncontrolled_motion_penalty": 0.5138219998198502,
+        "mean_support_quality": 0.4645104723281009,
+        "discounted_reward_components": {
+          "posture": -10.156691891833045,
+          "height": -1.225018546213593,
+          "motion": -15.424545096844978,
+          "support": 70.02301665259644,
+          "recovery": -4.104451476188135e-18,
+          "terminal": -0.15888051309497409
+        }
+      }
+    },
+    "native_physics_right_lateral": {
+      "stationary_collapse": {
+        "steps": 235,
+        "terminal_step": 235,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 234,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.95,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -102.0621770390096,
+        "undiscounted_failure_tail": -386.0,
+        "undiscounted_adjusted_return": -488.0621770390096,
+        "discounted_physical_return": -53.16273901233581,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.3094574157757028,
+        "failure_tail_at_terminal": -78.96877238907919,
+        "failure_tail_at_start": -24.437472230504117,
+        "discounted_adjusted_return": -77.60021124283993,
+        "mean_posture_quality": 0.3842177866931422,
+        "mean_uncontrolled_motion_penalty": 0.9148600824741631,
+        "mean_support_quality": 0.1644967953858013,
+        "discounted_reward_components": {
+          "posture": -18.78268926911577,
+          "height": -4.270376633749491,
+          "motion": -29.90607447671576,
+          "support": 0.10585878302094524,
+          "recovery": 3.652352376577616e-20,
+          "terminal": -0.3094574157757028
+        }
+      },
+      "observed_collapse": {
+        "steps": 235,
+        "terminal_step": 235,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 234,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.95,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -102.0621770390096,
+        "undiscounted_failure_tail": -627.11341912989,
+        "undiscounted_adjusted_return": -729.1755961688996,
+        "discounted_physical_return": -53.16273901233581,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.3094574157757028,
+        "failure_tail_at_terminal": -128.2963131020868,
+        "failure_tail_at_start": -39.70224550612222,
+        "discounted_adjusted_return": -92.86498451845803,
+        "mean_posture_quality": 0.3842177866931422,
+        "mean_uncontrolled_motion_penalty": 0.9148600824741631,
+        "mean_support_quality": 0.1644967953858013,
+        "discounted_reward_components": {
+          "posture": -18.78268926911577,
+          "height": -4.270376633749491,
+          "motion": -29.90607447671576,
+          "support": 0.10585878302094524,
+          "recovery": 3.652352376577616e-20,
+          "terminal": -0.3094574157757028
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 235,
+        "terminal_step": 235,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 234,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.95,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -102.0621770390096,
+        "undiscounted_failure_tail": -627.25,
+        "undiscounted_adjusted_return": -729.3121770390096,
+        "discounted_physical_return": -53.16273901233581,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.3094574157757028,
+        "failure_tail_at_terminal": -128.3242551322537,
+        "failure_tail_at_start": -39.7108923745692,
+        "discounted_adjusted_return": -92.873631386905,
+        "mean_posture_quality": 0.3842177866931422,
+        "mean_uncontrolled_motion_penalty": 0.9148600824741631,
+        "mean_support_quality": 0.1644967953858013,
+        "discounted_reward_components": {
+          "posture": -18.78268926911577,
+          "height": -4.270376633749491,
+          "motion": -29.90607447671576,
+          "support": 0.10585878302094524,
+          "recovery": 3.652352376577616e-20,
+          "terminal": -0.3094574157757028
+        }
+      }
+    },
+    "native_physics_severe_backward": {
+      "stationary_collapse": {
+        "steps": 138,
+        "terminal_step": 138,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 137,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.1416666666666666,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.62349764856553,
+        "undiscounted_failure_tail": -424.8,
+        "undiscounted_adjusted_return": -497.42349764856556,
+        "discounted_physical_return": -49.68673700170225,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.5032248303978423,
+        "failure_tail_at_terminal": -79.21182745078895,
+        "failure_tail_at_start": -39.861358434426414,
+        "discounted_adjusted_return": -89.54809543612866,
+        "mean_posture_quality": 0.055975699679979785,
+        "mean_uncontrolled_motion_penalty": 0.8208896427642834,
+        "mean_support_quality": 0.07405708518093188,
+        "discounted_reward_components": {
+          "posture": -23.366336100402,
+          "height": -6.561869225151925,
+          "motion": -19.28744646659181,
+          "support": 0.032139620841313915,
+          "recovery": -9.486219327811544e-20,
+          "terminal": -0.5032248303978423
+        }
+      },
+      "observed_collapse": {
+        "steps": 138,
+        "terminal_step": 138,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 137,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.1416666666666666,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.62349764856553,
+        "undiscounted_failure_tail": -690.1496902755888,
+        "undiscounted_adjusted_return": -762.7731879241543,
+        "discounted_physical_return": -49.68673700170225,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.5032248303978423,
+        "failure_tail_at_terminal": -128.69119157562469,
+        "failure_tail_at_start": -64.76060305433997,
+        "discounted_adjusted_return": -114.44734005604221,
+        "mean_posture_quality": 0.055975699679979785,
+        "mean_uncontrolled_motion_penalty": 0.8208896427642834,
+        "mean_support_quality": 0.07405708518093188,
+        "discounted_reward_components": {
+          "posture": -23.366336100402,
+          "height": -6.561869225151925,
+          "motion": -19.28744646659181,
+          "support": 0.032139620841313915,
+          "recovery": -9.486219327811544e-20,
+          "terminal": -0.5032248303978423
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 138,
+        "terminal_step": 138,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 137,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.1416666666666666,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.62349764856553,
+        "undiscounted_failure_tail": -690.3000000000001,
+        "undiscounted_adjusted_return": -762.9234976485656,
+        "discounted_physical_return": -49.68673700170225,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.5032248303978423,
+        "failure_tail_at_terminal": -128.71921960753204,
+        "failure_tail_at_start": -64.77470745594293,
+        "discounted_adjusted_return": -114.46144445764517,
+        "mean_posture_quality": 0.055975699679979785,
+        "mean_uncontrolled_motion_penalty": 0.8208896427642834,
+        "mean_support_quality": 0.07405708518093188,
+        "discounted_reward_components": {
+          "posture": -23.366336100402,
+          "height": -6.561869225151925,
+          "motion": -19.28744646659181,
+          "support": 0.032139620841313915,
+          "recovery": -9.486219327811544e-20,
+          "terminal": -0.5032248303978423
+        }
+      }
+    },
+    "native_physics_severe_forward": {
+      "stationary_collapse": {
+        "steps": 141,
+        "terminal_step": 141,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 140,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.1666666666666667,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.24977952771097,
+        "undiscounted_failure_tail": -423.6,
+        "undiscounted_adjusted_return": -495.849779527711,
+        "discounted_physical_return": -49.09318377558192,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.4957141369010507,
+        "failure_tail_at_terminal": -79.20594614778793,
+        "failure_tail_at_start": -39.26350723208179,
+        "discounted_adjusted_return": -88.35669100766371,
+        "mean_posture_quality": 0.054050640864314485,
+        "mean_uncontrolled_motion_penalty": 0.8322770164340628,
+        "mean_support_quality": 0.14150181215427995,
+        "discounted_reward_components": {
+          "posture": -23.757518955990133,
+          "height": -5.018590004069206,
+          "motion": -19.902417376725985,
+          "support": 0.08105669810443132,
+          "recovery": -4.866675972530319e-20,
+          "terminal": -0.4957141369010507
+        }
+      },
+      "observed_collapse": {
+        "steps": 141,
+        "terminal_step": 141,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 140,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.1666666666666667,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.24977952771097,
+        "undiscounted_failure_tail": -688.20011487933,
+        "undiscounted_adjusted_return": -760.449894407041,
+        "discounted_physical_return": -49.09318377558192,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.4957141369010507,
+        "failure_tail_at_terminal": -128.68163653926743,
+        "failure_tail_at_start": -63.78930639207766,
+        "discounted_adjusted_return": -112.88249016765958,
+        "mean_posture_quality": 0.054050640864314485,
+        "mean_uncontrolled_motion_penalty": 0.8322770164340628,
+        "mean_support_quality": 0.14150181215427995,
+        "discounted_reward_components": {
+          "posture": -23.757518955990133,
+          "height": -5.018590004069206,
+          "motion": -19.902417376725985,
+          "support": 0.08105669810443132,
+          "recovery": -4.866675972530319e-20,
+          "terminal": -0.4957141369010507
+        }
+      },
+      "physical_lower_bound": {
+        "steps": 141,
+        "terminal_step": 141,
+        "terminated": true,
+        "truncated": false,
+        "state_steps": {
+          "BALANCED": 0,
+          "UNBALANCED": 140,
+          "FALLEN": 1
+        },
+        "state_seconds": {
+          "BALANCED": 0.0,
+          "UNBALANCED": 1.1666666666666667,
+          "FALLEN": 0.008333333333333333
+        },
+        "undiscounted_physical_reward": -72.24977952771097,
+        "undiscounted_failure_tail": -688.35,
+        "undiscounted_adjusted_return": -760.599779527711,
+        "discounted_physical_return": -49.09318377558192,
+        "terminal_penalty_undiscounted": -1.0,
+        "terminal_penalty_discounted": -0.4957141369010507,
+        "failure_tail_at_terminal": -128.70966249015538,
+        "failure_tail_at_start": -63.80319925213291,
+        "discounted_adjusted_return": -112.89638302771483,
+        "mean_posture_quality": 0.054050640864314485,
+        "mean_uncontrolled_motion_penalty": 0.8322770164340628,
+        "mean_support_quality": 0.14150181215427995,
+        "discounted_reward_components": {
+          "posture": -23.757518955990133,
+          "height": -5.018590004069206,
+          "motion": -19.902417376725985,
+          "support": 0.08105669810443132,
+          "recovery": -4.866675972530319e-20,
+          "terminal": -0.4957141369010507
+        }
+      }
+    }
+  },
+  "sensitivity": [
+    {
+      "scenario": "sustained_controlled_standing",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 99.94942130090583
+    },
+    {
+      "scenario": "sustained_controlled_standing",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 99.94942130090583
+    },
+    {
+      "scenario": "sustained_controlled_standing",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 199.41165483689758
+    },
+    {
+      "scenario": "sustained_controlled_standing",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 199.41165483689758
+    },
+    {
+      "scenario": "sustained_controlled_standing",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 698.607096804143
+    },
+    {
+      "scenario": "sustained_controlled_standing",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 698.607096804143
+    },
+    {
+      "scenario": "sustained_controlled_standing",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 1199.3004999999926
+    },
+    {
+      "scenario": "sustained_controlled_standing",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 1199.3004999999926
+    },
+    {
+      "scenario": "prompt_recovery",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 41.579731433961896
+    },
+    {
+      "scenario": "prompt_recovery",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 41.579731433961896
+    },
+    {
+      "scenario": "prompt_recovery",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 122.75634530905417
+    },
+    {
+      "scenario": "prompt_recovery",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 122.75634530905417
+    },
+    {
+      "scenario": "prompt_recovery",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 602.3043485349239
+    },
+    {
+      "scenario": "prompt_recovery",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 602.3043485349239
+    },
+    {
+      "scenario": "prompt_recovery",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 1097.1980578440534
+    },
+    {
+      "scenario": "prompt_recovery",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 1097.1980578440534
+    },
+    {
+      "scenario": "delayed_recovery",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 3.088507228926381
+    },
+    {
+      "scenario": "delayed_recovery",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 3.088507228926381
+    },
+    {
+      "scenario": "delayed_recovery",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -5.739738617559856
+    },
+    {
+      "scenario": "delayed_recovery",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -5.739738617559856
+    },
+    {
+      "scenario": "delayed_recovery",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 84.19967118715947
+    },
+    {
+      "scenario": "delayed_recovery",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 84.19967118715947
+    },
+    {
+      "scenario": "delayed_recovery",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 290.02095145697086
+    },
+    {
+      "scenario": "delayed_recovery",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 290.02095145697086
+    },
+    {
+      "scenario": "constant_unbalanced_posture",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 3.061341221777302
+    },
+    {
+      "scenario": "constant_unbalanced_posture",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 3.061341221777302
+    },
+    {
+      "scenario": "constant_unbalanced_posture",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -8.77225404025911
+    },
+    {
+      "scenario": "constant_unbalanced_posture",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -8.77225404025911
+    },
+    {
+      "scenario": "constant_unbalanced_posture",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -69.41786229967721
+    },
+    {
+      "scenario": "constant_unbalanced_posture",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -69.41786229967721
+    },
+    {
+      "scenario": "constant_unbalanced_posture",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -130.41718845965488
+    },
+    {
+      "scenario": "constant_unbalanced_posture",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -130.41718845965488
+    },
+    {
+      "scenario": "controlled_crouch",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 60.534912669247106
+    },
+    {
+      "scenario": "controlled_crouch",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 60.534912669247106
+    },
+    {
+      "scenario": "controlled_crouch",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 129.11823843364576
+    },
+    {
+      "scenario": "controlled_crouch",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 129.11823843364576
+    },
+    {
+      "scenario": "controlled_crouch",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 506.71428604910403
+    },
+    {
+      "scenario": "controlled_crouch",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 506.71428604910403
+    },
+    {
+      "scenario": "controlled_crouch",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 892.6672463321904
+    },
+    {
+      "scenario": "controlled_crouch",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 892.6672463321904
+    },
+    {
+      "scenario": "oscillate_near_balanced_boundary",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 23.307855782210403
+    },
+    {
+      "scenario": "oscillate_near_balanced_boundary",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 23.307855782210403
+    },
+    {
+      "scenario": "oscillate_near_balanced_boundary",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 40.61802066506511
+    },
+    {
+      "scenario": "oscillate_near_balanced_boundary",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 40.61802066506511
+    },
+    {
+      "scenario": "oscillate_near_balanced_boundary",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 129.9749980192512
+    },
+    {
+      "scenario": "oscillate_near_balanced_boundary",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 129.9749980192512
+    },
+    {
+      "scenario": "oscillate_near_balanced_boundary",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 220.00835638593986
+    },
+    {
+      "scenario": "oscillate_near_balanced_boundary",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 220.00835638593986
+    },
+    {
+      "scenario": "constant_near_balanced_posture",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 78.1749987064342
+    },
+    {
+      "scenario": "constant_near_balanced_posture",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 78.1749987064342
+    },
+    {
+      "scenario": "constant_near_balanced_posture",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 128.80468662297955
+    },
+    {
+      "scenario": "constant_near_balanced_posture",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 128.80468662297955
+    },
+    {
+      "scenario": "constant_near_balanced_posture",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 344.428052984848
+    },
+    {
+      "scenario": "constant_near_balanced_posture",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 344.428052984848
+    },
+    {
+      "scenario": "constant_near_balanced_posture",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 553.0591722695664
+    },
+    {
+      "scenario": "constant_near_balanced_posture",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 553.0591722695664
+    },
+    {
+      "scenario": "constant_near_fall_stall",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 0.725997080767214
+    },
+    {
+      "scenario": "constant_near_fall_stall",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 0.725997080767214
+    },
+    {
+      "scenario": "constant_near_fall_stall",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -34.184799068246726
+    },
+    {
+      "scenario": "constant_near_fall_stall",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -34.184799068246726
+    },
+    {
+      "scenario": "constant_near_fall_stall",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -228.3082517636984
+    },
+    {
+      "scenario": "constant_near_fall_stall",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -228.3082517636984
+    },
+    {
+      "scenario": "constant_near_fall_stall",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -425.5303581571032
+    },
+    {
+      "scenario": "constant_near_fall_stall",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -425.5303581571032
+    },
+    {
+      "scenario": "oscillate_near_fallen_boundary",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 0.7172798568652534
+    },
+    {
+      "scenario": "oscillate_near_fallen_boundary",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 0.7172798568652534
+    },
+    {
+      "scenario": "oscillate_near_fallen_boundary",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -34.231688945674065
+    },
+    {
+      "scenario": "oscillate_near_fallen_boundary",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -34.231688945674065
+    },
+    {
+      "scenario": "oscillate_near_fallen_boundary",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -228.63892508660814
+    },
+    {
+      "scenario": "oscillate_near_fallen_boundary",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -228.63892508660814
+    },
+    {
+      "scenario": "oscillate_near_fallen_boundary",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -426.1690265306326
+    },
+    {
+      "scenario": "oscillate_near_fallen_boundary",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -426.1690265306326
+    },
+    {
+      "scenario": "slow_collapse_below_terminal_angle",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 38.363501813029096
+    },
+    {
+      "scenario": "slow_collapse_below_terminal_angle",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 38.363501813029096
+    },
+    {
+      "scenario": "slow_collapse_below_terminal_angle",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 25.124673621812416
+    },
+    {
+      "scenario": "slow_collapse_below_terminal_angle",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 25.124673621812416
+    },
+    {
+      "scenario": "slow_collapse_below_terminal_angle",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -125.82260910505617
+    },
+    {
+      "scenario": "slow_collapse_below_terminal_angle",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -125.82260910505617
+    },
+    {
+      "scenario": "slow_collapse_below_terminal_angle",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -295.40172341749445
+    },
+    {
+      "scenario": "slow_collapse_below_terminal_angle",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -295.40172341749445
+    },
+    {
+      "scenario": "confirmed_collapse",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -16.64328476594808
+    },
+    {
+      "scenario": "confirmed_collapse",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -26.362738116061458
+    },
+    {
+      "scenario": "confirmed_collapse",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -55.921996296441435
+    },
+    {
+      "scenario": "confirmed_collapse",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -87.01320338784225
+    },
+    {
+      "scenario": "confirmed_collapse",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -255.46062164615768
+    },
+    {
+      "scenario": "confirmed_collapse",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -407.76725222632604
+    },
+    {
+      "scenario": "confirmed_collapse",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -455.83544121410125
+    },
+    {
+      "scenario": "confirmed_collapse",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -732.3354412141011
+    },
+    {
+      "scenario": "native_physics_brief_airborne",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 25.40818874817927
+    },
+    {
+      "scenario": "native_physics_brief_airborne",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 25.366880063486526
+    },
+    {
+      "scenario": "native_physics_brief_airborne",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 35.886764994154866
+    },
+    {
+      "scenario": "native_physics_brief_airborne",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 33.956401978004976
+    },
+    {
+      "scenario": "native_physics_brief_airborne",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -87.55945075241382
+    },
+    {
+      "scenario": "native_physics_brief_airborne",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -144.48312941905118
+    },
+    {
+      "scenario": "native_physics_brief_airborne",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -263.6743366718887
+    },
+    {
+      "scenario": "native_physics_brief_airborne",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -404.4243366718887
+    },
+    {
+      "scenario": "native_physics_edge_landing",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -8.80969691511841
+    },
+    {
+      "scenario": "native_physics_edge_landing",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -8.8721439040728
+    },
+    {
+      "scenario": "native_physics_edge_landing",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -45.090352599504925
+    },
+    {
+      "scenario": "native_physics_edge_landing",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -47.48899514032691
+    },
+    {
+      "scenario": "native_physics_edge_landing",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -269.98801963409596
+    },
+    {
+      "scenario": "native_physics_edge_landing",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -332.44641050491737
+    },
+    {
+      "scenario": "native_physics_edge_landing",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -491.4974548869883
+    },
+    {
+      "scenario": "native_physics_edge_landing",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -642.4974548869883
+    },
+    {
+      "scenario": "native_physics_horizontal_collapse",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -42.507081357363056
+    },
+    {
+      "scenario": "native_physics_horizontal_collapse",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -62.148890275801215
+    },
+    {
+      "scenario": "native_physics_horizontal_collapse",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -82.5589677314708
+    },
+    {
+      "scenario": "native_physics_horizontal_collapse",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -126.76955696576003
+    },
+    {
+      "scenario": "native_physics_horizontal_collapse",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -282.56400728547567
+    },
+    {
+      "scenario": "native_physics_horizontal_collapse",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -451.3791466580333
+    },
+    {
+      "scenario": "native_physics_horizontal_collapse",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -483.02572997645603
+    },
+    {
+      "scenario": "native_physics_horizontal_collapse",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -777.025729976456
+    },
+    {
+      "scenario": "native_physics_left_lateral",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -34.151788751467386
+    },
+    {
+      "scenario": "native_physics_left_lateral",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -35.548787146473096
+    },
+    {
+      "scenario": "native_physics_left_lateral",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -78.40191809963399
+    },
+    {
+      "scenario": "native_physics_left_lateral",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -90.14282219261868
+    },
+    {
+      "scenario": "native_physics_left_lateral",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -289.80275831084725
+    },
+    {
+      "scenario": "native_physics_left_lateral",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -402.1503926096069
+    },
+    {
+      "scenario": "native_physics_left_lateral",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -495.47550689896593
+    },
+    {
+      "scenario": "native_physics_left_lateral",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -723.7255068989659
+    },
+    {
+      "scenario": "native_physics_mild_backward",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -18.010960467925706
+    },
+    {
+      "scenario": "native_physics_mild_backward",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -19.479961623171004
+    },
+    {
+      "scenario": "native_physics_mild_backward",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -53.70402546856262
+    },
+    {
+      "scenario": "native_physics_mild_backward",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -65.7460053668343
+    },
+    {
+      "scenario": "native_physics_mild_backward",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -252.9104214764435
+    },
+    {
+      "scenario": "native_physics_mild_backward",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -366.19888132712776
+    },
+    {
+      "scenario": "native_physics_mild_backward",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -454.27201369504627
+    },
+    {
+      "scenario": "native_physics_mild_backward",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -683.7720136950463
+    },
+    {
+      "scenario": "native_physics_mild_forward",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -12.885099704216966
+    },
+    {
+      "scenario": "native_physics_mild_forward",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -14.477102709347044
+    },
+    {
+      "scenario": "native_physics_mild_forward",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -46.24618636503243
+    },
+    {
+      "scenario": "native_physics_mild_forward",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -58.78586157070315
+    },
+    {
+      "scenario": "native_physics_mild_forward",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -242.51832338815166
+    },
+    {
+      "scenario": "native_physics_mild_forward",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -357.32192796863126
+    },
+    {
+      "scenario": "native_physics_mild_forward",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -442.8905783351964
+    },
+    {
+      "scenario": "native_physics_mild_forward",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -674.3905783351963
+    },
+    {
+      "scenario": "native_physics_neutral",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 39.22435044027163
+    },
+    {
+      "scenario": "native_physics_neutral",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 39.084632820856136
+    },
+    {
+      "scenario": "native_physics_neutral",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 54.278254593993665
+    },
+    {
+      "scenario": "native_physics_neutral",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 50.63608039658246
+    },
+    {
+      "scenario": "native_physics_neutral",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -70.34365083347447
+    },
+    {
+      "scenario": "native_physics_neutral",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -144.27762074651108
+    },
+    {
+      "scenario": "native_physics_neutral",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -247.35303150341485
+    },
+    {
+      "scenario": "native_physics_neutral",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -418.35303150341485
+    },
+    {
+      "scenario": "native_physics_one_foot_landing",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 2.381630558011915
+    },
+    {
+      "scenario": "native_physics_one_foot_landing",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 1.8440202986524026
+    },
+    {
+      "scenario": "native_physics_one_foot_landing",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -21.00275427794726
+    },
+    {
+      "scenario": "native_physics_one_foot_landing",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -28.24929967201273
+    },
+    {
+      "scenario": "native_physics_one_foot_landing",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -205.76616491056203
+    },
+    {
+      "scenario": "native_physics_one_foot_landing",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -301.1039631735873
+    },
+    {
+      "scenario": "native_physics_one_foot_landing",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -403.25448048316713
+    },
+    {
+      "scenario": "native_physics_one_foot_landing",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -607.7544804831671
+    },
+    {
+      "scenario": "native_physics_rapid_rotation",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -12.455211008998248
+    },
+    {
+      "scenario": "native_physics_rapid_rotation",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -12.833348824772838
+    },
+    {
+      "scenario": "native_physics_rapid_rotation",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -55.61202343308882
+    },
+    {
+      "scenario": "native_physics_rapid_rotation",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -61.672872063079055
+    },
+    {
+      "scenario": "native_physics_rapid_rotation",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -279.57660902562986
+    },
+    {
+      "scenario": "native_physics_rapid_rotation",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -369.04411094036254
+    },
+    {
+      "scenario": "native_physics_rapid_rotation",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -493.8777704606555
+    },
+    {
+      "scenario": "native_physics_rapid_rotation",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -689.6277704606555
+    },
+    {
+      "scenario": "native_physics_recovery_attempt",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 30.569233693071084
+    },
+    {
+      "scenario": "native_physics_recovery_attempt",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 29.950376910061024
+    },
+    {
+      "scenario": "native_physics_recovery_attempt",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": 30.606329827491685
+    },
+    {
+      "scenario": "native_physics_recovery_attempt",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": 22.824110591792856
+    },
+    {
+      "scenario": "native_physics_recovery_attempt",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -120.44430397973821
+    },
+    {
+      "scenario": "native_physics_recovery_attempt",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -218.18838643012438
+    },
+    {
+      "scenario": "native_physics_recovery_attempt",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -306.2055210289102
+    },
+    {
+      "scenario": "native_physics_recovery_attempt",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -514.2055210289102
+    },
+    {
+      "scenario": "native_physics_right_lateral",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -34.56530106588798
+    },
+    {
+      "scenario": "native_physics_right_lateral",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -36.92134880053632
+    },
+    {
+      "scenario": "native_physics_right_lateral",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -77.60021124283993
+    },
+    {
+      "scenario": "native_physics_right_lateral",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -92.873631386905
+    },
+    {
+      "scenario": "native_physics_right_lateral",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -284.621285459918
+    },
+    {
+      "scenario": "native_physics_right_lateral",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -406.9874034475307
+    },
+    {
+      "scenario": "native_physics_right_lateral",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -488.0621770390096
+    },
+    {
+      "scenario": "native_physics_right_lateral",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -729.3121770390096
+    },
+    {
+      "scenario": "native_physics_severe_backward",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -45.17970682891279
+    },
+    {
+      "scenario": "native_physics_severe_backward",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -51.42548863863182
+    },
+    {
+      "scenario": "native_physics_severe_backward",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -89.54809543612866
+    },
+    {
+      "scenario": "native_physics_severe_backward",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -114.46144445764517
+    },
+    {
+      "scenario": "native_physics_severe_backward",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -295.14348949377916
+    },
+    {
+      "scenario": "native_physics_severe_backward",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -437.6497691983846
+    },
+    {
+      "scenario": "native_physics_severe_backward",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -497.4234976485655
+    },
+    {
+      "scenario": "native_physics_severe_backward",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -762.9234976485656
+    },
+    {
+      "scenario": "native_physics_severe_forward",
+      "gamma": 0.99,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -44.325674590412014
+    },
+    {
+      "scenario": "native_physics_severe_forward",
+      "gamma": 0.99,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -50.385946139784224
+    },
+    {
+      "scenario": "native_physics_severe_forward",
+      "gamma": 0.995,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -88.35669100766371
+    },
+    {
+      "scenario": "native_physics_severe_forward",
+      "gamma": 0.995,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -112.89638302771483
+    },
+    {
+      "scenario": "native_physics_severe_forward",
+      "gamma": 0.999,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -293.646800893767
+    },
+    {
+      "scenario": "native_physics_severe_forward",
+      "gamma": 0.999,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -435.50045474858985
+    },
+    {
+      "scenario": "native_physics_severe_forward",
+      "gamma": 1.0,
+      "utility": "stationary_collapse",
+      "discounted_adjusted_return": -495.84977952771095
+    },
+    {
+      "scenario": "native_physics_severe_forward",
+      "gamma": 1.0,
+      "utility": "physical_lower_bound",
+      "discounted_adjusted_return": -760.599779527711
+    }
+  ],
+  "step130_saved_106_case_verification_validated": true,
+  "step129_scenarios_replayed_exactly": 4,
+  "failure_tail_semantics": "Only confirmed FALLEN; correction at actual termination. UNBALANCED truncation receives no tail.",
+  "no_training_started": true,
+  "audit_uses_only_saved_physics_traces": true,
+  "fixture_classifier_physics_steps": 0,
+  "source_sha256": {
+    "python/balance_reward_v2.py": "73b6eeba7799c303b0cd0df50036b23b9ec13c85cede0ca9cf49dcfe1ecbce93",
+    "python/failure_tail.py": "0b743dee48fa77a8e9653324554d1f61ae989f9f0d27cf72a19e8c1f9acfe8c4",
+    "python/absorbing_failure_audit.py": "5c9b06157f0722ac2717ed9a571f32df8edfdb031b84d8f4f184f9562a95157b",
+    "python/reward_incentive_audit.py": "c5d83cb42e106b6dd26b5eff2085e05c838cbef44050d5984e7836470d899538",
+    "python/train_nn.py": "9106e0d43e7cd37cbbfcb5218321f19128baad03213a37b17750713557a01128",
+    "python/aura_env.py": "46d4f25dd06c4375a81901e9d53debf3bfd27508f2745f2e9569befdf4c98ecd",
+    "src/sim/BalanceClassifier.cpp": "e59e749f620e750022e3c0b0b22370443eec62dd306957450e537e51f8815dab",
+    "include/aura/sim/BalanceClassifier.hpp": "68f70b9eec609aaea632bc0fbc19606e24320b04e84013344bcb9908d4b8e0cb",
+    "include/aura/sim/Termination.hpp": "9d5b0cc284071aa464c619eb913f7104a091ddec4092c65fb098e0c7f5fc6f39",
+    "python/model_checkpoint.py": "3cef40036218362c52ebe89edbfe7c2b4e530585b8690adf9d822631383d8b4c",
+    "tests/incentive_fixture_classifier.cpp": "6c1e028e650e51f87376032f0559395ce182f69827b3354030d3794d4b152eb2"
+  },
+  "comparison_note": "Scenario initial conditions differ for crouch and threshold-stall fixtures; compare as task outcomes, not paired policy effects."
+}

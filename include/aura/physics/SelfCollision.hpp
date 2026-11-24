@@ -40,7 +40,7 @@ namespace aura::physics {
                            const body::AuraBody3D &owner, const body::AuraSkeleton3D &skeleton);
 
     // Unfiltered pair projection: position only; coincident centers use world +X.
-    void resolveSelfCollision(body::BodyPart3D &a, body::BodyPart3D &b);
+    void resolveSelfCollision(body::BodyPart3D & a, body::BodyPart3D & b);
 
     // One deterministic pair sweep. Joint repairs may reopen an overlap.
     void resolveBodySelfCollisions(body::AuraBody3D &body, const body::AuraSkeleton3D &skeleton);

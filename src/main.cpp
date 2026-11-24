@@ -23,10 +23,6 @@
 #include "aura/physics/RoomCollision.hpp"
 #include "aura/render/Camera.hpp"
 #include "aura/render/BodyRenderer.hpp"
-#include "aura/render/DirectionalLight.hpp"
-#include "aura/render/Mesh.hpp"
-#include "aura/render/Shader.hpp"
-#include "aura/render/ShadowMap.hpp"
 #include "aura/render/Window.hpp"
 
 #include "app/BodyDiagnostics.hpp"
@@ -48,7 +44,7 @@ void loadViewerAction(aura::sim::AuraAction &action) {
     }
 
     const auto json = nlohmann::json::parse(file);
-    for (const auto &spec : aura::sim::actionSpecs)
+    for (const auto &spec: aura::sim::actionSpecs)
         action.*(spec.target) = json.value(spec.key, action.*(spec.target));
 }
 
@@ -91,15 +87,17 @@ void writeViewerObservation(aura::sim::AuraSimulation &simulation, bool paused) 
         {"pelvis_uprightness", simulation.pelvisUprightness()},
         {"pelvis_up", {up.x, up.y, up.z}},
         {"pelvis_angular_velocity", {omega.x, omega.y, omega.z}},
-        {"is_standing", simulation.isStanding()}
+        { "balance_state", aura::sim::balanceStateName(simulation.observation().balance.state) },
+        {"is_standing", simulation.isStanding()},
+        {"terminated", simulation.terminationStatus().terminated},
+        {"termination_reason", simulation.terminationStatus().reason}
     };
-    for (const auto &spec : aura::sim::actionSpecs) {
+    for (const auto &spec: aura::sim::actionSpecs) {
         const auto joint = std::find_if(joints.begin(), joints.end(), [&](const auto &entry) {
             return std::string_view(entry.name) == spec.jointName;
         });
         if (joint != joints.end()) {
-            observation[spec.angleKey] = aura::body::relativeJointAngle(
-                *joint->partA, *joint->partB, joint->constraint);
+            observation[spec.angleKey] = aura::sim::actionAngle(spec, *joint->partA, *joint->partB, joint->constraint);
             observation["motor_enabled"][spec.key] = joint->motor;
         }
     }
@@ -146,10 +144,10 @@ int main() {
     auto &joints = simulation.getJoints();
 
     auto &roomBodies = simulation.getRoomBodies();
-    for (std::size_t i = 0; i < parts.size(); ++i) roomBodies[i] = {&parts[i]->body, parts[i]->size};
+    for (std::size_t i = 0; i < parts.size(); ++i) roomBodies[i] = {&parts[i]->body, parts[i]->size, parts[i]->floorShape};
     auto &camera = viewer.camera();
     const auto updateTitle = [&] {
-        const std::string title = "AURA | paused=" + std::to_string(paused) +
+        const std::string title = std::string("AURA | dry ground") + " | paused=" + std::to_string(paused) +
                                   " follow=" + std::to_string(followBody) +
                                   " | L-drag: orbit R-drag: pan | F: focus G: follow H: help";
         window.setTitle(title.c_str());

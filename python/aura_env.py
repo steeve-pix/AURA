@@ -1,10 +1,8 @@
 """Python-side, fixed-size observation contract for AURA's balance policy."""
 
-from math import isfinite, sqrt
-
 import aura_python
 import torch
-
+from math import isfinite, sqrt
 
 OBSERVATION_SCHEMA_VERSION = 2
 
@@ -42,20 +40,28 @@ def _feature(name, size, frame, scale):
 
 
 _FEATURES = (
-    _feature("joint_relative_orientations", len(JOINT_ORDER) * 4, "parent-relative quaternion (w,x,y,z)", "unit quaternion; canonical sign"),
-    _feature("joint_relative_angular_velocities", len(JOINT_ORDER) * 3, "parent-local", f"rad/s ÷ {ANGULAR_SPEED_SCALE:.6g} rad/s"),
+    _feature("joint_relative_orientations", len(JOINT_ORDER) * 4, "parent-relative quaternion (w,x,y,z)",
+             "unit quaternion; canonical sign"),
+    _feature("joint_relative_angular_velocities", len(JOINT_ORDER) * 3, "parent-local",
+             f"rad/s ÷ {ANGULAR_SPEED_SCALE:.6g} rad/s"),
     _feature("pelvis_up", 3, "world direction", "unit vector"),
     _feature("pelvis_angular_velocity", 3, "pelvis-local", f"rad/s ÷ {ANGULAR_SPEED_SCALE:.6g} rad/s"),
     _feature("com_position_relative_to_pelvis", 3, "pelvis-local", f"m ÷ {CHARACTER_HEIGHT:g} m"),
     _feature("com_velocity_relative_to_pelvis", 3, "pelvis rotating frame", f"m/s ÷ {LINEAR_SPEED_SCALE:.6g} m/s"),
     _feature("com_world_horizontal_velocity", 2, "world ground X,Z", f"m/s ÷ {LINEAR_SPEED_SCALE:.6g} m/s"),
-    _feature("foot_positions_relative_to_pelvis", 6, "pelvis-local; left XYZ then right XYZ", f"m ÷ {CHARACTER_HEIGHT:g} m"),
+    _feature("foot_positions_relative_to_pelvis", 6, "pelvis-local; left XYZ then right XYZ",
+             f"m ÷ {CHARACTER_HEIGHT:g} m"),
     _feature("foot_grounded", 2, "left then right", "boolean → 0 or 1"),
-    _feature("body_part_linear_velocities", len(BODY_PART_ORDER) * 3, "pelvis orientation frame; canonical body-part order", f"m/s ÷ {LINEAR_SPEED_SCALE:.6g} m/s"),
-    _feature("foot_velocities_relative_to_pelvis", 6, "pelvis rotating frame; left XYZ then right XYZ", f"m/s ÷ {LINEAR_SPEED_SCALE:.6g} m/s"),
-    _feature("support_state", 3, "world-ground support polygon", "valid mask, COM-inside flag, signed margin ÷ character height"),
-    _feature("support_polygon_geometry", 7, "world ground X,Z relative to projected COM", f"centroid/extent/perimeter ÷ {CHARACTER_HEIGHT:g} m; area ÷ H²; vertex count ÷ {MAX_SUPPORT_VERTICES}"),
-    _feature("foot_contact_geometry", 14, "per-foot pelvis-local summary; left then right", f"valid mask, point count ÷ {MAX_CONTACT_POINTS_PER_FOOT}, centroid offset and X/Z extent ÷ {CHARACTER_HEIGHT:g} m"),
+    _feature("body_part_linear_velocities", len(BODY_PART_ORDER) * 3,
+             "pelvis orientation frame; canonical body-part order", f"m/s ÷ {LINEAR_SPEED_SCALE:.6g} m/s"),
+    _feature("foot_velocities_relative_to_pelvis", 6, "pelvis rotating frame; left XYZ then right XYZ",
+             f"m/s ÷ {LINEAR_SPEED_SCALE:.6g} m/s"),
+    _feature("support_state", 3, "world-ground support polygon",
+             "valid mask, COM-inside flag, signed margin ÷ character height"),
+    _feature("support_polygon_geometry", 7, "world ground X,Z relative to projected COM",
+             f"centroid/extent/perimeter ÷ {CHARACTER_HEIGHT:g} m; area ÷ H²; vertex count ÷ {MAX_SUPPORT_VERTICES}"),
+    _feature("foot_contact_geometry", 14, "per-foot pelvis-local summary; left then right",
+             f"valid mask, point count ÷ {MAX_CONTACT_POINTS_PER_FOOT}, centroid offset and X/Z extent ÷ {CHARACTER_HEIGHT:g} m"),
 )
 
 
@@ -241,10 +247,10 @@ def encode_observation(obs):
         "com_position_relative_to_pelvis": [value / CHARACTER_HEIGHT for value in com_relative_position],
         "com_velocity_relative_to_pelvis": [value / LINEAR_SPEED_SCALE for value in com_relative_velocity],
         "com_world_horizontal_velocity": [com_velocity[0] / LINEAR_SPEED_SCALE,
-                                           com_velocity[2] / LINEAR_SPEED_SCALE],
+                                          com_velocity[2] / LINEAR_SPEED_SCALE],
         "foot_positions_relative_to_pelvis": [],
         "foot_grounded": [float(bool(obs["left_foot_grounded"])),
-                           float(bool(obs["right_foot_grounded"]))],
+                          float(bool(obs["right_foot_grounded"]))],
         "body_part_linear_velocities": [],
         "foot_velocities_relative_to_pelvis": [],
     }
@@ -313,6 +319,9 @@ def encode_observation(obs):
 
 
 def balance_reward(observation):
+    if observation.get("termination_mode", "legacy") != "legacy":
+        raise ValueError(
+            "Legacy balance_reward cannot be used with balance_v2 termination; use AuraEnv balance-quality reward")
     if observation["terminated"]:
         return 0.0
 
@@ -322,8 +331,50 @@ def balance_reward(observation):
 
 
 class AuraEnv:
-    def __init__(self):
-        self.simulation = aura_python.AuraSimulation()
+    """Primary finite-horizon balance task; legacy is explicit replay-only."""
+    def __init__(self, termination_mode="balance_v2", *, quality_version=None):
+        if termination_mode not in ("legacy", "balance_v2"):
+            raise ValueError("Unknown termination mode")
+        self._configure_quality(quality_version)
+        friction_mode = "legacy_velocity_damping" if termination_mode == "legacy" else "coulomb"
+        self.simulation = aura_python.AuraSimulation(termination_mode=termination_mode,
+                                                     floor_friction_mode=friction_mode)
+        self.info = None
+
+    def _configure_quality(self, version):
+        if __package__:
+            from .balance_quality import QUALITY_VERSION, quality_implementation
+        else:
+            from balance_quality import QUALITY_VERSION, quality_implementation
+        self.quality_version = QUALITY_VERSION if version is None else version
+        self.quality_config_type, self.quality_components = quality_implementation(self.quality_version)
+
+    @property
+    def termination_mode(self):
+        return self.simulation.termination_mode
+
+    @property
+    def termination_version(self):
+        return 2 if self.termination_mode == "balance_v2" else 1
+
+    @property
+    def reward_version(self):
+        return 3 if self.termination_mode == "balance_v2" else 1
+
+    @property
+    def environment_contract(self):
+        if self.reward_version == 1:
+            return dict(environment_version=1, termination_mode="legacy", termination_version=1,
+                        reward_version=1, reward_name="legacy_balance_reward")
+        from dataclasses import asdict
+        return dict(environment_version=5, termination_mode="balance_v2", termination_version=2,
+                    reward_version=3, reward_name="balance_quality", quality_version=self.quality_version,
+                    quality_config=asdict(self.quality_config_type()), floor_friction_version=3,
+                    floor_friction_model="coulomb_supported_contacts",
+                    ground_material=dict(static_friction=.8, dynamic_friction=.6),
+                    articulation_projection="mass_balanced_horizontal_com_v1", gamma=.995,
+                    episode_limit=self.episode_limit, terminal_reward=0., absorbing_utility=0.,
+                    truncation="finite_horizon_zero_continuation")
 
     @property
     def episode_limit(self):
@@ -334,9 +385,68 @@ class AuraEnv:
         return OBSERVATION_SIZE
 
     def reset(self):
+        if __package__:
+            from .balance_metrics import BalanceMetrics
+        else:
+            from balance_metrics import BalanceMetrics
         obs = self.simulation.reset()
+        self.metrics = BalanceMetrics()
+        obs.update(self.environment_contract, reward_total=None, reward=None, reward_available=True)
+        self.info = obs
         return encode_observation(obs), obs
 
     def step(self, action):
+        if self.info is None:
+            raise ValueError("Reset environment before stepping")
+        if self.info["done"]:
+            raise ValueError("Episode ended; reset before collecting more reward")
         obs = self.simulation.step_action(action)
-        return encode_observation(obs), balance_reward(obs), bool(obs["terminated"]), bool(obs["truncated"]), obs
+        state = encode_observation(obs)
+        if self.reward_version == 3:
+            qualities = self.quality_components(obs)
+            reward = 0. if obs["terminated"] else qualities["balance_quality"]
+            obs.update(reward_qualities=qualities)
+        else:
+            reward = balance_reward(obs)
+        obs.update(self.environment_contract, reward_total=reward, reward=reward, reward_available=True)
+        self.metrics.update(obs, reward)
+        obs["balance_metrics"] = self.metrics.result()
+        self.info = obs
+        return state, reward, bool(obs["terminated"]), bool(obs["truncated"]), obs
+
+
+class LegacyAuraEnv(AuraEnv):
+    """Historical reward/termination for archived REINFORCE experiments only."""
+    def __init__(self):
+        super().__init__(termination_mode="legacy")
+
+
+class BalanceV2Diagnostics:
+    """Raw info-only diagnostic wrapper, deliberately not a training Env API."""
+
+    def __init__(self, reward_config=None):
+        try:
+            from .balance_reward_v2 import BalanceRewardV2
+        except ImportError:
+            from balance_reward_v2 import BalanceRewardV2
+        self.simulation = aura_python.AuraSimulation(termination_mode="balance_v2")
+        self.reward_evaluator = BalanceRewardV2(reward_config)
+        self.info = None
+
+    def reset(self):
+        obs = self.simulation.reset()
+        self.reward_evaluator.reset(obs)
+        obs.update(reward_version=2, reward_name="balance_reward_v2", reward_total=None,
+                   reward_components=None, reward_available=True)
+        self.info = obs
+        return obs
+
+    def step(self, action):
+        if self.info is None: raise ValueError("Reset diagnostics before stepping")
+        if self.info["done"]: raise ValueError("Episode ended; reset diagnostics")
+        obs = self.simulation.step_action(action)
+        obs.update(self.reward_evaluator.update(obs))
+        obs["reward"] = obs["reward_total"];
+        obs["reward_available"] = True
+        self.info = obs
+        return obs

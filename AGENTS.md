@@ -9,8 +9,9 @@ debuggability, and developer understanding matter more than producing code quick
 The current repository implements a **C++20 3D humanoid body simulation** with
 custom math and physics, articulated joints, and GLFW/OpenGL rendering. Active
 work includes hierarchical joint corrections, floor contact, and body stability.
-Python cognition and a brain/body bridge are future work; they are not implemented
-here yet.
+Python implements neural policies, value estimation, versioned environments,
+and training, with C++ bindings and a terminal CLI. High-level cognition and
+reasoning are not implemented. Consult the root README for the current layout.
 
 Use the actual code and the user's current task to determine scope. Do not impose
 the former 2D grid-world or battery-seeking roadmap on this 3D implementation.
@@ -26,6 +27,11 @@ src/body/           Humanoid parts, skeleton, joint geometry and constraints
 src/render/         Window, camera, meshes, shaders, lighting, shadows
 src/main.cpp        Application setup, input, simulation loop, rendering coordination
 assets/shaders/     GLSL shader assets
+python/            Stable learning/environment modules; investigations in subfolders
+cli/               Terminal app, screens, shared UI, platform code, Python workers
+docs/              Architecture, physics history, research results, recorded traces
+reports/           Generated model-analysis exports and controlled experiment outputs
+models/            Saved checkpoints, critic artifacts, and evaluation metadata
 tests/             Headless tests and full-body diagnostics
 CMakeLists.txt      Libraries, application, dependencies, and test registration
 ```
@@ -145,7 +151,7 @@ uses that same executable with no arguments and builds before running.
 - `src/body/JointSolver.cpp`: current joint geometry and four local velocity passes.
 - `src/render/BodyRenderer.cpp`: read-only body drawing and owned visual meshes.
 - `src/app/BodyDiagnostics.hpp`: current summaries, checks, and energy ledger.
-- `tests/runtime_baseline_tests.cpp`: headless ten-second gate using the exact
+- `tests/simulation/runtime_baseline_tests.cpp`: headless ten-second gate using the exact
   application step, with all 105 eligible body pairs enabled.
 
 Geometry changes poses only. Anchor, hinge-axis, and angular-limit velocity
@@ -154,7 +160,7 @@ Keep the forward sweep and reverse sweep starting at the penultimate joint,
 then self-collision and the final room pass, in the existing order. Do not
 change damping, motors, timestep, gains, or budgets during a refactor.
 
-Historical experiments stay in `tests/full_body_diagnostics.cpp`, with explicit
+Historical experiments stay in `tests/historical/full_body_diagnostics.cpp`, with explicit
 flag-selected configurations. They deliberately retain their own stepping to
 reproduce saved failures. Do not replace these replays with today's solver or
 interpret their defaults as the application baseline. Relevant measurements and

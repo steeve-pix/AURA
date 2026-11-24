@@ -1,0 +1,11 @@
+{
+  "protected_production_source_hashes_unchanged": true,
+  "checkpoint_count": 136,
+  "changed_checkpoints": {},
+  "no_training_started": true,
+  "original_106_case_results_exact": true,
+  "full_diagnostic_replay_exact": true,
+  "physical_simulation_steps_for_failure_tail_audit": 0,
+  "python_tests_passed": 52,
+  "cpp_gates_passed": 3
+}

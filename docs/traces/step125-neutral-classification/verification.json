@@ -1,0 +1,42 @@
+{
+  "original_raw_fields_exact_match_snapshots": 643,
+  "original_205_inputs_exact_match_snapshots": 463,
+  "python_reward_sequence_exact_match_steps": 462,
+  "legacy_termination_step": 462,
+  "unchanged_checkpoint_files": 135,
+  "checkpoint_files_changed_during_task": {
+    "models/aura_balance.pt": {
+      "before": "f86d56d55a41ab8c6fda1b4634d822a7f818e42d1f3c9069f0151f3950b4e9fe",
+      "after": "c74bb42424de846189d8e6cd0fcc3427a71d50b64f66824b71b7f27e0f843b89"
+    }
+  },
+  "added_checkpoint_files": [],
+  "removed_checkpoint_files": [],
+  "checkpoint_note": "Recorder and tests never load or save checkpoints or launch training. Main actor checkpoint changed during the task; it was left untouched. File hash differences do not isolate parameter changes from metadata changes.",
+  "source_reference_sha256": "d6f93f63124b25bc6206103f656dbe1954f4b1a55077d29405f8cf907bad741f",
+  "python_reward_sequence_sha256": "386eb68a476c03ca66520e6d2c65355832a2fcc073890a5599358a446a750a59",
+  "state_transitions": [
+    {
+      "step": 0,
+      "time_seconds": 0.0,
+      "state": "UNBALANCED"
+    },
+    {
+      "step": 64,
+      "time_seconds": 0.5333333333333339,
+      "state": "BALANCED"
+    },
+    {
+      "step": 210,
+      "time_seconds": 1.7499999999999962,
+      "state": "UNBALANCED"
+    },
+    {
+      "step": 516,
+      "time_seconds": 4.300000000000003,
+      "state": "FALLEN"
+    }
+  ],
+  "first_dangerous_motion_step": 25,
+  "first_deep_collapse_step": 493
+}

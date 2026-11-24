@@ -7,11 +7,11 @@
 
 namespace aura::body {
     // Stable physical-part ordering, independent of names and body copies.
-    std::array<BodyPart3D *, 16> collisionParts(AuraBody3D &body);
+    std::array<BodyPart3D *, 16> collisionParts(AuraBody3D & body);
 
     std::array<const BodyPart3D *, 16> collisionParts(const AuraBody3D &body);
 
-    void configureBodyCollisionJoints(AuraSkeleton3D &skeleton);
+    void configureBodyCollisionJoints(AuraSkeleton3D & skeleton);
 
     // Missing hinge swing projection. Entire child component moves rigidly;
     // any necessary floor lift is common to the body and remains pose-only.
@@ -46,7 +46,7 @@ namespace aura::body {
     // Fixed-budget search along the contact's articulation path: coordinate
     // probes plus torque-directed shoulder/hip requests (up to 6*angularStep).
     // Uses existing hip swing reconstruction and graph components. Pose only.
-    // Configured hinges probe their one permitted axis; SwingTwist hips use
+    // Configured hinges probe their one permitted axis; multi-axis joints use
     // their bounded swing coordinates. Legacy unconfigured shoulders retain
     // their historical free transverse motion for explicit comparisons.
     // Feasibility covers physical-box floor/room bounds and no-worse joint limits.
@@ -62,5 +62,5 @@ namespace aura::body {
                                               const std::vector<BodyCollisionPair> &pairs,
                                               const physics::RoomBounds &room,
                                               int projectionBudget = 4, float angularStep = 0.01f,
-                                              float tolerance = 0.001f);
+                                              float tolerance = 0.001f, bool shapedFloor = false);
 }

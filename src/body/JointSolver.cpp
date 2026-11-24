@@ -1,4 +1,5 @@
 #include "aura/body/JointSolver.hpp"
+#include "aura/body/JointGeometry.hpp"
 #include "aura/body/AuraBodyConstraint.hpp"
 #include "aura/body/BodySelfCollision.hpp"
 #include "aura/body/ComponentPosition.hpp"
@@ -30,21 +31,25 @@ namespace aura::body {
                 };
                 for (const auto &[connection, branch]: branches) {
                     if (&joint != connection) continue;
-                    // Swing bounds apply only to hips; other branches retain their
-                    // existing hinge projection and floor policy.
+                    // Bounded swing applies to shoulders and hips; preserve branch floor policy.
                     correctBranchAngleAroundPivot(body, skeleton, joint, branch, true);
                     return;
                 }
-                correctJointAngle(parent, child, joint);
+                if (joint.motorControlsSwing) {
+                    const auto component = skeleton.collectComponent(body, child, joint);
+                    correctJointAngleWithComponent(parent, child, joint, component);
+                    correctJointSwingWithComponent(parent, child, joint, component);
+                } else correctJointAngle(parent, child, joint);
             }
         }
     }
 
     void solveBodyJoint(AuraBody3D &body, const AuraSkeleton3D &skeleton,
-                        BodyPart3D &parent, BodyPart3D &child, const Joint3D &joint) {
+                        BodyPart3D &parent, BodyPart3D &child, const Joint3D &joint, bool massBalancedAnchor) {
         projectBodyHingeAxis(body, skeleton, parent, child, joint);
         projectAngle(body, skeleton, parent, child, joint);
-        correctJointPositionWithComponents(body, skeleton, parent, child, joint);
+        if (massBalancedAnchor) correctJointPositionDirectionally(body, skeleton, parent, child, joint);
+        else correctJointPositionWithComponents(body, skeleton, parent, child, joint);
         for (int i = 0; i < jointVelocityIterations; ++i) {
             correctLocalJointVelocity(parent, child, joint);
             correctLocalJointHingeAngularVelocity(parent, child, joint);

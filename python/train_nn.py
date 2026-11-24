@@ -1,8 +1,10 @@
 """Train AURA's balance policy with one Adam update per batch."""
 
-from dataclasses import dataclass
-
 import torch
+from dataclasses import dataclass, field
+
+from .model_templates import NetworkDesign
+from .worker_config import default_workers, validate_workers
 
 DISCOUNT_FACTOR = 0.995
 # Initial critic-training convention, independent of the actor advantage scale.
@@ -23,23 +25,74 @@ class TrainingConfig:
     batch_size: int = 8
     seed: int = 42
     learning_rate: float = 0.001
+    batches: int = 1
+    agents: int = field(default_factory=default_workers)
+    actor_design: NetworkDesign = field(default_factory=NetworkDesign)
+    critic_design: NetworkDesign = field(default_factory=NetworkDesign)
+    device: str = "cpu"
+    collection_mode: str = "independent"
 
     def __post_init__(self):
         if not isinstance(self.batch_size, int) or self.batch_size < 2:
             raise ValueError("batch_size must be an integer of at least two")
+        if type(self.batches) is not int or not 1 <= self.batches <= 1000:
+            raise ValueError("batches must be an integer from 1 to 1000")
+        validate_workers(self.agents)
+        if self.collection_mode not in ('independent', 'historical'):
+            raise ValueError('Unknown collection mode')
+        if self.collection_mode == 'historical' and (
+                self.agents > 4 or (self.agents > 1 and self.batch_size % self.agents)):
+            raise ValueError('Historical shared arenas require 1–4 agents and divisible episode waves')
+        if self.device not in ("cpu", "gpu"):
+            raise ValueError("device must be 'cpu' or 'gpu'")
+        if self.batch_size > 128:
+            raise ValueError("At most 128 episodes per batch")
         if not 0 < self.learning_rate < float("inf"):
             raise ValueError("learning_rate must be positive and finite")
 
 
-def create_training(config):
+def resolve_training_device(device):
+    """Resolve the user-facing CPU/GPU choice to a supported PyTorch device."""
+    if device == "cpu":
+        return torch.device("cpu")
+    if device != "gpu":
+        raise ValueError("device must be 'cpu' or 'gpu'")
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return torch.device("mps")
+    raise RuntimeError("GPU training was selected, but PyTorch found no supported CUDA or Apple Metal device")
+
+
+def create_training(config, *, environment=None):
     """The plain script and CLI use the same initialization."""
     torch.manual_seed(config.seed)
-    env = AuraEnv()
-    policy = AuraPolicy(env.observation_size)
+    if environment is not None:
+        env = environment
+    elif config.collection_mode == 'historical':
+        from .arena_env import make_environment
+        env = AuraEnv() if config.agents == 1 else make_environment(config.agents)
+    else:
+        from .independent_env import IndependentEnv
+        env = IndependentEnv(config.agents)
+        env.seed = config.seed
+    from dataclasses import asdict
+    policy = AuraPolicy(env.observation_size, **asdict(config.actor_design)).to(resolve_training_device(config.device))
     if tuple(policy.action_transforms) != CONTROLLED_ACTION_KEYS:
         raise ValueError("Policy action transforms must match the controlled-action schema")
     optimizer = torch.optim.Adam(policy.parameters(), lr=config.learning_rate)
+    policy.environment_contract = env.environment_contract
     return env, policy, optimizer
+
+
+def create_critic(env, config):
+    from python.aura_policy import AuraValue
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(config.seed + 1)
+        from dataclasses import asdict
+        critic = AuraValue(env.observation_size, **asdict(config.critic_design)).to(
+            resolve_training_device(config.device))
+    return critic, torch.optim.Adam(critic.parameters(), lr=config.learning_rate)
 
 
 def discounted_returns(rewards, gamma=DISCOUNT_FACTOR):
@@ -58,6 +111,15 @@ def collect_critic_rollouts(env, policy, episodes, seed, progress=None, service=
     A local exploration seed is isolated from the caller's RNG state. The
     observations are pre-action snapshots paired with raw reward-to-go.
     """
+    if getattr(env, 'is_arena', False):
+        completed = set()
+
+        def snapshot(index, worker, info, action, reward, total):
+            if info['done']: completed.add(index)
+            if progress: progress(len(completed), episodes, info['steps'])
+
+        return env.collect_batch(policy, episodes, gradients=False, seed=seed, service=service,
+                                 progress=snapshot if progress else None)
     if type(episodes) is not int or episodes < 1:
         raise ValueError("episodes must be a positive integer")
     if next(policy.parameters()).device.type != "cpu":
@@ -90,7 +152,7 @@ def collect_critic_rollouts(env, policy, episodes, seed, progress=None, service=
                 episode_scores.append(info["steps"])
                 episode_returns.append(sum(rewards))
                 if progress is not None:
-                    progress(episode+1, episodes, info["steps"])
+                    progress(episode + 1, episodes, info["steps"])
     finally:
         policy.train(was_training)
     return {"states_by_episode": states_by_episode, "returns_by_episode": returns_by_episode,
@@ -148,13 +210,24 @@ def train_critic(critic, optimizer, states_by_episode, returns_by_episode):
 
 
 def train_batch(env, policy, optimizer, batch_size=None, update_parameters=True,
-                compare_critic=None):
+                compare_critic=None, *, critic=None, critic_optimizer=None, update_critic=True):
     """Collect a batch, measure its policy gradient, and optionally update once.
 
     compare_critic is diagnostic-only: retain the original gradient and also
     measure a detached critic-baseline gradient on the same sampled trajectories.
     Neither baseline changes the actor's existing return scale or loss reduction.
     """
+    if getattr(env, "reward_version", 1) == 3 and critic is None:
+        raise ValueError("Balance System training requires its paired fresh/resumed critic")
+    if critic is not None:
+        if compare_critic is not None or critic_optimizer is None:
+            raise ValueError("Actor-critic training requires its own critic optimizer")
+        actor_ids = {id(p) for p in policy.parameters()}
+        critic_ids = {id(p) for p in critic.parameters()}
+        owned = {id(p) for g in critic_optimizer.param_groups for p in g['params']}
+        actor_owned = {id(p) for g in optimizer.param_groups for p in g['params']}
+        if actor_ids & critic_ids or owned != critic_ids or actor_owned != actor_ids:
+            raise ValueError("Actor and critic parameters and optimizers must be separate")
     batch_size = TrainingConfig().batch_size if batch_size is None else batch_size
     if compare_critic is not None and update_parameters:
         raise ValueError("Critic-baseline comparison is diagnostic only; disable parameter updates")
@@ -170,31 +243,40 @@ def train_batch(env, policy, optimizer, batch_size=None, update_parameters=True,
     step_log_probs_by_episode = []
     returns_by_episode = []
 
-    # Record survival, balance returns and the probabilities of sampled actions.
-    for episode in range(batch_size):
-        state, info = env.reset()
-        episode_states = []
-        log_probabilities = []
-        rewards = []
-        while True:
-            episode_states.append(state.detach().clone())
-            action, log_probability = policy.sample_action(state)
-            state, reward, terminated, truncated, info = env.step(action)
-            rewards.append(reward)
-            log_probabilities.append(log_probability)
-            if terminated or truncated:
-                break
+    if getattr(env, 'is_arena', False):
+        collected = env.collect_batch(policy, batch_size)
+        states_by_episode = collected['states_by_episode']
+        step_log_probs_by_episode = collected['log_probs_by_episode']
+        returns_by_episode = collected['returns_by_episode']
+        episode_scores = collected['episode_scores']
+        episode_returns = collected['episode_returns']
+        episode_log_probabilities = [torch.stack(values).sum() for values in step_log_probs_by_episode]
+    else:
+        # Record survival, balance returns and the probabilities of sampled actions.
+        for episode in range(batch_size):
+            state, info = env.reset()
+            episode_states = []
+            log_probabilities = []
+            rewards = []
+            while True:
+                episode_states.append(state.detach().clone())
+                action, log_probability = policy.sample_action(state)
+                state, reward, terminated, truncated, info = env.step(action)
+                rewards.append(reward)
+                log_probabilities.append(log_probability)
+                if terminated or truncated:
+                    break
 
-        assert len(episode_states) == len(rewards)
-        assert len(episode_states) == len(log_probabilities)
-        episode_scores.append(info["steps"])
-        episode_returns.append(sum(rewards))
-        states_by_episode.append(episode_states)
-        episode_log_probabilities.append(torch.stack(log_probabilities).sum())
-        step_log_probs_by_episode.append(log_probabilities)
-        returns = discounted_returns(rewards)
-        assert len(episode_states) == len(returns)
-        returns_by_episode.append(returns)
+            assert len(episode_states) == len(rewards)
+            assert len(episode_states) == len(log_probabilities)
+            episode_scores.append(info["steps"])
+            episode_returns.append(sum(rewards))
+            states_by_episode.append(episode_states)
+            episode_log_probabilities.append(torch.stack(log_probabilities).sum())
+            step_log_probs_by_episode.append(log_probabilities)
+            returns = discounted_returns(rewards)
+            assert len(episode_states) == len(returns)
+            returns_by_episode.append(returns)
 
     assert len(states_by_episode) == len(returns_by_episode)
 
@@ -226,6 +308,23 @@ def train_batch(env, policy, optimizer, batch_size=None, update_parameters=True,
                 peerless_absolute_advantage += absolute_advantage
             policy_terms.append(log_prob * advantage)
     loss = -torch.stack(policy_terms).sum() / len(step_log_probs_by_episode)
+
+    if critic is not None:
+        # Predict BEFORE fitting this batch. The baseline is detached from the
+        # policy loss; fitting it afterward cannot leak return targets into it.
+        states, targets = prepare_critic_data(critic, states_by_episode, returns_by_episode)
+        with torch.no_grad():
+            predictions = critic(states)
+            if predictions.shape != targets.shape or not torch.isfinite(predictions).all():
+                raise ValueError("Critic must produce finite scalar values")
+            step_advantages = ((targets - predictions) * CRITIC_RETURN_SCALE / score_scale).flatten()
+        log_probs = torch.stack([x for ep in step_log_probs_by_episode for x in ep])
+        loss = -(log_probs * step_advantages.to(log_probs)).sum() / batch_size
+        lengths = [len(ep) for ep in step_log_probs_by_episode]
+        advantages = [x.mean().item() for x in step_advantages.split(lengths)]
+        absolute_advantages = step_advantages.abs().tolist()
+        peerless_terms = 0
+        peerless_absolute_advantage = 0.
 
     # Backpropagation computes gradients; Adam uses them to update weights and biases.
     optimizer.zero_grad()
@@ -268,11 +367,16 @@ def train_batch(env, policy, optimizer, batch_size=None, update_parameters=True,
         (parameter.detach() - before).abs().max().item()
         for parameter, before in zip(policy.parameters(), parameters_before)
     )
+    critic_loss = None
+    if critic is not None and update_critic:
+        critic_loss = train_critic(critic, critic_optimizer, states_by_episode, returns_by_episode)
     total_absolute_advantage = sum(absolute_advantages)
     result = {
         "episode_scores": episode_scores,
         "episode_returns": episode_returns,
         "states_by_episode": states_by_episode,
+        "critic_loss": critic_loss,
+        "training_algorithm": "actor_critic_mc" if critic is not None else "legacy_reinforce",
         # Raw reward-to-go at each saved pre-action state; no actor scaling.
         "returns_by_episode": returns_by_episode,
         "advantages": advantages,
@@ -289,15 +393,37 @@ def train_batch(env, policy, optimizer, batch_size=None, update_parameters=True,
         ),
         "parameters_updated": update_parameters,
     }
+    if getattr(env, 'is_independent', False):
+        result['collection'] = {key: collected[key] for key in
+                                ('worker_ids', 'episode_seeds', 'collection_seconds', 'balance_metrics')}
     if critic_comparison is not None:
         result["gradient_comparison"] = {
             **critic_comparison,
             "original_gradient": torch.cat([parameter.grad.detach().flatten().clone()
-                                             for parameter in policy.parameters()]),
+                                            for parameter in policy.parameters()]),
             "actor_advantage_scale": score_scale,
             "critic_return_scale": CRITIC_RETURN_SCALE,
         }
     return result
+
+
+def evaluate_balance(env, policy, *, stochastic=False, seed=10042):
+    """One bounded episode; isolated exploration RNG, no optimizer or gradients."""
+    was_training = policy.training
+    policy.eval()
+    try:
+        if getattr(env, 'is_arena', False):
+            return env.evaluate_arena(policy, stochastic=stochastic, seed=seed, service=getattr(env, 'service', None))
+        with torch.random.fork_rng(devices=[]), torch.inference_mode():
+            torch.manual_seed(seed)
+            state, info = env.reset()
+            while not info['done']:
+                action = (policy.sample_action(state)[0] if stochastic else
+                          outputs_to_action(policy(state).clamp(*policy.sample_bounds), policy.action_transforms))
+                state, _, _, _, info = env.step(action)
+            return dict(info['balance_metrics'], stochastic=stochastic, exploration_seed=seed if stochastic else None)
+    finally:
+        policy.train(was_training)
 
 
 def evaluate_policy(env, policy):
@@ -324,8 +450,11 @@ def evaluate_policy(env, policy):
 def main():
     config = TrainingConfig()
     env, policy, optimizer = create_training(config)
-    result = train_batch(env, policy, optimizer, config.batch_size)
-    checkpoint = save_checkpoint(policy, optimizer, len(result["episode_scores"]))
+    critic, critic_optimizer = create_critic(env, config)
+    result = train_batch(env, policy, optimizer, config.batch_size,
+                         critic=critic, critic_optimizer=critic_optimizer)
+    checkpoint = save_checkpoint(policy, optimizer, len(result["episode_scores"]),
+                                 critic=critic, critic_optimizer=critic_optimizer)
     for score, total_reward in zip(result["episode_scores"], result["episode_returns"]):
         print(f"Survival: {score} | Balance return: {total_reward:.2f}")
     print(f"Maximum weight/bias change: {result['max_parameter_change']:.8f}")

@@ -36,13 +36,13 @@ namespace aura::render {
     }
 
     void BodyRenderer::draw(const body::AuraBody3D &auraBody, std::span<const JointMarker> joints,
-                            const Shader &shader, bool colored, bool details) const {
+                            const Shader &shader, bool colored, bool details, const math::Vec3 &tint) const {
         const auto drawPiece = [&](const math::Mat4 &model, const Mesh &solid,
                                    const Mesh &lines) {
             shader.setMat4("uModel", model);
             (details ? lines : solid).draw();
         };
-        if (colored) shader.setVec3("uColor", {0.96f, 0.97f, 1.0f});
+        if (colored) shader.setVec3("uColor", tint);
         const auto &head = auraBody.head;
         const float headDiameter = std::min({head.size.x, head.size.y, head.size.z});
         const auto headModel = math::Mat4::translation(head.body.position) *

@@ -58,7 +58,7 @@ namespace aura::physics {
             const auto q = box.orientation.normalized(), inverse = q.conjugate();
             const auto a = inverse.rotate(cap.pointA - box.position), b = inverse.rotate(cap.pointB - box.position);
             const auto d = b - a, h = size * 0.5f;
-            std::array<double, 8> breaks{};
+            std::array < double, 8 > breaks{};
             size_t count = 2;
             breaks[0] = 0;
             breaks[1] = 1;

@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include "aura/physics/Collision.hpp"
 #include "aura/physics/RoomCollision.hpp"
 
 #include "aura/body/AuraBody3D.hpp"
@@ -66,7 +67,9 @@ namespace aura::body {
 
     // Y=0 experiment: keep the ordinary shin floor impulses, but propagate its
     // upward positional correction to the foot. Foot velocities are untouched.
-    void resolveRightShinFloorWithFootTranslation(AuraBody3D &body, float dt);
+    void resolveRightShinFloorWithFootTranslation(
+        AuraBody3D &body, float dt,
+        physics::FloorFrictionModel friction = physics::FloorFrictionModel::LegacyVelocityDamping);
 
     // Left shoulder only: upper arm, forearm and hand are one child subtree.
     void correctLeftShoulderAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &shoulder);

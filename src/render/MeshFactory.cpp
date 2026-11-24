@@ -120,7 +120,7 @@ namespace aura::render {
         constexpr int subdivisions = 12;
         constexpr float bevel = 0.14f;
         const auto vertex = [&](int axis, float side, int u, int v) {
-            std::array<float, 3> point{};
+            std::array < float, 3 > point{};
             point[axis] = side * 0.5f;
             point[(axis + 1) % 3] = -0.5f + static_cast<float>(u) / subdivisions;
             point[(axis + 2) % 3] = -0.5f + static_cast<float>(v) / subdivisions;
@@ -226,7 +226,7 @@ namespace aura::render {
         for (int axis = 0; axis < 3; ++axis) {
             for (float a: {-0.5f, 0.5f})
                 for (float b: {-0.5f, 0.5f}) {
-                    std::array<float, 3> start{}, end{};
+                    std::array < float, 3 > start{}, end{};
                     start[axis] = -0.5f;
                     end[axis] = 0.5f;
                     start[(axis + 1) % 3] = end[(axis + 1) % 3] = a;

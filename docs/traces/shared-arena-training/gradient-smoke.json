@@ -1,0 +1,54 @@
+{
+  "seconds": 1.37892412499059,
+  "episode_steps": [
+    367,
+    389,
+    373,
+    385
+  ],
+  "episode_returns": [
+    81.82741624451904,
+    83.90894936701507,
+    73.72920890715699,
+    70.0792979730045
+  ],
+  "loss": 9.599994659423828,
+  "max_actor_change": 0.0,
+  "actor_gradient_norm": 13.180071830749512,
+  "actor_unchanged": true,
+  "critic_unchanged": true,
+  "critic_gradients_absent": true,
+  "optimizer_updates": 0,
+  "contract": {
+    "environment_version": 4,
+    "termination_mode": "balance_v2",
+    "termination_version": 2,
+    "reward_version": 3,
+    "reward_name": "balance_quality",
+    "quality_version": 1,
+    "quality_config": {
+      "posture_scale_degrees": 30.0,
+      "height_zero_ratio": 0.25,
+      "height_full_ratio": 0.75,
+      "vertical_deadband": 0.25,
+      "horizontal_deadband": 0.35,
+      "angular_deadband": 0.4,
+      "linear_dynamic_fraction": 0.25,
+      "angular_dynamic_fraction": 0.5,
+      "gravity": 9.81,
+      "support_margin_scale": 0.1,
+      "marginal_support_quality": 0.25
+    },
+    "gamma": 0.995,
+    "episode_limit": 1200,
+    "terminal_reward": 0.0,
+    "absorbing_utility": 0.0,
+    "truncation": "finite_horizon_zero_continuation",
+    "arena_agents": 4,
+    "arena_spacing": 6.0,
+    "arena_collisions": true,
+    "arena_collision_version": 1,
+    "arena_finished_agents": "removed_until_wave_reset",
+    "evaluation_summary": "mean_per_agent_rounded_steps"
+  }
+}

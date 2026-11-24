@@ -53,7 +53,8 @@ namespace aura::body {
                 candidate.position += delta;
                 for (const auto &corner: physics::cubeCorners(candidate, part->size))
                     if (corner.x < room.minimum.x || corner.x > room.maximum.x || corner.z < room.minimum.z || corner.z
-                        > room.maximum.z)return false;
+                        > room.maximum.z)
+                        return false;
             }
             return true;
         };
@@ -77,9 +78,11 @@ namespace aura::body {
         return result;
     }
 
-    void resolveRightShinFloorWithFootTranslation(AuraBody3D &body, float dt) {
+    void resolveRightShinFloorWithFootTranslation(AuraBody3D &body, float dt,
+                                                  physics::FloorFrictionModel friction) {
         const auto before = body.rightShin.body.position;
-        physics::resolveFloorCollision(body.rightShin.body, body.rightShin.size, body.rightShin.floorShape, 0.0f, dt);
+        physics::resolveFloorCollision(body.rightShin.body, body.rightShin.size, body.rightShin.floorShape,
+                                       0.0f, dt, nullptr, friction);
         const auto delta = body.rightShin.body.position - before;
         if (delta.y <= 0.0f) return;
         body.rightFoot.body.position += delta;
@@ -172,7 +175,8 @@ namespace aura::body {
         const float error = jointAngleError(*parts.parent, root, joint);
         bool changed = std::abs(error) >= 0.000001f;
         if (changed) {
-            if (branch == MajorBodyBranch3D::RightShoulder || branch == MajorBodyBranch3D::RightElbow ||
+            if (joint.motorControlsSwing || branch == MajorBodyBranch3D::RightShoulder || branch ==
+                MajorBodyBranch3D::RightElbow ||
                 branch == MajorBodyBranch3D::RightKnee || branch == MajorBodyBranch3D::LeftElbow ||
                 branch == MajorBodyBranch3D::LeftKnee) {
                 correctJointAngleWithComponent(*parts.parent, root, joint, parts.childParts());
@@ -183,7 +187,7 @@ namespace aura::body {
                 rotateSubtreeAroundWorldPoint(parts.childParts(), pivot, math::Quaternion::fromAxisAngle(axis, -error));
             }
         }
-        if (enforceSwingLimits && (branch == MajorBodyBranch3D::LeftHip || branch == MajorBodyBranch3D::RightHip))
+        if (enforceSwingLimits && joint.type == JointType::SwingTwist)
             changed |= correctJointSwingWithComponent(*parts.parent, root, joint, parts.childParts());
         if (!changed) return;
         if (parts.foot != nullptr) {
@@ -269,6 +273,8 @@ namespace aura::body {
                                              const Joint3D &shoulder) {
         const auto component = skeleton.collectComponent(body, body.leftUpperArm, shoulder);
         correctJointAngleWithComponent(body.torso, body.leftUpperArm, shoulder, component);
+        if (shoulder.type == JointType::SwingTwist)
+            correctJointSwingWithComponent(body.torso, body.leftUpperArm, shoulder, component);
     }
 
     void correctLeftShoulderPositionAsSubtree(AuraBody3D &body, const Joint3D &shoulder) {
@@ -331,6 +337,8 @@ namespace aura::body {
     void correctNeckAngleAroundPivot(AuraBody3D &body, const AuraSkeleton3D &skeleton, const Joint3D &neckJoint) {
         const auto component = skeleton.collectComponent(body, body.neck, neckJoint);
         correctJointAngleWithComponent(body.torso, body.neck, neckJoint, component);
+        if (neckJoint.type == JointType::SwingTwist)
+            correctJointSwingWithComponent(body.torso, body.neck, neckJoint, component);
     }
 
     void correctNeckPositionAsSubtree(AuraBody3D &body, const Joint3D &neckJoint) {
