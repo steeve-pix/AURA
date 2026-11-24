@@ -1,0 +1,52 @@
+grip mass=1 initial_speed=0.04 stopped_distance=0.000536448 residual_speed=1.00664e-05
+grip mass=1 initial_speed=1 stopped_distance=0.0922108 residual_speed=1.01331e-05
+grip mass=1 initial_speed=1.41421 stopped_distance=0.171478 residual_speed=1.00576e-05
+grip mass=10 initial_speed=0.04 stopped_distance=0.000536448 residual_speed=1.00672e-05
+grip mass=10 initial_speed=1 stopped_distance=0.0922108 residual_speed=1.01333e-05
+grip mass=10 initial_speed=1.41421 stopped_distance=0.171478 residual_speed=1.00573e-05
+viewer FALLEN step=473 no further physics or motor updates
+endpoint motors=1 tick=120 dx=0.000483094 dz=0.10694 com_y=3.23168 px=0.0392205 pz=2.69854 vx=0.00245128 vz=0.168659 motor_work=-100.736 left_support=0.251518 right_support=0.218573
+endpoint motors=1 tick=480 dx=1.70624 dz=0.570365 com_y=0.67658 px=2.75248 pz=-0.551593 vx=0.17203 vz=-0.0344745 motor_work=-728.251 left_support=0.216283 right_support=0.212315
+endpoint motors=1 tick=1200 dx=2.54089 dz=0.555961 com_y=0.664573 px=2.1024 pz=0.17778 vx=0.1314 vz=0.0111112 motor_work=-1073.48 left_support=0.249548 right_support=0.20367
+stage motors=1 floor dx=0 dz=0 path=0 largest=0 dpx=-6.65895 dpz=3.41404 dy=0.460211 dpy=1199.03 energy_change=-1078.95
+stage motors=1 integration dx=2.54089 dz=0.555961 path=3.17155 largest=0.0152376 dpx=0 dpz=0 dy=-19.0614 dpy=-1569.6 energy_change=-658.099
+stage motors=1 joint/head dx=-1.06299e-06 dz=1.87691e-07 path=6.98474e-05 largest=7.34155e-08 dpx=1.888e-05 dpz=6.66456e-06 dy=3.24728 dpy=-5.10216e-05 energy_change=399.37
+stage motors=1 joint/leftAnkle dx=3.72682e-07 dz=1.43369e-06 path=6.69294e-05 largest=7.15348e-08 dpx=-1.24369e-06 dpz=8.6723e-06 dy=3.4839 dpy=-1.74411e-05 energy_change=461.632
+stage motors=1 joint/leftElbow dx=-7.55033e-07 dz=-9.22446e-07 path=0.000123408 largest=7.67988e-08 dpx=3.7287e-06 dpz=-2.2535e-05 dy=3.43908 dpy=-9.37171e-05 energy_change=502.262
+stage motors=1 joint/leftHip dx=-1.42908e-06 dz=-2.47484e-07 path=0.000143766 largest=4.97016e-08 dpx=-7.23995e-06 dpz=1.87934e-05 dy=0.44112 dpy=-1.05259e-05 energy_change=30.2824
+stage motors=1 joint/leftKnee dx=1.79898e-07 dz=-1.40128e-06 path=0.000124086 largest=7.46486e-08 dpx=1.21726e-08 dpz=-3.64119e-06 dy=2.45407 dpy=-9.01756e-06 energy_change=334.557
+stage motors=1 joint/leftShoulder dx=-1.30848e-06 dz=2.51966e-08 path=0.000160565 largest=4.53201e-08 dpx=-7.72509e-06 dpz=4.98095e-06 dy=0.234193 dpy=-6.10901e-06 energy_change=-2.61671
+stage motors=1 joint/leftWrist dx=1.24284e-06 dz=-2.52759e-07 path=6.96022e-05 largest=4.97719e-08 dpx=-3.34807e-06 dpz=1.19086e-05 dy=0.00790591 dpy=-1.24015e-05 energy_change=-77.2569
+stage motors=1 joint/neck dx=-4.61719e-07 dz=-2.78269e-08 path=4.9748e-05 largest=5.06694e-08 dpx=-7.68797e-07 dpz=1.64937e-05 dy=0.170066 dpy=-2.3203e-06 energy_change=-103.839
+stage motors=1 joint/rightAnkle dx=-2.77797e-06 dz=-5.7873e-07 path=5.38636e-05 largest=7.1421e-08 dpx=9.03188e-07 dpz=1.58718e-06 dy=0.962106 dpy=-3.99798e-06 energy_change=72.6458
+stage motors=1 joint/rightElbow dx=-8.1999e-07 dz=1.12974e-06 path=0.000125245 largest=7.14031e-08 dpx=-4.66468e-06 dpz=-1.52164e-05 dy=0.191788 dpy=-3.37848e-05 energy_change=-19.6898
+stage motors=1 joint/rightHip dx=8.03906e-07 dz=-1.83927e-06 path=0.000154207 largest=5.06694e-08 dpx=1.48633e-07 dpz=1.79764e-05 dy=0.091845 dpy=-2.44858e-05 energy_change=-10.7537
+stage motors=1 joint/rightKnee dx=-1.1887e-06 dz=1.60118e-06 path=0.000134857 largest=7.17278e-08 dpx=1.19782e-06 dpz=9.90081e-06 dy=0.239624 dpy=-1.8633e-05 energy_change=-13.3498
+stage motors=1 joint/rightShoulder dx=-6.91274e-07 dz=-1.67856e-06 path=0.000131377 largest=4.97016e-08 dpx=9.09367e-06 dpz=-8.84433e-07 dy=0.456788 dpy=1.55892e-05 energy_change=30.8637
+stage motors=1 joint/rightWrist dx=-9.66829e-08 dz=2.40885e-07 path=7.25777e-05 largest=4.46477e-08 dpx=-3.93007e-06 dpz=3.95027e-06 dy=0.0114803 dpy=1.17339e-05 energy_change=-68.5815
+stage motors=1 joint/waist dx=1.03625e-06 dz=1.91279e-06 path=0.000135732 largest=6.02199e-08 dpx=1.40812e-05 dpz=7.12951e-07 dy=-0.758224 dpy=-8.0835e-06 energy_change=-243.267
+stage motors=1 room dx=0 dz=0 path=0 largest=0 dpx=8.76133 dpz=-3.23632 dy=0.00259398 dpy=357.845 energy_change=-159.046
+stage motors=1 self_collision dx=-1.14127e-07 dz=-1.8983e-08 path=1.96064e-06 largest=4.3146e-08 dpx=-3.52156e-09 dpz=2.27243e-07 dy=0.233904 dpy=5.06639e-06 energy_change=31.0333
+endpoint motors=0 tick=120 dx=0.00181254 dz=0.041888 com_y=3.10576 px=0.0680328 pz=0.389745 vx=0.00425205 vz=0.0243591 motor_work=0 left_support=0.157987 right_support=0.157377
+endpoint motors=0 tick=480 dx=2.08596 dz=-0.980534 com_y=0.684919 px=10.639 pz=-4.81781 vx=0.664936 vz=-0.301113 motor_work=0 left_support=0 right_support=0
+endpoint motors=0 tick=1200 dx=4.7057 dz=-1.58064 com_y=0.479817 px=0.129659 pz=0.157425 vx=0.00810367 vz=0.00983903 motor_work=0 left_support=0.139221 right_support=0.0938535
+stage motors=0 floor dx=0 dz=0 path=0 largest=0 dpx=25.1111 dpz=13.0172 dy=0.112242 dpy=556.05 energy_change=-965.738
+stage motors=0 integration dx=4.70566 dz=-1.58064 path=6.34454 largest=0.0152341 dpx=0 dpz=0 dy=-19.5123 dpy=-1569.6 energy_change=-64.1586
+stage motors=0 joint/head dx=5.97148e-06 dz=-2.68022e-07 path=0.000105325 largest=1.53374e-07 dpx=2.2441e-06 dpz=1.04106e-05 dy=0.672579 dpy=-1.20868e-05 energy_change=57.7747
+stage motors=0 joint/leftAnkle dx=8.82195e-07 dz=-2.1606e-06 path=0.000129173 largest=1.36622e-07 dpx=-3.23834e-06 dpz=7.11634e-06 dy=0.363712 dpy=6.56168e-05 energy_change=-86.645
+stage motors=0 joint/leftElbow dx=-2.67842e-06 dz=-1.06995e-06 path=0.000245787 largest=1.50004e-07 dpx=7.93617e-06 dpz=8.45442e-06 dy=0.241588 dpy=-5.12047e-06 energy_change=-5.32815
+stage motors=0 joint/leftHip dx=3.37241e-06 dz=2.41211e-06 path=0.000283095 largest=1.21287e-07 dpx=-2.55526e-05 dpz=-8.95926e-06 dy=0.758629 dpy=-4.19302e-05 energy_change=-48.5001
+stage motors=0 joint/leftKnee dx=1.40086e-05 dz=6.80792e-07 path=0.000248104 largest=1.54543e-07 dpx=1.72452e-05 dpz=-3.35187e-06 dy=0.196043 dpy=2.37421e-05 energy_change=-63.502
+stage motors=0 joint/leftShoulder dx=6.5143e-06 dz=4.51505e-07 path=0.000268225 largest=1.20137e-07 dpx=2.04548e-06 dpz=2.11526e-05 dy=0.0129122 dpy=-1.32356e-05 energy_change=-29.3526
+stage motors=0 joint/leftWrist dx=2.75229e-06 dz=-1.91725e-07 path=0.000135512 largest=1.53598e-07 dpx=6.74246e-06 dpz=-3.03877e-06 dy=0.136989 dpy=-9.85875e-06 energy_change=-13.3779
+stage motors=0 joint/neck dx=1.98783e-06 dz=3.72166e-07 path=0.000109594 largest=1.22028e-07 dpx=2.15418e-06 dpz=-1.27958e-05 dy=0.0171921 dpy=-4.0915e-05 energy_change=-57.5691
+stage motors=0 joint/rightAnkle dx=1.61665e-06 dz=-2.10741e-06 path=7.8064e-05 largest=1.51118e-07 dpx=-1.33959e-05 dpz=4.1929e-06 dy=0.172188 dpy=2.93149e-06 energy_change=-88.722
+stage motors=0 joint/rightElbow dx=-5.59085e-07 dz=3.30442e-06 path=0.000139786 largest=1.3596e-07 dpx=-7.77168e-07 dpz=6.81091e-07 dy=1.24535 dpy=-2.29769e-05 energy_change=107.111
+stage motors=0 joint/rightHip dx=4.63498e-06 dz=6.93564e-07 path=0.000279816 largest=1.20656e-07 dpx=1.91685e-05 dpz=-7.71505e-06 dy=0.347315 dpy=2.90809e-05 energy_change=-61.3422
+stage motors=0 joint/rightKnee dx=9.18368e-06 dz=-3.07796e-06 path=0.000180213 largest=1.51608e-07 dpx=-9.59595e-06 dpz=-8.49074e-06 dy=0.242318 dpy=2.63314e-05 energy_change=-65.0341
+stage motors=0 joint/rightShoulder dx=-1.40665e-06 dz=-1.70221e-06 path=0.000224737 largest=1.3596e-07 dpx=8.62992e-07 dpz=1.48052e-05 dy=0.134746 dpy=4.00271e-05 energy_change=-136.82
+stage motors=0 joint/rightWrist dx=2.17988e-07 dz=3.86616e-07 path=0.000105671 largest=1.20382e-07 dpx=-4.74695e-06 dpz=4.79184e-06 dy=0.102737 dpy=-1.6277e-05 energy_change=-6.76014
+stage motors=0 joint/waist dx=-1.38267e-05 dz=3.77615e-07 path=0.000497457 largest=1.35273e-07 dpx=-6.39725e-06 dpz=-2.58976e-06 dy=0.0959139 dpy=9.64566e-05 energy_change=-203.455
+stage motors=0 room dx=0 dz=0 path=0 largest=0 dpx=-24.9815 dpz=-12.8598 dy=0.153457 dpy=1012.66 energy_change=-454.542
+stage motors=0 self_collision dx=1.18111e-06 dz=7.97603e-07 path=2.84703e-05 largest=1.36622e-07 dpx=3.19054e-06 dpz=5.83276e-06 dy=10.6299 dpy=2.10892e-06 energy_change=1577.56
+Ground grip, COM conservation, finite full-body runs, and viewer termination passed.

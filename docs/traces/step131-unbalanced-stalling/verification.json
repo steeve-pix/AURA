@@ -1,0 +1,11 @@
+{
+  "protected_source_hashes_unchanged": true,
+  "checkpoint_count": 0,
+  "changed_checkpoints": [],
+  "checkpoint_files_available": false,
+  "no_training_started": true,
+  "audit_uses_only_saved_physics_traces": true,
+  "fixture_classifier_physics_steps": 0,
+  "cpp_regression_tests_stepped_simulation": true,
+  "step130_saved_verification_validated": true
+}

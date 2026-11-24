@@ -5,11 +5,28 @@
 # CMake build directories
 cmake-build-*/
 build/
+build-*/
 
 # Python
 __pycache__/
 *.pyc
 
+# Learned model artifacts
+models/
+
+# Live viewer bridge state
+viewer_action.json
+viewer_observation.json
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# Critic-only experiment artifacts (separate from actor checkpoints)
+models/critics/
+
+# Read-only model analysis exports
+/reports/
+
+# Independent experiment outputs; templates remain versionable configuration.
+/models/experiments/

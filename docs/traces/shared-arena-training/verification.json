@@ -1,0 +1,105 @@
+{
+  "protected_artifacts": 186,
+  "changed_historical_artifacts": [],
+  "python_suite": {
+    "tests": 183,
+    "result": "passed"
+  },
+  "final_focused_python": {
+    "tests": 15,
+    "result": "passed"
+  },
+  "cli_screens": [
+    "nn_training_screen",
+    "models_screen",
+    "evaluation_screen"
+  ],
+  "cli_keyboard": "new/resume settings passed; invalid episode/agent combination blocked",
+  "debug_tests": [
+    "termination_modes",
+    "shared_arena"
+  ],
+  "release_tests": [
+    "termination_modes",
+    "shared_arena",
+    "termination_release_replay"
+  ],
+  "release_replay": {
+    "legacy": 462,
+    "balance_v2": 516
+  },
+  "native_collision": {
+    "penetration_before": 0.8,
+    "penetration_after": 0.000100017,
+    "anchors_preserved": true,
+    "momentum_conserved": true
+  },
+  "builds": [
+    "aura_cli",
+    "aura_python",
+    "aura"
+  ],
+  "training_run_started": false,
+  "viewer_visual_inspection": false,
+  "limits": {
+    "episodes": [
+      2,
+      128
+    ],
+    "batches": [
+      1,
+      1000
+    ],
+    "agents": [
+      1,
+      4
+    ]
+  },
+  "new_cli_defaults": {
+    "episodes": 8,
+    "batches": 10,
+    "agents": 4
+  },
+  "changed_files_for_shared_arena": [
+    "CMakeLists.txt",
+    "include/aura/sim/AuraArena.hpp",
+    "src/sim/AuraArena.cpp",
+    "include/aura/sim/AuraSimulation.hpp",
+    "src/sim/AuraSimulation.cpp",
+    "src/python/AuraPython.cpp",
+    "include/aura/render/AuraViewer.hpp",
+    "src/render/AuraViewer.cpp",
+    "include/aura/render/BodyRenderer.hpp",
+    "src/render/BodyRenderer.cpp",
+    "python/arena_env.py",
+    "python/train_nn.py",
+    "python/model_checkpoint.py",
+    "cli/training_run.py",
+    "cli/nn_session.py",
+    "cli/evaluate_model.py",
+    "cli/model_viewer.py",
+    "cli/critic_session.py",
+    "cli/training_viewer.py",
+    "cli/TrainingSetup.hpp",
+    "cli/TrainingSetup.cpp",
+    "cli/Terminal.hpp",
+    "cli/Terminal.cpp",
+    "cli/main.cpp",
+    "cli/NNTraining.hpp",
+    "cli/NNTraining.cpp",
+    "cli/EvaluationScreen.hpp",
+    "cli/EvaluationScreen.cpp",
+    "cli/ModelActivity.hpp",
+    "tests/arena_tests.cpp",
+    "tests/test_arena_training.py",
+    "tests/cli_training_schedule_smoke.py",
+    "tests/cli_shortcut_driver.cpp",
+    "tests/models_screen_tests.cpp",
+    "tests/nn_training_screen_tests.cpp",
+    "tests/evaluation_screen_tests.cpp",
+    "tests/cli_training_setup_smoke.py",
+    "tests/cli_nn_smoke.py",
+    "cli/README.md",
+    "docs/architecture.md"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "reward_training_termination_physics_sources_unchanged": true,
+  "all_audit_results_reproduced_exactly": true,
+  "no_training_started": true,
+  "checkpoint_count": 136,
+  "changed_checkpoints": {},
+  "half_life_steps": 138.28257298606084,
+  "effective_discount_horizon_steps": 199.99999999999983
+}

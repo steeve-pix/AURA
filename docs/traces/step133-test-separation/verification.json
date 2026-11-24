@@ -1,0 +1,30 @@
+{
+  "debug": {
+    "termination_modes": "PASS",
+    "balance_classifier": "PASS",
+    "historical_replay_registered": false,
+    "observed_legacy": 455,
+    "observed_v2": 530
+  },
+  "release": {
+    "termination_modes": "PASS",
+    "balance_classifier": "PASS",
+    "termination_release_replay": "PASS",
+    "legacy_expected": 462,
+    "v2_expected": 516,
+    "archived_samples_exact": 643,
+    "physical_digest": "efa666e369d7f1e3"
+  },
+  "negative_check": "A 1e-9 perturbation to saved COM vertical velocity at tick 146 was rejected; only a temporary copy was modified.",
+  "production_sources_checked": 125,
+  "production_sources_unchanged": true,
+  "archived_trace_sha256": "edbd84f338a38e69e0c2db955cbb30481d8e9539dc526f3457068ee59a6ecbca",
+  "archive_matches_step129_sha256": true,
+  "no_training_started": true,
+  "scope": "Test infrastructure only; no production behavior or historical checkpoint changes",
+  "source_sha256": {
+    "CMakeLists.txt": "ce8942230240d76f42200b8c886aec72bddae2f7753933529ee55c10a6ff18bf",
+    "tests/termination_tests.cpp": "2f941aa3a3ed8e8d9e530c9a72d0629d4f23d368162801222c422937440bd1f9",
+    "tests/termination_release_replay_tests.cpp": "644ac4fbb5ddfbb0a3c577f0ebec90f1c214d04893ff4c8fef4e2359f495a6de"
+  }
+}

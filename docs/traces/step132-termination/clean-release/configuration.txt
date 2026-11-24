@@ -1,0 +1,18 @@
+dt 0.0083333333333333332
+iterations 16
+pairs 105
+waist 1 8 3 0 0 0
+neck 1 6 2.5 0 0 0
+head 0 10 2 0 0 0
+leftShoulder 1 10 2 0 0 0
+leftElbow 1 6 2.5 0 0 0
+leftWrist 1 4 2 0 0 0
+rightShoulder 1 10 2 0 0 0
+rightElbow 1 6 2.5 0 0 0
+rightWrist 1 4 2 0 0 0
+leftHip 1 15 4 0.5 0 0
+leftKnee 1 10 4 0.60000002384185791 0 0
+leftAnkle 1 10 2 0 0 0
+rightHip 1 15 4 0.5 0 0
+rightKnee 1 10 4 0.60000002384185791 0 0
+rightAnkle 1 10 2 0 0 0

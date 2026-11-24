@@ -1,0 +1,39 @@
+#pragma once
+#include "RigidBody3D.hpp"
+#include "Collision.hpp"
+#include <span>
+
+namespace aura::physics {
+    // Static world-space enclosure. Individual oriented boxes must fit inside it.
+    struct RoomBounds {
+        math::Vec3 minimum{-60.0f, 0.0f, -60.0f};
+        math::Vec3 maximum{60.0f, 30.0f, 60.0f};
+    };
+
+    struct RoomBody {
+        RigidBody3D *body;
+        math::Vec3 size;
+        CollisionShape floorShape{};
+        FloorCollisionAudit *floorAudit = nullptr; // Optional, caller-owned final-pass measurements.
+    };
+
+    // Project box corners inside six axis-aligned planes, then apply normal
+    // contact impulses to this body only. No friction, damping, or pose-to-velocity
+    // compensation. The existing floor solver retains its friction policy.
+    void resolveRoomCollision(RigidBody3D &body, const math::Vec3 &size, const RoomBounds &room);
+
+    // A common translation keeps connected bodies' geometry intact. Coulomb
+    // uses each floorShape and the same load-limited floor friction on this final
+    // pass. Legacy preserves the archived box-plane, normal-only response. Returns
+    // false without changing state if the group's bounding box cannot fit.
+    bool resolveRoomCollisions(std::span<const RoomBody> bodies, const RoomBounds &room,
+                               FloorFrictionModel friction = FloorFrictionModel::LegacyVelocityDamping,
+                               float dt = 0.0f);
+
+    // The same common containment translation without any contact impulses.
+    // Allows a coupled pose candidate to include its floor/room projection.
+    bool projectRoomGeometry(std::span<const RoomBody> bodies, const RoomBounds &room, bool shapedFloor = false);
+
+    float roomPenetration(const RigidBody3D &body, const math::Vec3 &size, const RoomBounds &room,
+                          CollisionShape floorShape = {});
+}

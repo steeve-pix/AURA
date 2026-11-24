@@ -1,0 +1,23 @@
+{
+  "checkpoint": "/Users/steeve.dimitry/Developer/AURA/models/aura_balance.pt",
+  "sha256_before_validation": "a8d3e7ff9c59822dbc9263631d6b1c2af2137242ddb3ccf5692c5d70b3be22b2",
+  "mtime_before_validation": 1792006203.9887059,
+  "existing_writer_process": "46832 46831 Wed Oct 14 15:02:43 2026     /Library/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python -m cli.nn_session --mode resume --checkpoint /Users/steeve.dimitry/Developer/AURA/models/aura_balance.pt --events --interactive",
+  "existing_cli_process": "40700  6295 Wed Oct 14 14:31:14 2026     /Users/steeve.dimitry/.local/bin/aura-cli",
+  "checkpoint_lock_owner": [
+    "Python  46832 steeve.dimitry    3w   REG               1,17         0           645102490 /Users/steeve.dimitry/Developer/AURA/models/.aura_balance.pt.lock"
+  ],
+  "checkpoint_metadata_read_only": {
+    "episodes_completed": 664,
+    "updates_completed": 83,
+    "training_seed": 42,
+    "training_run_id": "475fd917102248de833e49af0528bbf3"
+  },
+  "write_path": "cli.nn_session TrainingSession.run -> TrainingRun.save/save_current -> python.model_checkpoint.save_checkpoint -> atomic torch.save/os.replace",
+  "historical_attribution_limit": "No historical filesystem write audit was enabled. The existing resume worker owns the model lock, predates Step 125 and is the identified authorized writer; exact past write PID cannot be proven retrospectively.",
+  "preservation": "No checkpoint restored, overwritten, copied, deleted or trained by this validation task; existing session left running.",
+  "all_checkpoint_hashes_unchanged_during_validation": true,
+  "checkpoint_file_count": 136,
+  "diagnostic_write_reproduction": "Not reproduced",
+  "changed_files": []
+}

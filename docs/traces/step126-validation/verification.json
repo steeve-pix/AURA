@@ -1,0 +1,276 @@
+{
+  "physical_cases": [
+    {
+      "scenario": "neutral",
+      "fallen_step": 516,
+      "fallen_time": 4.3,
+      "first_upper_body_geometric_contact": 514,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 92,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 1.129496455192566,
+        "torso_height": 0.9011955857276917,
+        "com_height": 0.9913865327835083,
+        "pelvis_tilt": 93.68857505316326,
+        "torso_tilt": 102.5237879089319,
+        "com_vy": -5.955154895782471
+      }
+    },
+    {
+      "scenario": "mild_forward",
+      "fallen_step": 274,
+      "fallen_time": 2.283333333333333,
+      "first_upper_body_geometric_contact": 263,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 0,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 1.1005219221115112,
+        "torso_height": 1.0292418003082275,
+        "com_height": 0.8354185223579407,
+        "pelvis_tilt": 83.80173010696605,
+        "torso_tilt": 105.24087475393627,
+        "com_vy": -1.9219191074371338
+      }
+    },
+    {
+      "scenario": "severe_forward",
+      "fallen_step": 141,
+      "fallen_time": 1.175,
+      "first_upper_body_geometric_contact": 129,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 0,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 0.6772345304489136,
+        "torso_height": 0.7695103287696838,
+        "com_height": 0.7057932615280151,
+        "pelvis_tilt": 82.03570212705706,
+        "torso_tilt": 94.81286292995271,
+        "com_vy": -2.9138951301574707
+      }
+    },
+    {
+      "scenario": "mild_backward",
+      "fallen_step": 282,
+      "fallen_time": 2.35,
+      "first_upper_body_geometric_contact": 263,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 0,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 1.4055695533752441,
+        "torso_height": 1.1297976970672607,
+        "com_height": 1.1114110946655273,
+        "pelvis_tilt": 92.05986334332198,
+        "torso_tilt": 109.00143482321818,
+        "com_vy": -3.113978385925293
+      }
+    },
+    {
+      "scenario": "severe_backward",
+      "fallen_step": 138,
+      "fallen_time": 1.15,
+      "first_upper_body_geometric_contact": 118,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 0,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 0.9614100456237793,
+        "torso_height": 0.8898707628250122,
+        "com_height": 0.6642998456954956,
+        "pelvis_tilt": 86.67122277143685,
+        "torso_tilt": 100.7879490770389,
+        "com_vy": -1.8688262701034546
+      }
+    },
+    {
+      "scenario": "left_lateral",
+      "fallen_step": 287,
+      "fallen_time": 2.3916666666666666,
+      "first_upper_body_geometric_contact": 266,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 0,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 0.8704890608787537,
+        "torso_height": 0.8076865077018738,
+        "com_height": 0.901837944984436,
+        "pelvis_tilt": 86.84961727302638,
+        "torso_tilt": 99.81026274852644,
+        "com_vy": -5.115636825561523
+      }
+    },
+    {
+      "scenario": "right_lateral",
+      "fallen_step": 235,
+      "fallen_time": 1.9583333333333333,
+      "first_upper_body_geometric_contact": 230,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 0,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 1.1341888904571533,
+        "torso_height": 1.0664393901824951,
+        "com_height": 0.8068583607673645,
+        "pelvis_tilt": 85.49121167357207,
+        "torso_tilt": 102.31363543515825,
+        "com_vy": -2.878732681274414
+      }
+    },
+    {
+      "scenario": "one_foot_landing",
+      "fallen_step": 382,
+      "fallen_time": 3.183333333333333,
+      "first_upper_body_geometric_contact": 370,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 13,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 1.1478825807571411,
+        "torso_height": 1.0515413284301758,
+        "com_height": 0.9825708866119385,
+        "pelvis_tilt": 85.5735170975614,
+        "torso_tilt": 104.50811889728519,
+        "com_vy": -4.075294017791748
+      }
+    },
+    {
+      "scenario": "brief_airborne",
+      "fallen_step": 637,
+      "fallen_time": 5.308333333333334,
+      "first_upper_body_geometric_contact": 627,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 49,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 1.0077722072601318,
+        "torso_height": 0.7681256532669067,
+        "com_height": 1.011056661605835,
+        "pelvis_tilt": 96.73209835201668,
+        "torso_tilt": 98.73569129103448,
+        "com_vy": -4.238513469696045
+      }
+    },
+    {
+      "scenario": "edge_landing",
+      "fallen_step": 596,
+      "fallen_time": 4.966666666666667,
+      "first_upper_body_geometric_contact": 592,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 0,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 0.9221880435943604,
+        "torso_height": 0.8302395343780518,
+        "com_height": 0.8296560645103455,
+        "pelvis_tilt": 90.03025178302353,
+        "torso_tilt": 97.23971059841827,
+        "com_vy": -4.371061325073242
+      }
+    },
+    {
+      "scenario": "rapid_rotation",
+      "fallen_step": 417,
+      "fallen_time": 3.475,
+      "first_upper_body_geometric_contact": 195,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 21,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 0.6935601234436035,
+        "torso_height": 0.8442337512969971,
+        "com_height": 0.5955746173858643,
+        "pelvis_tilt": 84.92823727537437,
+        "torso_tilt": 85.80870211030599,
+        "com_vy": -3.447770595550537
+      }
+    },
+    {
+      "scenario": "recovery_attempt",
+      "fallen_step": 368,
+      "fallen_time": 3.066666666666667,
+      "first_upper_body_geometric_contact": 353,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 55,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 0.8920523524284363,
+        "torso_height": 0.7923781275749207,
+        "com_height": 0.7846738696098328,
+        "pelvis_tilt": 88.80276064746378,
+        "torso_tilt": 99.74871805280227,
+        "com_vy": -3.553417682647705
+      }
+    },
+    {
+      "scenario": "horizontal_collapse",
+      "fallen_step": 24,
+      "fallen_time": 0.2,
+      "first_upper_body_geometric_contact": 12,
+      "severe_tilt_balanced_samples": [],
+      "longest_entry_candidate_samples": 0,
+      "fall_has_24_continuous_evidence_samples": true,
+      "fallen_posture": {
+        "pelvis_height": 0.7207198143005371,
+        "torso_height": 0.7250000238418579,
+        "com_height": 0.6654375195503235,
+        "pelvis_tilt": 88.25699185899056,
+        "torso_tilt": 92.31854749430653,
+        "com_vy": -1.251388669013977
+      }
+    }
+  ],
+  "synthetic_fixture_count": 7,
+  "all_final_csvs_exact_match_initial_runs": true,
+  "production_sources_unchanged_from_step125": {
+    "src/sim/AuraSimulation.cpp": true,
+    "include/aura/sim/AuraSimulation.hpp": true,
+    "src/sim/BalanceClassifier.cpp": true,
+    "include/aura/sim/BalanceClassifier.hpp": true,
+    "src/python/AuraPython.cpp": true,
+    "src/app/SimulationStep.cpp": true,
+    "src/physics/Collision.cpp": true,
+    "src/physics/RoomCollision.cpp": true,
+    "src/physics/BodyGeometry.cpp": true,
+    "src/body/AuraBody3D.cpp": true,
+    "python/aura_env.py": true,
+    "python/aura_policy.py": true,
+    "python/balance_diagnostics.py": true
+  },
+  "all_136_checkpoints_unchanged_during_validation": true,
+  "source_sha256": {
+    "tests/balance_validation.cpp": "8c41e5dbf634aa99256a4b3929b2d230baeae1a690cf8cb023cbda76bd95c11a",
+    "tests/balance_classifier_tests.cpp": "e289d3887b8ebd57ca8d1d170f4916a3dfcb78a90bb3e80f8dfeebde9731ea6b",
+    "include/aura/sim/BalanceClassifier.hpp": "68f70b9eec609aaea632bc0fbc19606e24320b04e84013344bcb9908d4b8e0cb",
+    "src/sim/BalanceClassifier.cpp": "e59e749f620e750022e3c0b0b22370443eec62dd306957450e537e51f8815dab",
+    "src/sim/AuraSimulation.cpp": "bb1b40de51eebb203bca629038c7c1768162249f91a5c27cc63668249da93160",
+    "src/app/SimulationStep.cpp": "17f041400a9d778f0eda69b8d6fc99f8a83a36777ed7b1e339d8e4e2336f03dd",
+    "python/aura_env.py": "35787981490557b0bc6549bdfbeb0892e381d0bb1d33372a2aa13ec80c83303e",
+    "python/aura_policy.py": "162036f9bba36f7c11c316a67bc101951886895b08a33d061bcdd78d4d147fd8"
+  },
+  "csv_sha256": {
+    "horizontal_collapse.csv": "4cb59a48623dc5d32d61b8baad1edcc87552b98c09eadccf3cfe94e43176563a",
+    "one_foot_landing.csv": "412239e58eb62a1686dab0b080d9f37876881baef4f36f390bf9013147812edb",
+    "fixture-sustained_collapse.csv": "570b8485eceb89d2ce3dfa09d75da9d9e5919f2f0e162178fa645bf6fe24602b",
+    "severe_forward.csv": "03d8d7dc09b85ba300c4a1a65e5826d6bc57d1b6460bf5d518c8d16ef9b2255a",
+    "brief_airborne.csv": "30da4e1ef3b5ac22f6f7575fd876d48ad06dbfc1821ec34a3d475e8cda19721c",
+    "fixture-polygon.csv": "b5f24a133faea9258e5c638b6941791054d874dd22bc6816c3040cc97cde8d57",
+    "mild_forward.csv": "d4679a7e883ffe321f4675988708b0539dbb55cfe7db6f4699d675911f595114",
+    "fixture-both_feet.csv": "b5f24a133faea9258e5c638b6941791054d874dd22bc6816c3040cc97cde8d57",
+    "mild_backward.csv": "e01775bcafa6363915ae400dcee8ad3b09fbab7e550cad026965c8b6135b0853",
+    "right_lateral.csv": "d14dca0e8fcec63dba220bf77f3904de7cabb3ca5323e4955d29a36ffd5d8fb4",
+    "fixture-recovery.csv": "919602aa91909f1241db71c77955ff53e4641967b4e86d273c7b65a2b0251342",
+    "severe_backward.csv": "907442eb05112bdfbcb8f47dc43f20cdacaf26ef994d4c2752905ac1b86758b3",
+    "fixture-rotation.csv": "919602aa91909f1241db71c77955ff53e4641967b4e86d273c7b65a2b0251342",
+    "neutral.csv": "d7c48c52ece193bc0d5f0419bb97340a9365c6bfd479da9f4269b7d04e00d7e7",
+    "rapid_rotation.csv": "03b22342270b7ca6f1642f75868d36b8be32b969a8ea406e6b3b49021edb8760",
+    "fixture-brief_collapse.csv": "0e589cc53de394fb6d3882aa6a0af900abae41d2c6891a0005a67ec969951dd5",
+    "left_lateral.csv": "760c93d25b5fb8bb12bc2367e3343c72db514d7d011ae6d8fd7f264cc0bea155",
+    "edge_landing.csv": "70a2a5ea5ffef28b080ff59a65f1f619a89d61c2296acde3cd9b1b011b5e1770",
+    "fixture-one_foot.csv": "ffe3fb394d0bff781b1d8c17732f99a0c18bf7a0ba652138744f4e1a70ce1ae2",
+    "recovery_attempt.csv": "a9b68e7a5cba7a30dd0e82d2338ca9e084b22f99a169b4784ce7cdacf05a7d7e"
+  },
+  "interpretation": "No severe-tilt BALANCED cases and no missed eventual collapse in tested trajectories. Recoverability is not independently ground-truthed; cannot rule out terminal false positives for viable low postures. Airborne re-entry is passive resettling under existing neutral motors, not learned recovery."
+}

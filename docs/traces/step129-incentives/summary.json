@@ -1,0 +1,5100 @@
+{
+  "gamma": 0.995,
+  "config": {
+    "posture_scale_degrees": 30.0,
+    "height_zero_ratio": 0.25,
+    "height_full_ratio": 0.75,
+    "vertical_deadband": 0.25,
+    "horizontal_deadband": 0.35,
+    "angular_deadband": 0.4,
+    "linear_dynamic_fraction": 0.25,
+    "angular_dynamic_fraction": 0.5,
+    "support_margin_scale": 0.1,
+    "support_time_constant": 0.08,
+    "gravity": 9.81,
+    "time_step": 0.008333333333333333,
+    "discount": 0.995,
+    "posture_weight": 0.25,
+    "height_weight": 0.15,
+    "motion_weight": 0.25,
+    "support_weight": 1.0,
+    "recovery_weight": 0.1,
+    "terminal_weight": 1.0
+  },
+  "metadata": {
+    "severe_ideal_recovery_reference": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 1,
+      "interpretation": "Artificial one-tick recovery upper reference, not a plausible movement."
+    },
+    "severe_unbalanced_truncation": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "interpretation": "Prescribed unstable hold to time limit."
+    },
+    "severe_fall_wait0": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 0,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "severe_recover_wait0_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait0_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait0_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_fall_wait24": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 24,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "severe_recover_wait24_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait24_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait24_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_fall_wait120": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 120,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "severe_recover_wait120_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait120_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait120_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_fall_wait240": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 240,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "severe_recover_wait240_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait240_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait240_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_fall_wait480": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 480,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "severe_recover_wait480_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait480_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait480_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_fall_wait720": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 720,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "severe_recover_wait720_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait720_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait720_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_fall_wait900": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 900,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "severe_recover_wait900_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait900_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "severe_recover_wait900_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_ideal_recovery_reference": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 1,
+      "interpretation": "Artificial one-tick recovery upper reference, not a plausible movement."
+    },
+    "very_severe_unbalanced_truncation": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "interpretation": "Prescribed unstable hold to time limit."
+    },
+    "very_severe_fall_wait0": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 0,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "very_severe_recover_wait0_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait0_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait0_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_fall_wait24": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 24,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "very_severe_recover_wait24_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait24_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait24_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_fall_wait120": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 120,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "very_severe_recover_wait120_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait120_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait120_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_fall_wait240": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 240,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "very_severe_recover_wait240_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait240_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait240_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_fall_wait480": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 480,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "very_severe_recover_wait480_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait480_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait480_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_fall_wait720": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 720,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "very_severe_recover_wait720_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait720_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait720_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_fall_wait900": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 900,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "very_severe_recover_wait900_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait900_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "very_severe_recover_wait900_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "very_severe",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_ideal_recovery_reference": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 1,
+      "interpretation": "Artificial one-tick recovery upper reference, not a plausible movement."
+    },
+    "mild_unbalanced_truncation": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "interpretation": "Prescribed unstable hold to time limit."
+    },
+    "mild_fall_wait0": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 0,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "mild_recover_wait0_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait0_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait0_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 0,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_fall_wait24": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 24,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "mild_recover_wait24_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait24_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait24_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 24,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_fall_wait120": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 120,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "mild_recover_wait120_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait120_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait120_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 120,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_fall_wait240": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 240,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "mild_recover_wait240_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait240_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait240_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 240,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_fall_wait480": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 480,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "mild_recover_wait480_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait480_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait480_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 480,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_fall_wait720": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 720,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "mild_recover_wait720_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait720_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait720_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 720,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_fall_wait900": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "collapse_wait": 900,
+      "collapse_ramp": 24,
+      "interpretation": "Constructed collapse; terminal time supplied by actual classifier."
+    },
+    "mild_recover_wait900_ramp24": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 24,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait900_ramp60": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 60,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "mild_recover_wait900_ramp120": {
+      "kind": "constructed_measurements",
+      "cohort": "mild",
+      "fork_step": 48,
+      "assumptions": "Prescribed measurements; native classification; no proven joint/force/action feasibility.",
+      "recovery_wait": 900,
+      "recovery_ramp": 120,
+      "interpretation": "Artificial recovery; subsequent ideal standing is an optimistic assumption."
+    },
+    "sustained_standing_reference": {
+      "kind": "constructed_measurements",
+      "cohort": "standing_reference",
+      "fork_step": 0,
+      "interpretation": "Ideal supported standing to time limit; prescribed, not dynamically simulated."
+    },
+    "cap_fallen": {
+      "kind": "constructed_measurements",
+      "cohort": "cap_boundary",
+      "fork_step": 1176,
+      "interpretation": "Artificial abrupt pose change; tests existing persistence and cap semantics."
+    },
+    "cap_unbalanced": {
+      "kind": "constructed_measurements",
+      "cohort": "cap_boundary",
+      "fork_step": 1176,
+      "interpretation": "Artificial abrupt pose change; tests existing persistence and cap semantics."
+    },
+    "physical_brief_airborne": {
+      "kind": "integrated_physics_replay",
+      "cohort": "native_fork80",
+      "fork_step": 80,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_edge_landing": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_horizontal_collapse": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_left_lateral": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_mild_backward": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_mild_forward": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_neutral": {
+      "kind": "integrated_physics_replay",
+      "cohort": "native_fork80",
+      "fork_step": 80,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_one_foot_landing": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_rapid_rotation": {
+      "kind": "integrated_physics_replay",
+      "cohort": "native_fork80",
+      "fork_step": 80,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_recovery_attempt": {
+      "kind": "integrated_physics_replay",
+      "cohort": "native_fork80",
+      "fork_step": 80,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_right_lateral": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_severe_backward": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    },
+    "physical_severe_forward": {
+      "kind": "integrated_physics_replay",
+      "cohort": "unpaired_native_postures",
+      "fork_step": 0,
+      "interpretation": "Passive zero-target simulation; recovery is passive settling, not learned control."
+    }
+  },
+  "native_classifier_replay_exact": true,
+  "recovery_attempt_lotteries": [
+    {
+      "wait": 24,
+      "success_return": 124.51416410733759,
+      "failure_return": -20.659175780961075,
+      "rapid_fall_return": -20.59891368412554,
+      "minimum_success_probability": 0.000415104432273177,
+      "interpretation": "Constructed binary lottery, not a measured recovery probability.",
+      "expected_returns": {
+        "0.0": -20.659175780961075,
+        "0.01": -19.207442382078085,
+        "0.05": -13.400508786546139,
+        "0.25": 15.634159191113593,
+        "0.5": 51.92749416318826,
+        "1.0": 124.51416410733759
+      }
+    },
+    {
+      "wait": 120,
+      "success_return": 67.56743179625003,
+      "failure_return": -21.908614713163157,
+      "rapid_fall_return": -20.59891368412554,
+      "minimum_success_probability": 0.014637448570102282,
+      "interpretation": "Constructed binary lottery, not a measured recovery probability.",
+      "expected_returns": {
+        "0.0": -21.908614713163157,
+        "0.01": -21.013854248069027,
+        "0.05": -17.434812387692496,
+        "0.25": 0.4603969141901416,
+        "0.5": 22.829408541543437,
+        "1.0": 67.56743179625003
+      }
+    },
+    {
+      "wait": 240,
+      "success_return": 25.907323189284345,
+      "failure_return": -22.84354006123817,
+      "rapid_fall_return": -20.59891368412554,
+      "minimum_success_probability": 0.04604280267977756,
+      "interpretation": "Constructed binary lottery, not a measured recovery probability.",
+      "expected_returns": {
+        "0.0": -22.84354006123817,
+        "0.01": -22.356031428732944,
+        "0.05": -20.40599689871204,
+        "0.25": -10.65582424860754,
+        "0.5": 1.5318915640230877,
+        "1.0": 25.907323189284345
+      }
+    },
+    {
+      "wait": 480,
+      "success_return": -9.431916367867322,
+      "failure_return": -23.636614785590645,
+      "rapid_fall_return": -20.59891368412554,
+      "minimum_success_probability": 0.21385185465640985,
+      "interpretation": "Constructed binary lottery, not a measured recovery probability.",
+      "expected_returns": {
+        "0.0": -23.636614785590645,
+        "0.01": -23.49456780141341,
+        "0.05": -22.926379864704476,
+        "0.25": -20.085440181159814,
+        "0.5": -16.534265576728984,
+        "1.0": -9.431916367867322
+      }
+    },
+    {
+      "wait": 720,
+      "success_return": -20.043900182738504,
+      "failure_return": -23.87476637697444,
+      "rapid_fall_return": -20.59891368412554,
+      "minimum_success_probability": 0.855120624619536,
+      "interpretation": "Constructed binary lottery, not a measured recovery probability.",
+      "expected_returns": {
+        "0.0": -23.87476637697444,
+        "0.01": -23.83645771503208,
+        "0.05": -23.68322306726264,
+        "0.25": -22.917049828415458,
+        "0.5": -21.959333279856473,
+        "1.0": -20.043900182738504
+      }
+    },
+    {
+      "wait": 900,
+      "success_return": -22.750707987247665,
+      "failure_return": -23.93551190744829,
+      "rapid_fall_return": -20.59891368412554,
+      "minimum_success_probability": 2.816160688224053,
+      "interpretation": "Constructed binary lottery, not a measured recovery probability.",
+      "expected_returns": {
+        "0.0": -23.93551190744829,
+        "0.01": -23.923663868246287,
+        "0.05": -23.87627171143826,
+        "0.25": -23.639310927398135,
+        "0.5": -23.343109947347976,
+        "1.0": -22.750707987247665
+      }
+    }
+  ],
+  "terminal_penalty_sensitivity": {
+    "mild": {
+      "current_weight": 1.0,
+      "maximum_required_for_this_grid": 1.0,
+      "comparisons": [],
+      "warning": "Analytical sensitivity of this fixture grid, not a proposed fitted coefficient."
+    },
+    "severe": {
+      "current_weight": 1.0,
+      "maximum_required_for_this_grid": 5.227290542672059,
+      "comparisons": [
+        {
+          "comparison": "severe_unbalanced_truncation",
+          "minimum_weight": 5.137993567323685
+        },
+        {
+          "comparison": "severe_fall_wait24",
+          "minimum_weight": 1.666189113605561
+        },
+        {
+          "comparison": "severe_fall_wait120",
+          "minimum_weight": 4.63062942619419
+        },
+        {
+          "comparison": "severe_fall_wait240",
+          "minimum_weight": 5.01963582247518
+        },
+        {
+          "comparison": "severe_fall_wait480",
+          "minimum_weight": 5.1835773808036985
+        },
+        {
+          "comparison": "severe_fall_wait720",
+          "minimum_weight": 5.2189827541071185
+        },
+        {
+          "comparison": "severe_fall_wait900",
+          "minimum_weight": 5.227290542672059
+        },
+        {
+          "comparison": "severe_recover_wait900_ramp24",
+          "minimum_weight": 3.352502023026431
+        },
+        {
+          "comparison": "severe_recover_wait900_ramp60",
+          "minimum_weight": 3.696262179038091
+        },
+        {
+          "comparison": "severe_recover_wait900_ramp120",
+          "minimum_weight": 3.73089773137717
+        }
+      ],
+      "warning": "Analytical sensitivity of this fixture grid, not a proposed fitted coefficient."
+    },
+    "very_severe": {
+      "current_weight": 1.0,
+      "maximum_required_for_this_grid": 33.1712376717971,
+      "comparisons": [
+        {
+          "comparison": "very_severe_unbalanced_truncation",
+          "minimum_weight": 32.99089758278394
+        },
+        {
+          "comparison": "very_severe_fall_wait24",
+          "minimum_weight": 32.68929500125998
+        },
+        {
+          "comparison": "very_severe_fall_wait120",
+          "minimum_weight": 33.090488370602195
+        },
+        {
+          "comparison": "very_severe_fall_wait240",
+          "minimum_weight": 33.1431346614237
+        },
+        {
+          "comparison": "very_severe_fall_wait480",
+          "minimum_weight": 33.16532173865441
+        },
+        {
+          "comparison": "very_severe_recover_wait480_ramp24",
+          "minimum_weight": 9.750713944809188
+        },
+        {
+          "comparison": "very_severe_recover_wait480_ramp60",
+          "minimum_weight": 14.135504946269243
+        },
+        {
+          "comparison": "very_severe_recover_wait480_ramp120",
+          "minimum_weight": 16.429571114506594
+        },
+        {
+          "comparison": "very_severe_fall_wait720",
+          "minimum_weight": 33.17011333487856
+        },
+        {
+          "comparison": "very_severe_recover_wait720_ramp24",
+          "minimum_weight": 26.683462068860816
+        },
+        {
+          "comparison": "very_severe_recover_wait720_ramp60",
+          "minimum_weight": 28.000166438343165
+        },
+        {
+          "comparison": "very_severe_recover_wait720_ramp120",
+          "minimum_weight": 28.689049203016367
+        },
+        {
+          "comparison": "very_severe_fall_wait900",
+          "minimum_weight": 33.1712376717971
+        },
+        {
+          "comparison": "very_severe_recover_wait900_ramp24",
+          "minimum_weight": 31.002512641644007
+        },
+        {
+          "comparison": "very_severe_recover_wait900_ramp60",
+          "minimum_weight": 31.536637525024773
+        },
+        {
+          "comparison": "very_severe_recover_wait900_ramp120",
+          "minimum_weight": 31.816084783528527
+        }
+      ],
+      "warning": "Analytical sensitivity of this fixture grid, not a proposed fitted coefficient."
+    }
+  },
+  "results": {
+    "severe_ideal_recovery_reference": {
+      "total_reward": 1145.4673966575667,
+      "discounted_return": 193.6460224874576,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1134,
+          "seconds": 9.45
+        },
+        "UNBALANCED": {
+          "steps": 18,
+          "seconds": 0.15
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": 0.0,
+        "height": 0.0,
+        "motion": -0.25,
+        "support": 193.90698211377386,
+        "recovery": -0.010959626316673417,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "759349d99f88333e7e9a49a8a900dcbaf9de1680a04ecd576cbace87ff2ec034"
+    },
+    "severe_unbalanced_truncation": {
+      "total_reward": -139.96115100757325,
+      "discounted_return": -23.90130432467508,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 1152,
+          "seconds": 9.6
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -37.06573062656859,
+        "height": 0.0,
+        "motion": 0.0,
+        "support": 13.175385928210112,
+        "recovery": -0.01095962631667341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "da62d34478afa9a1ce08f1008c925056833d747d683c82ec3a959ebbb98d1194"
+    },
+    "severe_fall_wait0": {
+      "total_reward": -22.97940376202046,
+      "discounted_return": -20.59891368412554,
+      "steps": 46,
+      "terminal_step": 94,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 45,
+          "seconds": 0.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -10.043953379326092,
+        "height": -4.078610525866266,
+        "motion": -5.667324474934605,
+        "support": 3.295905798257161e-55,
+        "recovery": -0.010959626316673417,
+        "terminal": -0.7980656776819048
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "e81c0a8d580b834e970f6dceac6bf0501a001cd4a6320c90195b5a75f28ffb5d"
+    },
+    "severe_recover_wait0_ramp24": {
+      "total_reward": 1118.4454750986797,
+      "discounted_return": 168.28348359468316,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1111,
+          "seconds": 9.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 41,
+          "seconds": 0.3416666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -1.7473409662300678,
+        "height": 0.0,
+        "motion": -5.667258769737171,
+        "support": 175.70904295696658,
+        "recovery": -0.010959626316673417,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "78d277ea9afef7bde05d98fe47cac90e912c9f5cc9f8ebdfd781237ec1003ec6"
+    },
+    "severe_recover_wait0_ramp60": {
+      "total_reward": 1087.6540952961273,
+      "discounted_return": 143.4050051883548,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1075,
+          "seconds": 8.958333333333334
+        },
+        "UNBALANCED": {
+          "steps": 77,
+          "seconds": 0.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -4.28627479041295,
+        "height": 0.0,
+        "motion": -8.493560456249176,
+        "support": 156.1958000613332,
+        "recovery": -0.010959626316673408,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "6a1a54c69635a752428d2f1bd8d98d410d0a261b034e0212ec877ab11226472f"
+    },
+    "severe_recover_wait0_ramp120": {
+      "total_reward": 1081.8502463775076,
+      "discounted_return": 141.13979257422105,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1015,
+          "seconds": 8.458333333333334
+        },
+        "UNBALANCED": {
+          "steps": 137,
+          "seconds": 1.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -7.999062570703323,
+        "height": 0.0,
+        "motion": -1.487897530406272,
+        "support": 150.63771230164727,
+        "recovery": -0.01095962631667341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "9b1fec287e9c3535ae0b9ad6db08f9787ee386fee2056801f3e9e619998faff9"
+    },
+    "severe_fall_wait24": {
+      "total_reward": -25.523409408455702,
+      "discounted_return": -20.659175780961075,
+      "steps": 70,
+      "terminal_step": 118,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 69,
+          "seconds": 0.575
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -13.119866397376777,
+        "height": -3.6163143407269103,
+        "motion": -5.024953140850749,
+        "support": 1.8205254590372906,
+        "recovery": -0.010959626316673415,
+        "terminal": -0.7076077347272661
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "2dacf1ee0a07cc105b08f26a395b19c9e01881eab6ae3f80f4980885d4caab8e"
+    },
+    "severe_recover_wait24_ramp24": {
+      "total_reward": 1091.7917131202232,
+      "discounted_return": 146.65205962081615,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1087,
+          "seconds": 9.058333333333334
+        },
+        "UNBALANCED": {
+          "steps": 65,
+          "seconds": 0.5416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -5.763645876036459,
+        "height": 0.0,
+        "motion": -5.024894883106786,
+        "support": 157.45156000627566,
+        "recovery": -0.010959626316673418,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "70bc8e08925d649e37dbc5b79a782f680a49e7a56424194d8afc23ac4f49629d"
+    },
+    "severe_recover_wait24_ramp60": {
+      "total_reward": 1060.9168770722245,
+      "discounted_return": 124.51416410733759,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1051,
+          "seconds": 8.758333333333333
+        },
+        "UNBALANCED": {
+          "steps": 101,
+          "seconds": 0.8416666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -8.014800464178721,
+        "height": 0.0,
+        "motion": -7.530845195188421,
+        "support": 140.07076939302112,
+        "recovery": -0.01095962631667346,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "9e752740f962b7f639a4b54e1db3c4d708805b31185527dd128a982960137033"
+    },
+    "severe_recover_wait24_ramp120": {
+      "total_reward": 1054.8714651137316,
+      "discounted_return": 122.3012312389822,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 991,
+          "seconds": 8.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 161,
+          "seconds": 1.3416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -11.306756783319539,
+        "height": 0.0,
+        "motion": -1.3192495686009473,
+        "support": 134.93819721721906,
+        "recovery": -0.010959626316673408,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "b76f2a0ef263adfca335141073acf8ff9257f37e0bd8e1ea0f5bc30117ce5d44"
+    },
+    "severe_fall_wait120": {
+      "total_reward": -37.186446704352214,
+      "discounted_return": -21.908614713163157,
+      "steps": 166,
+      "terminal_step": 214,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 165,
+          "seconds": 1.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -22.310366524963623,
+        "height": -2.235022632030043,
+        "motion": -3.1056160876862178,
+        "support": 6.190679204123398,
+        "recovery": -0.010959626316673418,
+        "terminal": -0.43732904629000025
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "61a4f453493bd67c5635a2da0a72005c702b834016c4e18f7410b26f53217861"
+    },
+    "severe_recover_wait120_ramp24": {
+      "total_reward": 984.1657881990153,
+      "discounted_return": 81.25389339944395,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 991,
+          "seconds": 8.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 161,
+          "seconds": 1.3416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -17.763936706560557,
+        "height": 0.0,
+        "motion": -3.1055800821391384,
+        "support": 102.13436981446002,
+        "recovery": -0.010959626316673469,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "6256e9089ab7b2940b67e151809a5d0d5c452454e8b0b655c003e564246677fc"
+    },
+    "severe_recover_wait120_ramp60": {
+      "total_reward": 953.2834893742126,
+      "discounted_return": 67.56743179625003,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 955,
+          "seconds": 7.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 197,
+          "seconds": 1.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -19.155237621979563,
+        "height": 0.0,
+        "motion": -4.654354645005093,
+        "support": 91.38798368955118,
+        "recovery": -0.010959626316673427,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "8713d765d70981a0ed790cccd67701c2bdabe4871cce019a0bcbcbb78099f1b6"
+    },
+    "severe_recover_wait120_ramp120": {
+      "total_reward": 947.2164765032779,
+      "discounted_return": 66.18845293622822,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 895,
+          "seconds": 7.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 257,
+          "seconds": 2.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -21.189794406513702,
+        "height": 0.0,
+        "motion": -0.81534744087714,
+        "support": 88.20455440993551,
+        "recovery": -0.01095962631667343,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "85af62253d2764a713a05ef693858e51a10bf37acd99be069c5e526e4e425f1b"
+    },
+    "severe_fall_wait240": {
+      "total_reward": -51.807745395724524,
+      "discounted_return": -22.84354006123817,
+      "steps": 286,
+      "terminal_step": 334,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 285,
+          "seconds": 2.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -29.032192700927755,
+        "height": -1.2247617501123202,
+        "motion": -1.7018350240492874,
+        "support": 9.365859359781231,
+        "recovery": -0.01095962631667342,
+        "terminal": -0.23965031961335992
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "03f1c3cf0ca2f7481e2345bd6c11b3e077671bcdd98d114d596fc516116d605b"
+    },
+    "severe_recover_wait240_ramp24": {
+      "total_reward": 849.6044890133251,
+      "discounted_return": 33.40731655376481,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 871,
+          "seconds": 7.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 281,
+          "seconds": 2.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -26.540811512499893,
+        "height": 0.0,
+        "motion": -1.7018152935032864,
+        "support": 61.66090298608454,
+        "recovery": -0.010959626316673427,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "e7b4d6b3aebbefd73f163b0e363534f6d16ebddb7680669c89cd1a61290ac133"
+    },
+    "severe_recover_wait240_ramp60": {
+      "total_reward": 818.7221898496987,
+      "discounted_return": 25.907323189284345,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 835,
+          "seconds": 6.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 317,
+          "seconds": 2.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -27.30322533313925,
+        "height": 0.0,
+        "motion": -2.5505225132696645,
+        "support": 55.772030662009826,
+        "recovery": -0.010959626316673424,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "93f8661e2621740726624cae75f3d7d2c372338b016b3b3fe8d6e59e5bb4bf0c"
+    },
+    "severe_recover_wait240_ramp120": {
+      "total_reward": 812.6551759980432,
+      "discounted_return": 25.15166140486127,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 775,
+          "seconds": 6.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 377,
+          "seconds": 3.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -28.418134548114676,
+        "height": 0.0,
+        "motion": -0.4467992155100757,
+        "support": 54.02755479480256,
+        "recovery": -0.010959626316673418,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "10f71f876ccd573e9af9ab07192622a2a7f7560d0e5425ff1a39bebde40b790f"
+    },
+    "severe_fall_wait480": {
+      "total_reward": -81.0503458660499,
+      "discounted_return": -23.636614785590645,
+      "steps": 526,
+      "terminal_step": 574,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 525,
+          "seconds": 4.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -34.73415151155408,
+        "height": -0.3677824433161821,
+        "motion": -0.5110422849248027,
+        "support": 12.059285427938686,
+        "recovery": -0.010959626316673413,
+        "terminal": -0.07196434741762829
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "1640c8d16f64bebddcb9287a4f9c236fe5549b6a6f6f1780f2be1eadd60e04e8"
+    },
+    "severe_recover_wait480_ramp24": {
+      "total_reward": 580.481888542998,
+      "discounted_return": -7.179751092301719,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 631,
+          "seconds": 5.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 521,
+          "seconds": 4.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -33.986017222882886,
+        "height": 0.0,
+        "motion": -0.5110363600594846,
+        "support": 27.328262116957383,
+        "recovery": -0.010959626316673412,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "cbb45dd46e4a4049d8f4be3a974a4cf784e4397dd683032d12ec2256d8a68742"
+    },
+    "severe_recover_wait480_ramp60": {
+      "total_reward": 549.5995893793704,
+      "discounted_return": -9.431916367867322,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 595,
+          "seconds": 4.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 557,
+          "seconds": 4.641666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -34.21496168309896,
+        "height": 0.0,
+        "motion": -0.7658937761382745,
+        "support": 25.55989871768665,
+        "recovery": -0.010959626316673415,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "62e06822f04264306dc0017b28968ab60426321160c638de87c4b3165087664b"
+    },
+    "severe_recover_wait480_ramp120": {
+      "total_reward": 543.5325755277113,
+      "discounted_return": -9.658833266089122,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 535,
+          "seconds": 4.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 617,
+          "seconds": 5.141666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -34.5497566218875,
+        "height": 0.0,
+        "motion": -0.13416887581358508,
+        "support": 25.036051857928705,
+        "recovery": -0.010959626316673412,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "9f360e226d17ed72bd74f03175eca2a886c7f6e93ce85031a528e560b8897ae0"
+    },
+    "severe_fall_wait720": {
+      "total_reward": -110.292946336381,
+      "discounted_return": -23.87476637697444,
+      "steps": 766,
+      "terminal_step": 814,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 765,
+          "seconds": 6.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -36.446386844563186,
+        "height": -0.11044101075104275,
+        "motion": -0.15346036089900073,
+        "support": 12.868091565252325,
+        "recovery": -0.010959626316673412,
+        "terminal": -0.0216100996969269
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "bb15b2fc3274952aa1764f896e69d8dea8d6641130a85645a2df65ab23594e1b"
+    },
+    "severe_recover_wait720_ramp24": {
+      "total_reward": 311.359288072667,
+      "discounted_return": -19.367599793929493,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 391,
+          "seconds": 3.2583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 761,
+          "seconds": 6.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -36.221730370280845,
+        "height": 0.0,
+        "motion": -0.15345858172730237,
+        "support": 17.018548784395325,
+        "recovery": -0.01095962631667341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "aba952b11e97ba8b91547e7efea5f4fd15e876f0d4d5260655f13919422dd82c"
+    },
+    "severe_recover_wait720_ramp60": {
+      "total_reward": 280.4769889090394,
+      "discounted_return": -20.043900182738504,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 355,
+          "seconds": 2.9583333333333335
+        },
+        "UNBALANCED": {
+          "steps": 797,
+          "seconds": 6.641666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -36.29047986621689,
+        "height": 0.0,
+        "motion": -0.22998945246531344,
+        "support": 16.48752876226036,
+        "recovery": -0.010959626316673412,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "accd5581ca850712470eedb913f098e5797af74fbbdeff80efccfe64f28eb4bb"
+    },
+    "severe_recover_wait720_ramp120": {
+      "total_reward": 274.4099750573803,
+      "discounted_return": -20.112040824173548,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 295,
+          "seconds": 2.4583333333333335
+        },
+        "UNBALANCED": {
+          "steps": 857,
+          "seconds": 7.141666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -36.39101509324063,
+        "height": 0.0,
+        "motion": -0.040289433401378194,
+        "support": 16.33022332878514,
+        "recovery": -0.01095962631667341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "08f67a9b4a6ce8d7824f28e3225cc4109d7353d8dc9d6f015a9800102556b0a0"
+    },
+    "severe_fall_wait900": {
+      "total_reward": -132.22489668912934,
+      "discounted_return": -23.93551190744829,
+      "steps": 946,
+      "terminal_step": 994,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 945,
+          "seconds": 7.875
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -36.88312817807824,
+        "height": -0.04480071104431134,
+        "motion": -0.06225163314459211,
+        "support": 13.074394439720363,
+        "recovery": -0.01095962631667341,
+        "terminal": -0.008766198584900593
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "f53c3b6145a2336d023c1703a644c522213defc0137fc135ea9bdb459accdf2d"
+    },
+    "severe_recover_wait900_ramp24": {
+      "total_reward": 109.51733771998235,
+      "discounted_return": -22.476364805380182,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 211,
+          "seconds": 1.7583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 941,
+          "seconds": 7.841666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -36.79199563845267,
+        "height": 0.0,
+        "motion": -0.06225091141851758,
+        "support": 14.388841370807688,
+        "recovery": -0.01095962631667341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "ac0407aa6e45bc5499ba1f29b3da01377855f77166851b912e7a36ecda16cb5f"
+    },
+    "severe_recover_wait900_ramp60": {
+      "total_reward": 78.63503855660336,
+      "discounted_return": -22.750707987247665,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 175,
+          "seconds": 1.4583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 977,
+          "seconds": 8.141666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -36.81988406758717,
+        "height": 0.0,
+        "motion": -0.09329587743781674,
+        "support": 14.17343158409396,
+        "recovery": -0.01095962631667341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "8646f1a47d5be2ff3acffaaac359fe35463f86ede6f00b5ccd0684fafcf29627"
+    },
+    "severe_recover_wait900_ramp120": {
+      "total_reward": 72.5680247116828,
+      "discounted_return": -22.77834943279704,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 115,
+          "seconds": 0.9583333333333334
+        },
+        "UNBALANCED": {
+          "steps": 1037,
+          "seconds": 8.641666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -36.86066646920624,
+        "height": 0.0,
+        "motion": -0.016343523584939013,
+        "support": 14.109620186310778,
+        "recovery": -0.01095962631667341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "2853f1c0146d8ff6250d24c83967ae4daf2466e395f544f30451e3d87bf90862",
+      "input_sha256": "45645e4a77c662ed3a510b8210d365696303b5cb1a346dc520cebdb6ec23bf55"
+    },
+    "very_severe_ideal_recovery_reference": {
+      "total_reward": 1145.4768730597516,
+      "discounted_return": 193.65549888964253,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1134,
+          "seconds": 9.45
+        },
+        "UNBALANCED": {
+          "steps": 18,
+          "seconds": 0.15
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": 0.0,
+        "height": 0.0,
+        "motion": -0.25,
+        "support": 193.90698211377386,
+        "recovery": -0.0014832241317344298,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "13221f621e4b5b8ac8212818f102c8f1fff57dc7227cb052a04f0b92c6befdb6"
+    },
+    "very_severe_unbalanced_truncation": {
+      "total_reward": -267.9651204415878,
+      "discounted_return": -46.333647042136974,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 1152,
+          "seconds": 9.6
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -48.115258404351216,
+        "height": 0.0,
+        "motion": 0.0,
+        "support": 1.7830945863459948,
+        "recovery": -0.0014832241317344268,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "2941967d5df2a315963f0fefe7bc17a23cf27cedc485db3e6345d0245d1c3a8f"
+    },
+    "very_severe_fall_wait0": {
+      "total_reward": -23.186700588170712,
+      "discounted_return": -20.8028096830801,
+      "steps": 46,
+      "terminal_step": 94,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 45,
+          "seconds": 0.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -10.25732578046559,
+        "height": -4.078610525866266,
+        "motion": -5.667324474934605,
+        "support": 7.509659873518031e-48,
+        "recovery": -0.0014832241317344296,
+        "terminal": -0.7980656776819048
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "263771698aef34dcae1685f1e7f59d2e211ef72b1c71626b0651edabb0fd7443"
+    },
+    "very_severe_recover_wait0_ramp24": {
+      "total_reward": 1117.2489259096055,
+      "discounted_return": 167.13445316976737,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1111,
+          "seconds": 9.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 41,
+          "seconds": 0.3416666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -2.9056640579575994,
+        "height": 0.0,
+        "motion": -5.667324474934181,
+        "support": 175.70892492679025,
+        "recovery": -0.0014832241317344185,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "1dda842b43f12adf58f17eb88b606e2fefd39b6f414af09c42962084ca3b676c"
+    },
+    "very_severe_recover_wait0_ramp60": {
+      "total_reward": 1069.722793381589,
+      "discounted_return": 128.22245940850098,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1075,
+          "seconds": 8.958333333333334
+        },
+        "UNBALANCED": {
+          "steps": 77,
+          "seconds": 0.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -7.037966309273386,
+        "height": 0.0,
+        "motion": -12.619499535038061,
+        "support": 147.88140847694373,
+        "recovery": -0.0014832241317344263,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "f0ca5bfc4bdbdf0d0f025c69b9aa2be9e8db9846ef55e8538a40524027b9b39f"
+    },
+    "very_severe_recover_wait0_ramp120": {
+      "total_reward": 1036.3398301049806,
+      "discounted_return": 107.97346812109876,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1015,
+          "seconds": 8.458333333333334
+        },
+        "UNBALANCED": {
+          "steps": 137,
+          "seconds": 1.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -12.976095649956928,
+        "height": 0.0,
+        "motion": -8.618437881776448,
+        "support": 129.5694848769636,
+        "recovery": -0.0014832241317344229,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "f7f5a24539cee48c1dc2edc04da6fbf727d564c0a43a4cc857c9883ab0c71ec1"
+    },
+    "very_severe_fall_wait24": {
+      "total_reward": -28.718982607697072,
+      "discounted_return": -23.669358122576792,
+      "steps": 70,
+      "terminal_step": 118,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 69,
+          "seconds": 0.575
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -14.565381010778413,
+        "height": -3.6163143407269103,
+        "motion": -5.024953140850749,
+        "support": 0.24638132863827578,
+        "recovery": -0.00148322413173443,
+        "terminal": -0.7076077347272661
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "9fb14ece57055dd4ab00680c3c2f94e6d083127b9284dfbe2b56c8392cda9e76"
+    },
+    "very_severe_recover_wait24_ramp24": {
+      "total_reward": 1087.6068960949044,
+      "discounted_return": 142.80387775204153,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1087,
+          "seconds": 9.058333333333334
+        },
+        "UNBALANCED": {
+          "steps": 65,
+          "seconds": 0.5416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -8.047004336498611,
+        "height": 0.0,
+        "motion": -5.024953140850372,
+        "support": 155.87731845352178,
+        "recovery": -0.001483224131734438,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "97811d7c08f6769f56c376e0a720c999f231fec17c15fdda8cc2254a0d3496d3"
+    },
+    "very_severe_recover_wait24_ramp60": {
+      "total_reward": 1040.1944036775194,
+      "discounted_return": 108.38796776366844,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1051,
+          "seconds": 8.758333333333333
+        },
+        "UNBALANCED": {
+          "steps": 101,
+          "seconds": 0.8416666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -11.710924634080211,
+        "height": 0.0,
+        "motion": -11.189123563511119,
+        "support": 131.289499185391,
+        "recovery": -0.0014832241317344606,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "b13ec3835e6b6f36f0caf1454528e3d04ba634b25b2f878d3dbd9d70dc8dda79"
+    },
+    "very_severe_recover_wait24_ramp120": {
+      "total_reward": 1006.7585041241429,
+      "discounted_return": 90.38995923012769,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 991,
+          "seconds": 8.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 161,
+          "seconds": 1.3416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -16.97598785980809,
+        "height": 0.0,
+        "motion": -7.641568202914542,
+        "support": 115.00899851698182,
+        "recovery": -0.001483224131734441,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "e7538b69f2997b3d13b15c27850a55523097350c155a6262ee1e08c903a1a052"
+    },
+    "very_severe_fall_wait120": {
+      "total_reward": -51.04935626534176,
+      "discounted_return": -32.379024357612224,
+      "steps": 166,
+      "terminal_step": 214,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 165,
+          "seconds": 1.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -27.437390690991286,
+        "height": -2.235022632030043,
+        "motion": -3.1056160876862178,
+        "support": 0.8378173235170471,
+        "recovery": -0.0014832241317344298,
+        "terminal": -0.43732904629000025
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "e01514bd22d9774b127ea8261e82e117fd6c791878b5f802e6663acdecf7d196"
+    },
+    "very_severe_recover_wait120_ramp24": {
+      "total_reward": 969.3136355753252,
+      "discounted_return": 70.26556791929032,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 991,
+          "seconds": 8.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 161,
+          "seconds": 1.3416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -23.408780891494807,
+        "height": 0.0,
+        "motion": -3.105616087685985,
+        "support": 96.78144812260264,
+        "recovery": -0.0014832241317344732,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "9573e9173c78ca131dd31e48bb4ce46b26311b8199498d3990d7f66b44121311"
+    },
+    "very_severe_recover_wait120_ramp60": {
+      "total_reward": 921.9113050191297,
+      "discounted_return": 48.999927443143484,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 955,
+          "seconds": 7.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 197,
+          "seconds": 1.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -25.673225852715483,
+        "height": 0.0,
+        "motion": -6.915312674948821,
+        "support": 81.58994919493932,
+        "recovery": -0.0014832241317344387,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "dc65c80a1a4ccc78adc9c9f4183a51731dbc686da6f04c564a7e6ab770dd8471"
+    },
+    "very_severe_recover_wait120_ramp120": {
+      "total_reward": 888.4706718281897,
+      "discounted_return": 37.87401850755211,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 895,
+          "seconds": 7.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 257,
+          "seconds": 2.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -28.927239292876088,
+        "height": 0.0,
+        "motion": -4.722785761561342,
+        "support": 71.52552678612106,
+        "recovery": -0.0014832241317344341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "f8a8e20df7c16c363ab674e21c3c9834b926c46cda884d18cd2c916cae841c6f"
+    },
+    "very_severe_fall_wait240": {
+      "total_reward": -78.96807536792734,
+      "discounted_return": -38.75202973448447,
+      "steps": 286,
+      "terminal_step": 334,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 285,
+          "seconds": 2.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -36.85183064578807,
+        "height": -1.2247617501123202,
+        "motion": -1.7018350240492874,
+        "support": 1.2675312292102716,
+        "recovery": -0.0014832241317344296,
+        "terminal": -0.23965031961335992
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "2b3055262d40c8fe3def6d73b94a26c7d8192bdca74c642f8cd7732bf9589e29"
+    },
+    "very_severe_recover_wait240_ramp24": {
+      "total_reward": 821.4549159784564,
+      "discounted_return": 17.215016105524274,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 871,
+          "seconds": 7.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 281,
+          "seconds": 2.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -34.64420772607321,
+        "height": 0.0,
+        "motion": -1.70183502404916,
+        "support": 53.562542079778225,
+        "recovery": -0.0014832241317344341,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "b5934f5af64c21b78b4c582adbb26599a30f9dad99dacd0d5152f3848c19d6ed"
+    },
+    "very_severe_recover_wait240_ramp60": {
+      "total_reward": 774.0525858836278,
+      "discounted_return": 5.561736890058852,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 835,
+          "seconds": 6.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 317,
+          "seconds": 2.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -35.885092509069175,
+        "height": 0.0,
+        "motion": -3.7894965057474113,
+        "support": 45.237809129007005,
+        "recovery": -0.001483224131734437,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "2d922cf75d720f63ea6088c4141191e2f695e691fe9ba7d50ed4f067d380b794"
+    },
+    "very_severe_recover_wait240_ramp120": {
+      "total_reward": 740.6119524777721,
+      "discounted_return": -0.5351086809888874,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 775,
+          "seconds": 6.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 377,
+          "seconds": 3.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -37.66824724707746,
+        "height": 0.0,
+        "motion": -2.5880218266432595,
+        "support": 39.72264361686345,
+        "recovery": -0.0014832241317344218,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "8266891927d49cfb8cf5738af7a91e2f73064586dd7c3b820bbc44a466a5cd08"
+    },
+    "very_severe_fall_wait480": {
+      "total_reward": -134.80551399095717,
+      "discounted_return": -44.158092585895524,
+      "steps": 526,
+      "terminal_step": 574,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 525,
+          "seconds": 4.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -44.837867095126406,
+        "height": -0.3677824433161821,
+        "motion": -0.5110422849248027,
+        "support": 1.6320468090212363,
+        "recovery": -0.001483224131734428,
+        "terminal": -0.07196434741762829
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "0005ea8db19e930b0ca8b904476056194e6d42ec1d64968a496ac480f663d012"
+    },
+    "very_severe_recover_wait480_ramp24": {
+      "total_reward": 525.7374773554249,
+      "discounted_return": -27.78645413764474,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 631,
+          "seconds": 5.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 521,
+          "seconds": 4.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -44.174942284436426,
+        "height": 0.0,
+        "motion": -0.5110422849247644,
+        "support": 16.901013655848153,
+        "recovery": -0.0014832241317344268,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "c3dc6d17d2e77cf74c2582d9b952646ee7341aa3360ef773b796a27e6d1d0412"
+    },
+    "very_severe_recover_wait480_ramp60": {
+      "total_reward": 478.335147260598,
+      "discounted_return": -31.285805339718475,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 595,
+          "seconds": 4.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 557,
+          "seconds": 4.641666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -44.54756629667576,
+        "height": 0.0,
+        "motion": -1.1379439990627591,
+        "support": 14.401188180151816,
+        "recovery": -0.0014832241317344304,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "bea0d95339724953216514ec5bd0f56402f29fe4011a88b771f813539fda32a9"
+    },
+    "very_severe_recover_wait480_ramp120": {
+      "total_reward": 444.89451385474143,
+      "discounted_return": -33.11662081091995,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 535,
+          "seconds": 4.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 617,
+          "seconds": 5.141666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -45.08302799467162,
+        "height": 0.0,
+        "motion": -0.7771544062926331,
+        "support": 12.745044814176055,
+        "recovery": -0.0014832241317344257,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "7048094a7873019077a35db5c223c6991b2acff790c437d7b33b08eac19a662f"
+    },
+    "very_severe_fall_wait720": {
+      "total_reward": -190.64295261398777,
+      "discounted_return": -45.78147362635548,
+      "steps": 766,
+      "terminal_step": 814,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 765,
+          "seconds": 6.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -47.23598574757484,
+        "height": -0.11044101075104275,
+        "motion": -0.15346036089900073,
+        "support": 1.7415068166980883,
+        "recovery": -0.001483224131734427,
+        "terminal": -0.0216100996969269
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "5f5cca68c8a51837b8f5eb475c6943b1b1785cedfae3f231bec356083ed42f97"
+    },
+    "very_severe_recover_wait720_ramp24": {
+      "total_reward": 230.02003873239437,
+      "discounted_return": -41.299899244283004,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 391,
+          "seconds": 3.2583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 761,
+          "seconds": 6.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -47.03691673959176,
+        "height": 0.0,
+        "motion": -0.15346036089898923,
+        "support": 5.891961080339464,
+        "recovery": -0.0014832241317344265,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "772fcb1010a284d033a7cbc0ac0dd9e8830fb89967c2894941bd2163cc0cfe37"
+    },
+    "very_severe_recover_wait720_ramp60": {
+      "total_reward": 182.61770863756752,
+      "discounted_return": -42.35071580922066,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 355,
+          "seconds": 2.9583333333333335
+        },
+        "UNBALANCED": {
+          "steps": 797,
+          "seconds": 6.641666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -47.148811620083485,
+        "height": 0.0,
+        "motion": -0.3417120303552161,
+        "support": 5.141291065349756,
+        "recovery": -0.0014832241317344276,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "11de5e59ef1bba90c09d41abaf4886be9c8f26073177b7afe594a721ca4b836b"
+    },
+    "very_severe_recover_wait720_ramp120": {
+      "total_reward": 149.17707523171097,
+      "discounted_return": -42.90048949965296,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 295,
+          "seconds": 2.4583333333333335
+        },
+        "UNBALANCED": {
+          "steps": 857,
+          "seconds": 7.141666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -47.30960486135926,
+        "height": 0.0,
+        "motion": -0.23337089548561524,
+        "support": 4.643969481323644,
+        "recovery": -0.001483224131734426,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "602e5ec3fa0bb8528696961b341123bf74bb9fc90a383a4895e781dbe46e7411"
+    },
+    "very_severe_fall_wait900": {
+      "total_reward": -232.52103158126073,
+      "discounted_return": -46.19555081933547,
+      "steps": 946,
+      "terminal_step": 994,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 945,
+          "seconds": 7.875
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -47.84767592707662,
+        "height": -0.04480071104431134,
+        "motion": -0.06225163314459211,
+        "support": 1.7694268746467476,
+        "recovery": -0.0014832241317344268,
+        "terminal": -0.008766198584900593
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "d7fe1162dcfa2ccf81c96a83d548005872cb85c276ca4e1933d6200cd2a0ca3c"
+    },
+    "very_severe_recover_wait900_ramp24": {
+      "total_reward": 8.231959765185042,
+      "discounted_return": -44.74678526659364,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 211,
+          "seconds": 1.7583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 941,
+          "seconds": 7.841666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -47.76692301614364,
+        "height": 0.0,
+        "motion": -0.06225163314458745,
+        "support": 3.083872606826408,
+        "recovery": -0.0014832241317344263,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "2c223ba7ede8c9414231b96f04758fd3571866f83b8e69be547bbcd720ef730e"
+    },
+    "very_severe_recover_wait900_ramp60": {
+      "total_reward": -39.17037032939314,
+      "discounted_return": -45.17305200361568,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 175,
+          "seconds": 1.4583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 977,
+          "seconds": 8.141666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -47.812313493595425,
+        "height": 0.0,
+        "motion": -0.1386164598476788,
+        "support": 2.779361173959215,
+        "recovery": -0.001483224131734427,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "57cbb16d946707b1d4d3ee6e917762994271e02689dcb79767ab4624087fc84f"
+    },
+    "very_severe_recover_wait900_ramp120": {
+      "total_reward": -72.61100372851114,
+      "discounted_return": -45.39606926934983,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 115,
+          "seconds": 0.9583333333333334
+        },
+        "UNBALANCED": {
+          "steps": 1037,
+          "seconds": 8.641666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -47.87753973058191,
+        "height": 0.0,
+        "motion": -0.09466756944457351,
+        "support": 2.577621254808478,
+        "recovery": -0.0014832241317344263,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "5b22fc5412d2cca91f55ad7d658c486c37ac98333d365789052a43061e82a52a",
+      "input_sha256": "319bb59a95733f309dc0b3e43b565b7bcf6940210cafe444655eb42bdc33620b"
+    },
+    "mild_ideal_recovery_reference": {
+      "total_reward": 1148.7273437899119,
+      "discounted_return": 196.74847417639126,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1134,
+          "seconds": 9.45
+        },
+        "UNBALANCED": {
+          "steps": 18,
+          "seconds": 0.15
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": 0.0,
+        "height": 0.0,
+        "motion": -0.25,
+        "support": 197.0398492406811,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "b2ff2285a8c2207ecbabaf702c8b61a71781ec79435e7b11d412410ab40aaf40"
+    },
+    "mild_unbalanced_truncation": {
+      "total_reward": 279.36769330129437,
+      "discounted_return": 48.6829791385984,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 1152,
+          "seconds": 9.6
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -24.954662128500722,
+        "height": 0.0,
+        "motion": 0.0,
+        "support": 73.67901633138946,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "4d26e2d5a8bde13194db18b67393b288cd25ffb5fc4f3d201b62c64ac2b10fbb"
+    },
+    "mild_fall_wait0": {
+      "total_reward": -22.741043015233817,
+      "discounted_return": -20.36485500861729,
+      "steps": 46,
+      "terminal_step": 94,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 45,
+          "seconds": 0.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -9.779479265844108,
+        "height": -4.078610525866266,
+        "motion": -5.667324474934605,
+        "support": 2.6040897345759803e-60,
+        "recovery": -0.041375064290407215,
+        "terminal": -0.7980656776819048
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "6e1ef9fec6243a580ff42c077d339c9334360a01e70ecec08608e53bdbc36e79"
+    },
+    "mild_recover_wait0_ramp24": {
+      "total_reward": 1120.2561535528037,
+      "discounted_return": 169.9160537424956,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1111,
+          "seconds": 9.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 41,
+          "seconds": 0.3416666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -1.0491841805094742,
+        "height": 0.0,
+        "motion": -5.628875279316859,
+        "support": 176.63548826661204,
+        "recovery": -0.04137506429040727,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "7943fb46cfa1d392980682989b469c1c6f80b0b28a0466cbdc83e8c3a8816200"
+    },
+    "mild_recover_wait0_ramp60": {
+      "total_reward": 1117.067742431564,
+      "discounted_return": 168.83430732905603,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1075,
+          "seconds": 8.958333333333334
+        },
+        "UNBALANCED": {
+          "steps": 77,
+          "seconds": 0.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -2.5893453946300666,
+        "height": 0.0,
+        "motion": -3.7637337875490777,
+        "support": 175.22876157552517,
+        "recovery": -0.04137506429040724,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "5b6e7307debb6dfbf52f2299b88f792922681dbb3c941b7cbe09f62b0655e817"
+    },
+    "mild_recover_wait0_ramp120": {
+      "total_reward": 1118.870716062972,
+      "discounted_return": 171.21561851008457,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1015,
+          "seconds": 8.458333333333334
+        },
+        "UNBALANCED": {
+          "steps": 137,
+          "seconds": 1.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -4.857858743857142,
+        "height": 0.0,
+        "motion": -0.04564721437507829,
+        "support": 176.16049953260674,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "85b53abd593a132fba69639521369d57db65d85aa3340e43da63617d24e025a1"
+    },
+    "mild_fall_wait24": {
+      "total_reward": -16.542476114669906,
+      "discounted_return": -12.193688737731145,
+      "steps": 70,
+      "terminal_step": 118,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 69,
+          "seconds": 0.575
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -11.508345483738989,
+        "height": -3.6163143407269103,
+        "motion": -5.024953140850749,
+        "support": 8.704907026603172,
+        "recovery": -0.04137506429040721,
+        "terminal": -0.7076077347272661
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "540c356b9f275250e55c99959bbc8122137a053932c7b0a3b6928efbd827e883"
+    },
+    "mild_recover_wait24_ramp24": {
+      "total_reward": 1102.3997637800624,
+      "discounted_return": 156.39842358604506,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1087,
+          "seconds": 9.058333333333334
+        },
+        "UNBALANCED": {
+          "steps": 65,
+          "seconds": 0.5416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -3.76759869861472,
+        "height": 0.0,
+        "motion": -4.990862026580323,
+        "support": 165.19825937553026,
+        "recovery": -0.041375064290407194,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "18823af581e43d723304e65ae29278cd4a297cadd92daab1059002f827940cc7"
+    },
+    "mild_recover_wait24_ramp60": {
+      "total_reward": 1098.939741863731,
+      "discounted_return": 155.2050225717413,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1051,
+          "seconds": 8.758333333333333
+        },
+        "UNBALANCED": {
+          "steps": 101,
+          "seconds": 0.8416666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -5.1331880458527,
+        "height": 0.0,
+        "motion": -3.337127775322773,
+        "support": 163.716713457207,
+        "recovery": -0.041375064290407194,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "0cd53755f7d32d0523392e18e601c46843358c7a51a217b99446ebba56f90eca"
+    },
+    "mild_recover_wait24_ramp120": {
+      "total_reward": 1100.6499741801704,
+      "discounted_return": 157.23714322266534,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 991,
+          "seconds": 8.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 161,
+          "seconds": 1.3416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -7.144573370563966,
+        "height": 0.0,
+        "motion": -0.04047326287026893,
+        "support": 164.46356492038967,
+        "recovery": -0.041375064290407194,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "abbd0041db7ef7923d32b34681274aecd7ffd5e1c1303e740973e42e2d3300ce"
+    },
+    "mild_fall_wait120": {
+      "total_reward": 6.741070656370465,
+      "discounted_return": 11.134454417935139,
+      "steps": 166,
+      "terminal_step": 214,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 165,
+          "seconds": 1.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -16.67401340181718,
+        "height": -2.235022632030043,
+        "motion": -3.1056160876862178,
+        "support": 33.627810650048986,
+        "recovery": -0.0413750642904072,
+        "terminal": -0.43732904629000025
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "5007e3f91ac88c6da3f2676495b880f4254d5a2181e9e3261be7bc5c3dc37919"
+    },
+    "mild_recover_wait120_ramp24": {
+      "total_reward": 1029.725323189633,
+      "discounted_return": 115.09085355729316,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 991,
+          "seconds": 8.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 161,
+          "seconds": 1.3416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -11.889931426772684,
+        "height": 0.0,
+        "motion": -3.0845464557995688,
+        "support": 130.1067065041555,
+        "recovery": -0.04137506429040722,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "daa66c99a67e9ede326ae6308366350d5769411a56cbb368a4da81544967f9c6"
+    },
+    "mild_recover_wait120_ramp60": {
+      "total_reward": 1026.2410134476218,
+      "discounted_return": 114.34033844113495,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 955,
+          "seconds": 7.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 197,
+          "seconds": 1.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -12.733918649554461,
+        "height": 0.0,
+        "motion": -2.0624744978123863,
+        "support": 129.17810665279202,
+        "recovery": -0.04137506429040723,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "b5e1786f7fbeba09a4fcb60e4c95291f286d9d3238af006b6504883a161997a4"
+    },
+    "mild_recover_wait120_ramp120": {
+      "total_reward": 1027.942952703064,
+      "discounted_return": 115.59188655072707,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 895,
+          "seconds": 7.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 257,
+          "seconds": 2.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -13.97703285338198,
+        "height": 0.0,
+        "motion": -0.025014047448366807,
+        "support": 129.63530851584767,
+        "recovery": -0.04137506429040721,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "52908e40d2f44fba006a511299f0593ec946a03618d4b7644a270f64118ad40d"
+    },
+    "mild_fall_wait240": {
+      "total_reward": 35.80232447685681,
+      "discounted_return": 28.174953783612462,
+      "steps": 286,
+      "terminal_step": 334,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 285,
+          "seconds": 2.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -20.45212355317336,
+        "height": -1.2247617501123202,
+        "motion": -1.7018350240492874,
+        "support": 51.83469949485121,
+        "recovery": -0.04137506429040722,
+        "terminal": -0.23965031961335992
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "619d46eb460dd521ac3715287b1303f4eadf8cec9125efba3435fa40c0154252"
+    },
+    "mild_recover_wait240_ramp24": {
+      "total_reward": 938.8465767382821,
+      "discounted_return": 84.86085184966082,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 871,
+          "seconds": 7.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 281,
+          "seconds": 2.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -17.830512242188863,
+        "height": 0.0,
+        "motion": -1.6902891547350802,
+        "support": 104.42302831087495,
+        "recovery": -0.04137506429040722,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "9e2f0c238dfec78382f9b31bd2621efe600930557b4772d2e5f194fec36c8dde"
+    },
+    "mild_recover_wait240_ramp60": {
+      "total_reward": 935.3622658935597,
+      "discounted_return": 84.44957953683809,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 835,
+          "seconds": 6.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 317,
+          "seconds": 2.6416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -18.293005665402106,
+        "height": 0.0,
+        "motion": -1.1302077389741496,
+        "support": 103.91416800550464,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "cbbcb5baad5051994978af09f74c931bf14dfcb611d07b6bf63048f436db4171"
+    },
+    "mild_recover_wait240_ramp120": {
+      "total_reward": 937.0642047724817,
+      "discounted_return": 85.13541062751993,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 775,
+          "seconds": 6.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 377,
+          "seconds": 3.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -18.97421520039746,
+        "height": 0.0,
+        "motion": -0.013707354946302193,
+        "support": 104.16470824715398,
+        "recovery": -0.041375064290407215,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "c30b5da9dc3e047e8a63cd30c14e3d918297560a9ba18e6f09de40dc3f98722b"
+    },
+    "mild_fall_wait480": {
+      "total_reward": 93.92482898102631,
+      "discounted_return": 42.62998702346828,
+      "steps": 526,
+      "terminal_step": 574,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 525,
+          "seconds": 4.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -23.657000903628234,
+        "height": -0.3677824433161821,
+        "motion": -0.5110422849248027,
+        "support": 67.27915206704557,
+        "recovery": -0.04137506429040723,
+        "terminal": -0.07196434741762829
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "365df83643aebb7240f18fe631da5de969f36472094087836c838838e360ee63"
+    },
+    "mild_recover_wait480_ramp24": {
+      "total_reward": 757.0890812424508,
+      "discounted_return": 59.21748886560103,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 631,
+          "seconds": 5.258333333333333
+        },
+        "UNBALANCED": {
+          "steps": 521,
+          "seconds": 4.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -22.869759945710666,
+        "height": 0.0,
+        "motion": -0.5075751877312473,
+        "support": 82.63619906333344,
+        "recovery": -0.04137506429040723,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "95d944f5e29ab344c996cead0aa6830441ba252b66d4137eae50ecb2a268201d"
+    },
+    "mild_recover_wait480_ramp60": {
+      "total_reward": 753.6047703977241,
+      "discounted_return": 59.09398832676993,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 595,
+          "seconds": 4.958333333333333
+        },
+        "UNBALANCED": {
+          "steps": 557,
+          "seconds": 4.641666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -23.008641618976043,
+        "height": 0.0,
+        "motion": -0.33938891678863276,
+        "support": 82.48339392682506,
+        "recovery": -0.04137506429040723,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "044d52cd7e0bf4fc088a8fe35630933bc6e6779adac43d7565a158f7d498ebdf"
+    },
+    "mild_recover_wait480_ramp120": {
+      "total_reward": 755.3067092766448,
+      "discounted_return": 59.29993583795717,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 535,
+          "seconds": 4.458333333333333
+        },
+        "UNBALANCED": {
+          "steps": 617,
+          "seconds": 5.141666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -23.21320132797079,
+        "height": 0.0,
+        "motion": -0.004116167485709646,
+        "support": 82.55862839770417,
+        "recovery": -0.04137506429040722,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "e3a148442ac43438f546bbd04e41d95c4eb042c7546d3b72e415f477d9be2576"
+    },
+    "mild_fall_wait720": {
+      "total_reward": 152.04733348518997,
+      "discounted_return": 46.97067405315608,
+      "steps": 766,
+      "terminal_step": 814,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 765,
+          "seconds": 6.375
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -24.61939021924075,
+        "height": -0.11044101075104275,
+        "motion": -0.15346036089900073,
+        "support": 71.91695080803419,
+        "recovery": -0.041375064290407236,
+        "terminal": -0.0216100996969269
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "4f8820a1adb16c0d1c0f0a2cd90aa0be08bf09f523b2eed368c4e97570c19603"
+    },
+    "mild_recover_wait720_ramp24": {
+      "total_reward": 575.3315857466146,
+      "discounted_return": 51.517069831240526,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 391,
+          "seconds": 3.2583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 761,
+          "seconds": 6.341666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -24.382990443566058,
+        "height": 0.0,
+        "motion": -0.15241922985702988,
+        "support": 76.09385456895406,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "3e3687631645feb6d7304015d616775804a7dc2c96aad50fcc46c46998d3c6de"
+    },
+    "mild_recover_wait720_ramp60": {
+      "total_reward": 571.847274901888,
+      "discounted_return": 51.479983981753534,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 355,
+          "seconds": 2.9583333333333335
+        },
+        "UNBALANCED": {
+          "steps": 797,
+          "seconds": 6.641666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -24.42469507805574,
+        "height": 0.0,
+        "motion": -0.10191474794139241,
+        "support": 76.04796887204104,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "3a046f24f3eb23554e743e572e6ce691a4abc49b5a693071135ea87fedf6aa1b"
+    },
+    "mild_recover_wait720_ramp120": {
+      "total_reward": 573.5492137808086,
+      "discounted_return": 51.54182774757359,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 295,
+          "seconds": 2.4583333333333335
+        },
+        "UNBALANCED": {
+          "steps": 857,
+          "seconds": 7.141666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -24.486122102186137,
+        "height": 0.0,
+        "motion": -0.001236039690865662,
+        "support": 76.070560953741,
+        "recovery": -0.04137506429040723,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "79dcd1ecc9204d30e6062981caf8bbb8d4c9f5907483c26e850157d3e02b34e2"
+    },
+    "mild_fall_wait900": {
+      "total_reward": 195.63921186331274,
+      "discounted_return": 48.07785681312503,
+      "steps": 946,
+      "terminal_step": 994,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 945,
+          "seconds": 7.875
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -24.86486768659483,
+        "height": -0.04480071104431134,
+        "motion": -0.06225163314459211,
+        "support": 73.09991810678402,
+        "recovery": -0.041375064290407236,
+        "terminal": -0.008766198584900593
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "ee0bfadb5ff9e03ab42c54c8d006c398e4dedcdde84ffa7186d5b97779aef0a6"
+    },
+    "mild_recover_wait900_ramp24": {
+      "total_reward": 439.0134641247516,
+      "discounted_return": 49.55291735006216,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 211,
+          "seconds": 1.7583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 941,
+          "seconds": 7.841666666666667
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -24.768971443261673,
+        "height": 0.0,
+        "motion": -0.06182929536758875,
+        "support": 74.42509315298179,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "525d53341df4f80e9a09fd292f995c0df039307532341521f29f8930d4924578"
+    },
+    "mild_recover_wait900_ramp60": {
+      "total_reward": 435.52915328004246,
+      "discounted_return": 49.53787336943029,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 175,
+          "seconds": 1.4583333333333333
+        },
+        "UNBALANCED": {
+          "steps": 977,
+          "seconds": 8.141666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -24.785889047204947,
+        "height": 0.0,
+        "motion": -0.04134200821439907,
+        "support": 74.40647948914005,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "c9415bcb06fbe01ff569d44b5d7299bf13ae17cf5773d12b5fa62936d89045cd"
+    },
+    "mild_recover_wait900_ramp120": {
+      "total_reward": 437.2310921591064,
+      "discounted_return": 49.562960469445116,
+      "steps": 1152,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 115,
+          "seconds": 0.9583333333333334
+        },
+        "UNBALANCED": {
+          "steps": 1037,
+          "seconds": 8.641666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -24.810807094764122,
+        "height": 0.0,
+        "motion": -0.0005014030264047507,
+        "support": 74.41564403152601,
+        "recovery": -0.041375064290407236,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "7e9b31272ea94c8c737cabd922c75a234e7388d4186dccf057d6465fc47d9067",
+      "input_sha256": "90b3b88136928654678c0d971a3df1bfe646d8f7b504c5be7263d412cf2d805a"
+    },
+    "sustained_standing_reference": {
+      "total_reward": 1199.3005,
+      "discounted_return": 199.41165483689758,
+      "steps": 1200,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 1183,
+          "seconds": 9.858333333333333
+        },
+        "UNBALANCED": {
+          "steps": 17,
+          "seconds": 0.14166666666666666
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": 0.0,
+        "height": 0.0,
+        "motion": 0.0,
+        "support": 199.5116548368953,
+        "recovery": -0.1,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "683ce3b3d5b98754e46a1fe57a67188039a58eab3a2e6f96b120e28cd7da6901",
+      "input_sha256": "f807047aa338a33e256ed2034ac56e25d81ffd62cef72788a70aeff395e5882f"
+    },
+    "cap_fallen": {
+      "total_reward": -10.699260052024693,
+      "discounted_return": -10.05812881227243,
+      "steps": 24,
+      "terminal_step": 1200,
+      "terminated": true,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 5,
+          "seconds": 0.041666666666666664
+        },
+        "UNBALANCED": {
+          "steps": 18,
+          "seconds": 0.15
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -5.666625071531459,
+        "height": -3.400394684960763,
+        "motion": 0.0,
+        "support": 0.0,
+        "recovery": -0.1,
+        "terminal": -0.8911090557802088
+      },
+      "initial_context_sha256": "b584d6225a7ca7102c145d2c7da92edb1cd6bd4ffdd68d2369bafd82c756a0d7",
+      "input_sha256": "baf7c10f6e21fa33a217e837cb8aac504cfef5a731cabc14c105e7c38bb59ef9"
+    },
+    "cap_unbalanced": {
+      "total_reward": -8.2997908988546,
+      "discounted_return": -7.767050608943243,
+      "steps": 24,
+      "terminal_step": 1200,
+      "terminated": false,
+      "truncated": true,
+      "by_state": {
+        "BALANCED": {
+          "steps": 6,
+          "seconds": 0.05
+        },
+        "UNBALANCED": {
+          "steps": 18,
+          "seconds": 0.15
+        },
+        "FALLEN": {
+          "steps": 0,
+          "seconds": 0.0
+        }
+      },
+      "terminal_penalty_sum": 0.0,
+      "discounted_components": {
+        "posture": -5.41665592398248,
+        "height": -3.2503946849607632,
+        "motion": 0.0,
+        "support": 1.0,
+        "recovery": -0.1,
+        "terminal": 0.0
+      },
+      "initial_context_sha256": "b584d6225a7ca7102c145d2c7da92edb1cd6bd4ffdd68d2369bafd82c756a0d7",
+      "input_sha256": "caf3cf8ed15426a390b874490f26912a42c9e672ce5edbaeb96a4f7fbc2371f7"
+    },
+    "physical_brief_airborne": {
+      "total_reward": -61.39569551621436,
+      "discounted_return": 34.44930958606854,
+      "steps": 557,
+      "terminal_step": 637,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 97,
+          "seconds": 0.8083333333333333
+        },
+        "UNBALANCED": {
+          "steps": 459,
+          "seconds": 3.8249999999999997
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -8.18538476758549,
+        "height": -0.5198179581282353,
+        "motion": -19.10117520485339,
+        "support": 62.41325268066209,
+        "recovery": -0.09595776206137632,
+        "terminal": -0.061607401965086635
+      },
+      "initial_context_sha256": "ae82c3f5be8b1729f5948d91763e9bdce26f343678c7f590b61dc8b2ebadc336",
+      "input_sha256": "f4ca25bcf642b0a5ff1fddcdb6f34ac6495b53f561a55fa8f2e6ccbf36e7faaa"
+    },
+    "physical_edge_landing": {
+      "total_reward": -249.89745488698807,
+      "discounted_return": -41.25252453418975,
+      "steps": 596,
+      "terminal_step": 596,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 595,
+          "seconds": 4.958333333333333
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -17.6202013312123,
+        "height": -6.481095803578601,
+        "motion": -35.84459881658958,
+        "support": 18.744039333403748,
+        "recovery": -1.1225947570598931e-17,
+        "terminal": -0.050667916213027374
+      },
+      "initial_context_sha256": "412a89bb368c41e17b3a93b67b8da2a39bdf463e95d8866bcfa689e192fbffea",
+      "input_sha256": "8749500ba832635c9820a065e7fd3903d8de92056b515f692f1198d5983edaf5"
+    },
+    "physical_horizontal_collapse": {
+      "total_reward": -12.625729976456002,
+      "discounted_return": -11.822024956608034,
+      "steps": 24,
+      "terminal_step": 24,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 23,
+          "seconds": 0.19166666666666665
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -5.666643075778227,
+        "height": -3.400394684960763,
+        "motion": -1.8638750548437286,
+        "support": 0.0,
+        "recovery": -3.0852451021669888e-06,
+        "terminal": -0.8911090557802088
+      },
+      "initial_context_sha256": "10168fa34efc75c9064a9ebf8746ad248cdfb8262c8f482429bb68a743835ad9",
+      "input_sha256": "959bf4f53a45e047ec2775415fdc049d284dda4ff7534459f2f304613ec1b299"
+    },
+    "physical_left_lateral": {
+      "total_reward": -130.27550689896597,
+      "discounted_return": -59.61647155085847,
+      "steps": 287,
+      "terminal_step": 287,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 286,
+          "seconds": 2.3833333333333333
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -21.829948100615155,
+        "height": -4.387948276365966,
+        "motion": -33.3258442730135,
+        "support": 0.16572116715142926,
+        "recovery": 7.671425767580709e-20,
+        "terminal": -0.23845206801529312
+      },
+      "initial_context_sha256": "6f84a110d5e66b14e13e4baeb0f1cdba806ace7cf6dfc78accf9384ded8bf50d",
+      "input_sha256": "205f0efa163e7755013427ac1813d286568ded23965bdccb557585b811654643"
+    },
+    "physical_mild_backward": {
+      "total_reward": -87.0720136950462,
+      "discounted_return": -34.436857631327946,
+      "steps": 282,
+      "terminal_step": 282,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 281,
+          "seconds": 2.341666666666667
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -11.268513938238568,
+        "height": -3.043421914505361,
+        "motion": -25.66306179978352,
+        "support": 5.782643864195457,
+        "recovery": -6.703607180022417e-18,
+        "terminal": -0.24450384299593586
+      },
+      "initial_context_sha256": "44a6ec8e54286411312cbd01481a81df367a03ad78158153502bd0079569ca05",
+      "input_sha256": "d38800626afea12dce406ab8e814e157451a1cff76aec8899c6da0f5b64cded3"
+    },
+    "physical_mild_forward": {
+      "total_reward": -72.49057833519642,
+      "discounted_return": -26.182706035959278,
+      "steps": 274,
+      "terminal_step": 274,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 273,
+          "seconds": 2.275
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -12.285507820002994,
+        "height": -2.5486399864020117,
+        "motion": -23.902090956068523,
+        "support": 12.808040495287093,
+        "recovery": -1.2912546967131884e-17,
+        "terminal": -0.2545077687728011
+      },
+      "initial_context_sha256": "c703ff4b111ea97b66c67a5df374b85faa91bdf04573aff0894628f8d62332e4",
+      "input_sha256": "f0b6a43baf1e59b119ecd05cdba4e621db2d2f0e9fe3144b2e0cb8872ab8ef86"
+    },
+    "physical_neutral": {
+      "total_reward": 3.3256096522593137,
+      "discounted_return": 66.00378769219968,
+      "steps": 436,
+      "terminal_step": 516,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 129,
+          "seconds": 1.075
+        },
+        "UNBALANCED": {
+          "steps": 306,
+          "seconds": 2.55
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -10.199172090394798,
+        "height": -0.9718248466974402,
+        "motion": -17.33151409500293,
+        "support": 94.71524651647024,
+        "recovery": -0.09595776206137635,
+        "terminal": -0.1129900301140104
+      },
+      "initial_context_sha256": "ae82c3f5be8b1729f5948d91763e9bdce26f343678c7f590b61dc8b2ebadc336",
+      "input_sha256": "bba95deb63b08f00169b779dce2d00a62fe6a659949b3751bf0a11591c364451"
+    },
+    "physical_one_foot_landing": {
+      "total_reward": -76.05448048316703,
+      "discounted_return": -9.408281647442521,
+      "steps": 382,
+      "terminal_step": 382,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 381,
+          "seconds": 3.175
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -7.157062528762117,
+        "height": -1.7859625427780863,
+        "motion": -27.003949289986778,
+        "support": 26.686805913779803,
+        "recovery": 6.6162022367792016e-18,
+        "terminal": -0.14811319969530848
+      },
+      "initial_context_sha256": "49ddcdd76189b324daa014334854145d34479679a57bbe3a85638d054a7f10e3",
+      "input_sha256": "e8aff68a9e8becf7d46921a4c61851e55f88f5d2397ddf46a0283aaaadfea6d4"
+    },
+    "physical_rapid_rotation": {
+      "total_reward": -203.59912930498132,
+      "discounted_return": -92.3188345787951,
+      "steps": 337,
+      "terminal_step": 417,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 5,
+          "seconds": 0.041666666666666664
+        },
+        "UNBALANCED": {
+          "steps": 331,
+          "seconds": 2.7583333333333333
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -36.27692916333968,
+        "height": -15.466121664956171,
+        "motion": -40.29472162565168,
+        "support": 0.0004858760090919609,
+        "recovery": -0.09595776206137634,
+        "terminal": -0.18559023879528852
+      },
+      "initial_context_sha256": "ae82c3f5be8b1729f5948d91763e9bdce26f343678c7f590b61dc8b2ebadc336",
+      "input_sha256": "a18e222effa6ba0eda8eeca48436fcf1d49ce49b6bf88f59c57e2503243a26cd"
+    },
+    "physical_recovery_attempt": {
+      "total_reward": 3.6731201267640197,
+      "discounted_return": 40.54584967746514,
+      "steps": 288,
+      "terminal_step": 368,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 83,
+          "seconds": 0.6916666666666667
+        },
+        "UNBALANCED": {
+          "steps": 204,
+          "seconds": 1.7
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -15.167101185627796,
+        "height": -1.8293474700668293,
+        "motion": -15.562538421049679,
+        "support": 73.43805432394605,
+        "recovery": -0.09595776206137634,
+        "terminal": -0.23725980767521665
+      },
+      "initial_context_sha256": "ae82c3f5be8b1729f5948d91763e9bdce26f343678c7f590b61dc8b2ebadc336",
+      "input_sha256": "2b78fe73084606601d827b64ba946b729f49f3b39fd1120235626cf34bbb00c4"
+    },
+    "physical_right_lateral": {
+      "total_reward": -102.0621770390096,
+      "discounted_return": -53.16273901233581,
+      "steps": 235,
+      "terminal_step": 235,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 234,
+          "seconds": 1.95
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -18.78268926911577,
+        "height": -4.270376633749491,
+        "motion": -29.90607447671576,
+        "support": 0.10585878302094524,
+        "recovery": 3.652352376577616e-20,
+        "terminal": -0.3094574157757028
+      },
+      "initial_context_sha256": "6f84a110d5e66b14e13e4baeb0f1cdba806ace7cf6dfc78accf9384ded8bf50d",
+      "input_sha256": "03672d10e1ef0f44f0ae57058542eb8c69c038d29a6bc2d3c7053ffbd9b77b8c"
+    },
+    "physical_severe_backward": {
+      "total_reward": -72.62349764856553,
+      "discounted_return": -49.68673700170225,
+      "steps": 138,
+      "terminal_step": 138,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 137,
+          "seconds": 1.1416666666666666
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -23.366336100402,
+        "height": -6.561869225151925,
+        "motion": -19.28744646659181,
+        "support": 0.032139620841313915,
+        "recovery": -9.486219327811544e-20,
+        "terminal": -0.5032248303978423
+      },
+      "initial_context_sha256": "7a8355c29110717d7583e44df340a60a4d18112063abb17aac68875d4633db2f",
+      "input_sha256": "717f0346de657d901db4a5e5c7f7a05cbddebf570ccaa152e34c7bc4244214bb"
+    },
+    "physical_severe_forward": {
+      "total_reward": -72.24977952771097,
+      "discounted_return": -49.09318377558192,
+      "steps": 141,
+      "terminal_step": 141,
+      "terminated": true,
+      "truncated": false,
+      "by_state": {
+        "BALANCED": {
+          "steps": 0,
+          "seconds": 0.0
+        },
+        "UNBALANCED": {
+          "steps": 140,
+          "seconds": 1.1666666666666667
+        },
+        "FALLEN": {
+          "steps": 1,
+          "seconds": 0.008333333333333333
+        }
+      },
+      "terminal_penalty_sum": -1.0,
+      "discounted_components": {
+        "posture": -23.757518955990133,
+        "height": -5.018590004069206,
+        "motion": -19.902417376725985,
+        "support": 0.08105669810443132,
+        "recovery": -4.866675972530319e-20,
+        "terminal": -0.4957141369010507
+      },
+      "initial_context_sha256": "29e6e7411a089213f30491dc5743dde026952d7644d3958f6757f419b944ac12",
+      "input_sha256": "aaeea41515e4be7cd02a4e717f0a7a648834d47c13c6a68af12a5d4141d94755"
+    }
+  },
+  "recovery_comparisons": [
+    {
+      "recovery": "severe_recover_wait0_ramp24",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 188.8823972788087,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait0_ramp60",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 164.00391887248034,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait0_ramp120",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 161.73870625834658,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait24_ramp24",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 167.25097330494168,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait24_ramp60",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 145.11307779146313,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait24_ramp120",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 142.90014492310775,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait120_ramp24",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 101.8528070835695,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait120_ramp60",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 88.16634548037558,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait120_ramp120",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 86.78736662035377,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait240_ramp24",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 54.00623023789035,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait240_ramp60",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 46.50623687340989,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait240_ramp120",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 45.75057508898681,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait480_ramp24",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 13.419162591823824,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait480_ramp60",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 11.16699731625822,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait480_ramp120",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 10.94008041803642,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait720_ramp24",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 1.2313138901960485,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait720_ramp60",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 0.5550135013870374,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait720_ramp120",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": 0.48687285995199403,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "severe_recover_wait900_ramp24",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": -1.8774511212546408,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "severe_recover_wait900_ramp60",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": -2.1517943031221236,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "severe_recover_wait900_ramp120",
+      "rapid_fall": "severe_fall_wait0",
+      "discounted_advantage": -2.179435748671498,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait0_ramp24",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 187.93726285284748,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait0_ramp60",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 149.0252690915811,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait0_ramp120",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 128.77627780417885,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait24_ramp24",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 163.60668743512161,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait24_ramp60",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 129.19077744674854,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait24_ramp120",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 111.19276891320779,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait120_ramp24",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 91.06837760237042,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait120_ramp60",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 69.80273712622358,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait120_ramp120",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 58.67682819063221,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait240_ramp24",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 38.01782578860437,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait240_ramp60",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 26.364546573138952,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait240_ramp120",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": 20.26770100209121,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "very_severe_recover_wait480_ramp24",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -6.98364445456464,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait480_ramp60",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -10.482995656638376,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait480_ramp120",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -12.313811127839848,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait720_ramp24",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -20.497089561202905,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait720_ramp60",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -21.54790612614056,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait720_ramp120",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -22.097679816572864,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait900_ramp24",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -23.94397558351354,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait900_ramp60",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -24.37024232053558,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "very_severe_recover_wait900_ramp120",
+      "rapid_fall": "very_severe_fall_wait0",
+      "discounted_advantage": -24.59325958626973,
+      "recovery_wins": false
+    },
+    {
+      "recovery": "mild_recover_wait0_ramp24",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 190.2809087511129,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait0_ramp60",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 189.19916233767333,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait0_ramp120",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 191.58047351870187,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait24_ramp24",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 176.76327859466235,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait24_ramp60",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 175.5698775803586,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait24_ramp120",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 177.60199823128264,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait120_ramp24",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 135.45570856591044,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait120_ramp60",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 134.70519344975224,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait120_ramp120",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 135.95674155934435,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait240_ramp24",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 105.2257068582781,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait240_ramp60",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 104.81443454545538,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait240_ramp120",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 105.50026563613721,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait480_ramp24",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 79.58234387421831,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait480_ramp60",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 79.45884333538723,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait480_ramp120",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 79.66479084657446,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait720_ramp24",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 71.88192483985782,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait720_ramp60",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 71.84483899037082,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait720_ramp120",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 71.90668275619089,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait900_ramp24",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 69.91777235867946,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait900_ramp60",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 69.90272837804758,
+      "recovery_wins": true
+    },
+    {
+      "recovery": "mild_recover_wait900_ramp120",
+      "rapid_fall": "mild_fall_wait0",
+      "discounted_advantage": 69.9278154780624,
+      "recovery_wins": true
+    }
+  ],
+  "extremes": [
+    {
+      "kind": "finite_float32_measurement_stress_not_reachability",
+      "reward": 0.9995,
+      "qualities": {
+        "posture": 1.0,
+        "height": 1.0,
+        "motion": 1.0,
+        "support_target": 1.0,
+        "linear_speed_scale": 1.5175806453492435,
+        "angular_speed_scale": 0.8080295460791153,
+        "support": 1.0,
+        "recovery_potential": 1.0
+      }
+    },
+    {
+      "kind": "finite_float32_measurement_stress_not_reachability",
+      "reward": -0.39999999999999997,
+      "qualities": {
+        "posture": 2.3195228302435696e-16,
+        "height": 0.0,
+        "motion": 1.0,
+        "support_target": 0.25,
+        "linear_speed_scale": 1.5175806453492435,
+        "angular_speed_scale": 0.8080295460791153,
+        "support": 0.25,
+        "recovery_potential": 5.798807075608924e-17
+      }
+    },
+    {
+      "kind": "finite_float32_measurement_stress_not_reachability",
+      "reward": -0.6499999999999999,
+      "qualities": {
+        "posture": 3.456478778504502e-16,
+        "height": 0.0,
+        "motion": 0.0,
+        "support_target": 0.25,
+        "linear_speed_scale": 1.5175806453492435,
+        "angular_speed_scale": 0.8080295460791153,
+        "support": 0.25,
+        "recovery_potential": 0.0
+      }
+    }
+  ],
+  "source_sha256": {
+    "python/balance_reward_v2.py": "73b6eeba7799c303b0cd0df50036b23b9ec13c85cede0ca9cf49dcfe1ecbce93",
+    "python/train_nn.py": "9106e0d43e7cd37cbbfcb5218321f19128baad03213a37b17750713557a01128",
+    "python/aura_env.py": "46d4f25dd06c4375a81901e9d53debf3bfd27508f2745f2e9569befdf4c98ecd",
+    "src/sim/BalanceClassifier.cpp": "e59e749f620e750022e3c0b0b22370443eec62dd306957450e537e51f8815dab",
+    "include/aura/sim/BalanceClassifier.hpp": "68f70b9eec609aaea632bc0fbc19606e24320b04e84013344bcb9908d4b8e0cb",
+    "include/aura/sim/Termination.hpp": "9d5b0cc284071aa464c619eb913f7104a091ddec4092c65fb098e0c7f5fc6f39",
+    "python/reward_incentive_audit.py": "c5d83cb42e106b6dd26b5eff2085e05c838cbef44050d5984e7836470d899538",
+    "tests/incentive_fixture_classifier.cpp": "6c1e028e650e51f87376032f0559395ce182f69827b3354030d3794d4b152eb2"
+  },
+  "trace_sha256": {
+    "brief_airborne.csv": "0e7b6a69b6e12b40446f88f361d647d5b635ff586054189ee01caed3f5f9f285",
+    "edge_landing.csv": "6cae087b136c088b413bcb04940b17a2d9f897eeec38a05cf84bafbdd0047d2f",
+    "horizontal_collapse.csv": "1036d607e8998c0bfa2fd1c6fe1cc028b8be22d86f2ef2844ead685e3ec45f7c",
+    "left_lateral.csv": "64d517abb924e3691796bf53bf30937c64de51b3f8282b73be0a48d845c02a94",
+    "mild_backward.csv": "c32f33c317b31b226ec6c12be71a1b10d57649e46f9a3c2d46234f955510d847",
+    "mild_forward.csv": "b684f8e61c57f2ace45770425d78331a341719b7f4b562dce2710f27a521ef50",
+    "neutral.csv": "edbd84f338a38e69e0c2db955cbb30481d8e9539dc526f3457068ee59a6ecbca",
+    "one_foot_landing.csv": "143e1dc10f03ea9de6a286f431a35e31ef8942392d2ee886a84090b6dd6d63ef",
+    "rapid_rotation.csv": "5f8661462c33a89bbfcb1b9e0c5e725ca75ef9392978825952b51dd8ffec96cd",
+    "recovery_attempt.csv": "3b10e46ad9bb2ca62e297aa3dd2a847b3aa929532c822d7341e6a85eeaea1602",
+    "right_lateral.csv": "f7ceb51e30ef0dab6a5ccfd4cd13a3c9ac2d72edf345d6c50a9b3739e9f36aab",
+    "severe_backward.csv": "086bc62d6f1c9db5b41ff7bbc1558066344a0fc86f466fc5ca4fa6754863c39e",
+    "severe_forward.csv": "fa48d67f6ee8b7f4a9bd37f7a3c9d685a75d4c5c45ccdb266fb84fd051edd960"
+  }
+}
